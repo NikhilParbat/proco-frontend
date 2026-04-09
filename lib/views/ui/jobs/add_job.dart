@@ -73,7 +73,7 @@ class _AddJobPageState extends State<AddJobPage> {
           _reqControllers.add(TextEditingController(text: r));
         }
       }
-      // Domain
+      // DomainkDomains
       if (kDomains.contains(j.domain)) {
         selectedDomain = j.domain;
       } else if (j.domain.isNotEmpty) {
@@ -145,6 +145,11 @@ class _AddJobPageState extends State<AddJobPage> {
       return;
     }
 
+    if (_titleController == TextEditingController.fromValue(null)) {
+      _snack('Please Enter a title');
+      return;
+    }
+
     if (!_locationPicked) {
       _snack('Please pick a location on the map.');
       return;
@@ -187,7 +192,7 @@ class _AddJobPageState extends State<AddJobPage> {
       opportunityType: selectedOpportunityType!,
       title: _titleController.text.isNotEmpty
           ? _titleController.text
-          : selectedDomain!,
+          : _titleController.text,
       location: _locationController.text.trim().isNotEmpty
           ? _locationController.text.trim()
           : 'Remote',
