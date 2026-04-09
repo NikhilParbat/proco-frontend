@@ -1,0 +1,9 @@
+export 'package:proco/controllers/bookmark_provider.dart';
+export 'package:proco/controllers/chat_provider.dart';
+export 'package:proco/controllers/image_provider.dart';
+export 'package:proco/controllers/jobs_provider.dart';
+export 'package:proco/controllers/login_provider.dart';
+export 'package:proco/controllers/onboarding_provider.dart';
+export 'package:proco/controllers/profile_provider.dart';
+export 'package:proco/controllers/signup_provider.dart';
+export 'package:proco/controllers/zoom_provider.dart';

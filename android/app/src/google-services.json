@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "990483552835",
+    "project_id": "proco-3d9fe",
+    "storage_bucket": "proco-3d9fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:990483552835:android:9e25738abe6a8f9eb252f6",
+        "android_client_info": {
+          "package_name": "com.example.jobhub_v1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "990483552835-0i393u98081q15pail3tmua55hlkdl7o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.jobhub_v1",
+            "certificate_hash": "7bf1200e5bef13c6fb05e0ecefbb46652c3af72d"
+          }
+        },
+        {
+          "client_id": "990483552835-a5425i0t068l4k8i8tg7oi4er4d9v6v2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.jobhub_v1",
+            "certificate_hash": "65e1c92aec4f1c01e63f614df983f100ec72efba"
+          }
+        },
+        {
+          "client_id": "990483552835-st69ba3d93tv2jmfhj3ask7uhn1tdua1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2hCvyfSl46WIU5lrQgsOOs99ARduYACI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "990483552835-st69ba3d93tv2jmfhj3ask7uhn1tdua1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "990483552835-bc64n2r57lbfaa1nc64bs32hr0st75g2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.jobhubV1"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
