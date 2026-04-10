@@ -141,17 +141,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
             ),
-            body: IndexedStack(
-              index: signUpProvider.activeIndex,
-              children: [
-                _namePage(signUpProvider),
-                _emailPage(signUpProvider),
-                _passwordPage(signUpProvider),
-                _collegePage(signUpProvider),
-                _genderPage(signUpProvider),
-                _locationPage(signUpProvider),
-              ],
-            ),
+
+            body: signUpProvider.activeIndex == 0
+                ? _googleFirstScreen(signUpProvider)
+                : IndexedStack(
+                    index: signUpProvider.activeIndex,
+                    children: [
+                      _namePage(signUpProvider),
+                      _emailPage(signUpProvider),
+                      _passwordPage(signUpProvider),
+                      _collegePage(signUpProvider),
+                      _genderPage(signUpProvider),
+                      _locationPage(signUpProvider),
+                    ],
+                  ),
           );
         },
       ),
@@ -161,6 +164,69 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // ─────────────────────────────────────────────────────────────────────────────
   // Step pages (1-5 unchanged, 6 replaced)
   // ─────────────────────────────────────────────────────────────────────────────
+
+  Widget _googleFirstScreen(SignUpNotifier signUpProvider) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF040326),
+      body: Center(
+        child: _card(
+          children: [
+            _cardTitle("Join ProCo 🚀"),
+            const SizedBox(height: 20),
+
+            // ✅ Google Button FIRST
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: signUpProvider.isLoading
+                    ? null
+                    : () async {
+                        await signUpProvider.googleSignUp();
+
+                        // 👉 Move to onboarding after success
+                        signUpProvider.changeStep(1);
+                      },
+                icon: const Icon(Icons.g_mobiledata, size: 28),
+                label: signUpProvider.isLoading
+                    ? const CircularProgressIndicator(color: Colors.black)
+                    : const Text("Continue with Google"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Divider
+            Row(
+              children: const [
+                Expanded(child: Divider(color: Colors.white30)),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Text("OR", style: TextStyle(color: Colors.white54)),
+                ),
+                Expanded(child: Divider(color: Colors.white30)),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Manual signup option
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => signUpProvider.changeStep(1),
+                child: const Text("Continue with Email"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Step 1: Full Name
   Widget _namePage(SignUpNotifier signUpProvider) {

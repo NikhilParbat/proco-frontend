@@ -126,4 +126,56 @@ class AuthHelper {
       return [false, 'Connection error: ${e.toString()}'];
     }
   }
+
+  static Future<List<dynamic>> googleSignup({
+    required String idToken,
+    required String email,
+    String? displayName,
+    String? photoURL,
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      var url = Uri.http(Config.apiUrl, Config.googleSignupUrl);
+
+      final body = {
+        'idToken': idToken,
+        'email': email,
+        'displayName': displayName,
+        'photoURL': photoURL,
+      };
+
+      // Add location if available
+      if (latitude != null && longitude != null) {
+        body['latitude'] = latitude.toString();
+        body['longitude'] = longitude.toString();
+      }
+
+      var response = await client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+
+        // Save token and userId
+        final prefs = await SharedPreferences.getInstance();
+        if (data['data']?['userToken'] != null) {
+          await prefs.setString('token', data['data']['userToken']);
+        }
+        if (data['data']?['_id'] != null) {
+          await prefs.setString('userId', data['data']['_id']);
+        }
+
+        return [true, data];
+      } else {
+        var error = jsonDecode(response.body);
+        return [false, error['message'] ?? 'Signup failed'];
+      }
+    } catch (e) {
+      return [false, e.toString()];
+    }
+  }
 }

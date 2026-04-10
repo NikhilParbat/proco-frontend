@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:proco/controllers/auth_service.dart';
+import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/ui/auth/login.dart';
+import 'package:proco/views/ui/mainscreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/constants/app_constants.dart';
 
 class SignUpNotifier extends ChangeNotifier {
   final SignupModel signupModel = SignupModel();
@@ -30,6 +35,18 @@ class SignUpNotifier extends ChangeNotifier {
   set obscureText(bool newState) {
     if (_obscureText != newState) {
       _obscureText = newState;
+      notifyListeners();
+    }
+  }
+
+  // ─── Loading state ────────────────────────────────────────────────────────
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  set isLoading(bool newState) {
+    if (_isLoading != newState) {
+      _isLoading = newState;
       notifyListeners();
     }
   }
@@ -136,7 +153,7 @@ class SignUpNotifier extends ChangeNotifier {
     return RegExp(pattern).hasMatch(password);
   }
 
-  // ─── Submission ──────────────────────────────────────────────────────────
+  // ─── Regular Signup Submission ───────────────────────────────────────────
 
   void submitSignup() {
     if (signupModel.username.isEmpty ||
@@ -180,5 +197,125 @@ class SignUpNotifier extends ChangeNotifier {
         );
       }
     });
+  }
+
+  // ✅ ─── Google Sign-Up ───────────────────────────────────────────────────
+
+  Future<void> googleSignUp() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final authService = AuthService();
+      final userCredential = await authService.signInWithGoogle();
+
+      if (userCredential == null) {
+        _isLoading = false;
+        notifyListeners();
+
+        Get.snackbar(
+          'Sign Up Cancelled',
+          'Please try again',
+          colorText: kLight,
+          backgroundColor: kOrange,
+          icon: const Icon(Icons.add_alert),
+        );
+        return;
+      }
+
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        _isLoading = false;
+        notifyListeners();
+
+        Get.snackbar(
+          'Authentication Error',
+          'Could not retrieve user information',
+          colorText: kLight,
+          backgroundColor: kOrange,
+          icon: const Icon(Icons.add_alert),
+        );
+        return;
+      }
+
+      // Step 2: Get Firebase ID token
+      final idToken = await firebaseUser.getIdToken();
+      if (idToken == null) {
+        _isLoading = false;
+        notifyListeners();
+
+        Get.snackbar(
+          'Authentication Error',
+          'Could not retrieve authentication token',
+          colorText: kLight,
+          backgroundColor: kOrange,
+          icon: const Icon(Icons.add_alert),
+        );
+        return;
+      }
+
+      // Step 3: Call backend signup endpoint with location if available
+      final response = await AuthHelper.googleSignup(
+        idToken: idToken,
+        email: firebaseUser.email ?? '',
+        displayName: firebaseUser.displayName,
+        photoURL: firebaseUser.photoURL,
+        latitude: _latitude != 0.0 ? _latitude : null,
+        longitude: _longitude != 0.0 ? _longitude : null,
+      );
+
+      // Step 4: Handle response
+      Get.closeAllSnackbars(); // Prevent stacking
+
+      if (response.isNotEmpty && response[0] == true) {
+        // Save preferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('loggedIn', true);
+        await prefs.setBool('entrypoint', true);
+
+        _isLoading = false;
+        notifyListeners();
+
+        Get.snackbar(
+          'Sign Up Success',
+          'Welcome, ${firebaseUser.displayName ?? ""}!',
+          colorText: kLight,
+          backgroundColor: kLightBlue,
+          icon: const Icon(Icons.check),
+        );
+
+        await Future.delayed(const Duration(seconds: 1));
+
+        // Navigate to main screen
+        Get.offAll(() => const MainScreen(), transition: Transition.fade);
+      } else {
+        _isLoading = false;
+        notifyListeners();
+
+        final message = (response.length > 1 && response[1] != null)
+            ? response[1].toString()
+            : 'Sign up failed';
+
+        Get.snackbar(
+          'Sign Up Failed',
+          message,
+          colorText: kLight,
+          backgroundColor: kOrange,
+          icon: const Icon(Icons.error),
+        );
+      }
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+
+      debugPrint('Google Sign-Up Error: $e');
+      Get.snackbar(
+        'Sign Up Failed',
+        'An unexpected error occurred: ${e.toString()}',
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.add_alert),
+      );
+    }
   }
 }
