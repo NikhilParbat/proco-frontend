@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
 
 class LocationPickerScreen extends StatefulWidget {
@@ -45,7 +46,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       final addressData = await LocationService.getAddressFromLatLng(lat, lng);
       if (mounted) {
         setState(() {
-          _displayAddress = "${addressData.city}, ${addressData.state}";
+          String mainLoc = addressData.city.isNotEmpty ? addressData.city : addressData.state;
+          _displayAddress = mainLoc.isNotEmpty ? "$mainLoc, ${addressData.country}" : "Location Selected";
         });
       }
     } catch (e) {
@@ -56,7 +58,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   }
 
   void _moveMap(double lat, double lng) {
-    _mapController.move(LatLng(lat, lng), 13.0);
+    _mapController.move(LatLng(lat, lng), 15.0);
     setState(() {
       _selectedPosition = LatLng(lat, lng);
       _markerVisible = true;
@@ -98,7 +100,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _selectedPosition,
-              initialZoom: 13.0,
+              initialZoom: 25.0,
               onTap: (tapPosition, latLng) {
                 setState(() {
                   _selectedPosition = latLng;
@@ -111,7 +113,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://api.maptiler.com/maps/hybrid-v4/{z}/{x}/{y}.png?key={apiKey}',
+                additionalOptions: {
+                  'apiKey': dotenv.get('MAPTILER_API_KEY'),
+                },
                 userAgentPackageName: 'com.proco.proco',
               ),
               MarkerLayer(

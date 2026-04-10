@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Result type returned by LocationService methods.
 class LocationResult {
@@ -18,26 +19,31 @@ class LocationResult {
 }
 
 class LocationService {
+  static String get _apiKey => dotenv.get('LOCATIONIQ_API_KEY');
+
   /// NEW: Structured address lookup for Profile Update
   /// Converts coordinates into separate City, State, and Country strings.
   static Future<({String city, String state, String country})>
-  getAddressFromLatLng(double lat, double lng) async {
-    try {
-      final List<Placemark> placemarks = await placemarkFromCoordinates(
-        lat,
-        lng,
-      );
+      getAddressFromLatLng(double lat, double lng) async {
+    final String url =
+        'https://us1.locationiq.com/v1/reverse.php?key=$_apiKey&lat=$lat&lon=$lng&format=json';
 
-      if (placemarks.isNotEmpty) {
-        final Placemark p = placemarks.first;
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final addr = data['address'];
+        
         return (
-          city: p.locality ?? "",
-          state: p.administrativeArea ?? "",
-          country: p.country ?? "",
+          // LocationIQ uses 'city', 'town', or 'village' depending on the area
+          city: (addr['city'] ?? addr['town'] ?? addr['village'] ?? "").toString(),
+          state: (addr['state'] ?? "").toString(),
+          country: (addr['country'] ?? "").toString(),
         );
       }
     } catch (e) {
-      debugPrint("Reverse geocoding failed: $e");
+      debugPrint("LocationIQ Reverse Geocoding failed: $e");
     }
     return (city: "", state: "", country: "");
   }
@@ -70,26 +76,14 @@ class LocationService {
       locationSettings: locationSettings,
     );
 
-    String? address;
-    try {
-      final List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-      if (placemarks.isNotEmpty) {
-        final Placemark p = placemarks.first;
-        address = [
-          p.locality,
-          p.administrativeArea,
-          p.country,
-        ].where((s) => s != null && s.isNotEmpty).join(', ');
-      }
-    } catch (_) {}
+    // Get a nice readable string for the UI
+    final addressData = await getAddressFromLatLng(position.latitude, position.longitude);
+    final String displayStr = "${addressData.city}, ${addressData.state}";
 
     return LocationResult(
       latitude: position.latitude,
       longitude: position.longitude,
-      displayAddress: address,
+      displayAddress: displayStr,
     );
   }
 
@@ -133,15 +127,13 @@ class LocationService {
   ) async {
     if (query.length < 3) return []; // Don't search for very short strings
 
+    // LocationIQ Autocomplete endpoint is superior for POIs
     final String url =
-        'https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=5&addressdetails=1';
+        'https://api.locationiq.com/v1/autocomplete.php?key=$_apiKey&q=$query&limit=5&dedupe=1';
 
     try {
       final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'User-Agent': 'proco_app', // Nominatim requires a User-Agent
-        },
+        Uri.parse(url)
       );
 
       if (response.statusCode == 200) {
