@@ -21,8 +21,8 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(kOrange.value),
-        iconTheme: IconThemeData(color: Color(kLight.value)),
+        backgroundColor: kOrange,
+        iconTheme: IconThemeData(color: kLight),
         title: CustomField(
           hintText: 'Search for a job',
           controller: search,

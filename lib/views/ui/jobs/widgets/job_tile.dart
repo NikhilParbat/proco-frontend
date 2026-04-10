@@ -23,7 +23,7 @@ class VerticalTileWidget extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 20.w),
           height: height * 0.15,
           width: width,
-          color: Color(kLightGrey.value),
+          color: kLightGrey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -45,7 +45,7 @@ class VerticalTileWidget extends StatelessWidget {
                             text: job.company,
                             style: appstyle(
                               22,
-                              Color(kDark.value),
+                              kDark,
                               FontWeight.w600,
                             ),
                           ),
@@ -55,7 +55,7 @@ class VerticalTileWidget extends StatelessWidget {
                               text: job.title,
                               style: appstyle(
                                 20,
-                                Color(kDarkGrey.value),
+                                kDarkGrey,
                                 FontWeight.w600,
                               ),
                             ),
@@ -68,7 +68,7 @@ class VerticalTileWidget extends StatelessWidget {
                     radius: 18,
                     child: Icon(
                       Ionicons.chevron_forward,
-                      color: Color(kOrange.value),
+                      color: kOrange,
                     ),
                   ),
                 ],
@@ -79,13 +79,13 @@ class VerticalTileWidget extends StatelessWidget {
                   children: [
                     ReusableText(
                       text: job.salary,
-                      style: appstyle(22, Color(kDark.value), FontWeight.w600),
+                      style: appstyle(22, kDark, FontWeight.w600),
                     ),
                     ReusableText(
                       text: '/${job.period}',
                       style: appstyle(
                         20,
-                        Color(kDarkGrey.value),
+                        kDarkGrey,
                         FontWeight.w600,
                       ),
                     ),

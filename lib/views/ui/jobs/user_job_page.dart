@@ -187,7 +187,7 @@ class _JobListingPageState extends State<JobListingPage> {
                                     boxShadow: isSelected
                                         ? [
                                             BoxShadow(
-                                              color: _teal.withOpacity(0.3),
+                                              color: _teal.withValues(alpha:0.3),
                                               blurRadius: 8,
                                               offset: const Offset(0, 3),
                                             ),
@@ -304,7 +304,7 @@ class _JobListingPageState extends State<JobListingPage> {
           Icon(
             Icons.work_outline_rounded,
             size: 64,
-            color: _teal.withOpacity(0.35),
+            color: _teal.withValues(alpha:0.35),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -355,12 +355,12 @@ class JobCard extends StatelessWidget {
   static const Color _teal = Color(0xFF08979F);
 
   const JobCard({
-    Key? key,
+    super.key,
     required this.job,
     required this.onViewMatches,
     required this.onDelete,
     required this.onEdit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -374,7 +374,7 @@ class JobCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: _navy.withOpacity(0.3),
+              color: _navy.withValues(alpha:0.3),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -393,8 +393,8 @@ class JobCard extends StatelessWidget {
                   Image.network(
                     job.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: _teal.withOpacity(0.12),
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: _teal.withValues(alpha:0.12),
                       child: const Icon(
                         Icons.business_rounded,
                         color: _teal,
@@ -409,7 +409,7 @@ class JobCard extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, _navy.withOpacity(0.7)],
+                          colors: [Colors.transparent, _navy.withValues(alpha:0.7)],
                           stops: const [0.5, 1.0],
                         ),
                       ),
@@ -451,7 +451,7 @@ class JobCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _teal.withOpacity(0.85),
+                        color: _teal.withValues(alpha:0.85),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(

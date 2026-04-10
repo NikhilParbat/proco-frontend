@@ -28,11 +28,11 @@ class DevicesInfo extends StatelessWidget {
       children: [
         ReusableText(
           text: platform,
-          style: appstyle(22, Color(kDark.value), FontWeight.bold),
+          style: appstyle(22, kDark, FontWeight.bold),
         ),
         ReusableText(
           text: device,
-          style: appstyle(22, Color(kDark.value), FontWeight.bold),
+          style: appstyle(22, kDark, FontWeight.bold),
         ),
         const HeightSpacer(size: 15),
         Row(
@@ -43,13 +43,13 @@ class DevicesInfo extends StatelessWidget {
               children: [
                 ReusableText(
                   text: date,
-                  style: appstyle(16, Color(kDarkGrey.value), FontWeight.w400),
+                  style: appstyle(16, kDarkGrey, FontWeight.w400),
                 ),
                 ReusableText(
                   text: ipAdress != null
                       ? "IP: $ipAdress"
                       : "IP Address not available",
-                  style: appstyle(16, Color(kDarkGrey.value), FontWeight.w400),
+                  style: appstyle(16, kDarkGrey, FontWeight.w400),
                 ),
               ],
             ),
@@ -57,7 +57,7 @@ class DevicesInfo extends StatelessWidget {
               onTap: onSignOut,
               child: CustomOutlineBtn(
                 text: 'Sign Out',
-                color: Color(kOrange.value),
+                color: kOrange,
                 height: height * 0.05,
                 width: width * 0.3,
               ),

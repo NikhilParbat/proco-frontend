@@ -120,7 +120,7 @@ class ViewTab extends StatelessWidget {
                 : CachedNetworkImage(
                     imageUrl: state.profileImageUrl,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Image.asset(
+                    errorWidget: (context, url, error) => Image.asset(
                       'assets/images/user.png',
                       fit: BoxFit.cover,
                     ),
@@ -168,7 +168,7 @@ class ViewTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _teal.withOpacity(0.25)),
+        border: Border.all(color: _teal.withValues(alpha:0.25)),
       ),
       child: Row(
         children: [
@@ -212,7 +212,7 @@ class ViewTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _teal.withOpacity(0.25)),
+        border: Border.all(color: _teal.withValues(alpha:0.25)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -240,9 +240,9 @@ class ViewTab extends StatelessWidget {
               return Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                 decoration: BoxDecoration(
-                  color: _teal.withOpacity(0.15),
+                  color: _teal.withValues(alpha:0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _teal.withOpacity(0.4)),
+                  border: Border.all(color: _teal.withValues(alpha:0.4)),
                 ),
                 child: Text(
                   skill,
@@ -269,7 +269,7 @@ class ViewTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _teal.withOpacity(0.25)),
+        border: Border.all(color: _teal.withValues(alpha:0.25)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -353,7 +353,7 @@ class ViewTab extends StatelessWidget {
             Icon(
               Icons.visibility_off_outlined,
               size: 46,
-              color: _teal.withOpacity(0.35),
+              color: _teal.withValues(alpha:0.35),
             ),
             SizedBox(height: 12.h),
             Text(

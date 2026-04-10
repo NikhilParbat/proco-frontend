@@ -8,7 +8,7 @@ import 'package:proco/services/helpers/messaging_helper.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:provider/provider.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class ChatPage extends StatefulWidget {
   const ChatPage({
@@ -40,9 +40,9 @@ class _ChatPageState extends State<ChatPage> {
 
   // ─── State ────────────────────────────────────────────────────────────────
   int offset = 1;
-  IO.Socket? socket;
-  late Future<List<ReceivedMessge>> msgList;
-  List<ReceivedMessge> messages = [];
+  io.Socket? socket;
+  late Future<List<ReceivedMessage>> msgList;
+  List<ReceivedMessage> messages = [];
   final Set<String> _loadedMessageIds = {};
   bool _initialLoadDone = false;
 
@@ -95,7 +95,7 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  void _mergeMessages(List<ReceivedMessge> fetched) {
+  void _mergeMessages(List<ReceivedMessage> fetched) {
     for (final msg in fetched) {
       if (!_loadedMessageIds.contains(msg.id)) {
         _loadedMessageIds.add(msg.id);
@@ -115,10 +115,10 @@ class _ChatPageState extends State<ChatPage> {
 
     final chatNotifier = context.read<ChatNotifier>();
 
-    socket = IO.io(
+    socket = io.io(
       'http://10.0.2.2:3000',
       // 'https://proco-server-api.onrender.com',
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
           .enableForceNewConnection()
@@ -137,7 +137,7 @@ class _ChatPageState extends State<ChatPage> {
       socket!.on('typing', (_) => chatNotifier.typingStatus = true);
       socket!.on('stop typing', (_) => chatNotifier.typingStatus = false);
       socket!.on('message received', (data) {
-        final msg = ReceivedMessge.fromJson(data);
+        final msg = ReceivedMessage.fromJson(data);
         if (msg.sender.id != chatNotifier.userId &&
             !_loadedMessageIds.contains(msg.id)) {
           _loadedMessageIds.add(msg.id);
@@ -166,7 +166,7 @@ class _ChatPageState extends State<ChatPage> {
     _sendingNotifier.value = false;
 
     if (result['success']) {
-      final message = result['message'] as ReceivedMessge;
+      final message = result['message'] as ReceivedMessage;
       if (!_loadedMessageIds.contains(message.id)) {
         _loadedMessageIds.add(message.id);
         setState(() {
@@ -246,7 +246,7 @@ class _ChatPageState extends State<ChatPage> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _teal.withOpacity(0.08),
+                  color: _teal.withValues(alpha:0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -289,7 +289,7 @@ class _ChatPageState extends State<ChatPage> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.08),
+                  color: Colors.orange.withValues(alpha:0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -330,7 +330,7 @@ class _ChatPageState extends State<ChatPage> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.08),
+                  color: Colors.red.withValues(alpha:0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -492,7 +492,7 @@ class _ChatPageState extends State<ChatPage> {
                           width: 36.w,
                           height: 36.w,
                           decoration: BoxDecoration(
-                            color: _teal.withOpacity(0.08),
+                            color: _teal.withValues(alpha:0.08),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -578,7 +578,7 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 // ── Messages ────────────────────────────────────────────
                 Expanded(
-                  child: FutureBuilder<List<ReceivedMessge>>(
+                  child: FutureBuilder<List<ReceivedMessage>>(
                     future: msgList,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -614,7 +614,7 @@ class _ChatPageState extends State<ChatPage> {
                                 Icon(
                                   Icons.chat_bubble_outline_rounded,
                                   size: 52,
-                                  color: _teal.withOpacity(0.25),
+                                  color: _teal.withValues(alpha:0.25),
                                 ),
                                 SizedBox(height: 12.h),
                                 Text(
@@ -712,7 +712,7 @@ class _ChatPageState extends State<ChatPage> {
                 else
                   ValueListenableBuilder<bool>(
                     valueListenable: _socketNotifier,
-                    builder: (_, connected, __) {
+                    builder: (context, connected, child) {
                       if (!connected) {
                         return const SizedBox(
                           height: 3,
@@ -732,7 +732,7 @@ class _ChatPageState extends State<ChatPage> {
 
   // ─── Bubble ───────────────────────────────────────────────────────────────
   Widget _buildBubble(
-    ReceivedMessge data,
+    ReceivedMessage data,
     bool isMine,
     ChatNotifier chatNotifier,
     bool showTime,
@@ -789,7 +789,7 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha:0.06),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -822,7 +822,7 @@ class _ChatPageState extends State<ChatPage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha:0.06),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -836,7 +836,7 @@ class _ChatPageState extends State<ChatPage> {
               decoration: BoxDecoration(
                 color: _bgChat,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _teal.withOpacity(0.2), width: 1),
+                border: Border.all(color: _teal.withValues(alpha:0.2), width: 1),
               ),
               child: TextField(
                 controller: _messageController,
@@ -872,7 +872,7 @@ class _ChatPageState extends State<ChatPage> {
           // Send button
           ValueListenableBuilder<bool>(
             valueListenable: _sendingNotifier,
-            builder: (_, sending, __) => GestureDetector(
+            builder: (context, sending, child) => GestureDetector(
               onTap: sending
                   ? null
                   : () => _sendMessage(
@@ -885,11 +885,11 @@ class _ChatPageState extends State<ChatPage> {
                 width: 44.w,
                 height: 44.w,
                 decoration: BoxDecoration(
-                  color: sending ? _teal.withOpacity(0.5) : _teal,
+                  color: sending ? _teal.withValues(alpha:0.5) : _teal,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: _teal.withOpacity(0.35),
+                      color: _teal.withValues(alpha:0.35),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),

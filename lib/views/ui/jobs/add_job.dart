@@ -16,7 +16,7 @@ import 'package:proco/services/location_service.dart';
 class AddJobPage extends StatefulWidget {
   /// Pass an existing job to open in edit mode; null = create mode.
   final JobsResponse? job;
-  const AddJobPage({Key? key, this.job}) : super(key: key);
+  const AddJobPage({super.key, this.job});
 
   @override
   State<AddJobPage> createState() => _AddJobPageState();
@@ -73,7 +73,7 @@ class _AddJobPageState extends State<AddJobPage> {
           _reqControllers.add(TextEditingController(text: r));
         }
       }
-      // DomainkDomains
+      // Domain kDomains
       if (kDomains.contains(j.domain)) {
         selectedDomain = j.domain;
       } else if (j.domain.isNotEmpty) {
@@ -129,8 +129,9 @@ class _AddJobPageState extends State<AddJobPage> {
     } catch (e) {
       debugPrint("Failed to fetch address for Edit mode: $e");
       // Fallback to the saved string if geocoding fails
-      if (mounted)
+      if (mounted) {
         setState(() => _locationController.text = widget.job!.location);
+      }
     }
   }
 
@@ -181,10 +182,6 @@ class _AddJobPageState extends State<AddJobPage> {
         .map((c) => c.text)
         .where((t) => t.trim().isNotEmpty)
         .toList();
-
-    final location = _locationController.text.trim().isNotEmpty
-        ? _locationController.text.trim()
-        : 'Remote';
 
     final jobData = CreateJobsRequest(
       agentId: userId,
@@ -241,8 +238,8 @@ class _AddJobPageState extends State<AddJobPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: _teal.withOpacity(0.1),
-        border: Border.all(color: _teal.withOpacity(0.3)),
+        color: _teal.withValues(alpha: 0.1),
+        border: Border.all(color: _teal.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: DropdownButtonHideUnderline(
@@ -352,10 +349,12 @@ class _AddJobPageState extends State<AddJobPage> {
                 child: Container(
                   padding: EdgeInsets.all(14.h),
                   decoration: BoxDecoration(
-                    color: _teal.withOpacity(0.05),
+                    color: _teal.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: _locationPicked ? _teal : _teal.withOpacity(0.3),
+                      color: _locationPicked
+                          ? _teal
+                          : _teal.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -489,10 +488,10 @@ class _AddJobPageState extends State<AddJobPage> {
                           width: 38.w,
                           height: 38.w,
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.15),
+                            color: Colors.red.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: Colors.redAccent.withOpacity(0.3),
+                              color: Colors.redAccent.withValues(alpha: 0.3),
                             ),
                           ),
                           child: const Icon(
@@ -514,10 +513,10 @@ class _AddJobPageState extends State<AddJobPage> {
                     vertical: 10.h,
                   ),
                   decoration: BoxDecoration(
-                    color: _teal.withOpacity(0.07),
+                    color: _teal.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _teal.withOpacity(0.25),
+                      color: _teal.withValues(alpha: 0.25),
                       width: 1,
                     ),
                   ),
@@ -546,9 +545,9 @@ class _AddJobPageState extends State<AddJobPage> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                 decoration: BoxDecoration(
-                  color: _teal.withOpacity(0.1),
+                  color: _teal.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _teal.withOpacity(0.3)),
+                  border: Border.all(color: _teal.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -556,7 +555,7 @@ class _AddJobPageState extends State<AddJobPage> {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: (_isHiring ? Colors.green : Colors.red)
-                            .withOpacity(0.15),
+                            .withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -592,8 +591,8 @@ class _AddJobPageState extends State<AddJobPage> {
                     Switch(
                       value: _isHiring,
                       onChanged: (v) => setState(() => _isHiring = v),
-                      activeColor: _teal,
-                      activeTrackColor: _teal.withOpacity(0.3),
+                      activeThumbColor: _teal,
+                      activeTrackColor: _teal.withValues(alpha: 0.3),
                       inactiveThumbColor: Colors.white38,
                       inactiveTrackColor: Colors.white12,
                     ),
@@ -610,9 +609,9 @@ class _AddJobPageState extends State<AddJobPage> {
                 child: Container(
                   height: 160.h,
                   decoration: BoxDecoration(
-                    color: _teal.withOpacity(0.08),
+                    color: _teal.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _teal.withOpacity(0.3)),
+                    border: Border.all(color: _teal.withValues(alpha: 0.3)),
                   ),
                   child: imageNotifier.selectedImage != null
                       ? ClipRRect(
@@ -682,7 +681,7 @@ class _AddJobPageState extends State<AddJobPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: _teal.withOpacity(0.4),
+                        color: _teal.withValues(alpha: 0.4),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -747,15 +746,15 @@ class _AddJobPageState extends State<AddJobPage> {
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         filled: true,
         fillColor: readOnly
-            ? Colors.white.withOpacity(0.02)
-            : _teal.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.02)
+            : _teal.withValues(alpha: 0.1),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _teal.withOpacity(0.3)),
+          borderSide: BorderSide(color: _teal.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _teal.withOpacity(0.3)),
+          borderSide: BorderSide(color: _teal.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

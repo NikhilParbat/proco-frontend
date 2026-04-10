@@ -179,7 +179,7 @@ class _MatchedUsersState extends State<MatchedUsers> {
           Icon(
             Icons.people_outline_rounded,
             size: 60,
-            color: _teal.withOpacity(0.25),
+            color: _teal.withValues(alpha:0.25),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -231,7 +231,7 @@ class _CarouselCard extends StatelessWidget {
                   child: Image.network(
                     user.profile,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholderBg(),
+                    errorBuilder: (context, error, stackTrace) => _placeholderBg(),
                   ),
                 ),
 
@@ -346,7 +346,7 @@ class _CarouselCard extends StatelessWidget {
   }
 
   Widget _placeholderBg() => Container(
-    color: _teal.withOpacity(0.1),
+    color: _teal.withValues(alpha:0.1),
     child: const Center(
       child: Icon(Icons.person_rounded, color: _teal, size: 80),
     ),
@@ -579,8 +579,8 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
               boxShadow: [
                 BoxShadow(
                   color: outlined
-                      ? Colors.black.withOpacity(0.06)
-                      : color.withOpacity(0.35),
+                      ? Colors.black.withValues(alpha:0.06)
+                      : color.withValues(alpha:0.35),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),
@@ -640,7 +640,7 @@ class _SwipeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28.r),
         boxShadow: [
           BoxShadow(
-            color: _navy.withOpacity(0.35),
+            color: _navy.withValues(alpha:0.35),
             blurRadius: 28,
             offset: const Offset(0, 10),
           ),
@@ -661,8 +661,8 @@ class _SwipeCard extends StatelessWidget {
                     Image.network(
                       user.profile,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: _teal.withOpacity(0.08),
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: _teal.withValues(alpha:0.08),
                         child: const Icon(
                           Icons.person_rounded,
                           color: _teal,
@@ -678,7 +678,7 @@ class _SwipeCard extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              _navy.withOpacity(0.6),
+                              _navy.withValues(alpha:0.6),
                               _navy,
                             ],
                             stops: const [0.5, 0.8, 1.0],
@@ -747,10 +747,10 @@ class _SwipeCard extends StatelessWidget {
                             vertical: 7.h,
                           ),
                           decoration: BoxDecoration(
-                            color: _teal.withOpacity(0.12),
+                            color: _teal.withValues(alpha:0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: _teal.withOpacity(0.4),
+                              color: _teal.withValues(alpha:0.4),
                               width: 1,
                             ),
                           ),
@@ -789,10 +789,10 @@ class _SwipeCard extends StatelessWidget {
                                   vertical: 5.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _teal.withOpacity(0.08),
+                                  color: _teal.withValues(alpha:0.08),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _teal.withOpacity(0.25),
+                                    color: _teal.withValues(alpha:0.25),
                                     width: 1,
                                   ),
                                 ),
@@ -830,7 +830,7 @@ class _SwipeCard extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: (isRight ? _accept : _reject).withOpacity(0.12),
+                  color: (isRight ? _accept : _reject).withValues(alpha:0.12),
                   borderRadius: BorderRadius.circular(28.r),
                   border: Border.all(
                     color: isRight ? _accept : _reject,
@@ -1001,7 +1001,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: _accept.withOpacity(0.4),
+                    color: _accept.withValues(alpha:0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -1054,8 +1054,8 @@ class _ProfilePageState extends State<_ProfilePage> {
                 child: Image.network(
                   widget.user.profile,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: _teal.withOpacity(0.1),
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: _teal.withValues(alpha:0.1),
                     child: const Icon(
                       Icons.person_rounded,
                       color: _teal,
@@ -1119,10 +1119,10 @@ class _ProfilePageState extends State<_ProfilePage> {
                       vertical: 7.h,
                     ),
                     decoration: BoxDecoration(
-                      color: _teal.withOpacity(0.1),
+                      color: _teal.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: _teal.withOpacity(0.3),
+                        color: _teal.withValues(alpha:0.3),
                         width: 1,
                       ),
                     ),

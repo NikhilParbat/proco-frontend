@@ -23,7 +23,7 @@ class JobHorizontalTile extends StatelessWidget {
           width: width * 0.75,
           height: height * 0.27,
           decoration: BoxDecoration(
-            color: Color(kLightGrey.value),
+            color: kLightGrey,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -40,7 +40,7 @@ class JobHorizontalTile extends StatelessWidget {
                     width: width * 0.4,
                     child: ReusableText(
                       text: job.company,
-                      style: appstyle(18, Color(kDark.value), FontWeight.w600),
+                      style: appstyle(18, kDark, FontWeight.w600),
                     ),
                   ),
                 ],
@@ -48,11 +48,11 @@ class JobHorizontalTile extends StatelessWidget {
               const HeightSpacer(size: 15),
               ReusableText(
                 text: job.title,
-                style: appstyle(16, Color(kDark.value), FontWeight.w600),
+                style: appstyle(16, kDark, FontWeight.w600),
               ),
               ReusableText(
                 text: job.location,
-                style: appstyle(16, Color(kDarkGrey.value), FontWeight.w600),
+                style: appstyle(16, kDarkGrey, FontWeight.w600),
               ),
               const HeightSpacer(size: 20),
               Row(
@@ -60,11 +60,11 @@ class JobHorizontalTile extends StatelessWidget {
                 children: [
                   ReusableText(
                     text: '${job.salary}/${job.period}',
-                    style: appstyle(14, Color(kDark.value), FontWeight.w600),
+                    style: appstyle(14, kDark, FontWeight.w600),
                   ),
                   CircleAvatar(
                     radius: 18,
-                    backgroundColor: Color(kLight.value),
+                    backgroundColor: kLight,
                     child: const Icon(Ionicons.chevron_forward),
                   ),
                 ],

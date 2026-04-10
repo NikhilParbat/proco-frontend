@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 class LocationResult {
   final double latitude;
   final double longitude;
-  final String? displayAddress; 
+  final String? displayAddress;
 
   const LocationResult({
     required this.latitude,
@@ -20,10 +20,14 @@ class LocationResult {
 class LocationService {
   /// NEW: Structured address lookup for Profile Update
   /// Converts coordinates into separate City, State, and Country strings.
-  static Future<({String city, String state, String country})> getAddressFromLatLng(double lat, double lng) async {
+  static Future<({String city, String state, String country})>
+  getAddressFromLatLng(double lat, double lng) async {
     try {
-      final List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
-      
+      final List<Placemark> placemarks = await placemarkFromCoordinates(
+        lat,
+        lng,
+      );
+
       if (placemarks.isNotEmpty) {
         final Placemark p = placemarks.first;
         return (
@@ -52,13 +56,18 @@ class LocationService {
         throw 'Location permission was denied.';
       }
     }
-    
+
     if (permission == LocationPermission.deniedForever) {
       throw 'Location permission permanently denied. Enable in settings.';
     }
 
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, // Optional: only update if user moves 100m
+    );
+
     final Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: locationSettings,
     );
 
     String? address;
@@ -69,9 +78,11 @@ class LocationService {
       );
       if (placemarks.isNotEmpty) {
         final Placemark p = placemarks.first;
-        address = [p.locality, p.administrativeArea, p.country]
-            .where((s) => s != null && s.isNotEmpty)
-            .join(', ');
+        address = [
+          p.locality,
+          p.administrativeArea,
+          p.country,
+        ].where((s) => s != null && s.isNotEmpty).join(', ');
       }
     } catch (_) {}
 
@@ -98,9 +109,11 @@ class LocationService {
         );
         if (placemarks.isNotEmpty) {
           final Placemark p = placemarks.first;
-          displayAddress = [p.locality, p.administrativeArea, p.country]
-              .where((s) => s != null && s.isNotEmpty)
-              .join(', ');
+          displayAddress = [
+            p.locality,
+            p.administrativeArea,
+            p.country,
+          ].where((s) => s != null && s.isNotEmpty).join(', ');
         }
       } catch (_) {}
 
@@ -115,27 +128,36 @@ class LocationService {
   }
 
   // NEW: Provides autocomplete suggestions for location search using Nominatim API.
-  static Future<List<Map<String, dynamic>>> getPlacePredictions(String query) async {
+  static Future<List<Map<String, dynamic>>> getPlacePredictions(
+    String query,
+  ) async {
     if (query.length < 3) return []; // Don't search for very short strings
 
-    final String url = 
-      'https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=5&addressdetails=1';
+    final String url =
+        'https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=5&addressdetails=1';
 
     try {
-      final response = await http.get(Uri.parse(url), headers: {
-        'User-Agent': 'proco_app', // Nominatim requires a User-Agent
-      });
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'User-Agent': 'proco_app', // Nominatim requires a User-Agent
+        },
+      );
 
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
-        return data.map((item) => {
-          'display_name': item['display_name'],
-          'lat': double.parse(item['lat']),
-          'lon': double.parse(item['lon']),
-        }).toList();
+        return data
+            .map(
+              (item) => {
+                'display_name': item['display_name'],
+                'lat': double.parse(item['lat']),
+                'lon': double.parse(item['lon']),
+              },
+            )
+            .toList();
       }
     } catch (e) {
-      print("Autocomplete error: $e");
+      debugPrint("Autocomplete error: $e");
     }
     return [];
   }

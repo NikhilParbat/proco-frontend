@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
 
 class NotificationPage extends StatefulWidget {
-  const NotificationPage({Key? key}) : super(key: key);
+  const NotificationPage({super.key});
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
@@ -72,7 +72,7 @@ class _NotificationPageState extends State<NotificationPage> {
           : ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               itemCount: _notifications.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (context, index) =>
                   const Divider(color: Colors.white12, height: 1),
               itemBuilder: (context, index) {
                 final n = _notifications[index];

@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as https;
-import 'package:http_parser/http_parser.dart';
 import 'package:proco/models/request/messaging/send_message.dart';
 import 'package:proco/models/response/messaging/messaging_res.dart';
 import 'package:proco/services/config.dart';
@@ -35,7 +33,7 @@ class MesssagingHelper {
       final decoded = json.decode(response.body);
 
       if (response.statusCode == 201 && decoded['success'] == true) {
-        final message = ReceivedMessge.fromJson(
+        final message = ReceivedMessage.fromJson(
           decoded['data'] as Map<String, dynamic>,
         );
 
@@ -53,7 +51,7 @@ class MesssagingHelper {
   }
 
   /// ================= GET MESSAGES =================
-  static Future<List<ReceivedMessge>> getMessages(
+  static Future<List<ReceivedMessage>> getMessages(
     String chatId,
     int offset,
   ) async {
@@ -79,7 +77,7 @@ class MesssagingHelper {
       debugPrint("GET MESSAGES RESPONSE: ${response.body}");
 
       if (response.statusCode == 200) {
-        return receivedMessgeFromJson(response.body);
+        return receivedMessageFromJson(response.body);
       } else {
         throw Exception('Failed to load messages');
       }

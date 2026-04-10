@@ -21,7 +21,7 @@ class VerticalTile extends StatelessWidget {
         height: height * 0.15,
         width: width,
         decoration: BoxDecoration(
-          color: Color(kLightGrey.value),
+          color: kLightGrey,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -39,7 +39,7 @@ class VerticalTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CircleAvatar(
-                        backgroundColor: Color(kLightGrey.value),
+                        backgroundColor: kLightGrey,
                         radius: 25,
                         backgroundImage: NetworkImage(job!.imageUrl),
                       ),
@@ -53,7 +53,7 @@ class VerticalTile extends StatelessWidget {
                               text: job!.company,
                               style: appstyle(
                                 16,
-                                Color(kDark.value),
+                                kDark,
                                 FontWeight.w600,
                               ),
                             ),
@@ -64,7 +64,7 @@ class VerticalTile extends StatelessWidget {
                               text: job!.title,
                               style: appstyle(
                                 16,
-                                Color(kDarkGrey.value),
+                                kDarkGrey,
                                 FontWeight.w600,
                               ),
                             ),
@@ -73,7 +73,7 @@ class VerticalTile extends StatelessWidget {
                       ),
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: Color(kLight.value),
+                        backgroundColor: kLight,
                         child: const Icon(Ionicons.chevron_forward),
                       ),
                     ],
@@ -87,13 +87,13 @@ class VerticalTile extends StatelessWidget {
                 children: [
                   ReusableText(
                     text: job!.salary,
-                    style: appstyle(23, Color(kDark.value), FontWeight.w600),
+                    style: appstyle(23, kDark, FontWeight.w600),
                   ),
                   ReusableText(
                     text: '/${job!.period}',
                     style: appstyle(
                       20,
-                      Color(kDarkGrey.value),
+                      kDarkGrey,
                       FontWeight.w600,
                     ),
                   ),

@@ -76,7 +76,7 @@ class _ChatsListState extends State<ChatsList> {
               return ListView.separated(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 itemCount: chats.length,
-                separatorBuilder: (_, __) => Divider(
+                separatorBuilder: (context, index) => Divider(
                   height: 1,
                   indent: 76.w,
                   color: Colors.grey.shade100,
@@ -123,9 +123,9 @@ class _ChatsListState extends State<ChatsList> {
                             children: [
                               CircleAvatar(
                                 radius: 26.r,
-                                backgroundColor: _teal.withOpacity(0.12),
+                                backgroundColor: _teal.withValues(alpha:0.12),
                                 backgroundImage: NetworkImage(profile),
-                                onBackgroundImageError: (_, __) {},
+                                onBackgroundImageError: (e, s) {},
                               ),
                               // Online dot — shown if user is in online list
                               if (chatNotifier.online.contains(other?.id))
@@ -230,7 +230,7 @@ class _ChatsListState extends State<ChatsList> {
           Icon(
             Icons.chat_bubble_outline_rounded,
             size: 60,
-            color: _teal.withOpacity(0.25),
+            color: _teal.withValues(alpha:0.25),
           ),
           SizedBox(height: 16.h),
           Text('No chats yet', style: appstyle(18, _navy, FontWeight.w600)),

@@ -15,24 +15,24 @@ class ProfileNotifier extends ChangeNotifier {
   Future<ProfileRes?>? profile;
   Future<List<SwipedRes>>? swipedUsers;
 
-  getProfile() async {
+  void getProfile() async {
     profile = UserHelper.getProfile();
     notifyListeners();
   }
 
-  getSwipedUsers(agentId) async {
+  void getSwipedUsers(dynamic agentId) async {
     swipedUsers = UserHelper.getUserProfiles(agentId);
     notifyListeners();
   }
 
-  updateProfile(ProfileUpdateReq model, File? image) async {
+  void updateProfile(ProfileUpdateReq model, File? image) async {
     await UserHelper.updateProfile(model, image).then((response) {
       if (response) {
         Get.snackbar(
           'Profile Update',
           'Enjoy your search for a job',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kLightBlue.value),
+          colorText: kLight,
+          backgroundColor: kLightBlue,
           icon: const Icon(Icons.add_alert),
         );
 
@@ -43,8 +43,8 @@ class ProfileNotifier extends ChangeNotifier {
         Get.snackbar(
           'Updating Failed',
           'Please try again',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kOrange.value),
+          colorText: kLight,
+          backgroundColor: kOrange,
           icon: const Icon(Icons.add_alert),
         );
       }

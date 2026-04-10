@@ -21,7 +21,7 @@ class CustomButton extends StatelessWidget {
         child: Center(
           child: ReusableText(
             text: text,
-            style: appstyle(16, color ?? Color(kLight.value), FontWeight.w600),
+            style: appstyle(16, color ?? kLight, FontWeight.w600),
           ),
         ),
       ),

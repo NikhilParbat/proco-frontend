@@ -24,7 +24,7 @@ class SearchWidget extends StatelessWidget {
                   children: [
                     Icon(
                       Feather.search,
-                      color: Color(kOrange.value),
+                      color: kOrange,
                       size: 20.h,
                     ),
                     const WidthSpacer(width: 20),
@@ -32,7 +32,7 @@ class SearchWidget extends StatelessWidget {
                       text: 'Search for jobs',
                       style: appstyle(
                         18,
-                        Color(kOrange.value),
+                        kOrange,
                         FontWeight.w500,
                       ),
                     ),
@@ -41,14 +41,14 @@ class SearchWidget extends StatelessWidget {
               ),
               Icon(
                 FontAwesome.sliders,
-                color: Color(kDarkGrey.value),
+                color: kDarkGrey,
                 size: 20.h,
               ),
             ],
           ),
           const HeightSpacer(size: 7),
           Divider(
-            color: Color(kDarkGrey.value),
+            color: kDarkGrey,
             thickness: 0.5,
             endIndent: 40.w,
           ),

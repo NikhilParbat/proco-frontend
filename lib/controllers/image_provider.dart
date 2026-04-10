@@ -53,8 +53,8 @@ class ImageNotifier extends ChangeNotifier {
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop Image',
-            toolbarColor: Color(kLightBlue.value),
-            toolbarWidgetColor: Color(kLight.value),
+            toolbarColor: kLightBlue,
+            toolbarWidgetColor: kLight,
             initAspectRatio: CropAspectRatioPreset.ratio5x4,
             lockAspectRatio: true,
           ),

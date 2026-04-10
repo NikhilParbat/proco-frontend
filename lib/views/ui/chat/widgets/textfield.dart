@@ -23,25 +23,25 @@ class MessaginTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      cursorColor: Color(kDarkGrey.value),
+      cursorColor: kDarkGrey,
       controller: messageController,
       keyboardType: TextInputType.multiline,
-      style: appstyle(16, Color(kDark.value), FontWeight.w500),
+      style: appstyle(16, kDark, FontWeight.w500),
       decoration: InputDecoration(
         isDense: true,
         contentPadding: EdgeInsets.all(6.h),
         filled: true,
-        fillColor: Color(kLight.value),
+        fillColor: kLight,
         suffixIcon: sufixIcon,
         hintText: 'Type your message here',
-        hintStyle: appstyle(14, Color(kDarkGrey.value), FontWeight.normal),
+        hintStyle: appstyle(14, kDarkGrey, FontWeight.normal),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12.h)),
-          borderSide: BorderSide(color: Color(kDarkGrey.value)),
+          borderSide: BorderSide(color: kDarkGrey),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12.h)),
-          borderSide: BorderSide(color: Color(kDarkGrey.value)),
+          borderSide: BorderSide(color: kDarkGrey),
         ),
       ),
       onChanged: onChanged,

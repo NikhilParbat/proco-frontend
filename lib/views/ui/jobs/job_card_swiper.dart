@@ -160,7 +160,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             borderRadius: BorderRadius.circular(28.r),
             boxShadow: [
               BoxShadow(
-                color: _navy.withOpacity(0.4),
+                color: _navy.withValues(alpha:0.4),
                 blurRadius: 28,
                 offset: const Offset(0, 12),
               ),
@@ -179,8 +179,8 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                     Image.network(
                       job.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: _teal.withOpacity(0.12),
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: _teal.withValues(alpha:0.12),
                         child: const Icon(
                           Icons.business_rounded,
                           color: _teal,
@@ -196,7 +196,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              _navy.withOpacity(0.85),
+                              _navy.withValues(alpha:0.85),
                             ],
                             stops: const [0.5, 1.0],
                           ),
@@ -305,14 +305,14 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                         Row(
                           children: [
                             if (job.domain.isNotEmpty)
-                              _chip(job.domain, _teal.withOpacity(0.35)),
+                              _chip(job.domain, _teal.withValues(alpha:0.35)),
                             if (job.domain.isNotEmpty &&
                                 job.opportunityType.isNotEmpty)
                               SizedBox(width: 6.w),
                             if (job.opportunityType.isNotEmpty)
                               _chip(
                                 job.opportunityType,
-                                _teal.withOpacity(0.35),
+                                _teal.withValues(alpha:0.35),
                               ),
                           ],
                         ),
@@ -438,7 +438,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withValues(alpha:0.15),
           borderRadius: BorderRadius.circular(28.r),
           border: Border.all(color: color, width: 3),
         ),
@@ -551,7 +551,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.45),
+                  color: color.withValues(alpha:0.45),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),
@@ -586,7 +586,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               width: 90.w,
               height: 90.w,
               decoration: BoxDecoration(
-                color: _teal.withOpacity(0.12),
+                color: _teal.withValues(alpha:0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.coffee_rounded, size: 44.w, color: _teal),

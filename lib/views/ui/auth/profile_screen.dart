@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage>
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: _teal.withOpacity(0.4),
+                      color: _teal.withValues(alpha:0.4),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -151,7 +151,7 @@ class _ProfilePageState extends State<ProfilePage>
           Icon(
             Icons.error_outline_rounded,
             size: 60,
-            color: _teal.withOpacity(0.6),
+            color: _teal.withValues(alpha:0.6),
           ),
           SizedBox(height: 16.h),
           Text(

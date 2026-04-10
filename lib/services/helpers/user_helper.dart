@@ -1,3 +1,5 @@
+// ignore_for_file: dead_code
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -23,12 +25,12 @@ class UserHelper {
     request.headers['token'] = 'Bearer $token';
 
     // ✅ Add text fields
-    request.fields['city'] = model.city ?? '';
-    request.fields['state'] = model.state ?? '';
-    request.fields['country'] = model.country ?? '';
-    request.fields['phone'] = model.phone ?? '';
-    request.fields['college'] = model.college ?? '';
-    request.fields['branch'] = model.branch ?? '';
+    request.fields['city'] = model.city;
+    request.fields['state'] = model.state;
+    request.fields['country'] = model.country;
+    request.fields['phone'] = model.phone;
+    request.fields['college'] = model.college;
+    request.fields['branch'] = model.branch;
     request.fields['gender'] = model.gender ?? '';
     request.fields['age'] = model.age;
     request.fields['linkedInUrl'] = model.linkedInUrl;

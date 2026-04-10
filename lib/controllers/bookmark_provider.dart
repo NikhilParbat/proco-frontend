@@ -46,7 +46,7 @@ class BookMarkNotifier extends ChangeNotifier {
     }
   }
 
-  addBookMark(BookmarkReqResModel model, String jobId) {
+  void addBookMark(BookmarkReqResModel model, String jobId) {
     BookMarkHelper.addBookmarks(model).then((response) {
       debugPrint('BOOKMARK RESPONSE: $response');
       if (response['success'] == true) {
@@ -54,15 +54,15 @@ class BookMarkNotifier extends ChangeNotifier {
         Get.snackbar(
           'Bookmark successfully added',
           'Please Check your bookmarks',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kLightBlue.value),
+          colorText: kLight,
+          backgroundColor: kLightBlue,
           icon: const Icon(Icons.bookmark_add),
         );
       } else {
         Get.snackbar(
           'Failed to add Bookmark',
           response['message'] ?? 'Please try again',
-          colorText: Color(kLight.value),
+          colorText: kLight,
           backgroundColor: Colors.red,
           icon: const Icon(Icons.bookmark_add),
         );
@@ -70,22 +70,22 @@ class BookMarkNotifier extends ChangeNotifier {
     });
   }
 
-  deleteBookMark(String jobId) {
+  void deleteBookMark(String jobId) {
     BookMarkHelper.deleteBookmarks(jobId).then((response) {
       if (response) {
         removeJob(jobId);
         Get.snackbar(
           'Bookmark successfully deleted',
           'Please check your bookmarks',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kOrange.value),
+          colorText: kLight,
+          backgroundColor: kOrange,
           icon: const Icon(Icons.bookmark_remove_outlined),
         );
       } else if (!response) {
         Get.snackbar(
           'Failed to delete Bookmarks',
           'Please try again',
-          colorText: Color(kLight.value),
+          colorText: kLight,
           backgroundColor: Colors.red,
           icon: const Icon(Icons.bookmark_remove_outlined),
         );
@@ -93,7 +93,7 @@ class BookMarkNotifier extends ChangeNotifier {
     });
   }
 
-  getBookMarks() {
+  void getBookMarks() {
     bookmarks = BookMarkHelper.getBookmarks();
     notifyListeners();
   }

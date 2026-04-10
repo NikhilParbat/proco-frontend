@@ -26,7 +26,10 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<ProfileNotifier>().getProfile());
+    Future.microtask(() {
+      if (!mounted) return;
+      context.read<ProfileNotifier>().getProfile();
+    });
   }
 
   @override
@@ -191,7 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 : CachedNetworkImage(
                     imageUrl: userData.profile,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Image.asset(
+                    errorWidget: (context, url, error) => Image.asset(
                       'assets/images/user.png',
                       fit: BoxFit.cover,
                     ),
@@ -244,9 +247,9 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: _card.withOpacity(0.25),
+              color: _card.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _card.withOpacity(0.4)),
+              border: Border.all(color: _card.withValues(alpha: 0.4)),
             ),
             child: const Icon(Feather.edit, color: _white, size: 16),
           ),
@@ -269,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         SizedBox(height: 4.h),
-        Container(height: 1, color: _card.withOpacity(0.5)),
+        Container(height: 1, color: _card.withValues(alpha: 0.5)),
       ],
     );
   }
@@ -279,9 +282,9 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: _card.withOpacity(0.25),
+        color: _card.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withOpacity(0.4)),
+        border: Border.all(color: _card.withValues(alpha: 0.4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,9 +330,9 @@ class _ProfilePageState extends State<ProfilePage> {
         width: double.infinity,
         padding: EdgeInsets.all(14.h),
         decoration: BoxDecoration(
-          color: _card.withOpacity(0.15),
+          color: _card.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _card.withOpacity(0.3)),
+          border: Border.all(color: _card.withValues(alpha: 0.3)),
         ),
         child: const Text(
           'No skills added yet',
@@ -342,9 +345,9 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       padding: EdgeInsets.all(14.h),
       decoration: BoxDecoration(
-        color: _card.withOpacity(0.15),
+        color: _card.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withOpacity(0.3)),
+        border: Border.all(color: _card.withValues(alpha: 0.3)),
       ),
       child: Wrap(
         spacing: 8,

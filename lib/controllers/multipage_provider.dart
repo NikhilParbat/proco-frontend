@@ -6,10 +6,10 @@ import 'package:proco/models/multipage_model.dart';
 import 'package:provider/provider.dart';
 
 class MultiPageProvider extends StatefulWidget {
-  const MultiPageProvider({Key? key}) : super(key: key);
+  const MultiPageProvider({super.key});
 
   @override
-  _MultiPageProviderState createState() => _MultiPageProviderState();
+  State<MultiPageProvider> createState() => _MultiPageProviderState();
 }
 
 class _MultiPageProviderState extends State<MultiPageProvider> {
@@ -38,10 +38,10 @@ class _MultiPageProviderState extends State<MultiPageProvider> {
 }
 
 class BasicDetails extends StatefulWidget {
-  const BasicDetails({Key? key}) : super(key: key);
+  const BasicDetails({super.key});
 
   @override
-  _BasicDetailsState createState() => _BasicDetailsState();
+  State<BasicDetails> createState() => _BasicDetailsState();
 }
 
 class _BasicDetailsState extends State<BasicDetails> {
@@ -71,21 +71,21 @@ class _BasicDetailsState extends State<BasicDetails> {
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: "Name"),
-                validator: RequiredValidator(errorText: "Required *"),
+                validator: RequiredValidator(errorText: "Required *").call,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: "Email"),
                 validator: MultiValidator([
                   RequiredValidator(errorText: "Required *"),
                   EmailValidator(errorText: "Not Valid Email"),
-                ]),
+                ]).call,
               ),
               TextFormField(
-                decoration: const InputDecoration(labelText: "Passoword"),
+                decoration: const InputDecoration(labelText: "Password"),
                 validator: MinLengthValidator(
                   6,
                   errorText: "Min 6 characters required",
-                ),
+                ).call,
               ),
               const SizedBox(height: 12.0),
               SizedBox(
@@ -109,7 +109,7 @@ class _BasicDetailsState extends State<BasicDetails> {
 }
 
 class EducationDetails extends StatelessWidget {
-  const EducationDetails({Key? key}) : super(key: key);
+  const EducationDetails({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +133,7 @@ class EducationDetails extends StatelessWidget {
             ),
             TextFormField(
               decoration: const InputDecoration(labelText: "Name"),
-              validator: RequiredValidator(errorText: "Required *"),
+              validator: RequiredValidator(errorText: "Required *").call,
             ),
             const SizedBox(height: 12.0),
             SizedBox(

@@ -84,8 +84,8 @@ class FilterNotifier extends ChangeNotifier {
         Get.snackbar(
           'Filter Added Successfully',
           '',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kLightBlue.value),
+          colorText: kLight,
+          backgroundColor: kLightBlue,
           icon: const Icon(Icons.check_circle),
         );
         getUserFilters(agentId);
@@ -94,8 +94,8 @@ class FilterNotifier extends ChangeNotifier {
       Get.snackbar(
         'Error Creating Filter',
         e.toString(),
-        colorText: Color(kLight.value),
-        backgroundColor: Color(kOrange.value),
+        colorText: kLight,
+        backgroundColor: kOrange,
         icon: const Icon(Icons.error),
       );
     }

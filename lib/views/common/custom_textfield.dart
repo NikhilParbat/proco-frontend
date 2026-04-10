@@ -23,14 +23,14 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Color(kLightGrey.value),
+      color: kLightGrey,
       child: TextFormField(
         keyboardType: keyboardType,
         obscureText: obscureText ?? false,
         decoration: InputDecoration(
           hintText: hintText,
           suffixIcon: suffixIcon,
-          hintStyle: appstyle(14, Color(kDarkGrey.value), FontWeight.w500),
+          hintStyle: appstyle(14, kDarkGrey, FontWeight.w500),
           errorBorder: const OutlineInputBorder(
             borderRadius: BorderRadius.zero,
             borderSide: BorderSide(color: Colors.red, width: 0.5),
@@ -45,7 +45,7 @@ class CustomTextField extends StatelessWidget {
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.zero,
-            borderSide: BorderSide(color: Color(kDarkGrey.value), width: 0.5),
+            borderSide: BorderSide(color: kDarkGrey, width: 0.5),
           ),
           enabledBorder: const OutlineInputBorder(
             borderRadius: BorderRadius.zero,
@@ -55,7 +55,7 @@ class CustomTextField extends StatelessWidget {
         ),
         controller: controller,
         cursorHeight: 25,
-        style: appstyle(14, Color(kDark.value), FontWeight.w500),
+        style: appstyle(14, kDark, FontWeight.w500),
         validator: validator,
       ),
     );

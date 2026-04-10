@@ -141,8 +141,8 @@ class JobsNotifier extends ChangeNotifier {
         Get.snackbar(
           'Query Created Successfully',
           'Your job listing has been added in {model.location}.',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kLightBlue.value),
+          colorText: kLight,
+          backgroundColor: kLightBlue,
           icon: const Icon(Icons.check_circle),
         );
 

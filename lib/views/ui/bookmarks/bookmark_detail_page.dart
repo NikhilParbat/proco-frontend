@@ -164,7 +164,7 @@ class _BookmarkDetailPageState extends State<BookmarkDetailPage> {
             borderRadius: BorderRadius.circular(28.r),
             boxShadow: [
               BoxShadow(
-                color: _navy.withOpacity(0.4),
+                color: _navy.withValues(alpha:0.4),
                 blurRadius: 28,
                 offset: const Offset(0, 12),
               ),
@@ -183,8 +183,8 @@ class _BookmarkDetailPageState extends State<BookmarkDetailPage> {
                     Image.network(
                       j.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: _teal.withOpacity(0.12),
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: _teal.withValues(alpha:0.12),
                         child: const Icon(
                           Icons.business_rounded,
                           color: _teal,
@@ -200,7 +200,7 @@ class _BookmarkDetailPageState extends State<BookmarkDetailPage> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              _navy.withOpacity(0.85),
+                              _navy.withValues(alpha:0.85),
                             ],
                             stops: const [0.5, 1.0],
                           ),
@@ -349,7 +349,7 @@ class _BookmarkDetailPageState extends State<BookmarkDetailPage> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withValues(alpha:0.15),
           borderRadius: BorderRadius.circular(28.r),
           border: Border.all(color: color, width: 3),
         ),
@@ -407,7 +407,7 @@ class _BookmarkDetailPageState extends State<BookmarkDetailPage> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.45),
+                  color: color.withValues(alpha:0.45),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),

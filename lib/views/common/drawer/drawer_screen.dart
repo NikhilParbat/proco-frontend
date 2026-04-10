@@ -42,48 +42,48 @@ class _DrawerScreenState extends State<DrawerScreen> {
                   'Home',
                   0,
                   zoomNotifier.currentIndex == 0
-                      ? Color(kLight.value)
-                      : Color(kLightGrey.value),
+                      ? kLight
+                      : kLightGrey,
                 ),
                 drawerItem(
                   Ionicons.chatbubble_outline,
                   'Chat',
                   1,
                   zoomNotifier.currentIndex == 1
-                      ? Color(kLight.value)
-                      : Color(kLightGrey.value),
+                      ? kLight
+                      : kLightGrey,
                 ),
                 drawerItem(
                   Fontisto.bookmark,
                   'Saved Queries',
                   2,
                   zoomNotifier.currentIndex == 2
-                      ? Color(kLight.value)
-                      : Color(kLightGrey.value),
+                      ? kLight
+                      : kLightGrey,
                 ),
                 drawerItem(
                   MaterialCommunityIcons.devices,
                   'Devices',
                   3,
                   zoomNotifier.currentIndex == 3
-                      ? Color(kLight.value)
-                      : Color(kLightGrey.value),
+                      ? kLight
+                      : kLightGrey,
                 ),
                 drawerItem(
                   FontAwesome5Regular.clipboard,
                   'My Queries',
                   4,
                   zoomNotifier.currentIndex == 4
-                      ? Color(kLight.value)
-                      : Color(kLightGrey.value),
+                      ? kLight
+                      : kLightGrey,
                 ),
                 drawerItem(
                   FontAwesome5Regular.user_circle,
                   'Profile',
                   5,
                   zoomNotifier.currentIndex == 5
-                      ? Color(kLight.value)
-                      : Color(kLightGrey.value),
+                      ? kLight
+                      : kLightGrey,
                 ),
               ],
             ),

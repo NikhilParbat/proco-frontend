@@ -145,7 +145,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       CircleAvatar(
                         backgroundColor: const Color(
                           0xFF040326,
-                        ).withOpacity(0.8),
+                        ).withValues(alpha:0.8),
                         child: IconButton(
                           icon: const Icon(
                             Icons.arrow_back,
@@ -160,14 +160,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                   // Search bar
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withOpacity(0.92),
+                      color: const Color(0xFF040326).withValues(alpha:0.92),
                       borderRadius: _searchResults.isEmpty
                           ? BorderRadius.circular(12)
                           : const BorderRadius.vertical(
                               top: Radius.circular(12),
                             ),
                       border: Border.all(
-                        color: const Color(0xFF08979F).withOpacity(0.6),
+                        color: const Color(0xFF08979F).withValues(alpha:0.6),
                       ),
                     ),
                     child: TextField(
@@ -222,12 +222,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                         maxHeight: 200.h,
                       ), // Limit height
                       decoration: BoxDecoration(
-                        color: const Color(0xFF040326).withOpacity(0.95),
+                        color: const Color(0xFF040326).withValues(alpha:0.95),
                         borderRadius: const BorderRadius.vertical(
                           bottom: Radius.circular(12),
                         ),
                         border: Border.all(
-                          color: const Color(0xFF08979F).withOpacity(0.4),
+                          color: const Color(0xFF08979F).withValues(alpha:0.4),
                         ),
                       ),
                       child: ListView.separated(
@@ -274,7 +274,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(
                           0xFF08979F,
-                        ).withOpacity(0.9),
+                        ).withValues(alpha:0.9),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -283,26 +283,29 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       ),
                       icon: const Icon(Icons.my_location, size: 20),
                       label: const Text('Use Current Location'),
-                      onPressed: _isLoading
-                          ? null
-                          : () async {
-                              setState(() => _isLoading = true);
-                              try {
-                                final result =
-                                    await LocationService.getCurrentLocation();
-                                _moveMap(result.latitude, result.longitude);
-                              } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(e.toString())),
-                                  );
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                setState(() => _isLoading = true);
+                                try {
+                                  final result =
+                                      await LocationService.getCurrentLocation();
+
+                                  if(!context.mounted) return;
+
+                                  _moveMap(result.latitude, result.longitude);
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isLoading = false);
+                                  }
                                 }
-                              } finally {
-                                if (mounted) {
-                                  setState(() => _isLoading = false);
-                                }
-                              }
-                            },
+                              },
                     ),
                   ),
                 ],
@@ -327,10 +330,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withOpacity(0.88),
+                      color: const Color(0xFF040326).withValues(alpha:0.88),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: const Color(0xFF08979F).withOpacity(0.5),
+                        color: const Color(0xFF08979F).withValues(alpha:0.5),
                       ),
                     ),
                     child: Row(

@@ -328,7 +328,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             _cardTitle("Please specify your Gender"),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
-              value: genderController.text.isEmpty
+              initialValue: genderController.text.isEmpty
                   ? null
                   : genderController.text,
               dropdownColor: kLightBlue,
@@ -337,7 +337,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 hintText: 'Select Gender',
                 hintStyle: const TextStyle(color: Colors.white54),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.1),
+                fillColor: Colors.white.withValues(alpha: 0.1),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -429,14 +429,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   // Search bar
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withOpacity(0.92),
+                      color: const Color(0xFF040326).withValues(alpha: 0.92),
                       borderRadius: _searchResults.isEmpty
                           ? BorderRadius.circular(12)
                           : const BorderRadius.vertical(
                               top: Radius.circular(12),
                             ),
                       border: Border.all(
-                        color: const Color(0xFF08979F).withOpacity(0.6),
+                        color: const Color(0xFF08979F).withValues(alpha: 0.6),
                       ),
                     ),
                     child: TextField(
@@ -451,7 +451,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Icons.search,
                           color: Color(0xFF08979F),
                         ),
-                        suffixIcon: signUpProvider.locationLoading
+                        suffixIcon: _isSearching
                             ? const Padding(
                                 padding: EdgeInsets.all(12),
                                 child: SizedBox(
@@ -463,7 +463,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                               )
-                            : IconButton(
+                            : locationSearchController.text.isNotEmpty
+                            ? IconButton(
                                 icon: const Icon(
                                   Icons.clear,
                                   color: Colors.white54,
@@ -471,7 +472,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ),
                                 onPressed: () =>
                                     locationSearchController.clear(),
-                              ),
+                              )
+                            : null,
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -484,12 +486,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     Container(
                       constraints: BoxConstraints(maxHeight: 250.h),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF040326).withOpacity(0.95),
+                        color: const Color(0xFF040326).withValues(alpha: 0.95),
                         borderRadius: const BorderRadius.vertical(
                           bottom: Radius.circular(12),
                         ),
                         border: Border.all(
-                          color: const Color(0xFF08979F).withOpacity(0.4),
+                          color: const Color(0xFF08979F).withValues(alpha: 0.4),
                         ),
                       ),
                       child: ListView.separated(
@@ -538,7 +540,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(
                           0xFF08979F,
-                        ).withOpacity(0.9),
+                        ).withValues(alpha: 0.9),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -580,10 +582,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withOpacity(0.88),
+                      color: const Color(0xFF040326).withValues(alpha: 0.88),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: const Color(0xFF08979F).withOpacity(0.5),
+                        color: const Color(0xFF08979F).withValues(alpha: 0.5),
                       ),
                     ),
                     child: Column(
@@ -610,7 +612,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: const Color(
                         0xFF08979F,
-                      ).withOpacity(0.4),
+                      ).withValues(alpha: 0.4),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

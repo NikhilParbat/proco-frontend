@@ -24,7 +24,7 @@ class CustomField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Color(kOrange.value),
+      color: kOrange,
       child: TextField(
         keyboardType: keyboard,
         obscureText: obscureText ?? false,
@@ -32,8 +32,8 @@ class CustomField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hintText.toUpperCase(),
           suffixIcon: suffixIcon,
-          suffixIconColor: Color(kLight.value),
-          hintStyle: appstyle(16, Color(kLight.value), FontWeight.w500),
+          suffixIconColor: kLight,
+          hintStyle: appstyle(16, kLight, FontWeight.w500),
           // contentPadding: EdgeInsets.only(left: 24),
           errorBorder: const OutlineInputBorder(
             borderRadius: BorderRadius.zero,
@@ -59,7 +59,7 @@ class CustomField extends StatelessWidget {
         ),
         controller: controller,
         cursorHeight: 25,
-        style: appstyle(14, Color(kLight.value), FontWeight.w500),
+        style: appstyle(14, kLight, FontWeight.w500),
         onSubmitted: validator,
       ),
     );

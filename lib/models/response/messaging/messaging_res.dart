@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-List<ReceivedMessge> receivedMessgeFromJson(String str) {
+List<ReceivedMessage> receivedMessageFromJson(String str) {
   final decoded = json.decode(str);
 
   if (decoded['success'] != true) {
@@ -10,11 +10,11 @@ List<ReceivedMessge> receivedMessgeFromJson(String str) {
   final List data = decoded['data'] ?? [];
 
   return data
-      .map((e) => ReceivedMessge.fromJson(e as Map<String, dynamic>))
+      .map((e) => ReceivedMessage.fromJson(e as Map<String, dynamic>))
       .toList();
 }
 
-class ReceivedMessge {
+class ReceivedMessage {
   final String id;
   final Sender sender;
   final String content;
@@ -24,7 +24,7 @@ class ReceivedMessge {
   final String messageType;
   final String? audioUrl;
 
-  ReceivedMessge({
+  ReceivedMessage({
     required this.id,
     required this.sender,
     required this.content,
@@ -37,8 +37,8 @@ class ReceivedMessge {
 
   bool get isAudio => messageType == 'audio';
 
-  factory ReceivedMessge.fromJson(Map<String, dynamic> json) {
-    return ReceivedMessge(
+  factory ReceivedMessage.fromJson(Map<String, dynamic> json) {
+    return ReceivedMessage(
       id: json['_id'] ?? '',
       sender: json['sender'] is Map<String, dynamic>
           ? Sender.fromJson(json['sender'])

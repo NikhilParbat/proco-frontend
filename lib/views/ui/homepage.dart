@@ -111,7 +111,7 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.work_off_rounded, size: 64, color: _teal.withOpacity(0.4)),
+          Icon(Icons.work_off_rounded, size: 64, color: _teal.withValues(alpha:0.4)),
           SizedBox(height: 16.h),
           Text(
             'No jobs available',

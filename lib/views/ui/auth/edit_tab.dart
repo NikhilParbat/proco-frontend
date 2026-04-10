@@ -213,7 +213,7 @@ class _EditTabState extends State<EditTab> {
                   decoration: BoxDecoration(
                     color: _card,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _teal.withOpacity(0.5)),
+                    border: Border.all(color: _teal.withValues(alpha:0.5)),
                   ),
                   child: Row(
                     children: [
@@ -353,8 +353,8 @@ class _EditTabState extends State<EditTab> {
       readOnly: true,
       style: TextStyle(color: Colors.white70, fontSize: 14.sp),
       decoration: _fieldDecoration(label).copyWith(
-        prefixIcon: Icon(icon, color: _teal.withOpacity(0.3), size: 18),
-        fillColor: Colors.white.withOpacity(0.02),
+        prefixIcon: Icon(icon, color: _teal.withValues(alpha:0.3), size: 18),
+        fillColor: Colors.white.withValues(alpha:0.02),
       ),
     );
   }
@@ -385,7 +385,7 @@ class _EditTabState extends State<EditTab> {
                     ? Icon(
                         Icons.person_rounded,
                         size: 42.w,
-                        color: _teal.withOpacity(0.5),
+                        color: _teal.withValues(alpha:0.5),
                       )
                     : null,
               ),
@@ -488,8 +488,8 @@ class _EditTabState extends State<EditTab> {
                 child: Switch(
                   value: state.showEmail,
                   onChanged: (_) => state.toggleVisibility('email'),
-                  activeColor: _teal,
-                  activeTrackColor: _teal.withOpacity(0.3),
+                  activeThumbColor: _teal,
+                  activeTrackColor: _teal.withValues(alpha:0.3),
                   inactiveThumbColor: Colors.white38,
                   inactiveTrackColor: Colors.white12,
                 ),
@@ -502,15 +502,15 @@ class _EditTabState extends State<EditTab> {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
           decoration: BoxDecoration(
-            color: _card.withOpacity(0.6),
+            color: _card.withValues(alpha:0.6),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _teal.withOpacity(0.15)),
+            border: Border.all(color: _teal.withValues(alpha:0.15)),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.lock_outline_rounded,
-                color: _teal.withOpacity(0.5),
+                color: _teal.withValues(alpha:0.5),
                 size: 14,
               ),
               SizedBox(width: 8.w),
@@ -578,8 +578,8 @@ class _EditTabState extends State<EditTab> {
                 child: Switch(
                   value: isVisible,
                   onChanged: (_) => state.toggleVisibility(visKey),
-                  activeColor: _teal,
-                  activeTrackColor: _teal.withOpacity(0.3),
+                  activeThumbColor: _teal,
+                  activeTrackColor: _teal.withValues(alpha:0.3),
                   inactiveThumbColor: Colors.white38,
                   inactiveTrackColor: Colors.white12,
                 ),
@@ -648,11 +648,11 @@ class _EditTabState extends State<EditTab> {
       contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _teal.withOpacity(0.25)),
+        borderSide: BorderSide(color: _teal.withValues(alpha:0.25)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _teal.withOpacity(0.25)),
+        borderSide: BorderSide(color: _teal.withValues(alpha:0.25)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -704,8 +704,8 @@ class _EditTabState extends State<EditTab> {
                 child: Switch(
                   value: state.showGender,
                   onChanged: (_) => state.toggleVisibility('gender'),
-                  activeColor: _teal,
-                  activeTrackColor: _teal.withOpacity(0.3),
+                  activeThumbColor: _teal,
+                  activeTrackColor: _teal.withValues(alpha:0.3),
                   inactiveThumbColor: Colors.white38,
                   inactiveTrackColor: Colors.white12,
                 ),
@@ -715,7 +715,7 @@ class _EditTabState extends State<EditTab> {
         ),
         SizedBox(height: 5.h),
         DropdownButtonFormField<String>(
-          value: _selectedGender,
+          initialValue: _selectedGender,
           decoration: InputDecoration(
             hintText: 'Select gender',
             hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
@@ -732,11 +732,11 @@ class _EditTabState extends State<EditTab> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _teal.withOpacity(0.25)),
+              borderSide: BorderSide(color: _teal.withValues(alpha:0.25)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _teal.withOpacity(0.25)),
+              borderSide: BorderSide(color: _teal.withValues(alpha:0.25)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -792,8 +792,8 @@ class _EditTabState extends State<EditTab> {
             child: Switch(
               value: state.showSkills,
               onChanged: (_) => state.toggleVisibility('skills'),
-              activeColor: _teal,
-              activeTrackColor: _teal.withOpacity(0.3),
+              activeThumbColor: _teal,
+              activeTrackColor: _teal.withValues(alpha:0.3),
               inactiveThumbColor: Colors.white38,
               inactiveTrackColor: Colors.white12,
             ),
@@ -828,11 +828,11 @@ class _EditTabState extends State<EditTab> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _teal.withOpacity(0.25)),
+                borderSide: BorderSide(color: _teal.withValues(alpha:0.25)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: _teal.withOpacity(0.25)),
+                borderSide: BorderSide(color: _teal.withValues(alpha:0.25)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -872,9 +872,9 @@ class _EditTabState extends State<EditTab> {
         width: double.infinity,
         padding: EdgeInsets.all(12.h),
         decoration: BoxDecoration(
-          color: _teal.withOpacity(0.07),
+          color: _teal.withValues(alpha:0.07),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _teal.withOpacity(0.2)),
+          border: Border.all(color: _teal.withValues(alpha:0.2)),
         ),
         child: Text(
           'No skills added yet',
@@ -891,9 +891,9 @@ class _EditTabState extends State<EditTab> {
       width: double.infinity,
       padding: EdgeInsets.all(10.h),
       decoration: BoxDecoration(
-        color: _teal.withOpacity(0.07),
+        color: _teal.withValues(alpha:0.07),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _teal.withOpacity(0.2)),
+        border: Border.all(color: _teal.withValues(alpha:0.2)),
       ),
       child: Wrap(
         spacing: 8,
@@ -902,9 +902,9 @@ class _EditTabState extends State<EditTab> {
           return Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
             decoration: BoxDecoration(
-              color: _teal.withOpacity(0.18),
+              color: _teal.withValues(alpha:0.18),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _teal.withOpacity(0.45)),
+              border: Border.all(color: _teal.withValues(alpha:0.45)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -945,7 +945,7 @@ class _EditTabState extends State<EditTab> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: state.isSaving
-                ? [_teal.withOpacity(0.4), _teal.withOpacity(0.4)]
+                ? [_teal.withValues(alpha:0.4), _teal.withValues(alpha:0.4)]
                 : [kTeal, kTealLight],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -955,7 +955,7 @@ class _EditTabState extends State<EditTab> {
               ? []
               : [
                   BoxShadow(
-                    color: _teal.withOpacity(0.4),
+                    color: _teal.withValues(alpha:0.4),
                     blurRadius: 14,
                     offset: const Offset(0, 4),
                   ),

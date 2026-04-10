@@ -87,7 +87,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
                     child: ListView.separated(
                       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
                       itemCount: bookmarks.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                      separatorBuilder: (context, index) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
                         return BookMarkTileWidget(job: bookmarks[index]);
                       },
@@ -110,7 +110,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
           Icon(
             Icons.bookmark_outline_rounded,
             size: 64,
-            color: _teal.withOpacity(0.25),
+            color: _teal.withValues(alpha:0.25),
           ),
           SizedBox(height: 16.h),
           Text(

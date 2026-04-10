@@ -6,8 +6,6 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/common/height_spacer.dart';
 import 'package:proco/views/ui/auth/login.dart';
-import 'package:provider/provider.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});

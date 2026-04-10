@@ -66,8 +66,8 @@ class NotificationHelper {
       Get.snackbar(
         message.notification?.title ?? 'New Message',
         message.notification?.body ?? '',
-        colorText: Color(kLight.value),
-        backgroundColor: Color(kLightBlue.value),
+        colorText: kLight,
+        backgroundColor: kLightBlue,
         duration: const Duration(seconds: 4),
         snackPosition: SnackPosition.TOP,
         icon: const Icon(Icons.notifications, color: Colors.white),

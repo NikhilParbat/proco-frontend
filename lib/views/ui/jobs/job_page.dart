@@ -5,7 +5,6 @@ import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
-import 'package:proco/models/request/chat/create_chat.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:provider/provider.dart';
 
@@ -129,7 +128,7 @@ class _JobPageState extends State<JobPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _teal.withOpacity(0.1),
+                  color: _teal.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -179,7 +178,7 @@ class _JobPageState extends State<JobPage> {
                       width: 38.w,
                       height: 38.w,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -219,8 +218,8 @@ class _JobPageState extends State<JobPage> {
                           height: 38.w,
                           decoration: BoxDecoration(
                             color: isBookmarked
-                                ? _orange.withOpacity(0.2)
-                                : Colors.white.withOpacity(0.1),
+                                ? _orange.withValues(alpha: 0.2)
+                                : Colors.white.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
@@ -250,7 +249,7 @@ class _JobPageState extends State<JobPage> {
                 border: Border.all(color: _teal, width: 2.5),
                 boxShadow: [
                   BoxShadow(
-                    color: _teal.withOpacity(0.35),
+                    color: _teal.withValues(alpha: 0.35),
                     blurRadius: 16,
                     spreadRadius: 2,
                   ),
@@ -260,7 +259,7 @@ class _JobPageState extends State<JobPage> {
                 child: Image.network(
                   job.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.business_rounded,
                     color: _teal,
                     size: 36,
@@ -305,9 +304,9 @@ class _JobPageState extends State<JobPage> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: _teal.withOpacity(0.18),
+                color: _teal.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _teal.withOpacity(0.4)),
+                border: Border.all(color: _teal.withValues(alpha: 0.4)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -358,7 +357,7 @@ class _JobPageState extends State<JobPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -449,9 +448,7 @@ class _JobPageState extends State<JobPage> {
   // ─── Apply button ─────────────────────────────────────────────────────────
   Widget _buildApplyButton(dynamic job) {
     return GestureDetector(
-      onTap: () {
-        final model = CreateChat(userId: job.agentId);
-      },
+      onTap: () {},
       child: Container(
         width: double.infinity,
         height: 56.h,
@@ -464,7 +461,7 @@ class _JobPageState extends State<JobPage> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: _teal.withOpacity(0.45),
+              color: _teal.withValues(alpha: 0.45),
               blurRadius: 18,
               offset: const Offset(0, 6),
             ),
@@ -490,7 +487,7 @@ class _JobPageState extends State<JobPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),

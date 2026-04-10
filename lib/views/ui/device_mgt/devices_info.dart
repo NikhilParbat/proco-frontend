@@ -58,7 +58,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                         'You are logged in into your account on these devices',
                         style: appstyle(
                           16,
-                          Color(kDark.value),
+                          kDark,
                           FontWeight.normal,
                         ),
                       ),
@@ -71,7 +71,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                               'No device sessions found',
                               style: appstyle(
                                 16,
-                                Color(kDarkGrey.value),
+                                kDarkGrey,
                                 FontWeight.w400,
                               ),
                             ),
@@ -81,7 +81,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                         Expanded(
                           child: ListView.separated(
                             itemCount: sessions.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (context, index) =>
                                 const HeightSpacer(size: 30),
                             itemBuilder: (context, index) {
                               final session = sessions[index];
@@ -117,7 +117,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                         text: 'Sign out from all devices',
                         style: appstyle(
                           16,
-                          Color(kOrange.value),
+                          kOrange,
                           FontWeight.w600,
                         ),
                       ),

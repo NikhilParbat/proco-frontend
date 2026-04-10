@@ -31,7 +31,7 @@ class BookMarkTileWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.07),
+              color: Colors.black.withValues(alpha:0.07),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -50,8 +50,8 @@ class BookMarkTileWidget extends StatelessWidget {
                   Image.network(
                     j.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: _teal.withOpacity(0.10),
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: _teal.withValues(alpha:0.10),
                       child: const Icon(
                         Icons.business_rounded,
                         color: _teal,
@@ -67,7 +67,7 @@ class BookMarkTileWidget extends StatelessWidget {
                         end: Alignment.centerRight,
                         colors: [
                           Colors.transparent,
-                          Colors.white.withOpacity(0.15),
+                          Colors.white.withValues(alpha:0.15),
                         ],
                       ),
                     ),
@@ -174,7 +174,7 @@ class BookMarkTileWidget extends StatelessWidget {
                           ),
                           SizedBox(width: 3.w),
                           Text(
-                            '${j.salary} · ${j.period ?? ''}',
+                            '${j.salary} · ${j.period}',
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 11.sp,
@@ -191,7 +191,7 @@ class BookMarkTileWidget extends StatelessWidget {
                               vertical: 2.h,
                             ),
                             decoration: BoxDecoration(
-                              color: _teal.withOpacity(0.08),
+                              color: _teal.withValues(alpha:0.08),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -221,7 +221,7 @@ class BookMarkTileWidget extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.07),
+                    color: Colors.red.withValues(alpha:0.07),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

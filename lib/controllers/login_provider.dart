@@ -70,7 +70,7 @@ class LoginNotifier extends ChangeNotifier {
   List<DeviceSession> _deviceSessions = [];
   List<DeviceSession> get deviceSessions => _deviceSessions;
 
-  getPrefs() async {
+  void getPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     entrypoint = prefs.getBool('entrypoint') ?? false;
     final token = prefs.getString('token');
@@ -121,8 +121,8 @@ class LoginNotifier extends ChangeNotifier {
         Get.snackbar(
           'Login Success',
           'Enjoy your search for a job',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kLightBlue.value),
+          colorText: kLight,
+          backgroundColor: kLightBlue,
           icon: const Icon(Icons.add_alert),
         );
 
@@ -138,8 +138,8 @@ class LoginNotifier extends ChangeNotifier {
         Get.snackbar(
           response[1],
           'Please try again',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kOrange.value),
+          colorText: kLight,
+          backgroundColor: kOrange,
           icon: const Icon(Icons.add_alert),
         );
       }
@@ -150,8 +150,8 @@ class LoginNotifier extends ChangeNotifier {
       Get.snackbar(
         'Login Failed',
         'An unexpected error occurred',
-        colorText: Color(kLight.value),
-        backgroundColor: Color(kOrange.value),
+        colorText: kLight,
+        backgroundColor: kOrange,
         icon: const Icon(Icons.add_alert),
       );
       debugPrint('Login Error: $e');
@@ -175,8 +175,8 @@ class LoginNotifier extends ChangeNotifier {
         Get.snackbar(
           'Login Cancelled',
           'Please try again',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kOrange.value),
+          colorText: kLight,
+          backgroundColor: kOrange,
           icon: const Icon(Icons.add_alert),
         );
         return;
@@ -190,8 +190,8 @@ class LoginNotifier extends ChangeNotifier {
         Get.snackbar(
           'Authentication Error',
           'Could not retrieve user information',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kOrange.value),
+          colorText: kLight,
+          backgroundColor: kOrange,
           icon: const Icon(Icons.add_alert),
         );
         return;
@@ -206,8 +206,8 @@ class LoginNotifier extends ChangeNotifier {
         Get.snackbar(
           'Authentication Error',
           'Could not retrieve authentication token',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kOrange.value),
+          colorText: kLight,
+          backgroundColor: kOrange,
           icon: const Icon(Icons.add_alert),
         );
         return;
@@ -236,8 +236,8 @@ class LoginNotifier extends ChangeNotifier {
         Get.snackbar(
           'Login Success',
           'Welcome back, ${firebaseUser.displayName ?? ""}!',
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kLightBlue.value),
+          colorText: kLight,
+          backgroundColor: kLightBlue,
           icon: const Icon(Icons.check),
         );
 
@@ -255,8 +255,8 @@ class LoginNotifier extends ChangeNotifier {
         Get.snackbar(
           'Login Failed',
           message,
-          colorText: Color(kLight.value),
-          backgroundColor: Color(kOrange.value),
+          colorText: kLight,
+          backgroundColor: kOrange,
           icon: const Icon(Icons.error),
         );
       }
@@ -268,8 +268,8 @@ class LoginNotifier extends ChangeNotifier {
       Get.snackbar(
         'Login Failed',
         'An unexpected error occurred',
-        colorText: Color(kLight.value),
-        backgroundColor: Color(kOrange.value),
+        colorText: kLight,
+        backgroundColor: kOrange,
         icon: const Icon(Icons.add_alert),
       );
     }
@@ -364,7 +364,7 @@ class LoginNotifier extends ChangeNotifier {
     }
   }
 
-  logout() async {
+  void logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('loggedIn', false);
     await prefs.setBool('entrypoint', false);

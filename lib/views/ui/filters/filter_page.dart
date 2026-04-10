@@ -10,14 +10,14 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FilterPage extends StatefulWidget {
-  const FilterPage({Key? key}) : super(key: key);
+  const FilterPage({super.key});
 
   @override
   State<FilterPage> createState() => _FilterPageState();
 }
 
 class _FilterPageState extends State<FilterPage> {
-  // ─── Theme colours (matching UpdateProfilePage) ───────────────────────────
+  // ─── Theme colors (matching UpdateProfilePage) ───────────────────────────
   static const Color _bg = Color(0xFF040326);
   static const Color _card = Color(0xFF08979F);
   static const Color _accent = Color(0xFF0BBFCA);
@@ -240,7 +240,7 @@ class _FilterPageState extends State<FilterPage> {
           ),
         ),
         SizedBox(height: 4.h),
-        Container(height: 1, color: _card.withOpacity(0.5)),
+        Container(height: 1, color: _card.withValues(alpha:0.5)),
       ],
     );
   }
@@ -251,9 +251,9 @@ class _FilterPageState extends State<FilterPage> {
       width: double.infinity,
       padding: EdgeInsets.all(14.h),
       decoration: BoxDecoration(
-        color: _card.withOpacity(0.15),
+        color: _card.withValues(alpha:0.15),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withOpacity(0.3)),
+        border: Border.all(color: _card.withValues(alpha:0.3)),
       ),
       child: Wrap(
         spacing: 8,
@@ -273,10 +273,10 @@ class _FilterPageState extends State<FilterPage> {
                 duration: const Duration(milliseconds: 180),
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
                 decoration: BoxDecoration(
-                  color: isSelected ? _card : _card.withOpacity(0.2),
+                  color: isSelected ? _card : _card.withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? _accent : _card.withOpacity(0.4),
+                    color: isSelected ? _accent : _card.withValues(alpha:0.4),
                   ),
                 ),
                 child: Row(
@@ -300,16 +300,16 @@ class _FilterPageState extends State<FilterPage> {
                 ),
               ),
             );
-          }).toList(),
+          }),
           // CUSTOM bubble
           GestureDetector(
             onTap: () => setState(() => showCustomInput = true),
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
               decoration: BoxDecoration(
-                color: _accent.withOpacity(0.2),
+                color: _accent.withValues(alpha:0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _accent.withOpacity(0.6)),
+                border: Border.all(color: _accent.withValues(alpha:0.6)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -349,18 +349,18 @@ class _FilterPageState extends State<FilterPage> {
                 size: 20,
               ),
               filled: true,
-              fillColor: _card.withOpacity(0.25),
+              fillColor: _card.withValues(alpha:0.25),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16.w,
                 vertical: 14.h,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withOpacity(0.4)),
+                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withOpacity(0.4)),
+                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -400,9 +400,9 @@ class _FilterPageState extends State<FilterPage> {
   Widget _opportunityToggles() {
     return Container(
       decoration: BoxDecoration(
-        color: _card.withOpacity(0.15),
+        color: _card.withValues(alpha:0.15),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withOpacity(0.3)),
+        border: Border.all(color: _card.withValues(alpha:0.3)),
       ),
       child: Column(
         children: opportunityTypes.keys.toList().asMap().entries.map((e) {
@@ -442,8 +442,8 @@ class _FilterPageState extends State<FilterPage> {
                     ),
                     Switch(
                       value: opportunityTypes[opportunity]!,
-                      activeColor: _accent,
-                      activeTrackColor: _card.withOpacity(0.6),
+                      activeThumbColor: _accent,
+                      activeTrackColor: _card.withValues(alpha:0.6),
                       inactiveThumbColor: Colors.white38,
                       inactiveTrackColor: Colors.white12,
                       onChanged: (value) =>
@@ -455,7 +455,7 @@ class _FilterPageState extends State<FilterPage> {
               if (!isLast)
                 Divider(
                   height: 1,
-                  color: _card.withOpacity(0.3),
+                  color: _card.withValues(alpha:0.3),
                   indent: 16,
                   endIndent: 16,
                 ),
@@ -485,18 +485,18 @@ class _FilterPageState extends State<FilterPage> {
                 size: 20,
               ),
               filled: true,
-              fillColor: _card.withOpacity(0.25),
+              fillColor: _card.withValues(alpha:0.25),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16.w,
                 vertical: 16.h,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withOpacity(0.4)),
+                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withOpacity(0.4)),
+                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -535,9 +535,9 @@ class _FilterPageState extends State<FilterPage> {
       width: double.infinity,
       padding: EdgeInsets.all(14.h),
       decoration: BoxDecoration(
-        color: _card.withOpacity(0.15),
+        color: _card.withValues(alpha:0.15),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withOpacity(0.3)),
+        border: Border.all(color: _card.withValues(alpha:0.3)),
       ),
       child: Wrap(
         spacing: 8,
@@ -581,9 +581,9 @@ class _FilterPageState extends State<FilterPage> {
   Widget _locationToggles() {
     return Container(
       decoration: BoxDecoration(
-        color: _card.withOpacity(0.15),
+        color: _card.withValues(alpha:0.15),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withOpacity(0.3)),
+        border: Border.all(color: _card.withValues(alpha:0.3)),
       ),
       child: Row(
         children: ['City', 'State', 'Country'].map((option) {
@@ -654,15 +654,15 @@ class _FilterPageState extends State<FilterPage> {
           size: 20,
         ),
         filled: true,
-        fillColor: _card.withOpacity(0.25),
+        fillColor: _card.withValues(alpha:0.25),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withOpacity(0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withOpacity(0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -674,7 +674,7 @@ class _FilterPageState extends State<FilterPage> {
 
   Widget _stateDropdown() {
     return DropdownButtonFormField<String>(
-      value: selectedState.isEmpty ? null : selectedState,
+      initialValue: selectedState.isEmpty ? null : selectedState,
       dropdownColor: const Color(0xFF0A0540),
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _accent),
       style: const TextStyle(color: _white, fontSize: 15),
@@ -684,15 +684,15 @@ class _FilterPageState extends State<FilterPage> {
         labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
         prefixIcon: const Icon(Icons.map_outlined, color: _accent, size: 20),
         filled: true,
-        fillColor: _card.withOpacity(0.25),
+        fillColor: _card.withValues(alpha:0.25),
         contentPadding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withOpacity(0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withOpacity(0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -727,15 +727,15 @@ class _FilterPageState extends State<FilterPage> {
         hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
         prefixIcon: const Icon(Icons.flag_outlined, color: _accent, size: 20),
         filled: true,
-        fillColor: _card.withOpacity(0.25),
+        fillColor: _card.withValues(alpha:0.25),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withOpacity(0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withOpacity(0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -750,9 +750,9 @@ class _FilterPageState extends State<FilterPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: _card.withOpacity(0.15),
+        color: _card.withValues(alpha:0.15),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withOpacity(0.3)),
+        border: Border.all(color: _card.withValues(alpha:0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -788,8 +788,8 @@ class _FilterPageState extends State<FilterPage> {
           ),
           Switch(
             value: sortByTime,
-            activeColor: _accent,
-            activeTrackColor: _card.withOpacity(0.6),
+            activeThumbColor: _accent,
+            activeTrackColor: _card.withValues(alpha:0.6),
             inactiveThumbColor: Colors.white38,
             inactiveTrackColor: Colors.white12,
             onChanged: (val) => setState(() => sortByTime = val),
@@ -813,10 +813,10 @@ class _FilterPageState extends State<FilterPage> {
               margin: EdgeInsets.only(right: entry.$1 == '30d' ? 0 : 8.w),
               padding: EdgeInsets.symmetric(vertical: 12.h),
               decoration: BoxDecoration(
-                color: isSelected ? _card : _card.withOpacity(0.15),
+                color: isSelected ? _card : _card.withValues(alpha:0.15),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? _accent : _card.withOpacity(0.3),
+                  color: isSelected ? _accent : _card.withValues(alpha:0.3),
                 ),
               ),
               child: Column(
@@ -880,6 +880,7 @@ class _FilterPageState extends State<FilterPage> {
         if (!context.mounted) return;
 
         final filterNotifier = Provider.of<FilterNotifier>(
+          // ignore: use_build_context_synchronously
           context,
           listen: false,
         );
@@ -904,6 +905,7 @@ class _FilterPageState extends State<FilterPage> {
           ),
         );
 
+        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       },
       child: Container(
@@ -914,7 +916,7 @@ class _FilterPageState extends State<FilterPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: _card.withOpacity(0.4),
+              color: _card.withValues(alpha:0.4),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

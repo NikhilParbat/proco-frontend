@@ -4,7 +4,7 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
-import 'package:proco/views/common/drawer/drawerScreen.dart';
+import 'package:proco/views/common/drawer/drawer_screen.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/auth/profile_screen.dart';

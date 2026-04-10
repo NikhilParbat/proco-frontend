@@ -69,8 +69,8 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'ProCo',
           theme: ThemeData(
-            scaffoldBackgroundColor: Color(kLight.value),
-            iconTheme: IconThemeData(color: Color(kDark.value)),
+            scaffoldBackgroundColor: kLight,
+            iconTheme: IconThemeData(color: kDark),
             primarySwatch: Colors.grey,
           ),
           home: entrypoint ? const MainScreen() : const OnBoardingScreen(),
