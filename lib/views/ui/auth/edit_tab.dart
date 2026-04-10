@@ -33,8 +33,15 @@ class _EditTabState extends State<EditTab> {
 
   final _formKey = GlobalKey<FormState>();
 
+  static const List<String> _months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
   late TextEditingController _phoneCtrl;
-  late TextEditingController _ageCtrl;
+  String? _dobDay;
+  String? _dobMonth;
+  String? _dobYear;
   late TextEditingController _cityCtrl;
   late TextEditingController _stateCtrl;
   late TextEditingController _countryCtrl;
@@ -55,7 +62,16 @@ class _EditTabState extends State<EditTab> {
     if (!_initialized) {
       final s = context.read<ProfileEditState>();
       _phoneCtrl = TextEditingController(text: s.phone);
-      _ageCtrl = TextEditingController(text: s.age);
+      // Parse stored "YYYY-MM-DD" into the three dropdown values
+      if (s.dob.isNotEmpty) {
+        final parts = s.dob.split('-');
+        if (parts.length == 3) {
+          _dobYear  = parts[0];
+          final mi  = int.tryParse(parts[1]);
+          _dobMonth = (mi != null && mi >= 1 && mi <= 12) ? _months[mi - 1] : null;
+          _dobDay   = parts[2];
+        }
+      }
       _cityCtrl = TextEditingController(text: s.city);
       _stateCtrl = TextEditingController(text: s.state);
       _countryCtrl = TextEditingController(text: s.country);
@@ -73,7 +89,6 @@ class _EditTabState extends State<EditTab> {
   @override
   void dispose() {
     _phoneCtrl.dispose();
-    _ageCtrl.dispose();
     _cityCtrl.dispose();
     _stateCtrl.dispose();
     _countryCtrl.dispose();
@@ -91,7 +106,10 @@ class _EditTabState extends State<EditTab> {
     if (!_formKey.currentState!.validate()) return;
     final s = context.read<ProfileEditState>();
     s.setField('phone', _phoneCtrl.text.trim());
-    s.setField('age', _ageCtrl.text.trim());
+    if (_dobDay != null && _dobMonth != null && _dobYear != null) {
+      final mi = (_months.indexOf(_dobMonth!) + 1).toString().padLeft(2, '0');
+      s.setField('dob', '$_dobYear-$mi-$_dobDay');
+    }
     s.setField('city', _cityCtrl.text.trim());
     s.setField('state', _stateCtrl.text.trim());
     s.setField('country', _countryCtrl.text.trim());
@@ -167,15 +185,7 @@ class _EditTabState extends State<EditTab> {
               SizedBox(height: 10.h),
               _genderRowWithToggle(state),
               SizedBox(height: 10.h),
-              _fieldWithToggle(
-                controller: _ageCtrl,
-                label: 'Age',
-                icon: Icons.cake_outlined,
-                visKey: 'age',
-                isVisible: state.showAge,
-                state: state,
-                keyboardType: TextInputType.number,
-              ),
+              _dobSectionWithToggle(state),
               SizedBox(height: 20.h),
 
               // ── Location ──────────────────────────────────────────────────
@@ -758,6 +768,131 @@ class _EditTabState extends State<EditTab> {
           onChanged: (val) => setState(() => _selectedGender = val),
         ),
       ],
+    );
+  }
+
+  // ── DOB section with visibility toggle ────────────────────────────────────
+  Widget _dobSectionWithToggle(ProfileEditState state) {
+    final days   = List.generate(31, (i) => (i + 1).toString().padLeft(2, '0'));
+    final years  = List.generate(
+      DateTime.now().year - 13 - 1949,
+      (i) => (DateTime.now().year - 13 - i).toString(),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Label + visibility toggle ──────────────────────────────────────
+        Row(
+          children: [
+            const Icon(Icons.cake_outlined, color: _teal, size: 15),
+            SizedBox(width: 6.w),
+            Text(
+              'Date of Birth',
+              style: TextStyle(color: Colors.white60, fontSize: 12.sp, fontFamily: 'Poppins'),
+            ),
+            const Spacer(),
+            Text(
+              state.showDob ? 'Visible' : 'Hidden',
+              style: TextStyle(
+                color: state.showDob ? _tealLight : Colors.white38,
+                fontSize: 11.sp,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(width: 2.w),
+            SizedBox(
+              height: 24,
+              child: Transform.scale(
+                scale: 0.75,
+                child: Switch(
+                  value: state.showDob,
+                  onChanged: (_) => state.toggleVisibility('dob'),
+                  activeThumbColor: _teal,
+                  activeTrackColor: _teal.withValues(alpha: 0.3),
+                  inactiveThumbColor: Colors.white38,
+                  inactiveTrackColor: Colors.white12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 5.h),
+        // ── Three dropdowns ────────────────────────────────────────────────
+        Row(
+          children: [
+            // Day
+            Expanded(
+              flex: 2,
+              child: _dobDropdown(
+                hint: 'Day',
+                value: _dobDay,
+                items: days,
+                onChanged: (v) => setState(() => _dobDay = v),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            // Month
+            Expanded(
+              flex: 3,
+              child: _dobDropdown(
+                hint: 'Month',
+                value: _dobMonth,
+                items: _months,
+                onChanged: (v) => setState(() => _dobMonth = v),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            // Year
+            Expanded(
+              flex: 3,
+              child: _dobDropdown(
+                hint: 'Year',
+                value: _dobYear,
+                items: years,
+                onChanged: (v) => setState(() => _dobYear = v),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _dobDropdown({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      isExpanded: true,
+      dropdownColor: const Color(0xFF0D2233),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _teal, size: 18),
+      style: TextStyle(color: _white, fontSize: 13.sp),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+        filled: true,
+        fillColor: _card,
+        contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 13.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _teal.withValues(alpha: 0.25)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _teal.withValues(alpha: 0.25)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _teal, width: 1.5),
+        ),
+      ),
+      items: items.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+      onChanged: onChanged,
     );
   }
 

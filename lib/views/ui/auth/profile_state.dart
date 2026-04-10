@@ -23,8 +23,7 @@ class ProfileEditState extends ChangeNotifier {
   double latitude = 0.0;
   double longitude = 0.0;
 
-  // ── Local-only fields (stored in SharedPreferences) ──────────────────────────
-  String age = '';
+  String dob = ''; // Date of birth, stored as "YYYY-MM-DD"
   String linkedInUrl = '';
   String gitHubUrl = '';
   String twitterUrl = '';
@@ -34,7 +33,7 @@ class ProfileEditState extends ChangeNotifier {
   bool showEmail = true;
   bool showPhone = true;
   bool showGender = true;
-  bool showAge = true;
+  bool showDob = true;
   bool showCollege = true;
   bool showSkills = true;
   bool showLinkedIn = true;
@@ -75,7 +74,7 @@ class ProfileEditState extends ChangeNotifier {
         branch = data.branch;
         skills = List<String>.from(data.skills);
         profileImageUrl = data.profile;
-        age = data.age;
+        dob = data.dob;
         linkedInUrl = data.linkedInUrl;
         gitHubUrl = data.gitHubUrl;
         twitterUrl = data.twitterUrl;
@@ -107,7 +106,7 @@ class ProfileEditState extends ChangeNotifier {
         college: college,
         branch: branch,
         gender: gender.isEmpty ? null : gender,
-        age: age,
+        dob: dob,
         linkedInUrl: linkedInUrl,
         gitHubUrl: gitHubUrl,
         twitterUrl: twitterUrl,
@@ -140,7 +139,7 @@ class ProfileEditState extends ChangeNotifier {
     showEmail = prefs.getBool('vis_email') ?? true;
     showPhone = prefs.getBool('vis_phone') ?? true;
     showGender = prefs.getBool('vis_gender') ?? true;
-    showAge = prefs.getBool('vis_age') ?? true;
+    showDob = prefs.getBool('vis_dob') ?? true;
     showCollege = prefs.getBool('vis_college') ?? true;
     showSkills = prefs.getBool('vis_skills') ?? true;
     showLinkedIn = prefs.getBool('vis_linkedin') ?? true;
@@ -164,9 +163,9 @@ class ProfileEditState extends ChangeNotifier {
         showGender = !showGender;
         await prefs.setBool('vis_gender', showGender);
         break;
-      case 'age':
-        showAge = !showAge;
-        await prefs.setBool('vis_age', showAge);
+      case 'dob':
+        showDob = !showDob;
+        await prefs.setBool('vis_dob', showDob);
         break;
       case 'college':
         showCollege = !showCollege;
@@ -205,8 +204,8 @@ class ProfileEditState extends ChangeNotifier {
       case 'gender':
         gender = value;
         break;
-      case 'age':
-        age = value;
+      case 'dob':
+        dob = value;
         break;
       case 'city':
         city = value;

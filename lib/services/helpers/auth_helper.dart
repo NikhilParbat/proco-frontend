@@ -127,6 +127,58 @@ class AuthHelper {
     }
   }
 
+  /// Called after Firebase email verification is confirmed.
+  /// Registers the user in the backend with just email + username.
+  static Future<List<dynamic>> emailSignup({
+    required String idToken,
+    required String email,
+    required String username,
+  }) async {
+    try {
+      final requestHeaders = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      final url = Uri.http(Config.apiUrl, Config.emailSignupUrl);
+
+      final response = await client.post(
+        url,
+        headers: requestHeaders,
+        body: jsonEncode({
+          'idToken': idToken,
+          'email': email,
+          'displayName': username,
+        }),
+      );
+
+      debugPrint('Email Signup Response: ${response.body}');
+
+      if (response.body.isEmpty) {
+        return [false, 'Server is starting up, please try again'];
+      }
+
+      final Map<String, dynamic> body = jsonDecode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        final data = body['data'];
+        if (data?['userToken'] != null) {
+          await prefs.setString('token', data['userToken']);
+        }
+        if (data?['_id'] != null) {
+          await prefs.setString('userId', data['_id']);
+        }
+        await prefs.setBool('loggedIn', true);
+        return [true];
+      } else {
+        final message = body['message'] as String? ?? 'Sign up failed';
+        return [false, message];
+      }
+    } catch (e) {
+      debugPrint('Email signup error: $e');
+      return [false, 'Connection error: ${e.toString()}'];
+    }
+  }
+
   static Future<List<dynamic>> googleSignup({
     required String idToken,
     required String email,

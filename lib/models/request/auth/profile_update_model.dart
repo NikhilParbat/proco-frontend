@@ -8,6 +8,7 @@ String profileUpdateReqToJson(ProfileUpdateReq data) =>
 
 class ProfileUpdateReq {
   ProfileUpdateReq({
+    this.name = "",
     this.city = "",
     this.state = "",
     this.country = "",
@@ -17,7 +18,8 @@ class ProfileUpdateReq {
     this.college = "",
     this.branch = "",
     this.gender,
-    this.age = "",
+    this.dob = "",
+    this.userType = "",
     this.linkedInUrl = "",
     this.gitHubUrl = "",
     this.twitterUrl = "",
@@ -28,6 +30,7 @@ class ProfileUpdateReq {
 
   factory ProfileUpdateReq.fromJson(Map<String, dynamic> json) =>
       ProfileUpdateReq(
+        name: json['name'] ?? "",
         city: json['city'],
         state: json['state'],
         country: json['country'],
@@ -37,7 +40,7 @@ class ProfileUpdateReq {
         college: json['college'] ?? "",
         branch: json['branch'] ?? "",
         gender: json['gender'],
-        age: json['age'] ?? "",
+        dob: json['dob'] ?? "",
         linkedInUrl: json['linkedInUrl'] ?? "",
         gitHubUrl: json['gitHubUrl'] ?? "",
         twitterUrl: json['twitterUrl'] ?? "",
@@ -46,6 +49,7 @@ class ProfileUpdateReq {
         longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       );
 
+  String name;
   String city;
   String state;
   String country;
@@ -55,7 +59,8 @@ class ProfileUpdateReq {
   String college;
   String branch;
   String? gender;
-  String age;
+  String dob;
+  String userType;
   String linkedInUrl;
   String gitHubUrl;
   String twitterUrl;
@@ -64,6 +69,7 @@ class ProfileUpdateReq {
   double longitude;
 
   Map<String, dynamic> toJson() => {
+        if (name.isNotEmpty) 'name': name,
         'city': city,
         'state': state,
         'country': country,
@@ -73,7 +79,8 @@ class ProfileUpdateReq {
         'college': college,
         'branch': branch,
         if (gender != null) 'gender': gender,
-        'age': age,
+        'dob': dob,
+        'userType': userType,
         'linkedInUrl': linkedInUrl,
         'gitHubUrl': gitHubUrl,
         'twitterUrl': twitterUrl,

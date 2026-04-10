@@ -25,7 +25,8 @@ class ProfileRes {
   final String college;
   final String gender;
   final String branch;
-  final String age;
+  final String dob;
+  final String userType;
   final String linkedInUrl;
   final String gitHubUrl;
   final String twitterUrl;
@@ -52,7 +53,8 @@ class ProfileRes {
     this.college = "",
     this.gender = "",
     this.branch = "",
-    this.age = "",
+    this.dob = "",
+    this.userType = "",
     this.linkedInUrl = "",
     this.gitHubUrl = "",
     this.twitterUrl = "",
@@ -105,7 +107,8 @@ class ProfileRes {
       college:      json['college']      ?? "",
       gender:       json['gender']       ?? "",
       branch:       json['branch']       ?? "",
-      age:          json['age']          ?? "",
+      dob:          json['dob']          ?? "",
+      userType:     json['userType']     ?? "",
       linkedInUrl:  json['linkedInUrl']  ?? "",
       gitHubUrl:    json['gitHubUrl']    ?? "",
       twitterUrl:   json['twitterUrl']   ?? "",
@@ -132,7 +135,8 @@ class ProfileRes {
         'college':  college,
         'gender':   gender,
         'branch':   branch,
-        'age':      age,
+        'dob':      dob,
+        'userType': userType,
         'linkedInUrl':  linkedInUrl,
         'gitHubUrl':    gitHubUrl,
         'twitterUrl':   twitterUrl,

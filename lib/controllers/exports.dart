@@ -1,4 +1,5 @@
 export 'package:proco/controllers/bookmark_provider.dart';
+export 'package:proco/controllers/onboarding_flow_provider.dart';
 export 'package:proco/controllers/chat_provider.dart';
 export 'package:proco/controllers/image_provider.dart';
 export 'package:proco/controllers/jobs_provider.dart';

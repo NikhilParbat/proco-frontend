@@ -70,21 +70,32 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildErrorView(String message) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            size: 60,
-            color: Colors.redAccent,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: _white, fontSize: 16),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                size: 60, color: Colors.redAccent),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: _white, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () =>
+                  context.read<ProfileNotifier>().getProfile(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _card,
+                foregroundColor: _white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -106,6 +117,18 @@ class _ProfilePageState extends State<ProfilePage> {
             Icons.phone_outlined,
             'Phone',
             userData.phone.isEmpty ? 'Not set' : userData.phone,
+          ),
+          SizedBox(height: 12.h),
+          _infoTile(
+            Icons.cake_outlined,
+            'Date of Birth',
+            userData.dob.isEmpty ? 'Not set' : userData.dob,
+          ),
+          SizedBox(height: 12.h),
+          _infoTile(
+            Icons.person_outline,
+            'Role',
+            userData.userType.isEmpty ? 'Not set' : userData.userType,
           ),
           SizedBox(height: 12.h),
           _infoTile(

@@ -25,6 +25,7 @@ class UserHelper {
     request.headers['token'] = 'Bearer $token';
 
     // ✅ Add text fields
+    if (model.name.isNotEmpty) request.fields['username'] = model.name;
     request.fields['city'] = model.city;
     request.fields['state'] = model.state;
     request.fields['country'] = model.country;
@@ -32,7 +33,8 @@ class UserHelper {
     request.fields['college'] = model.college;
     request.fields['branch'] = model.branch;
     request.fields['gender'] = model.gender ?? '';
-    request.fields['age'] = model.age;
+    request.fields['dob'] = model.dob;
+    request.fields['userType'] = model.userType;
     request.fields['linkedInUrl'] = model.linkedInUrl;
     request.fields['gitHubUrl'] = model.gitHubUrl;
     request.fields['twitterUrl'] = model.twitterUrl;
@@ -53,9 +55,13 @@ class UserHelper {
       );
     }
 
-    final response = await request.send();
+    final streamedResponse = await request.send();
+    final responseBody = await streamedResponse.stream.bytesToString();
 
-    return response.statusCode == 200;
+    debugPrint('updateProfile status: ${streamedResponse.statusCode}');
+    debugPrint('updateProfile body:   $responseBody');
+
+    return streamedResponse.statusCode == 200;
   }
 
   static Future<ProfileRes?> getProfile() async {
@@ -63,9 +69,11 @@ class UserHelper {
     final token = prefs.getString('token');
 
     if (token == null) {
-      debugPrint("Token Missing");
+      debugPrint('getProfile: token missing in SharedPreferences');
       return null;
     }
+
+    debugPrint('getProfile: token found, fetching...');
 
     final requestHeaders = <String, String>{
       'Content-Type': 'application/json',
@@ -75,14 +83,16 @@ class UserHelper {
     final url = Uri.http(Config.apiUrl, '/api/users');
     final response = await client.get(url, headers: requestHeaders);
 
+    debugPrint('getProfile status: ${response.statusCode}');
+    debugPrint('getProfile body:   ${response.body}');
+
     if (response.statusCode == 200) {
       final profile = profileResFromJson(response.body);
       return profile;
     } else {
-      debugPrint(
-        'Failed to load user profiles: ${response.statusCode}, ${response.body}',
+      throw Exception(
+        'Profile fetch failed [${response.statusCode}]: ${response.body}',
       );
-      throw Exception('Failed to get the profile [${response.statusCode}]');
     }
   }
 

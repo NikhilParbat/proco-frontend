@@ -8,6 +8,7 @@ import 'package:proco/controllers/filter_provider.dart';
 import 'package:proco/firebase_options.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/mainscreen.dart';
+import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:proco/views/ui/onboarding/onboarding_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,6 +37,8 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
 
   final entrypoint = prefs.getBool('entrypoint') ?? false;
+  final onboardingComplete = prefs.getBool('onboardingComplete') ?? false;
+  final onboardingPage = prefs.getInt('onboardingPage') ?? 0;
 
   await ScreenUtil.ensureScreenSize();
 
@@ -53,14 +56,34 @@ void main() async {
         ChangeNotifierProvider(create: (context) => ChatNotifier()),
         ChangeNotifierProvider(create: (context) => FilterNotifier()),
       ],
-      child: MyApp(entrypoint: entrypoint),
+      child: MyApp(
+        entrypoint: entrypoint,
+        onboardingComplete: onboardingComplete,
+        onboardingPage: onboardingPage,
+      ),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
   final bool entrypoint;
-  const MyApp({super.key, required this.entrypoint});
+  final bool onboardingComplete;
+  final int onboardingPage;
+
+  const MyApp({
+    super.key,
+    required this.entrypoint,
+    required this.onboardingComplete,
+    required this.onboardingPage,
+  });
+
+  Widget get _home {
+    if (!entrypoint) return const OnBoardingScreen();
+    if (!onboardingComplete) {
+      return OnboardingFlow(initialPage: onboardingPage);
+    }
+    return const MainScreen();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +101,7 @@ class MyApp extends StatelessWidget {
             iconTheme: IconThemeData(color: kDark),
             primarySwatch: Colors.grey,
           ),
-          home: entrypoint ? const MainScreen() : const OnBoardingScreen(),
+          home: _home,
           onInit: () => FlutterNativeSplash.remove(),
         );
       },

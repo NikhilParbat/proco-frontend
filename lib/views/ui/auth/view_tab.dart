@@ -30,7 +30,7 @@ class ViewTab extends StatelessWidget {
         (state.showEmail && state.email.isNotEmpty) ||
         (state.showPhone && state.phone.isNotEmpty) ||
         (state.showGender && state.gender.isNotEmpty) ||
-        (state.showAge && state.age.isNotEmpty) ||
+        (state.showDob && state.dob.isNotEmpty) ||
         (state.showCollege && education.isNotEmpty) ||
         location.isNotEmpty ||
         (state.showSkills && state.skills.isNotEmpty) ||
@@ -65,8 +65,8 @@ class ViewTab extends StatelessWidget {
               _infoCard(Icons.wc_outlined, 'Gender', state.gender),
               SizedBox(height: 10.h),
             ],
-            if (state.showAge && state.age.isNotEmpty) ...[
-              _infoCard(Icons.cake_outlined, 'Age', state.age),
+            if (state.showDob && state.dob.isNotEmpty) ...[
+              _infoCard(Icons.cake_outlined, 'Date of Birth', _formatDob(state.dob)),
               SizedBox(height: 10.h),
             ],
 
@@ -158,6 +158,23 @@ class ViewTab extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  // ── DOB formatter ("YYYY-MM-DD" → "DD Month YYYY") ────────────────────────
+  String _formatDob(String raw) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    final parts = raw.split('-');
+    if (parts.length == 3) {
+      final monthIndex = int.tryParse(parts[1]);
+      final monthName = (monthIndex != null && monthIndex >= 1 && monthIndex <= 12)
+          ? months[monthIndex - 1]
+          : parts[1];
+      return '${parts[2]} $monthName ${parts[0]}';
+    }
+    return raw; // fallback: show as-is
   }
 
   // ── Info card ──────────────────────────────────────────────────────────────

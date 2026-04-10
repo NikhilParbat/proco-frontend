@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/signup_provider.dart';
 import 'package:proco/views/common/app_bar.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:proco/services/location_service.dart';
+import 'package:provider/provider.dart';
 
+/// Sign-up screen: 4 steps — choose method → email → password → verify email.
+/// Profile details (name, dob, phone, location, institution) are collected
+/// in the post-signup OnboardingFlow.
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
@@ -19,87 +18,32 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  // ── Controllers ─────────────────────────────────────────────────────────────
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController collegeController = TextEditingController();
-  final TextEditingController branchController = TextEditingController();
-  final TextEditingController genderController = TextEditingController();
-  final TextEditingController locationSearchController =
-      TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  late final SignUpNotifier _provider;
 
-  // ── Map state ────────────────────────────────────────────────────────────────
-  final MapController _mapController = MapController();
-
-  /// Starting camera position (world center – will move on first location pick).
-  LatLng _markerPosition = const LatLng(20.5937, 78.9629); // India centre
-  bool _markerVisible = false;
-  List<Map<String, dynamic>> _searchResults = [];
-  bool _isSearching = false;
-
-  final List<String> genderOptions = [
-    'Male',
-    'Female',
-    'Other',
-    'Prefer not to say',
-  ];
-
-  // ── Lifecycle ────────────────────────────────────────────────────────────────
+  @override
+  void initState() {
+    super.initState();
+    _provider = SignUpNotifier();
+  }
 
   @override
   void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    collegeController.dispose();
-    branchController.dispose();
-    genderController.dispose();
-    locationSearchController.dispose();
-    _mapController.dispose();
+    _provider.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
-  }
-
-  // ── Helpers ──────────────────────────────────────────────────────────────────
-
-  void _moveMap(double lat, double lng) {
-    final target = LatLng(lat, lng);
-    setState(() {
-      _markerPosition = target;
-      _markerVisible = true;
-    });
-    _mapController.move(target, 13.0);
-  }
-
-  /// Fetches suggestions directly from Nominatim API
-  Future<void> _onSearchChanged(String query) async {
-    if (query.length < 3) {
-      setState(() => _searchResults = []);
-      return;
-    }
-
-    setState(() => _isSearching = true);
-
-    try {
-      final results = await LocationService.getPlacePredictions(query);
-      setState(() {
-        _searchResults = results;
-      });
-    } catch (e) {
-      debugPrint("Autocomplete error: $e");
-    } finally {
-      setState(() => _isSearching = false);
-    }
   }
 
   // ── Build ────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => SignUpNotifier(),
+    return ChangeNotifierProvider.value(
+      value: _provider,
       child: Consumer<SignUpNotifier>(
-        builder: (context, signUpProvider, child) {
+        builder: (context, provider, _) {
           return Scaffold(
             appBar: PreferredSize(
               preferredSize: Size.fromHeight(0.065.sh),
@@ -107,45 +51,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 text: 'Sign Up',
                 child: GestureDetector(
                   onTap: () {
-                    if (signUpProvider.activeIndex > 0) {
-                      signUpProvider.changeStep(signUpProvider.activeIndex - 1);
+                    if (provider.activeIndex > 0) {
+                      provider.changeStep(provider.activeIndex - 1);
                     } else {
                       Navigator.of(context).pop();
                     }
                   },
                   child: const Icon(
                     Icons.arrow_back_ios,
-                    color: Color(0xFF08979F),
+                    color: kTeal,
                     size: 20,
                   ),
                 ),
               ),
             ),
-
-            body: signUpProvider.activeIndex == 0
-                ? _googleFirstScreen(signUpProvider)
-                : IndexedStack(
-                    index: signUpProvider.activeIndex,
-                    children: [
-                      _namePage(signUpProvider),
-                      _emailPage(signUpProvider),
-                      _passwordPage(signUpProvider),
-                      _collegePage(signUpProvider),
-                      _genderPage(signUpProvider),
-                      _locationPage(signUpProvider),
-                    ],
-                  ),
+            body: IndexedStack(
+              index: provider.activeIndex,
+              children: [
+                _choicePage(provider),
+                _emailPage(provider),
+                _passwordPage(provider),
+                _verifyEmailPage(provider),
+              ],
+            ),
           );
         },
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Step pages (1-5 unchanged, 6 replaced)
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Step 0: Google or Email ──────────────────────────────────────────────────
 
-  Widget _googleFirstScreen(SignUpNotifier signUpProvider) {
+  Widget _choicePage(SignUpNotifier provider) {
     return Scaffold(
       backgroundColor: const Color(0xFF040326),
       body: Center(
@@ -153,22 +90,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
           children: [
             _cardTitle("Join ProCo 🚀"),
             const SizedBox(height: 20),
-
-            // ✅ Google Button FIRST
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: signUpProvider.isLoading
-                    ? null
-                    : () async {
-                        await signUpProvider.googleSignUp();
-
-                        // 👉 Move to onboarding after success
-                        signUpProvider.changeStep(1);
-                      },
+                onPressed: provider.isLoading ? null : () => provider.googleSignUp(),
                 icon: const Icon(Icons.g_mobiledata, size: 28),
-                label: signUpProvider.isLoading
-                    ? const CircularProgressIndicator(color: Colors.black)
+                label: provider.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.black,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text("Continue with Google"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -177,12 +112,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Divider
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Expanded(child: Divider(color: Colors.white30)),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
@@ -191,14 +123,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Expanded(child: Divider(color: Colors.white30)),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            // Manual signup option
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => signUpProvider.changeStep(1),
+                onPressed: () => provider.changeStep(1),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white30),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
                 child: const Text("Continue with Email"),
               ),
             ),
@@ -208,41 +142,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  /// Step 1: Full Name
-  Widget _namePage(SignUpNotifier signUpProvider) {
+  // ── Step 1: Email ────────────────────────────────────────────────────────────
+
+  Widget _emailPage(SignUpNotifier provider) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFF040326),
-      body: Center(
-        child: _card(
-          children: [
-            _cardTitle("What should other\nProfessionals call you?"),
-            const SizedBox(height: 15),
-            CustomTextFieldInput(
-              controller: nameController,
-              hintText: 'Full Name',
-              keyboardType: TextInputType.text,
-            ),
-            const SizedBox(height: 20),
-            _nextButton(
-              onTap: () {
-                if (nameController.text.isEmpty) {
-                  _snack('Invalid Name', 'Name cannot be empty.');
-                  return;
-                }
-                signUpProvider.signupModel.username = nameController.text;
-                signUpProvider.changeStep(1);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Step 2: Email
-  Widget _emailPage(SignUpNotifier signUpProvider) {
-    return Scaffold(
       backgroundColor: const Color(0xFF040326),
       body: Center(
         child: _card(
@@ -250,19 +154,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
             _cardTitle("What's your email?"),
             const SizedBox(height: 15),
             CustomTextFieldInput(
-              controller: emailController,
+              controller: _emailController,
               hintText: 'Email',
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 20),
             _nextButton(
               onTap: () {
-                if (emailController.text.isEmpty) {
-                  _snack('Invalid Email', 'Email cannot be empty.');
+                final email = _emailController.text.trim();
+                if (email.isEmpty || !email.contains('@')) {
+                  _snack('Invalid Email', 'Please enter a valid email address.');
                   return;
                 }
-                signUpProvider.signupModel.email = emailController.text;
-                signUpProvider.changeStep(2);
+                provider.signupModel.email = email;
+                // Temporary username from email prefix; user sets their real
+                // name on the first onboarding page.
+                provider.signupModel.username = email.split('@').first;
+                provider.changeStep(2);
               },
             ),
           ],
@@ -271,92 +179,125 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  /// Step 3: Password
-  Widget _passwordPage(SignUpNotifier signUpProvider) {
+  // ── Step 2: Password ─────────────────────────────────────────────────────────
+
+  Widget _passwordPage(SignUpNotifier provider) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFF040326),
       body: Center(
         child: _card(
           children: [
-            _cardTitle("Create a secure password"),
+            _cardTitle("Create a\nsecure password"),
             const SizedBox(height: 15),
             CustomTextFieldInput(
-              controller: passwordController,
+              controller: _passwordController,
               hintText: 'Password',
               keyboardType: TextInputType.text,
-              obscureText: signUpProvider.obscureText,
-              validator: (password) {
-                if (!signUpProvider.passwordValidator(password!)) {
-                  return 'At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character.';
-                }
-                return null;
-              },
+              obscureText: provider.obscureText,
               suffixIcon: GestureDetector(
-                onTap: () =>
-                    signUpProvider.obscureText = !signUpProvider.obscureText,
+                onTap: () => provider.obscureText = !provider.obscureText,
                 child: Icon(
-                  signUpProvider.obscureText
-                      ? Icons.visibility
-                      : Icons.visibility_off,
+                  provider.obscureText ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white54,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            _nextButton(
-              onTap: () {
-                if (!signUpProvider.passwordValidator(
-                  passwordController.text,
-                )) {
-                  _snack(
-                    'Invalid Password',
-                    'Password must have uppercase, lowercase, digit & special character.',
-                  );
-                } else {
-                  signUpProvider.signupModel.password = passwordController.text;
-                  signUpProvider.changeStep(3);
-                }
-              },
+            const SizedBox(height: 8),
+            const Text(
+              '8+ chars • uppercase • lowercase • digit • special character',
+              style: TextStyle(color: Colors.white38, fontSize: 11),
             ),
+            const SizedBox(height: 20),
+            provider.isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: kTeal),
+                  )
+                : _nextButton(
+                    onTap: () {
+                      if (!provider.passwordValidator(_passwordController.text)) {
+                        _snack(
+                          'Weak Password',
+                          'Need 8+ chars, uppercase, lowercase, digit & special character.',
+                        );
+                        return;
+                      }
+                      provider.signupModel.password = _passwordController.text;
+                      provider.submitEmailSignup();
+                    },
+                  ),
           ],
         ),
       ),
     );
   }
 
-  /// Step 4: College & Branch
-  Widget _collegePage(SignUpNotifier signUpProvider) {
+  // ── Step 3: Email Verification Pending ───────────────────────────────────────
+
+  Widget _verifyEmailPage(SignUpNotifier provider) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFF040326),
       body: Center(
         child: _card(
           children: [
-            _cardTitle("Which College do you belong to?"),
-            const SizedBox(height: 15),
-            CustomTextFieldInput(
-              controller: collegeController,
-              hintText: 'College',
-              keyboardType: TextInputType.text,
+            _cardTitle("Check your\ninbox 📬"),
+            const SizedBox(height: 12),
+            Text(
+              'We sent a verification link to:\n${provider.signupModel.email}',
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
-            CustomTextFieldInput(
-              controller: branchController,
-              hintText: 'Branch',
-              keyboardType: TextInputType.text,
+            const SizedBox(height: 8),
+            const Text(
+              'Click the link in the email, then come back and tap the button below.',
+              style: TextStyle(color: Colors.white38, fontSize: 12),
             ),
-            const SizedBox(height: 20),
-            _nextButton(
-              onTap: () {
-                if (collegeController.text.isEmpty) {
-                  _snack('Invalid College', 'College cannot be empty.');
-                  return;
-                }
-                if (branchController.text.isEmpty) {
-                  _snack('Invalid Branch', 'Branch cannot be empty.');
-                  return;
-                }
-                signUpProvider.signupModel.college = collegeController.text;
-                signUpProvider.signupModel.branch = branchController.text;
-                signUpProvider.changeStep(4);
-              },
+            const SizedBox(height: 28),
+            // Primary action — checked only on tap
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: provider.checkingVerification || provider.isLoading
+                    ? null
+                    : () => provider.checkVerifiedAndProceed(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kTeal,
+                  disabledBackgroundColor: kTeal.withValues(alpha: 0.4),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: provider.checkingVerification || provider.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        "I've verified my email",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: TextButton(
+                onPressed: provider.checkingVerification || provider.isLoading
+                    ? null
+                    : () => provider.resendVerificationEmail(),
+                child: const Text(
+                  'Resend email',
+                  style: TextStyle(color: kTeal, fontSize: 13),
+                ),
+              ),
             ),
           ],
         ),
@@ -364,349 +305,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  /// Step 5: Gender
-  Widget _genderPage(SignUpNotifier signUpProvider) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF040326),
-      body: Center(
-        child: _card(
-          children: [
-            _cardTitle("Please specify your Gender"),
-            const SizedBox(height: 15),
-            DropdownButtonFormField<String>(
-              initialValue: genderController.text.isEmpty
-                  ? null
-                  : genderController.text,
-              dropdownColor: kLightBlue,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-              decoration: InputDecoration(
-                hintText: 'Select Gender',
-                hintStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              items: genderOptions
-                  .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                  .toList(),
-              onChanged: (newValue) =>
-                  setState(() => genderController.text = newValue!),
-            ),
-            const SizedBox(height: 20),
-            _nextButton(
-              onTap: () {
-                if (genderController.text.isEmpty) {
-                  _snack('Invalid Gender', 'Gender cannot be empty.');
-                  return;
-                }
-                signUpProvider.signupModel.gender = genderController.text;
-                signUpProvider.changeStep(5);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Step 6 — Interactive Map Location Page (UPDATED for flutter_map v8)
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  Widget _locationPage(SignUpNotifier signUpProvider) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF040326),
-      body: Stack(
-        children: [
-          // ── Full-screen map ──────────────────────────────────────────────
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              // flutter_map v8 uses initialCenter + initialZoom
-              initialCenter: _markerPosition,
-              initialZoom: 5.0,
-              onTap: (tapPosition, latLng) async{
-                setState(() {
-                  _markerPosition = latLng;
-                  _markerVisible = true;
-                  _searchResults = [];
-                  locationSearchController.clear();
-                });
-
-                final addrData = await LocationService.getAddressFromLatLng(
-                  latLng.latitude, 
-                  latLng.longitude
-                );
-
-                if(!mounted) return;
-
-                signUpProvider.setLocation(
-                  latLng.latitude, 
-                  latLng.longitude, 
-                  displayAddress: "${addrData.city}, ${addrData.state}"
-                );
-                FocusScope.of(context).unfocus();
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://api.maptiler.com/maps/hybrid-v4/{z}/{x}/{y}.png?key={apiKey}',
-                additionalOptions: {
-                  'apiKey': dotenv.get('MAPTILER_API_KEY'),
-                },
-                userAgentPackageName: 'com.proco.proco',
-              ),
-              MarkerLayer(
-                markers: [
-                  if (_markerVisible)
-                    Marker(
-                      point: _markerPosition,
-                      width: 48,
-                      height: 48,
-                      child: const Icon(
-                        Icons.location_pin,
-                        color: Color(0xFF08979F),
-                        size: 48,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          // ── Top overlay: search bar + GPS button ─────────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Search bar
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withValues(alpha: 0.92),
-                      borderRadius: _searchResults.isEmpty
-                          ? BorderRadius.circular(12)
-                          : const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                      border: Border.all(
-                        color: const Color(0xFF08979F).withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: TextField(
-                      controller: locationSearchController,
-                      style: const TextStyle(color: Colors.white),
-                      onChanged: _onSearchChanged,
-                      textInputAction: TextInputAction.search,
-                      decoration: InputDecoration(
-                        hintText: 'Search location…',
-                        hintStyle: const TextStyle(color: Colors.white54),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Color(0xFF08979F),
-                        ),
-                        suffixIcon: _isSearching
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Color(0xFF08979F),
-                                  ),
-                                ),
-                              )
-                            : locationSearchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(
-                                  Icons.clear,
-                                  color: Colors.white54,
-                                  size: 18,
-                                ),
-                                onPressed: () =>
-                                    locationSearchController.clear(),
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_searchResults.isNotEmpty)
-                    Container(
-                      constraints: BoxConstraints(maxHeight: 250.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF040326).withValues(alpha: 0.95),
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(12),
-                        ),
-                        border: Border.all(
-                          color: const Color(0xFF08979F).withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        itemCount: _searchResults.length,
-                        separatorBuilder: (context, index) =>
-                            const Divider(color: Colors.white10, height: 1),
-                        itemBuilder: (context, index) {
-                          final item = _searchResults[index];
-                          return ListTile(
-                            leading: const Icon(
-                              Icons.location_on_outlined,
-                              color: Color(0xFF08979F),
-                              size: 18,
-                            ),
-                            title: Text(
-                              item['display_name'],
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                              ),
-                            ),
-                            onTap: () {
-                              _moveMap(item['lat'], item['lon']);
-                              signUpProvider.setLocation(
-                                item['lat'],
-                                item['lon'],
-                              );
-                              locationSearchController.text =
-                                  item['display_name'];
-                              setState(() => _searchResults = []);
-                              FocusScope.of(context).unfocus();
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  const SizedBox(height: 10),
-                  // "Use Current Location" button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(
-                          0xFF08979F,
-                        ).withValues(alpha: 0.9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: const Icon(Icons.my_location, size: 20),
-                      label: const Text('Use Current Location'),
-                      onPressed: signUpProvider.locationLoading
-                          ? null
-                          : () async {
-                              final result = await signUpProvider
-                                  .fetchCurrentLocation();
-                              if (result != null) {
-                                _moveMap(result.latitude, result.longitude);
-                              }
-                            },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Bottom overlay: coordinate chip + confirm button ─────────────
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 32,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Show selected address
-                if (signUpProvider.hasLocation)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withValues(alpha: 0.88),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFF08979F).withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (signUpProvider.displayAddress.isNotEmpty)
-                          Text(
-                            signUpProvider.displayAddress,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                // Confirm button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF08979F),
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(
-                        0xFF08979F,
-                      ).withValues(alpha: 0.4),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: signUpProvider.hasLocation
-                        ? () => signUpProvider.submitSignup()
-                        : null,
-                    child: const Text(
-                      'Confirm Location',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Shared UI helpers
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ── Shared UI helpers ────────────────────────────────────────────────────────
 
   Widget _card({required List<Widget> children}) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.9,
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF08979F), Color(0xFF040326)],
@@ -724,13 +328,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _cardTitle(String text) => Text(
-    text,
-    style: TextStyle(
-      fontSize: 26.sp,
-      fontWeight: FontWeight.bold,
-      color: Colors.white,
-    ),
-  );
+        text,
+        style: TextStyle(
+          fontSize: 26.sp,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
 
   Widget _nextButton({required VoidCallback onTap}) {
     return Center(

@@ -1,11 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/location_service.dart';
-import 'package:proco/views/ui/auth/login.dart';
-import 'package:proco/views/ui/mainscreen.dart';
+import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/constants/app_constants.dart';
 
@@ -13,6 +13,7 @@ class SignUpNotifier extends ChangeNotifier {
   final SignupModel signupModel = SignupModel();
 
   // ─── Step navigation ────────────────────────────────────────────────────────
+  // Steps: 0=choice, 1=email, 2=password, 3=verify email
 
   int _activeIndex = 0;
   int get activeIndex => _activeIndex;
@@ -50,9 +51,15 @@ class SignUpNotifier extends ChangeNotifier {
     }
   }
 
+  // ─── Email verification state ─────────────────────────────────────────────
+
+  User? _firebaseUser;
+
+  bool _checkingVerification = false;
+  bool get checkingVerification => _checkingVerification;
+
   // ─── Location state ──────────────────────────────────────────────────────
 
-  /// The coordinates the user has confirmed on the map.
   double _latitude = 0.0;
   double _longitude = 0.0;
   String _displayAddress = '';
@@ -63,11 +70,8 @@ class SignUpNotifier extends ChangeNotifier {
   String get displayAddress => _displayAddress;
   bool get locationLoading => _locationLoading;
 
-  /// Returns true when the user has picked a valid location.
   bool get hasLocation => _latitude != 0.0 || _longitude != 0.0;
 
-  /// Called from the UI after the user taps on the map or confirms a search
-  /// result. [displayAddress] is optional and purely cosmetic.
   void setLocation(double lat, double lng, {String displayAddress = ''}) {
     _latitude = lat;
     _longitude = lng;
@@ -77,9 +81,6 @@ class SignUpNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Asks [LocationService] for the GPS fix and pushes it into the model.
-  /// Returns the [LocationResult] so the UI can animate the map camera,
-  /// or null on failure (error is shown via snackbar internally).
   Future<LocationResult?> fetchCurrentLocation() async {
     _locationLoading = true;
     notifyListeners();
@@ -106,8 +107,6 @@ class SignUpNotifier extends ChangeNotifier {
     }
   }
 
-  /// Geocode [address] and updates state. Returns the result for the UI to
-  /// move the map camera, or null when geocoding fails.
   Future<LocationResult?> geocodeAndSet(String address) async {
     _locationLoading = true;
     notifyListeners();
@@ -152,50 +151,204 @@ class SignUpNotifier extends ChangeNotifier {
     return RegExp(pattern).hasMatch(password);
   }
 
-  // ─── Regular Signup Submission ───────────────────────────────────────────
+  // ─── Email + Password Firebase Sign-Up ───────────────────────────────────
 
-  void submitSignup() {
-    if (signupModel.username.isEmpty ||
-        signupModel.email.isEmpty ||
-        signupModel.password.isEmpty ||
-        signupModel.college.isEmpty ||
-        signupModel.branch.isEmpty ||
-        signupModel.gender.isEmpty) {
+  /// Step 2 → Step 3: Creates Firebase user, sends verification email.
+  Future<void> submitEmailSignup() async {
+    isLoading = true;
+
+    try {
+      final authService = AuthService();
+      final credential = await authService.createUserWithEmail(
+        signupModel.email,
+        signupModel.password,
+      );
+
+      _firebaseUser = credential.user;
+
+      if (_firebaseUser == null) {
+        isLoading = false;
+        Get.snackbar('Sign Up Failed', 'Could not create account. Please try again.',
+            backgroundColor: Colors.red, colorText: Colors.white);
+        return;
+      }
+
+      await _firebaseUser!.sendEmailVerification();
+      debugPrint('Verification email sent to ${_firebaseUser!.email}');
+
+      isLoading = false;
+      changeStep(3); // verification pending screen — user taps button to confirm
+    } on FirebaseAuthException catch (e) {
+      isLoading = false;
+      final message = _firebaseAuthMessage(e.code);
+      Get.snackbar(
+        'Sign Up Failed',
+        message,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      isLoading = false;
+      Get.snackbar(
+        'Sign Up Failed',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Resend verification email (user taps "Resend" on step 3).
+  Future<void> resendVerificationEmail() async {
+    try {
+      await _firebaseUser?.sendEmailVerification();
+      Get.snackbar(
+        'Email Sent',
+        'Verification email resent. Check your inbox.',
+        backgroundColor: kLightBlue,
+        colorText: Colors.white,
+      );
+    } catch (_) {
       Get.snackbar(
         'Error',
-        'Please fill in all fields',
+        'Could not resend email. Please try again.',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-      return;
     }
+  }
 
-    if (!hasLocation) {
-      Get.snackbar(
-        'Location Required',
-        'Please select your location on the map before continuing.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
+  // ─── Verification check (on-demand) ─────────────────────────────────────
 
-    AuthHelper.signup(signupModel).then((response) {
-      if (response[0]) {
-        Get.offAll(
-          () => const LoginPage(drawer: true),
-          transition: Transition.fade,
-          duration: const Duration(seconds: 2),
-        );
-      } else {
+  /// Called when the user taps "I've verified my email".
+  /// Always reloads via FirebaseAuth.instance.currentUser to avoid stale references.
+  Future<void> checkVerifiedAndProceed() async {
+    if (_checkingVerification) return;
+    _checkingVerification = true;
+    notifyListeners();
+
+    try {
+      // Use FirebaseAuth.instance.currentUser directly — never rely on the
+      // stored _firebaseUser reference which may be stale if the app restarted.
+      final current = FirebaseAuth.instance.currentUser;
+
+      if (current == null) {
         Get.snackbar(
-          'Sign Up Failed',
-          response[1],
+          'Session Expired',
+          'Your session has expired. Please sign up again.',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
+        changeStep(0);
+        return;
       }
-    });
+
+      // Step 1: reload() fetches latest user state from server.
+      await current.reload();
+
+      // Step 2: getIdToken(true) forces a full token refresh, busting all
+      // local caches. This is the most reliable way to get updated emailVerified.
+      await current.getIdToken(true);
+
+      // Step 3: get a completely fresh reference after both refreshes.
+      final refreshed = FirebaseAuth.instance.currentUser;
+
+      debugPrint('--- Verification Check ---');
+      debugPrint('uid:           ${refreshed?.uid}');
+      debugPrint('email:         ${refreshed?.email}');
+      debugPrint('emailVerified: ${refreshed?.emailVerified}');
+
+      if (refreshed?.emailVerified == true) {
+        await _completeEmailSignup(refreshed!);
+      } else {
+        Get.snackbar(
+          'Not Verified Yet',
+          'Please open the link in the email first, then tap this button.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      debugPrint('checkVerifiedAndProceed error: $e');
+      Get.snackbar(
+        'Error',
+        'Could not check verification. Please try again.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      _checkingVerification = false;
+      notifyListeners();
+    }
+  }
+
+  /// Called once verification is confirmed: registers user in backend → onboarding.
+  Future<void> _completeEmailSignup(User user) async {
+    isLoading = true;
+
+    try {
+      final idToken = await user.getIdToken();
+      if (idToken == null) {
+        isLoading = false;
+        Get.snackbar('Error', 'Could not retrieve auth token.',
+            backgroundColor: Colors.red, colorText: Colors.white);
+        return;
+      }
+
+      final response = await AuthHelper.emailSignup(
+        idToken: idToken,
+        email: user.email ?? signupModel.email,
+        username: signupModel.username,
+      );
+
+      if (response[0] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('entrypoint', true);
+
+        isLoading = false;
+
+        Get.snackbar(
+          'Email Verified!',
+          'Welcome! Let\'s set up your profile.',
+          backgroundColor: kLightBlue,
+          colorText: Colors.white,
+        );
+
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        Get.offAll(
+          () => OnboardingFlow(initialName: signupModel.username),
+          transition: Transition.fade,
+          duration: const Duration(milliseconds: 600),
+        );
+      } else {
+        isLoading = false;
+        final msg = (response.length > 1 && response[1] != null)
+            ? response[1].toString()
+            : 'Registration failed';
+        Get.snackbar('Sign Up Failed', msg,
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      isLoading = false;
+      Get.snackbar('Error', e.toString(),
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  String _firebaseAuthMessage(String code) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'An account with this email already exists.';
+      case 'invalid-email':
+        return 'The email address is not valid.';
+      case 'weak-password':
+        return 'Password is too weak. Use 8+ chars with mixed case, digit & symbol.';
+      case 'operation-not-allowed':
+        return 'Email/password sign-up is not enabled.';
+      default:
+        return 'Sign up failed. Please try again.';
+    }
   }
 
   // ✅ ─── Google Sign-Up ───────────────────────────────────────────────────
@@ -237,7 +390,6 @@ class SignUpNotifier extends ChangeNotifier {
         return;
       }
 
-      // Step 2: Get Firebase ID token
       final idToken = await firebaseUser.getIdToken();
       if (idToken == null) {
         _isLoading = false;
@@ -253,7 +405,6 @@ class SignUpNotifier extends ChangeNotifier {
         return;
       }
 
-      // Step 3: Call backend signup endpoint with location if available
       final response = await AuthHelper.googleSignup(
         idToken: idToken,
         email: firebaseUser.email ?? '',
@@ -263,11 +414,9 @@ class SignUpNotifier extends ChangeNotifier {
         longitude: _longitude != 0.0 ? _longitude : null,
       );
 
-      // Step 4: Handle response
-      Get.closeAllSnackbars(); // Prevent stacking
+      Get.closeAllSnackbars();
 
       if (response.isNotEmpty && response[0] == true) {
-        // Save preferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('loggedIn', true);
         await prefs.setBool('entrypoint', true);
@@ -285,8 +434,10 @@ class SignUpNotifier extends ChangeNotifier {
 
         await Future.delayed(const Duration(seconds: 1));
 
-        // Navigate to main screen
-        Get.offAll(() => const MainScreen(), transition: Transition.fade);
+        Get.offAll(
+          () => OnboardingFlow(initialName: firebaseUser.displayName ?? ''),
+          transition: Transition.fade,
+        );
       } else {
         _isLoading = false;
         notifyListeners();
