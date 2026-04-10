@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/auth_service.dart';
-import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/location_service.dart';
@@ -107,7 +106,7 @@ class SignUpNotifier extends ChangeNotifier {
     }
   }
 
-  /// Geocodes [address] and updates state. Returns the result for the UI to
+  /// Geocode [address] and updates state. Returns the result for the UI to
   /// move the map camera, or null when geocoding fails.
   Future<LocationResult?> geocodeAndSet(String address) async {
     _locationLoading = true;
