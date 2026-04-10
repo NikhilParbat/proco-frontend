@@ -12,6 +12,7 @@ import 'package:proco/views/ui/onboarding/onboarding_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Must be a top-level function — called when app is in background/terminated
 @pragma('vm:entry-point')
@@ -24,6 +25,10 @@ Widget defaultHome = const OnBoardingScreen();
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables before anything else
+  await dotenv.load(fileName: ".env");
+
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);

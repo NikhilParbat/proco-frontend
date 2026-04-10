@@ -8,8 +8,8 @@ import 'package:proco/views/common/app_bar.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:proco/services/location_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -81,30 +81,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isSearching = true);
 
     try {
-      // Using Nominatim API (Free, requires User-Agent)
-      final url =
-          'https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=5&addressdetails=1';
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'User-Agent': 'proco_app', // Nominatim requires a User-Agent
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        setState(() {
-          _searchResults = data
-              .map(
-                (item) => {
-                  'display_name': item['display_name'],
-                  'lat': double.parse(item['lat']),
-                  'lon': double.parse(item['lon']),
-                },
-              )
-              .toList();
-        });
-      }
+      final results = await LocationService.getPlacePredictions(query);
+      setState(() {
+        _searchResults = results;
+      });
     } catch (e) {
       debugPrint("Autocomplete error: $e");
     } finally {
@@ -452,20 +432,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
               // flutter_map v8 uses initialCenter + initialZoom
               initialCenter: _markerPosition,
               initialZoom: 5.0,
-              onTap: (tapPosition, latLng) {
+              onTap: (tapPosition, latLng) async{
                 setState(() {
                   _markerPosition = latLng;
                   _markerVisible = true;
                   _searchResults = [];
                   locationSearchController.clear();
                 });
-                signUpProvider.setLocation(latLng.latitude, latLng.longitude);
-                FocusScope.of(context).unfocus(); // Dismiss keyboard if open
+
+                final addrData = await LocationService.getAddressFromLatLng(
+                  latLng.latitude, 
+                  latLng.longitude
+                );
+
+                if(!mounted) return;
+
+                signUpProvider.setLocation(
+                  latLng.latitude, 
+                  latLng.longitude, 
+                  displayAddress: "${addrData.city}, ${addrData.state}"
+                );
+                FocusScope.of(context).unfocus();
               },
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://api.maptiler.com/maps/hybrid-v4/{z}/{x}/{y}.png?key={apiKey}',
+                additionalOptions: {
+                  'apiKey': dotenv.get('MAPTILER_API_KEY'),
+                },
                 userAgentPackageName: 'com.proco.proco',
               ),
               MarkerLayer(
