@@ -58,7 +58,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                         'You are logged in into your account on these devices',
                         style: appstyle(
                           16,
-                          kDark,
+                          Colors.white,
                           FontWeight.normal,
                         ),
                       ),
@@ -117,7 +117,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                         text: 'Sign out from all devices',
                         style: appstyle(
                           16,
-                          kOrange,
+                          kTeal,
                           FontWeight.w600,
                         ),
                       ),
