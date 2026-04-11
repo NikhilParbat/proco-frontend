@@ -409,6 +409,8 @@ class _FilterPageState extends State<FilterPage> {
           final idx = e.key;
           final opportunity = e.value;
           final isLast = idx == opportunityTypes.length - 1;
+          final isSelected = opportunityTypes[opportunity]!;
+          final icon = kOpportunityIcons[opportunity] ?? Icons.work_outline_rounded;
           return Column(
             children: [
               Padding(
@@ -419,8 +421,8 @@ class _FilterPageState extends State<FilterPage> {
                     Row(
                       children: [
                         Icon(
-                          Icons.work_outline_rounded,
-                          color: opportunityTypes[opportunity]!
+                          icon,
+                          color: isSelected
                               ? _accent
                               : Colors.white38,
                           size: 18,

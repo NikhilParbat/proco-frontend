@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/material.dart';
 
 const kDark = Color(0xFF000000);
 const kLight = Color(0xFFFFFFFF);
@@ -47,6 +48,14 @@ const List<String> kOpportunityTypes = [
   'Competition',
   'Collaborate',
 ];
+
+const Map<String, IconData> kOpportunityIcons = {
+  'Internship': Icons.business_center_outlined,
+  'Research': Icons.biotech_outlined,
+  'Freelance': Icons.devices_outlined,
+  'Competition': Icons.emoji_events_outlined,
+  'Collaborate': Icons.groups_outlined,
+};
 
 List<String> requirements = [
   'Design and Build sophisticated and highly scalable apps using Flutter.',
