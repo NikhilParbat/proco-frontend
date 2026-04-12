@@ -31,6 +31,7 @@ class ViewTab extends StatelessWidget {
         (state.showPhone && state.phone.isNotEmpty) ||
         (state.showGender && state.gender.isNotEmpty) ||
         (state.showDob && state.dob.isNotEmpty) ||
+        state.userType.isNotEmpty ||
         (state.showCollege && education.isNotEmpty) ||
         location.isNotEmpty ||
         (state.showSkills && state.skills.isNotEmpty) ||
@@ -67,6 +68,10 @@ class ViewTab extends StatelessWidget {
             ],
             if (state.showDob && state.dob.isNotEmpty) ...[
               _infoCard(Icons.cake_outlined, 'Date of Birth', _formatDob(state.dob)),
+              SizedBox(height: 10.h),
+            ],
+            if (state.userType.isNotEmpty) ...[
+              _infoCard(Icons.badge_outlined, 'Role', state.userType),
               SizedBox(height: 10.h),
             ],
 

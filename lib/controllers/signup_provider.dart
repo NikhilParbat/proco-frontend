@@ -5,6 +5,7 @@ import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/location_service.dart';
+import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/constants/app_constants.dart';
@@ -439,6 +440,41 @@ class SignUpNotifier extends ChangeNotifier {
           transition: Transition.fade,
         );
       } else {
+        // ── Fallback: email already registered → auto-login ──────────────
+        // This handles the case where the user signed up with email/password
+        // (or a previous Google sign-in) and is now trying Google sign-up
+        // with the same address.  Firebase already authenticated them, so
+        // we can use the same idToken to log them straight in.
+        final loginResponse = await AuthHelper.googleLogin(
+          idToken: idToken,
+          email: firebaseUser.email ?? '',
+          displayName: firebaseUser.displayName,
+        );
+
+        Get.closeAllSnackbars();
+
+        if (loginResponse.isNotEmpty && loginResponse[0] == true) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('loggedIn', true);
+          await prefs.setBool('entrypoint', true);
+
+          _isLoading = false;
+          notifyListeners();
+
+          Get.snackbar(
+            'Welcome Back!',
+            'You already have an account. Logging you in...',
+            colorText: kLight,
+            backgroundColor: kLightBlue,
+            icon: const Icon(Icons.check),
+          );
+
+          await Future.delayed(const Duration(seconds: 1));
+          Get.offAll(() => const MainScreen(), transition: Transition.fade);
+          return;
+        }
+
+        // Both signup and login failed — show the original signup error.
         _isLoading = false;
         notifyListeners();
 

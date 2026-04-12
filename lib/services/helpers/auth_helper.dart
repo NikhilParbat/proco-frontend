@@ -38,6 +38,7 @@ class AuthHelper {
       await prefs.setString('token', loginRes.userToken);
       await prefs.setString('userId', loginRes.id);
       await prefs.setString('profile', loginRes.profile);
+      await prefs.setBool('onboardingComplete', true);
 
       return [true];
     } else {
@@ -116,6 +117,7 @@ class AuthHelper {
         await prefs.setString('token', data['userToken']);
         await prefs.setString('userId', data['_id']);
         await prefs.setString('profile', data['profile'] ?? '');
+        await prefs.setBool('onboardingComplete', true);
         return [true];
       } else {
         final message = body['message'] as String? ?? 'Google login failed';

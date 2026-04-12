@@ -26,8 +26,8 @@ class ProfileNotifier extends ChangeNotifier {
   }
 
   void updateProfile(ProfileUpdateReq model, File? image) async {
-    await UserHelper.updateProfile(model, image).then((response) {
-      if (response) {
+    await UserHelper.updateProfile(model, image).then((error) {
+      if (error == null) {
         Get.snackbar(
           'Profile Update',
           'Enjoy your search for a job',
@@ -42,10 +42,11 @@ class ProfileNotifier extends ChangeNotifier {
       } else {
         Get.snackbar(
           'Updating Failed',
-          'Please try again',
+          error,
           colorText: kLight,
           backgroundColor: kOrange,
           icon: const Icon(Icons.add_alert),
+          duration: const Duration(seconds: 6),
         );
       }
     });

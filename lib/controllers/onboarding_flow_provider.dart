@@ -122,19 +122,20 @@ class OnboardingFlowProvider extends ChangeNotifier {
         skills: skills,
       );
 
-      final success = await UserHelper.updateProfile(req, profilePhoto);
+      final error = await UserHelper.updateProfile(req, profilePhoto);
 
-      if (success) {
+      if (error == null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('onboardingComplete', true);
         await prefs.remove('onboardingPage');
         Get.offAll(() => const MainScreen(), transition: Transition.fade);
       } else {
         Get.snackbar(
-          'Error',
-          'Could not save your profile. Please try again.',
+          'Could Not Save Profile',
+          error,
           backgroundColor: kOrange,
           colorText: kLight,
+          duration: const Duration(seconds: 6),
         );
       }
     } catch (e) {

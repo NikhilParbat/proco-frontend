@@ -23,6 +23,7 @@ class ProfileEditState extends ChangeNotifier {
   double latitude = 0.0;
   double longitude = 0.0;
 
+  String userType = ''; // 'Student' | 'Young Professional'
   String dob = ''; // Date of birth, stored as "YYYY-MM-DD"
   String linkedInUrl = '';
   String gitHubUrl = '';
@@ -75,6 +76,7 @@ class ProfileEditState extends ChangeNotifier {
         skills = List<String>.from(data.skills);
         profileImageUrl = data.profile;
         dob = data.dob;
+        userType = data.userType;
         linkedInUrl = data.linkedInUrl;
         gitHubUrl = data.gitHubUrl;
         twitterUrl = data.twitterUrl;

@@ -14,9 +14,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserHelper {
   static https.Client client = https.Client();
 
-  static Future<bool> updateProfile(ProfileUpdateReq model, File? image) async {
+  /// Returns null on success, or an error description on failure.
+  static Future<String?> updateProfile(ProfileUpdateReq model, File? image) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+
+    if (token == null || token.isEmpty) {
+      debugPrint('updateProfile: token is missing in SharedPreferences');
+      return 'Not authenticated — please log in again.';
+    }
 
     final url = Uri.http(Config.apiUrl, Config.profileUrl);
 
@@ -61,7 +67,16 @@ class UserHelper {
     debugPrint('updateProfile status: ${streamedResponse.statusCode}');
     debugPrint('updateProfile body:   $responseBody');
 
-    return streamedResponse.statusCode == 200;
+    if (streamedResponse.statusCode == 200) return null;
+
+    // Extract backend message for a useful error snackbar
+    try {
+      final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
+      final msg = decoded['message'] as String?;
+      return '[${streamedResponse.statusCode}] ${msg ?? responseBody}';
+    } catch (_) {
+      return '[${streamedResponse.statusCode}] $responseBody';
+    }
   }
 
   static Future<ProfileRes?> getProfile() async {

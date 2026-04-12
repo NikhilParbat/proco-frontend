@@ -36,7 +36,8 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
 
-  final entrypoint = prefs.getBool('entrypoint') ?? false;
+  final token = prefs.getString('token');
+  final isLoggedIn = token != null && token.isNotEmpty;
   final onboardingComplete = prefs.getBool('onboardingComplete') ?? false;
   final onboardingPage = prefs.getInt('onboardingPage') ?? 0;
 
@@ -57,7 +58,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => FilterNotifier()),
       ],
       child: MyApp(
-        entrypoint: entrypoint,
+        isLoggedIn: isLoggedIn,
         onboardingComplete: onboardingComplete,
         onboardingPage: onboardingPage,
       ),
@@ -66,19 +67,19 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  final bool entrypoint;
+  final bool isLoggedIn;
   final bool onboardingComplete;
   final int onboardingPage;
 
   const MyApp({
     super.key,
-    required this.entrypoint,
+    required this.isLoggedIn,
     required this.onboardingComplete,
     required this.onboardingPage,
   });
 
   Widget get _home {
-    if (!entrypoint) return const OnBoardingScreen();
+    if (!isLoggedIn) return const OnBoardingScreen();
     if (!onboardingComplete) {
       return OnboardingFlow(initialPage: onboardingPage);
     }
