@@ -122,7 +122,10 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             if (fractionRemaining <= _prefetchThreshold &&
                 !widget.jobNotifier.isFetchingMore &&
                 widget.jobNotifier.hasMorePages) {
-              widget.jobNotifier.loadNextPage(widget.currentUserId);
+              widget.jobNotifier.loadNextPage(
+                widget.currentUserId,
+                bookmarkedIds: widget.bookmarkNotifier.jobs,
+              );
             }
 
             return true;
@@ -145,7 +148,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
         ),
 
         // ── Floating action buttons ──────────────────────────────────────────
-        Positioned(bottom: 14.h, child: _buildFabRow()),
+        Positioned(bottom: 48.h, child: _buildFabRow()),
       ],
     );
   }
@@ -170,9 +173,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Top image (52%) ──────────────────────────────────────────
+              // ── Top image (44%) ──────────────────────────────────────────
               Expanded(
-                flex: 52,
+                flex: 44,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -248,14 +251,11 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                 ),
               ),
 
-              // ── Bottom info (48%) ────────────────────────────────────────
+              // ── Bottom info (56%) ────────────────────────────────────────
               Expanded(
-                flex: 48,
+                flex: 56,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 18.w,
-                    vertical: 12.h,
-                  ),
+                  padding: EdgeInsets.fromLTRB(18.w, 4.h, 18.w, 108.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -550,10 +550,24 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               color: color,
               shape: BoxShape.circle,
               boxShadow: [
+                // top-edge highlight — gives the raised dome feel
                 BoxShadow(
-                  color: color.withValues(alpha:0.45),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
+                  color: Colors.white.withValues(alpha: 0.18),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
+                ),
+                // coloured glow
+                BoxShadow(
+                  color: color.withValues(alpha: 0.55),
+                  blurRadius: 16,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 6),
+                ),
+                // hard dark base — the "depth" layer
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),

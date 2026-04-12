@@ -35,18 +35,31 @@ class Job {
     required this.agentId,
   });
 
-  factory Job.fromJson(Map<String, dynamic> json) => Job(
-        id: json['_id'] ?? '',
-        title: json['title'] ?? '',
-        location: json['location'] ?? '',
-        company: json['company'] ?? '',
-        salary: json['salary'] ?? '',
-        period: json['period'] ?? '',
-        contract: json['contract'] ?? '',
-        imageUrl: json['imageUrl'] ?? '',
-        hiring: json['hiring'] ?? true,
-        agentId: json['agentId'] ?? '',
-      );
+  factory Job.fromJson(Map<String, dynamic> json) {
+    // location arrives as a GeoJSON Map or a plain String
+    final rawLocation = json['location'];
+    String parsedLocation = '';
+    if (rawLocation is Map) {
+      final city = rawLocation['city'] ?? '';
+      final state = rawLocation['state'] ?? '';
+      parsedLocation = [city, state].where((s) => s.isNotEmpty).join(', ');
+    } else if (rawLocation is String) {
+      parsedLocation = rawLocation;
+    }
+
+    return Job(
+      id: json['_id'] ?? '',
+      title: json['title'] ?? '',
+      location: parsedLocation,
+      company: json['company'] ?? '',
+      salary: json['salary'] ?? '',
+      period: json['period'] ?? '',
+      contract: json['contract'] ?? '',
+      imageUrl: json['imageUrl'] ?? '',
+      hiring: json['hiring'] ?? true,
+      agentId: json['agentId'] ?? '',
+    );
+  }
   final String id;
   final String title;
   final String location;

@@ -146,15 +146,11 @@ class _AddJobPageState extends State<AddJobPage> {
       return;
     }
 
-    if (_titleController == TextEditingController.fromValue(null)) {
-      _snack('Please Enter a title');
+    if (_titleController.text.trim().isEmpty) {
+      _snack('Please enter a query title.');
       return;
     }
 
-    if (!_locationPicked) {
-      _snack('Please pick a location on the map.');
-      return;
-    }
 
     final effectiveDomain = selectedDomain == 'Custom…'
         ? _customDomainController.text.trim()
@@ -309,7 +305,7 @@ class _AddJobPageState extends State<AddJobPage> {
               SizedBox(height: 12.h),
               _field(
                 _titleController,
-                'Query Title (optional)',
+                'Query Title *',
                 Icons.work_outline_rounded,
                 false,
               ),
@@ -365,7 +361,7 @@ class _AddJobPageState extends State<AddJobPage> {
                         child: Text(
                           _locationPicked
                               ? _locationController.text
-                              : "Pin Job Location on Map *",
+                              : "Pin Job Location on Map (optional)",
                           style: appstyle(
                             14,
                             _locationPicked ? _white : Colors.white38,

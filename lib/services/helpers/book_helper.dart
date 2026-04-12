@@ -108,7 +108,9 @@ class BookMarkHelper {
       if (response.statusCode == 200 && decoded['success'] == true) {
         final List data = decoded['data'] ?? [];
 
+        // Guard against orphaned bookmarks where the job was deleted
         return data
+            .where((e) => e is Map && e['job'] != null)
             .map((e) => AllBookmark.fromJson(e as Map<String, dynamic>))
             .toList();
       } else {

@@ -30,7 +30,10 @@ class JobsNotifier extends ChangeNotifier {
 
   /// Load page 1 from on-device cache immediately, then refresh from network.
   /// Resets pagination state — call this on app start or after filter changes.
-  Future<void> preloadJobs(String userId) async {
+  Future<void> preloadJobs(
+    String userId, {
+    List<String> bookmarkedIds = const [],
+  }) async {
     _currentPage = 1;
     hasMorePages = true;
 
@@ -47,7 +50,12 @@ class JobsNotifier extends ChangeNotifier {
 
     try {
       final fresh = userId.isNotEmpty
-          ? await JobsHelper.getFilteredJobsPaged(userId, 1, _pageSize)
+          ? await JobsHelper.getFilteredJobsPaged(
+              userId,
+              1,
+              _pageSize,
+              excludeIds: bookmarkedIds,
+            )
           : await JobsHelper.getJobsPaged(1, _pageSize);
       cachedJobs = fresh;
       hasMorePages = fresh.length >= _pageSize;
@@ -62,7 +70,10 @@ class JobsNotifier extends ChangeNotifier {
 
   /// Silently fetch the next page and append — called when remaining cards
   /// drop below the percentage threshold set in JobCardSwiper.
-  Future<void> loadNextPage(String userId) async {
+  Future<void> loadNextPage(
+    String userId, {
+    List<String> bookmarkedIds = const [],
+  }) async {
     if (isFetchingMore || !hasMorePages) return;
     isFetchingMore = true;
     notifyListeners();
@@ -74,6 +85,7 @@ class JobsNotifier extends ChangeNotifier {
               userId,
               _currentPage,
               _pageSize,
+              excludeIds: bookmarkedIds,
             )
           : await JobsHelper.getJobsPaged(_currentPage, _pageSize);
 
@@ -111,14 +123,16 @@ class JobsNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<JobsResponse> getDisplayableJobs(String currentUserId) {
-    // Return the cached filtered list to prevent re-calculating on every build frame
+  List<JobsResponse> getDisplayableJobs(
+    String currentUserId, {
+    List<String> bookmarkedIds = const [],
+  }) {
+    final bookmarkedSet = bookmarkedIds.toSet();
     return cachedJobs.where((job) {
-      bool isNotMine = job.agentId != currentUserId;
-      bool isHiring = job.hiring == true;
-      // Note: If checking bookmarks is still slow,
-      // move bookmarkedIds to a Set in the Notifier state
-      return isNotMine && isHiring;
+      final isNotMine = job.agentId != currentUserId;
+      final isHiring = job.hiring == true;
+      final isNotBookmarked = !bookmarkedSet.contains(job.id);
+      return isNotMine && isHiring && isNotBookmarked;
     }).toList();
   }
 

@@ -47,20 +47,22 @@ class DevicesInfo extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ReusableText(
-                    text: date,
-                    style: appstyle(16, kDarkGrey, FontWeight.w400),
-                  ),
-                  ReusableText(
-                    text: ipAddress != null
-                        ? "IP: $ipAddress"
-                        : "IP Address not available",
-                    style: appstyle(16, kDarkGrey, FontWeight.w400),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ReusableText(
+                      text: date,
+                      style: appstyle(16, kDarkGrey, FontWeight.w400),
+                    ),
+                    ReusableText(
+                      text: ipAddress != null
+                          ? "IP: $ipAddress"
+                          : "IP Address not available",
+                      style: appstyle(16, kDarkGrey, FontWeight.w400),
+                    ),
+                  ],
+                ),
               ),
               GestureDetector(
                 onTap: onSignOut,

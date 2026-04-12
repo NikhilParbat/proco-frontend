@@ -53,7 +53,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const HeightSpacer(size: 50),
+                      const HeightSpacer(size: 20),
                       Text(
                         'You are logged in into your account on these devices',
                         style: appstyle(
@@ -62,7 +62,7 @@ class _DeviceManagementState extends State<DeviceManagement> {
                           FontWeight.normal,
                         ),
                       ),
-                      const HeightSpacer(size: 30),
+                      const HeightSpacer(size: 16),
                       if (sessions.isEmpty)
                         Center(
                           child: Padding(

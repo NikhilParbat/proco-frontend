@@ -35,14 +35,21 @@ class JobsHelper {
   static Future<List<JobsResponse>> getFilteredJobsPaged(
     String agentId,
     int page,
-    int limit,
-  ) async {
+    int limit, {
+    List<String> excludeIds = const [],
+  }) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, '${Config.jobs}/filtered/$agentId', {
+      final queryParams = <String, String>{
         'page': '$page',
         'limit': '$limit',
-      });
+        if (excludeIds.isNotEmpty) 'excludeIds': excludeIds.join(','),
+      };
+      final url = Uri.http(
+        Config.apiUrl,
+        '${Config.jobs}/filtered/$agentId',
+        queryParams,
+      );
       final response = await client.get(url, headers: requestHeaders);
       if (response.statusCode == 200) {
         return jobsResponseFromJson(response.body);

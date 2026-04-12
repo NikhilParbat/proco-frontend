@@ -116,10 +116,11 @@ class ProfileEditState extends ChangeNotifier {
         latitude: latitude,
         longitude: longitude,
       );
-      final ok = await UserHelper.updateProfile(req, image);
+      final err = await UserHelper.updateProfile(req, image);
       isSaving = false;
+      if (err != null) error = err;
       notifyListeners();
-      return ok == true;
+      return err == null; // null = success, non-null = error message
     } catch (e) {
       isSaving = false;
       error = e.toString();

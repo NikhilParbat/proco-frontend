@@ -94,7 +94,12 @@ class BookMarkNotifier extends ChangeNotifier {
   }
 
   void getBookMarks() {
-    bookmarks = BookMarkHelper.getBookmarks();
+    bookmarks = BookMarkHelper.getBookmarks().then((list) {
+      // Sync local ID list so SharedPreferences reflects only live bookmarks
+      final activeIds = list.map((b) => b.job.id).toList();
+      jobs = activeIds; // setter persists to SharedPreferences + notifies
+      return list;
+    });
     notifyListeners();
   }
 }

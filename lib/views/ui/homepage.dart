@@ -43,10 +43,10 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (_) => const FilterPage()),
     );
     if (mounted) {
-      Provider.of<JobsNotifier>(
-        context,
-        listen: false,
-      ).preloadJobs(_currentUserId);
+      final bookmarkedIds =
+          Provider.of<BookMarkNotifier>(context, listen: false).jobs;
+      Provider.of<JobsNotifier>(context, listen: false)
+          .preloadJobs(_currentUserId, bookmarkedIds: bookmarkedIds);
     }
   }
 
@@ -82,9 +82,13 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: Consumer<JobsNotifier>(
-        builder: (context, jobNotifier, _) {
-          final jobs = jobNotifier.getDisplayableJobs(_currentUserId);
+      body: Consumer2<JobsNotifier, BookMarkNotifier>(
+        builder: (context, jobNotifier, bookmarkNotifier, _) {
+          final bookmarkedIds = bookmarkNotifier.jobs;
+          final jobs = jobNotifier.getDisplayableJobs(
+            _currentUserId,
+            bookmarkedIds: bookmarkedIds,
+          );
 
           if (jobNotifier.isLoadingJobs && jobs.isEmpty) {
             return const Center(child: CircularProgressIndicator(color: _teal));
@@ -96,10 +100,7 @@ class _HomePageState extends State<HomePage> {
             jobs: jobs,
             currentUserId: _currentUserId,
             jobNotifier: jobNotifier,
-            bookmarkNotifier: Provider.of<BookMarkNotifier>(
-              context,
-              listen: false,
-            ),
+            bookmarkNotifier: bookmarkNotifier,
           );
         },
       ),
