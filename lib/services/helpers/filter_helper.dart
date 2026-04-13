@@ -13,7 +13,7 @@ class FilterHelper {
   static Future<List<FilterResponse>> getFilters() async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, Config.filters);
+      final url = Config.url( Config.filters);
       final response = await client.get(url, headers: requestHeaders);
 
       if (response.statusCode == 200) {
@@ -31,7 +31,7 @@ class FilterHelper {
   static Future<GetFilterRes> getFilter(String agentId) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, '${Config.filters}/$agentId');
+      final url = Config.url( '${Config.filters}/$agentId');
       final response = await client.get(url, headers: requestHeaders);
 
       debugPrint('Request Headers: ${{'Content-Type': 'application/json'}}');
@@ -52,7 +52,7 @@ class FilterHelper {
 
   static Future<List<FilterResponse>> getUserFilters(String agentId) async {
     final requestHeaders = {'Content-Type': 'application/json'};
-    final url = Uri.http(Config.apiUrl, '${Config.filters}/$agentId');
+    final url = Config.url( '${Config.filters}/$agentId');
     final response = await client.get(url, headers: requestHeaders);
 
     if (response.statusCode == 200) {
@@ -86,7 +86,7 @@ class FilterHelper {
   static Future<FilterResponse> getRecentFilters() async {
     final requestHeaders = <String, String>{'Content-Type': 'application/json'};
 
-    final url = Uri.http(Config.apiUrl, Config.filters, {'new': 'true'});
+    final url = Config.url( Config.filters, {'new': 'true'});
     final response = await client.get(url, headers: requestHeaders);
 
     if (response.statusCode == 200) {
@@ -101,7 +101,7 @@ class FilterHelper {
 
   static Future<FilterResponse> createFilter(CreateFilterRequest model) async {
     try {
-      final url = Uri.http(Config.apiUrl, Config.filters);
+      final url = Config.url( Config.filters);
 
       // API Request
       final response = await client.post(
@@ -144,7 +144,7 @@ class FilterHelper {
     try {
       final prefs = await SharedPreferences.getInstance();
       var token = prefs.getString('token');
-      final url = Uri.http(Config.apiUrl, '${Config.filters}/$filterId');
+      final url = Config.url( '${Config.filters}/$filterId');
       final response = await client.put(
         url,
         headers: {
@@ -167,7 +167,7 @@ class FilterHelper {
   static Future<void> deleteFilter(String filterId) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, '${Config.filters}/$filterId');
+      final url = Config.url( '${Config.filters}/$filterId');
       final response = await client.delete(url, headers: requestHeaders);
 
       if (response.statusCode != 204) {

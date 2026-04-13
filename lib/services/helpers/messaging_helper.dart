@@ -20,7 +20,7 @@ class MesssagingHelper {
         return {"success": false, "message": "User not authenticated"};
       }
 
-      final url = Uri.http(Config.apiUrl, Config.messagingUrl);
+      final url = Config.url( Config.messagingUrl);
 
       final response = await client.post(
         url,
@@ -65,7 +65,7 @@ class MesssagingHelper {
         throw Exception("User not authenticated");
       }
 
-      final url = Uri.http(Config.apiUrl, '${Config.messagingUrl}/$chatId', {
+      final url = Config.url( '${Config.messagingUrl}/$chatId', {
         'page': offset.toString(),
       });
 

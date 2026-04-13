@@ -88,12 +88,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: Center(
         child: _card(
           children: [
-            _cardTitle("Join ProCo 🚀"),
+            _cardTitle("Join ProCo"),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: provider.isLoading ? null : () => provider.googleSignUp(),
+                onPressed: provider.isLoading
+                    ? null
+                    : () => provider.googleSignUp(),
                 icon: const Icon(Icons.g_mobiledata, size: 28),
                 label: provider.isLoading
                     ? const SizedBox(
@@ -163,7 +165,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               onTap: () {
                 final email = _emailController.text.trim();
                 if (email.isEmpty || !email.contains('@')) {
-                  _snack('Invalid Email', 'Please enter a valid email address.');
+                  _snack(
+                    'Invalid Email',
+                    'Please enter a valid email address.',
+                  );
                   return;
                 }
                 provider.signupModel.email = email;
@@ -198,7 +203,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               suffixIcon: GestureDetector(
                 onTap: () => provider.obscureText = !provider.obscureText,
                 child: Icon(
-                  provider.obscureText ? Icons.visibility : Icons.visibility_off,
+                  provider.obscureText
+                      ? Icons.visibility
+                      : Icons.visibility_off,
                   color: Colors.white54,
                 ),
               ),
@@ -210,12 +217,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
             const SizedBox(height: 20),
             provider.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: kTeal),
-                  )
+                ? const Center(child: CircularProgressIndicator(color: kTeal))
                 : _nextButton(
                     onTap: () {
-                      if (!provider.passwordValidator(_passwordController.text)) {
+                      if (!provider.passwordValidator(
+                        _passwordController.text,
+                      )) {
                         _snack(
                           'Weak Password',
                           'Need 8+ chars, uppercase, lowercase, digit & special character.',
@@ -328,13 +335,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _cardTitle(String text) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 26.sp,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 26.sp,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+  );
 
   Widget _nextButton({required VoidCallback onTap}) {
     return Center(

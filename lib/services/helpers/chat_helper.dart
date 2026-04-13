@@ -20,7 +20,7 @@ class ChatHelper {
         return {"success": false, "message": "User not authenticated"};
       }
 
-      final url = Uri.http(Config.apiUrl, Config.chatsUrl);
+      final url = Config.url( Config.chatsUrl);
 
       final response = await client.post(
         url,
@@ -59,7 +59,7 @@ class ChatHelper {
       final token = prefs.getString('token');
       if (token == null) return false;
 
-      final url = Uri.http(Config.apiUrl, '${Config.chatsUrl}/$chatId/unmatch');
+      final url = Config.url( '${Config.chatsUrl}/$chatId/unmatch');
       final response = await client.patch(
         url,
         headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
@@ -80,7 +80,7 @@ class ChatHelper {
       final token = prefs.getString('token');
       if (token == null) return false;
 
-      final url = Uri.http(Config.apiUrl, '/api/messages/clear/$chatId');
+      final url = Config.url( '/api/messages/clear/$chatId');
       final response = await client.delete(
         url,
         headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
@@ -101,7 +101,7 @@ class ChatHelper {
       final token = prefs.getString('token');
       if (token == null) return null;
 
-      final url = Uri.http(Config.apiUrl, '${Config.chatsUrl}/$chatId/pin');
+      final url = Config.url( '${Config.chatsUrl}/$chatId/pin');
       final response = await client.patch(
         url,
         headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
@@ -128,7 +128,7 @@ class ChatHelper {
         throw Exception("User not authenticated");
       }
 
-      final url = Uri.http(Config.apiUrl, Config.chatsUrl);
+      final url = Config.url( Config.chatsUrl);
 
       final response = await client.get(
         url,

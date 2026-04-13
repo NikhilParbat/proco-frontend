@@ -108,7 +108,7 @@ class NotificationHelper {
     String authToken,
   ) async {
     try {
-      final url = Uri.http(Config.apiUrl, Config.fcmTokenUrl);
+      final url = Config.url( Config.fcmTokenUrl);
       await http.post(
         url,
         headers: {

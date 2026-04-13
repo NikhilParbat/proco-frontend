@@ -13,7 +13,7 @@ class AuthHelper {
 
   static Future<List<dynamic>> login(LoginModel model) async {
     final requestHeaders = <String, String>{'Content-Type': 'application/json'};
-    final url = Uri.http(Config.apiUrl, Config.loginUrl);
+    final url = Config.url( Config.loginUrl);
 
     final response = await client.post(
       url,
@@ -38,9 +38,13 @@ class AuthHelper {
       await prefs.setString('token', loginRes.userToken);
       await prefs.setString('userId', loginRes.id);
       await prefs.setString('profile', loginRes.profile);
-      await prefs.setBool('onboardingComplete', true);
 
-      return [true];
+      // Use the flag returned by the backend to decide onboarding state.
+      // isFirstTimeUser: true means the account needs to complete onboarding.
+      final isFirstTimeUser = body['data']?['isFirstTimeUser'] as bool? ?? false;
+      await prefs.setBool('onboardingComplete', !isFirstTimeUser);
+
+      return [true, isFirstTimeUser];
     } else {
       // ✅ Server always sends { success: false, message: "..." }
       final message = body['message'] as String? ?? 'An error occurred';
@@ -53,7 +57,7 @@ class AuthHelper {
       final requestHeaders = <String, String>{
         'Content-Type': 'application/json',
       };
-      final url = Uri.http(Config.apiUrl, Config.signupUrl);
+      final url = Config.url( Config.signupUrl);
 
       debugPrint(jsonEncode(model));
 
@@ -90,7 +94,7 @@ class AuthHelper {
       final requestHeaders = <String, String>{
         'Content-Type': 'application/json',
       };
-      final url = Uri.http(Config.apiUrl, Config.googleLoginUrl);
+      final url = Config.url( Config.googleLoginUrl);
 
       final response = await client.post(
         url,
@@ -117,8 +121,13 @@ class AuthHelper {
         await prefs.setString('token', data['userToken']);
         await prefs.setString('userId', data['_id']);
         await prefs.setString('profile', data['profile'] ?? '');
-        await prefs.setBool('onboardingComplete', true);
-        return [true];
+
+        // If the backend flags this as a first-time user (e.g. re-signup after
+        // account deletion), onboarding has NOT been completed yet.
+        final isFirstTimeUser = data['isFirstTimeUser'] as bool? ?? false;
+        await prefs.setBool('onboardingComplete', !isFirstTimeUser);
+
+        return [true, isFirstTimeUser];
       } else {
         final message = body['message'] as String? ?? 'Google login failed';
         return [false, message];
@@ -140,7 +149,7 @@ class AuthHelper {
       final requestHeaders = <String, String>{
         'Content-Type': 'application/json',
       };
-      final url = Uri.http(Config.apiUrl, Config.emailSignupUrl);
+      final url = Config.url( Config.emailSignupUrl);
 
       final response = await client.post(
         url,
@@ -190,7 +199,7 @@ class AuthHelper {
     double? longitude,
   }) async {
     try {
-      var url = Uri.http(Config.apiUrl, Config.googleSignupUrl);
+      var url = Config.url( Config.googleSignupUrl);
 
       final body = {
         'idToken': idToken,
@@ -212,18 +221,27 @@ class AuthHelper {
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        var data = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final userData = data['data'] ?? {};
 
-        // Save token and userId
         final prefs = await SharedPreferences.getInstance();
-        if (data['data']?['userToken'] != null) {
-          await prefs.setString('token', data['data']['userToken']);
+        if (userData['userToken'] != null) {
+          await prefs.setString('token', userData['userToken']);
         }
-        if (data['data']?['_id'] != null) {
-          await prefs.setString('userId', data['data']['_id']);
+        if (userData['_id'] != null) {
+          await prefs.setString('userId', userData['_id']);
+        }
+        if (userData['profile'] != null) {
+          await prefs.setString('profile', userData['profile']);
         }
 
-        return [true, data];
+        // isFirstTimeUser: true  → new account, must go through onboarding
+        // isFirstTimeUser: false → existing email/password account linked via Google,
+        //                          onboarding already complete
+        final isFirstTimeUser = userData['isFirstTimeUser'] as bool? ?? true;
+        await prefs.setBool('onboardingComplete', !isFirstTimeUser);
+
+        return [true, isFirstTimeUser];
       } else {
         var error = jsonDecode(response.body);
         return [false, error['message'] ?? 'Signup failed'];

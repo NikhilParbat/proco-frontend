@@ -8,6 +8,7 @@ import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/mainscreen.dart';
+import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Simple model to hold one device session
@@ -129,7 +130,13 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        Get.offAll(() => const MainScreen(), transition: Transition.fade);
+        // response[1] carries isFirstTimeUser — if true, onboarding is still needed.
+        final isFirstTimeUser = response.length > 1 && response[1] == true;
+        if (isFirstTimeUser) {
+          Get.offAll(() => const OnboardingFlow(), transition: Transition.fade);
+        } else {
+          Get.offAll(() => const MainScreen(), transition: Transition.fade);
+        }
       } else {
         _isLoading = false;
         notifyListeners();
@@ -232,6 +239,10 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
+        // response[1] carries isFirstTimeUser — true means this account was
+        // re-created after deletion and still needs onboarding.
+        final isFirstTimeUser = response.length > 1 && response[1] == true;
+
         Get.snackbar(
           'Login Success',
           'Welcome back, ${firebaseUser.displayName ?? ""}!',
@@ -242,7 +253,14 @@ class LoginNotifier extends ChangeNotifier {
 
         await Future.delayed(const Duration(seconds: 1));
 
-        Get.offAll(() => const MainScreen());
+        if (isFirstTimeUser) {
+          Get.offAll(
+            () => OnboardingFlow(initialName: firebaseUser.displayName ?? ''),
+            transition: Transition.fade,
+          );
+        } else {
+          Get.offAll(() => const MainScreen());
+        }
       } else {
         _isLoading = false;
         notifyListeners();
@@ -371,6 +389,8 @@ class LoginNotifier extends ChangeNotifier {
     await prefs.remove('profile');
     await prefs.remove('userId');
     await prefs.remove('device_sessions');
+    await prefs.remove('onboardingComplete');
+    await prefs.remove('onboardingPage');
 
     // ✅ Also sign out from Firebase
     await AuthService().signOut();

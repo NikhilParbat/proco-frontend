@@ -425,26 +425,40 @@ class SignUpNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        Get.snackbar(
-          'Sign Up Success',
-          'Welcome, ${firebaseUser.displayName ?? ""}!',
-          colorText: kLight,
-          backgroundColor: kLightBlue,
-          icon: const Icon(Icons.check),
-        );
+        // response[1] is isFirstTimeUser:
+        //   true  → brand-new account or re-signup after deletion → go through onboarding
+        //   false → existing email/password account linked via Google → go straight to dashboard
+        final isFirstTimeUser = response.length > 1 && response[1] == true;
 
-        await Future.delayed(const Duration(seconds: 1));
-
-        Get.offAll(
-          () => OnboardingFlow(initialName: firebaseUser.displayName ?? ''),
-          transition: Transition.fade,
-        );
+        if (isFirstTimeUser) {
+          Get.snackbar(
+            'Welcome!',
+            'Let\'s set up your profile.',
+            colorText: kLight,
+            backgroundColor: kLightBlue,
+            icon: const Icon(Icons.check),
+          );
+          await Future.delayed(const Duration(seconds: 1));
+          Get.offAll(
+            () => OnboardingFlow(initialName: firebaseUser.displayName ?? ''),
+            transition: Transition.fade,
+          );
+        } else {
+          Get.snackbar(
+            'Welcome Back!',
+            'Signed in with Google.',
+            colorText: kLight,
+            backgroundColor: kLightBlue,
+            icon: const Icon(Icons.check),
+          );
+          await Future.delayed(const Duration(seconds: 1));
+          Get.offAll(() => const MainScreen(), transition: Transition.fade);
+        }
       } else {
-        // ── Fallback: email already registered → auto-login ──────────────
-        // This handles the case where the user signed up with email/password
-        // (or a previous Google sign-in) and is now trying Google sign-up
-        // with the same address.  Firebase already authenticated them, so
-        // we can use the same idToken to log them straight in.
+        // ── Fallback: same Google account already registered → auto-login ─
+        // Triggered when the backend returns 409 (googleSignup endpoint).
+        // Firebase already authenticated them, so we use the same idToken
+        // to log them straight in.
         final loginResponse = await AuthHelper.googleLogin(
           idToken: idToken,
           email: firebaseUser.email ?? '',
@@ -461,16 +475,36 @@ class SignUpNotifier extends ChangeNotifier {
           _isLoading = false;
           notifyListeners();
 
-          Get.snackbar(
-            'Welcome Back!',
-            'You already have an account. Logging you in...',
-            colorText: kLight,
-            backgroundColor: kLightBlue,
-            icon: const Icon(Icons.check),
-          );
+          // loginResponse[1] carries isFirstTimeUser — true means the backend
+          // record belongs to a previously deleted account that was re-created.
+          // In that case we must run onboarding rather than skipping it.
+          final isFirstTimeUser =
+              loginResponse.length > 1 && loginResponse[1] == true;
 
-          await Future.delayed(const Duration(seconds: 1));
-          Get.offAll(() => const MainScreen(), transition: Transition.fade);
+          if (isFirstTimeUser) {
+            Get.snackbar(
+              'Welcome!',
+              'Let\'s finish setting up your profile.',
+              colorText: kLight,
+              backgroundColor: kLightBlue,
+              icon: const Icon(Icons.check),
+            );
+            await Future.delayed(const Duration(seconds: 1));
+            Get.offAll(
+              () => OnboardingFlow(initialName: firebaseUser.displayName ?? ''),
+              transition: Transition.fade,
+            );
+          } else {
+            Get.snackbar(
+              'Welcome Back!',
+              'You already have an account. Logging you in...',
+              colorText: kLight,
+              backgroundColor: kLightBlue,
+              icon: const Icon(Icons.check),
+            );
+            await Future.delayed(const Duration(seconds: 1));
+            Get.offAll(() => const MainScreen(), transition: Transition.fade);
+          }
           return;
         }
 

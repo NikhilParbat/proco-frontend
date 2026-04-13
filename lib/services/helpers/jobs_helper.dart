@@ -17,7 +17,7 @@ class JobsHelper {
   static Future<List<JobsResponse>> getFilteredJobs(String agentId) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, '${Config.jobs}/filtered/$agentId');
+      final url = Config.url( '${Config.jobs}/filtered/$agentId');
       final response = await client.get(url, headers: requestHeaders);
 
       if (response.statusCode == 200) {
@@ -45,11 +45,7 @@ class JobsHelper {
         'limit': '$limit',
         if (excludeIds.isNotEmpty) 'excludeIds': excludeIds.join(','),
       };
-      final url = Uri.http(
-        Config.apiUrl,
-        '${Config.jobs}/filtered/$agentId',
-        queryParams,
-      );
+      final url = Config.url('${Config.jobs}/filtered/$agentId', queryParams);
       final response = await client.get(url, headers: requestHeaders);
       if (response.statusCode == 200) {
         return jobsResponseFromJson(response.body);
@@ -66,7 +62,7 @@ class JobsHelper {
   static Future<List<JobsResponse>> getJobs() async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, Config.jobs);
+      final url = Config.url( Config.jobs);
       final response = await client.get(url, headers: requestHeaders);
 
       if (response.statusCode == 200) {
@@ -84,7 +80,7 @@ class JobsHelper {
   static Future<List<JobsResponse>> getJobsPaged(int page, int limit) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, Config.jobs, {
+      final url = Config.url( Config.jobs, {
         'page': '$page',
         'limit': '$limit',
       });
@@ -104,7 +100,7 @@ class JobsHelper {
   static Future<GetJobRes> getJob(String jobId) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, '${Config.jobs}/$jobId');
+      final url = Config.url( '${Config.jobs}/$jobId');
       final response = await client.get(url, headers: requestHeaders);
 
       if (response.statusCode == 200) {
@@ -121,7 +117,7 @@ class JobsHelper {
 
   static Future<List<JobsResponse>> getUserJobs(String agentId) async {
     final requestHeaders = {'Content-Type': 'application/json'};
-    final url = Uri.http(Config.apiUrl, '${Config.jobs}/user/$agentId');
+    final url = Config.url( '${Config.jobs}/user/$agentId');
 
     final response = await client.get(url, headers: requestHeaders);
 
@@ -219,7 +215,7 @@ class JobsHelper {
   static Future<JobsResponse> getRecent() async {
     final requestHeaders = <String, String>{'Content-Type': 'application/json'};
 
-    final url = Uri.http(Config.apiUrl, Config.jobs, {'new': 'true'});
+    final url = Config.url( Config.jobs, {'new': 'true'});
     final response = await client.get(url, headers: requestHeaders);
 
     if (response.statusCode == 200) {
@@ -236,7 +232,7 @@ class JobsHelper {
   static Future<List<JobsResponse>> searchJobs(String searchQeury) async {
     final requestHeaders = <String, String>{'Content-Type': 'application/json'};
 
-    final url = Uri.http(Config.apiUrl, '${Config.search}/$searchQeury');
+    final url = Config.url( '${Config.search}/$searchQeury');
     final response = await client.get(url, headers: requestHeaders);
 
     if (response.statusCode == 200) {
@@ -252,7 +248,7 @@ class JobsHelper {
     File? imageFile,
   }) async {
     try {
-      final url = Uri.http(Config.apiUrl, Config.jobs);
+      final url = Config.url( Config.jobs);
 
       final request = https.MultipartRequest('POST', url);
 
@@ -310,7 +306,7 @@ class JobsHelper {
     try {
       final prefs = await SharedPreferences.getInstance();
       var token = prefs.getString('token');
-      final url = Uri.http(Config.apiUrl, '${Config.jobs}/$jobId');
+      final url = Config.url( '${Config.jobs}/$jobId');
       final response = await client.put(
         url,
         headers: {
@@ -339,7 +335,7 @@ class JobsHelper {
 
     // debugPrint("Deleting with Token: $token"); // Use this to verify if token exists
 
-    final url = Uri.http(Config.apiUrl, '${Config.jobs}/$jobId');
+    final url = Config.url( '${Config.jobs}/$jobId');
     final response = await client.delete(
       url,
       headers: {
@@ -358,7 +354,7 @@ class JobsHelper {
 
   // static Future<List<SwipedRes>> getSwipededUsersId(String jobId) async {
   //   final requestHeaders = {'Content-Type': 'application/json'};
-  //   final url = Uri.http(Config.apiUrl, '${Config.jobs}/user/swipe/$jobId');
+  //   final url = Config.url( '${Config.jobs}/user/swipe/$jobId');
   //   final response = await client.get(url, headers: requestHeaders);
   //   debugPrint("Response Received $response");
 
@@ -380,7 +376,7 @@ class JobsHelper {
   static Future<List<SwipedRes>> getSwipededUsersId(String jobId) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, '${Config.swipe}/$jobId');
+      final url = Config.url( '${Config.swipe}/$jobId');
 
       final response = await client.get(url, headers: requestHeaders);
 
@@ -418,7 +414,7 @@ class JobsHelper {
   }
 
   static Future<void> undoSwipe(String jobId, String userId) async {
-    final url = Uri.http(Config.apiUrl, '${Config.swipe}/undo');
+    final url = Config.url( '${Config.swipe}/undo');
     try {
       await client.post(
         url,
@@ -436,7 +432,7 @@ class JobsHelper {
     String action,
   ) async {
     final requestHeaders = {'Content-Type': 'application/json'};
-    final url = Uri.http(Config.apiUrl, Config.swipe);
+    final url = Config.url( Config.swipe);
 
     try {
       final requestBody = json.encode({
@@ -465,7 +461,7 @@ class JobsHelper {
   static Future<List<MatchedRes>> getMatchedUsersId(String jobId) async {
     try {
       final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Uri.http(Config.apiUrl, '${Config.matches}/$jobId');
+      final url = Config.url( '${Config.matches}/$jobId');
 
       final response = await client.get(url, headers: requestHeaders);
 
@@ -499,7 +495,7 @@ class JobsHelper {
 
   static Future<void> addMatchedUsers(String jobId, String userId) async {
     final requestHeaders = {'Content-Type': 'application/json'};
-    final url = Uri.http(Config.apiUrl, Config.matches);
+    final url = Config.url( Config.matches);
     debugPrint("jobId: $jobId");
     debugPrint("userId: $userId");
 

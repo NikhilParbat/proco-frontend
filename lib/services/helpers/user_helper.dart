@@ -24,7 +24,7 @@ class UserHelper {
       return 'Not authenticated — please log in again.';
     }
 
-    final url = Uri.http(Config.apiUrl, Config.profileUrl);
+    final url = Config.url( Config.profileUrl);
 
     var request = https.MultipartRequest('PUT', url);
 
@@ -95,7 +95,7 @@ class UserHelper {
       'token': 'Bearer $token',
     };
 
-    final url = Uri.http(Config.apiUrl, '/api/users');
+    final url = Config.url( '/api/users');
     final response = await client.get(url, headers: requestHeaders);
 
     debugPrint('getProfile status: ${response.statusCode}');
@@ -113,7 +113,7 @@ class UserHelper {
 
   static Future<List<SwipedRes>> getUserProfiles(String agentId) async {
     final requestHeaders = {'Content-Type': 'application/json'};
-    final url = Uri.http(Config.apiUrl, '${Config.profileUrl}/$agentId');
+    final url = Config.url( '${Config.profileUrl}/$agentId');
 
     final response = await client.get(url, headers: requestHeaders);
 
