@@ -44,6 +44,8 @@ class _ObInstitutionPageState extends State<ObInstitutionPage> {
         controller: _controller,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
+        maxLength: 100,
+        inputFormatters: [noEmojiFormatter],
         style: const TextStyle(color: Colors.white, fontSize: 20),
         cursorColor: kTeal,
         decoration: InputDecoration(

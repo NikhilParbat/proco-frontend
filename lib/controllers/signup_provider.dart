@@ -1,14 +1,17 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
+import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/constants/app_constants.dart';
+import 'package:uuid/uuid.dart';
 
 class SignUpNotifier extends ChangeNotifier {
   final SignupModel signupModel = SignupModel();
@@ -306,6 +309,8 @@ class SignUpNotifier extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('entrypoint', true);
 
+        await _saveDeviceSession();
+
         isLoading = false;
 
         Get.snackbar(
@@ -422,6 +427,8 @@ class SignUpNotifier extends ChangeNotifier {
         await prefs.setBool('loggedIn', true);
         await prefs.setBool('entrypoint', true);
 
+        await _saveDeviceSession();
+
         _isLoading = false;
         notifyListeners();
 
@@ -471,6 +478,8 @@ class SignUpNotifier extends ChangeNotifier {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('loggedIn', true);
           await prefs.setBool('entrypoint', true);
+
+          await _saveDeviceSession();
 
           _isLoading = false;
           notifyListeners();
@@ -536,6 +545,42 @@ class SignUpNotifier extends ChangeNotifier {
         backgroundColor: kOrange,
         icon: const Icon(Icons.add_alert),
       );
+    }
+  }
+
+  // ─── Device session registration after signup ─────────────────────────────
+  Future<void> _saveDeviceSession() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      String deviceName   = 'Unknown Device';
+      String platformName = 'Unknown Platform';
+
+      if (GetPlatform.isAndroid) {
+        final info = await deviceInfo.androidInfo;
+        deviceName   = '${info.manufacturer} ${info.model}';
+        platformName = 'Android ${info.version.release}';
+      } else if (GetPlatform.isIOS) {
+        final info = await deviceInfo.iosInfo;
+        deviceName   = info.name;
+        platformName = '${info.systemName} ${info.systemVersion}';
+      } else if (GetPlatform.isWeb) {
+        final info = await deviceInfo.webBrowserInfo;
+        deviceName   = info.browserName.name;
+        platformName = 'Web';
+      }
+
+      final prefs     = await SharedPreferences.getInstance();
+      final sessionId = prefs.getString('deviceSessionId') ?? const Uuid().v4();
+      await prefs.setString('deviceSessionId', sessionId);
+
+      await UserHelper.registerDeviceSession(
+        sessionId: sessionId,
+        device:    deviceName,
+        platform:  platformName,
+        date:      DateTime.now().toString().substring(0, 10),
+      );
+    } catch (e) {
+      debugPrint('SignUpNotifier: error saving device session: $e');
     }
   }
 }

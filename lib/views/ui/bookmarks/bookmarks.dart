@@ -4,8 +4,7 @@ import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/views/common/app_bar.dart';
 import 'package:proco/views/common/drawer/drawer_widget.dart';
-
-import 'package:proco/views/ui/bookmarks/widgets/bookmark_widget.dart';
+import 'package:proco/views/ui/bookmarks/bookmark_card_swiper.dart';
 import 'package:provider/provider.dart';
 
 class BookMarkPage extends StatefulWidget {
@@ -22,7 +21,6 @@ class _BookMarkPageState extends State<BookMarkPage> {
   @override
   void initState() {
     super.initState();
-    // ✅ Load once in initState instead of on every build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BookMarkNotifier>().getBookMarks();
     });
@@ -31,7 +29,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _navy,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(0.065.sh),
         child: CustomAppBar(
@@ -68,32 +66,9 @@ class _BookMarkPageState extends State<BookMarkPage> {
 
               final bookmarks = snapshot.data!;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Count header
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 8.h),
-                    child: Text(
-                      '${bookmarks.length} saved job${bookmarks.length == 1 ? '' : 's'}',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13.sp,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.separated(
-                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
-                      itemCount: bookmarks.length,
-                      separatorBuilder: (context, index) => SizedBox(height: 12.h),
-                      itemBuilder: (context, index) {
-                        return BookMarkTileWidget(job: bookmarks[index]);
-                      },
-                    ),
-                  ),
-                ],
+              return BookmarkCardSwiper(
+                bookmarks: bookmarks,
+                bookmarkNotifier: bookMarkNotifier,
               );
             },
           );
@@ -110,7 +85,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
           Icon(
             Icons.bookmark_outline_rounded,
             size: 64,
-            color: _teal.withValues(alpha:0.25),
+            color: _teal.withValues(alpha: 0.25),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -119,7 +94,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
               fontFamily: 'Poppins',
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
-              color: _navy,
+              color: Colors.white,
             ),
           ),
           SizedBox(height: 6.h),
@@ -128,7 +103,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 13.sp,
-              color: Colors.grey,
+              color: Colors.white54,
             ),
           ),
         ],

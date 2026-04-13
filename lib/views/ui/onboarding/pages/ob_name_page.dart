@@ -39,6 +39,8 @@ class _ObNamePageState extends State<ObNamePage> {
         controller: _controller,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
+        maxLength: 50,
+        inputFormatters: [noEmojiFormatter],
         style: const TextStyle(color: Colors.white, fontSize: 20),
         cursorColor: kTeal,
         decoration: const InputDecoration(

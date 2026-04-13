@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proco/constants/app_constants.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/chat_provider.dart';
@@ -846,6 +847,8 @@ class _ChatPageState extends State<ChatPage> {
                   color: _navy,
                 ),
                 maxLines: null,
+                maxLength: 1000,
+                inputFormatters: [noEmojiFormatter],
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) =>
                     _sendMessage(_messageController.text, widget.id, receiver),

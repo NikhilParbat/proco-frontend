@@ -4,6 +4,7 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/services/helpers/book_helper.dart';
+import 'package:proco/services/helpers/jobs_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookMarkNotifier extends ChangeNotifier {
@@ -70,10 +71,13 @@ class BookMarkNotifier extends ChangeNotifier {
     });
   }
 
-  void deleteBookMark(String jobId) {
+  Future<void> deleteBookMark(String jobId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId') ?? '';
     BookMarkHelper.deleteBookmarks(jobId).then((response) {
       if (response) {
         removeJob(jobId);
+        if (userId.isNotEmpty) JobsHelper.addSwipedUsers(jobId, userId, 'left');
         Get.snackbar(
           'Bookmark successfully deleted',
           'Please check your bookmarks',

@@ -1,5 +1,14 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
+
+/// Shared formatter — denies emoji characters across all text inputs.
+final noEmojiFormatter = FilteringTextInputFormatter.deny(
+  RegExp(
+    r'[\u{1F000}-\u{1FAFF}]|[\u{2600}-\u{2BFF}]|[\u{FE00}-\u{FE0F}]|\u{200D}',
+    unicode: true,
+  ),
+);
 
 const kDark = Color(0xFF000000);
 const kLight = Color(0xFFFFFFFF);

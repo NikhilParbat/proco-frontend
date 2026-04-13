@@ -200,6 +200,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               hintText: 'Password',
               keyboardType: TextInputType.text,
               obscureText: provider.obscureText,
+              maxLength: 20,
+              inputFormatters: [noEmojiFormatter],
               suffixIcon: GestureDetector(
                 onTap: () => provider.obscureText = !provider.obscureText,
                 child: Icon(

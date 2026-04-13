@@ -1,6 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/image_provider.dart';
 import 'package:proco/views/ui/auth/profile_state.dart';
@@ -173,11 +176,15 @@ class _EditTabState extends State<EditTab> {
                 isVisible: state.showPhone,
                 state: state,
                 keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(15),
+                ],
                 validator: (v) {
                   if (v != null &&
                       v.isNotEmpty &&
                       !RegExp(r'^\d{10,15}$').hasMatch(v)) {
-                    return 'Enter a valid phone number';
+                    return 'Enter a valid phone number (10–15 digits)';
                   }
                   return null;
                 },
@@ -190,7 +197,16 @@ class _EditTabState extends State<EditTab> {
 
               // ── Location ──────────────────────────────────────────────────
               _sectionDivider('Location'),
-              SizedBox(height: 12.h),
+              SizedBox(height: 8.h),
+              Text(
+                'Use the map pin for automatic detection, or fill in manually.',
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 11.sp,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 10.h),
               GestureDetector(
                 onTap: () async {
                   final LatLng? result = await Navigator.push(
@@ -211,8 +227,8 @@ class _EditTabState extends State<EditTab> {
                       result.longitude,
                     );
                     setState(() {
-                      _cityCtrl.text = address.city;
-                      _stateCtrl.text = address.state;
+                      _cityCtrl.text    = address.city;
+                      _stateCtrl.text   = address.state;
                       _countryCtrl.text = address.country;
                       state.setCoordinates(result.latitude, result.longitude);
                     });
@@ -223,48 +239,46 @@ class _EditTabState extends State<EditTab> {
                   decoration: BoxDecoration(
                     color: _card,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _teal.withValues(alpha:0.5)),
+                    border: Border.all(color: _teal.withValues(alpha: 0.5)),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.gps_fixed_rounded, color: _teal),
                       SizedBox(width: 15.w),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Tap to Update Location",
-                              style: TextStyle(
-                                color: _tealLight,
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          'Auto-detect via Map',
+                          style: TextStyle(
+                            color: _tealLight,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                       ),
+                      const Icon(Icons.chevron_right_rounded, color: _teal),
                     ],
                   ),
                 ),
               ),
               SizedBox(height: 12.h),
-              _readOnlyLocationField(
-                controller: _cityCtrl,
-                label: 'City',
-                icon: Icons.location_city_outlined,
-              ),
+              // Country — searchable dropdown
+              _countryPickerField(),
               SizedBox(height: 10.h),
-              _readOnlyLocationField(
+              // State — editable text
+              _plainField(
                 controller: _stateCtrl,
-                label: 'State',
+                label: 'State / Province',
+                hint: 'e.g. Maharashtra',
                 icon: Icons.map_outlined,
               ),
               SizedBox(height: 10.h),
-              _readOnlyLocationField(
-                controller: _countryCtrl,
-                label: 'Country',
-                icon: Icons.flag_outlined,
+              // City — editable text
+              _plainField(
+                controller: _cityCtrl,
+                label: 'City',
+                hint: 'e.g. Mumbai',
+                icon: Icons.location_city_outlined,
               ),
               SizedBox(height: 20.h),
 
@@ -278,6 +292,7 @@ class _EditTabState extends State<EditTab> {
                 visKey: 'college',
                 isVisible: state.showCollege,
                 state: state,
+                inputFormatters: [noEmojiFormatter],
               ),
               SizedBox(height: 10.h),
               _plainField(
@@ -285,6 +300,8 @@ class _EditTabState extends State<EditTab> {
                 label: 'Branch / Field of Study',
                 hint: 'e.g. Computer Science',
                 icon: Icons.school_outlined,
+                maxLength: 100,
+                inputFormatters: [noEmojiFormatter],
               ),
               SizedBox(height: 20.h),
 
@@ -352,27 +369,398 @@ class _EditTabState extends State<EditTab> {
     );
   }
 
-  // ── Read-only location field ───────────────────────────────────────────────
-  Widget _readOnlyLocationField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-  }) {
-    return TextFormField(
-      controller: controller,
-      readOnly: true,
-      style: TextStyle(color: Colors.white70, fontSize: 14.sp),
-      decoration: _fieldDecoration(label).copyWith(
-        prefixIcon: Icon(icon, color: _teal.withValues(alpha:0.3), size: 18),
-        fillColor: Colors.white.withValues(alpha:0.02),
+  // ── Country picker field ───────────────────────────────────────────────────
+  static const List<String> _countries = [
+    'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina',
+    'Armenia', 'Australia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain',
+    'Bangladesh', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
+    'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei',
+    'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon', 'Canada',
+    'Cape Verde', 'Central African Republic', 'Chad', 'Chile', 'China',
+    'Colombia', 'Comoros', 'Congo', 'Costa Rica', 'Croatia', 'Cuba',
+    'Cyprus', 'Czech Republic', 'Denmark', 'Djibouti', 'Dominican Republic',
+    'DR Congo', 'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea',
+    'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji', 'Finland',
+    'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece',
+    'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana', 'Haiti', 'Honduras',
+    'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland',
+    'Israel', 'Italy', 'Ivory Coast', 'Jamaica', 'Japan', 'Jordan',
+    'Kazakhstan', 'Kenya', 'Kosovo', 'Kuwait', 'Kyrgyzstan', 'Laos',
+    'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein',
+    'Lithuania', 'Luxembourg', 'Madagascar', 'Malawi', 'Malaysia',
+    'Maldives', 'Mali', 'Malta', 'Mauritania', 'Mauritius', 'Mexico',
+    'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique',
+    'Myanmar', 'Namibia', 'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua',
+    'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman',
+    'Pakistan', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay',
+    'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania',
+    'Russia', 'Rwanda', 'Saudi Arabia', 'Senegal', 'Serbia', 'Sierra Leone',
+    'Singapore', 'Slovakia', 'Slovenia', 'Somalia', 'South Africa',
+    'South Korea', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname',
+    'Sweden', 'Switzerland', 'Syria', 'Taiwan', 'Tajikistan', 'Tanzania',
+    'Thailand', 'Timor-Leste', 'Togo', 'Trinidad and Tobago', 'Tunisia',
+    'Turkey', 'Turkmenistan', 'Uganda', 'Ukraine', 'United Arab Emirates',
+    'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Venezuela',
+    'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe',
+  ];
+
+  Widget _countryPickerField() {
+    final current = _countryCtrl.text;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.flag_outlined, color: _teal, size: 15),
+            SizedBox(width: 6.w),
+            Text(
+              'Country',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 12.sp,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 5.h),
+        GestureDetector(
+          onTap: () => _showCountryPicker(),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+            decoration: BoxDecoration(
+              color: _card,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _teal.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    current.isNotEmpty ? current : 'Select country',
+                    style: TextStyle(
+                      color: current.isNotEmpty ? _white : Colors.white24,
+                      fontSize: 14.sp,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: _teal,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCountryPicker() {
+    final searchCtrl = TextEditingController();
+    List<String> filtered = List.from(_countries);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0D1B2A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.7,
+              maxChildSize: 0.9,
+              minChildSize: 0.4,
+              builder: (_, scrollCtrl) {
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                  child: Column(
+                    children: [
+                      // handle
+                      Container(
+                        width: 40,
+                        height: 4,
+                        margin: EdgeInsets.only(bottom: 12.h),
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      Text(
+                        'Select Country',
+                        style: TextStyle(
+                          color: _white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      // Search
+                      TextField(
+                        controller: searchCtrl,
+                        style: TextStyle(color: _white, fontSize: 14.sp),
+                        decoration: InputDecoration(
+                          hintText: 'Search country...',
+                          hintStyle: const TextStyle(color: Colors.white38),
+                          prefixIcon: const Icon(Icons.search, color: _teal),
+                          filled: true,
+                          fillColor: const Color(0xFF040326),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 10.h,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: _teal.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: _teal.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: _teal,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        onChanged: (q) {
+                          setSheetState(() {
+                            filtered = _countries
+                                .where(
+                                  (c) => c.toLowerCase().contains(
+                                    q.toLowerCase(),
+                                  ),
+                                )
+                                .toList();
+                          });
+                        },
+                      ),
+                      SizedBox(height: 8.h),
+                      // List
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollCtrl,
+                          itemCount: filtered.length,
+                          itemBuilder: (_, i) {
+                            final country = filtered[i];
+                            final selected = country == _countryCtrl.text;
+                            return InkWell(
+                              onTap: () {
+                                setState(() => _countryCtrl.text = country);
+                                Navigator.pop(ctx);
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 12.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: selected
+                                      ? _teal.withValues(alpha: 0.15)
+                                      : Colors.transparent,
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        country,
+                                        style: TextStyle(
+                                          color: selected ? _teal : _white,
+                                          fontSize: 14.sp,
+                                          fontFamily: 'Poppins',
+                                          fontWeight: selected
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
+                                    if (selected)
+                                      const Icon(
+                                        Icons.check_rounded,
+                                        color: _teal,
+                                        size: 18,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
   // ── Avatar picker ──────────────────────────────────────────────────────────
+  void _showImageSourceSheet(ImageNotifier imageNotifier) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0D1B2A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: EdgeInsets.only(bottom: 16.h),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              Text(
+                'Change Photo',
+                style: TextStyle(
+                  color: _white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 16.h),
+              _sourceOption(
+                icon: Icons.camera_alt_rounded,
+                label: 'Take a Photo',
+                onTap: () {
+                  Navigator.pop(context);
+                  imageNotifier.pickImage(source: ImageSource.camera);
+                },
+              ),
+              SizedBox(height: 10.h),
+              _sourceOption(
+                icon: Icons.photo_library_rounded,
+                label: 'Choose from Gallery',
+                onTap: () {
+                  Navigator.pop(context);
+                  imageNotifier.pickImage(source: ImageSource.gallery);
+                },
+              ),
+              SizedBox(height: 6.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          color: _teal.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _teal.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: _teal, size: 22),
+            SizedBox(width: 14.w),
+            Text(
+              label,
+              style: TextStyle(
+                color: _white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAvatarPicker() {
+    final state = context.watch<ProfileEditState>();
     return Consumer<ImageNotifier>(
       builder: (context, imageNotifier, _) {
+        // Determine what to display in the circle:
+        //  1. Newly picked local file (highest priority)
+        //  2. Existing profile image from backend
+        //  3. Fallback person icon
+        final hasNewImage   = imageNotifier.selectedImage != null;
+        final hasNetworkImg = state.profileImageUrl.isNotEmpty &&
+            state.profileImageUrl != 'null';
+
+        Widget avatarChild;
+        if (hasNewImage) {
+          avatarChild = ClipOval(
+            child: Image.file(
+              imageNotifier.selectedImage!,
+              fit: BoxFit.cover,
+              width: 86.w,
+              height: 86.w,
+            ),
+          );
+        } else if (hasNetworkImg) {
+          avatarChild = ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: state.profileImageUrl,
+              fit: BoxFit.cover,
+              width: 86.w,
+              height: 86.w,
+              placeholder: (context, url) => Icon(
+                Icons.person_rounded,
+                size: 42.w,
+                color: _teal.withValues(alpha: 0.5),
+              ),
+              errorWidget: (context, url, error) => Icon(
+                Icons.person_rounded,
+                size: 42.w,
+                color: _teal.withValues(alpha: 0.5),
+              ),
+            ),
+          );
+        } else {
+          avatarChild = Icon(
+            Icons.person_rounded,
+            size: 42.w,
+            color: _teal.withValues(alpha: 0.5),
+          );
+        }
+
         return Center(
           child: Stack(
             clipBehavior: Clip.none,
@@ -384,20 +772,8 @@ class _EditTabState extends State<EditTab> {
                   shape: BoxShape.circle,
                   color: _card,
                   border: Border.all(color: _teal, width: 2.5),
-                  image: imageNotifier.selectedImage != null
-                      ? DecorationImage(
-                          image: FileImage(imageNotifier.selectedImage!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
                 ),
-                child: imageNotifier.selectedImage == null
-                    ? Icon(
-                        Icons.person_rounded,
-                        size: 42.w,
-                        color: _teal.withValues(alpha:0.5),
-                      )
-                    : null,
+                child: avatarChild,
               ),
               Positioned(
                 bottom: 0,
@@ -405,7 +781,7 @@ class _EditTabState extends State<EditTab> {
                 child: GestureDetector(
                   onTap: imageNotifier.isLoading
                       ? null
-                      : () async => await imageNotifier.pickImage(),
+                      : () => _showImageSourceSheet(imageNotifier),
                   child: Container(
                     width: 28.w,
                     height: 28.w,
@@ -552,6 +928,7 @@ class _EditTabState extends State<EditTab> {
     required ProfileEditState state,
     String? hint,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -602,6 +979,7 @@ class _EditTabState extends State<EditTab> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           style: TextStyle(color: _white, fontSize: 14.sp),
           validator: validator,
           decoration: _fieldDecoration(hint ?? label),
@@ -617,6 +995,8 @@ class _EditTabState extends State<EditTab> {
     required IconData icon,
     String? hint,
     TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -641,6 +1021,8 @@ class _EditTabState extends State<EditTab> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
           style: TextStyle(color: _white, fontSize: 14.sp),
           validator: validator,
           decoration: _fieldDecoration(hint ?? label),

@@ -11,17 +11,25 @@ class ImageNotifier extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
-  Future<void> pickImage() async {
+  Future<void> pickImage({ImageSource source = ImageSource.gallery}) async {
     try {
       _setLoading(true);
       _clearError();
 
       final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 90,
       );
 
       if (pickedFile == null) {
+        _setLoading(false);
+        return;
+      }
+
+      // Reject files larger than 2 MB
+      final fileSize = await pickedFile.length();
+      if (fileSize > 2 * 1024 * 1024) {
+        _setError('Image must be under 2 MB. Please choose a smaller photo.');
         _setLoading(false);
         return;
       }

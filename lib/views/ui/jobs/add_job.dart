@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:proco/constants/app_constants.dart';
@@ -308,6 +309,8 @@ class _AddJobPageState extends State<AddJobPage> {
                 'Query Title *',
                 Icons.work_outline_rounded,
                 false,
+                maxLength: 50,
+                inputFormatters: [noEmojiFormatter],
               ),
               SizedBox(height: 12.h),
               _field(
@@ -457,6 +460,8 @@ class _AddJobPageState extends State<AddJobPage> {
                 Icons.description_outlined,
                 false,
                 maxLines: 4,
+                maxLength: 700,
+                inputFormatters: [noEmojiFormatter],
               ),
               SizedBox(height: 24.h),
 
@@ -724,12 +729,16 @@ class _AddJobPageState extends State<AddJobPage> {
     bool readOnly, {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       style: appstyle(14, _white, FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,

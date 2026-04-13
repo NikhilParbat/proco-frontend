@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/ui/auth/profile_state.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ViewTab extends StatelessWidget {
   const ViewTab({super.key});
@@ -329,37 +330,61 @@ class ViewTab extends StatelessWidget {
     );
   }
 
+  Future<void> _launchUrl(BuildContext context, String rawUrl) async {
+    // Ensure the URL has a scheme so Uri.parse can handle it
+    final normalized = rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
+        ? rawUrl
+        : 'https://$rawUrl';
+    final uri = Uri.tryParse(normalized);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open $rawUrl')),
+        );
+      }
+    }
+  }
+
   Widget _socialRow(IconData icon, String label, String url) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
-      child: Row(
-        children: [
-          Icon(icon, color: _teal, size: 15),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(color: Colors.white38, fontSize: 10),
+    return Builder(
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: 8.h),
+        child: GestureDetector(
+          onTap: () => _launchUrl(context, url),
+          child: Row(
+            children: [
+              Icon(icon, color: _teal, size: 15),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(color: Colors.white38, fontSize: 10),
+                    ),
+                    Text(
+                      url,
+                      style: TextStyle(
+                        color: _tealLight,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                        decorationColor: _tealLight,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                Text(
-                  url,
-                  style: TextStyle(
-                    color: _tealLight,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline,
-                    decorationColor: _tealLight,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+              ),
+              Icon(Icons.open_in_new_rounded, color: _teal.withValues(alpha: 0.5), size: 13),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

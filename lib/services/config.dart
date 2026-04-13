@@ -2,11 +2,11 @@ class Config {
   // ─── Environment toggle ───────────────────────────────────────────────────
   // Set _isProd = false when running on an emulator (local Node server).
   // Set _isProd = true  when building an APK / release build (Render.com).
-  static const bool _isProd = true;
+  static const bool _isProd = false;
 
   // ─── API hosts (no scheme, no trailing slash) ─────────────────────────────
   static const String _devHost  = '10.0.2.2:3000';
-  static const String _prodHost = 'proco-server-api.onrender.com';
+  static const String _prodHost = 'proco-backend-n5so.onrender.com';
 
   // ─── URI builder ──────────────────────────────────────────────────────────
   // Use this everywhere instead of calling Uri.http / Uri.https directly.
@@ -35,5 +35,7 @@ class Config {
   static const String chatsUrl       = '/api/chats';
   static const String messagingUrl   = '/api/messages';
   static const String filters        = '/api/filters';
-  static const String fcmTokenUrl    = '/api/users/fcm-token';
+  static const String fcmTokenUrl       = '/api/users/fcm-token';
+  static const String deviceSessionUrl  = '/api/users/device-session';
+  static const String deviceSessionsUrl = '/api/users/device-sessions';
 }
