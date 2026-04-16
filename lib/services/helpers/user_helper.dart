@@ -201,6 +201,39 @@ class UserHelper {
     }
   }
 
+  /// Fetches a single user's full profile by their userId.
+  ///
+  /// Backend contract: GET /api/users/:userId
+  /// Response format: { "success": true, "data": { ...user fields... } }
+  ///
+  /// Returns null when the user is not found or a network/parse error occurs.
+  static Future<ProfileRes?> fetchUserById(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
+      };
+
+      final url = Config.url('${Config.getprofileUrl}$userId');
+      final response = await client.get(url, headers: headers);
+
+      debugPrint('fetchUserById [$userId] status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return profileResFromJson(response.body);
+      }
+
+      debugPrint('fetchUserById failed: ${response.body}');
+      return null;
+    } catch (e) {
+      debugPrint('fetchUserById error: $e');
+      return null;
+    }
+  }
+
   static Future<List<SwipedRes>> getUserProfiles(String agentId) async {
     final requestHeaders = {'Content-Type': 'application/json'};
     final url = Config.url( '${Config.profileUrl}/$agentId');

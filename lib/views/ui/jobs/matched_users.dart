@@ -4,8 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/chat/create_chat.dart';
+import 'package:proco/models/response/auth/profile_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/helpers/chat_helper.dart';
+import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -274,7 +276,7 @@ class _CarouselCard extends StatelessWidget {
                 ),
               ),
 
-              // ── Bottom: white prompt box ─────────────────────────────────
+              // ── Bottom: white prompt box with Profile button ──────────────
               Positioned(
                 left: 0,
                 right: 0,
@@ -286,7 +288,7 @@ class _CarouselCard extends StatelessWidget {
                       top: Radius.circular(20.r),
                     ),
                   ),
-                  padding: EdgeInsets.fromLTRB(16.w, 14.h, 60.w, 20.h),
+                  padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -312,30 +314,43 @@ class _CarouselCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── Heart button (bottom-right) ──────────────────────────────
-              Positioned(
-                right: 14.w,
-                bottom: 14.h,
-                child: Container(
-                  width: 46.w,
-                  height: 46.w,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
+                      SizedBox(height: 12.h),
+                      // ── Profile button ─────────────────────────────────
+                      GestureDetector(
+                        onTap: onTap,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 8.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _teal,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.person_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              SizedBox(width: 6.w),
+                              Text(
+                                'Profile',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  child: Icon(Icons.favorite_rounded, color: _teal, size: 22.w),
                 ),
               ),
             ],
@@ -911,6 +926,85 @@ class _ProfilePageState extends State<_ProfilePage> {
 
   bool _isMatching = false;
 
+  /// Full profile fetched from GET /api/users/:userId.
+  /// Null while loading or when the backend returns an error.
+  ProfileRes? _fullProfile;
+  bool _isLoadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFullProfile();
+  }
+
+  /// Fetches the complete user profile from the backend so we can display
+  /// education, user type, and social links in addition to the basic
+  /// SwipedRes fields already available via [widget.user].
+  Future<void> _loadFullProfile() async {
+    final profile = await UserHelper.fetchUserById(widget.user.id);
+    if (!mounted) return;
+    setState(() {
+      _fullProfile = profile;
+      _isLoadingProfile = false;
+    });
+  }
+
+  bool get _hasAnySocialLink =>
+      _fullProfile != null &&
+      (_fullProfile!.linkedInUrl.isNotEmpty ||
+          _fullProfile!.gitHubUrl.isNotEmpty ||
+          _fullProfile!.twitterUrl.isNotEmpty ||
+          _fullProfile!.portfolioUrl.isNotEmpty);
+
+  Widget _sectionLabel(String text) => Text(
+        text,
+        style: TextStyle(
+          fontSize: 11.sp,
+          color: Colors.white38,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Poppins',
+          letterSpacing: 1.2,
+        ),
+      );
+
+  Widget _infoRow(IconData icon, String text) => Row(
+        children: [
+          Icon(icon, color: _teal, size: 16),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.white70,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ),
+        ],
+      );
+
+  Widget _linkRow(String label, String url) => Padding(
+        padding: EdgeInsets.only(bottom: 8.h),
+        child: Row(
+          children: [
+            const Icon(Icons.link_rounded, color: _teal, size: 16),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                '$label: $url',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: Colors.white70,
+                  fontFamily: 'Poppins',
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+
   Future<void> _onMatch() async {
     setState(() => _isMatching = true);
 
@@ -1047,6 +1141,7 @@ class _ProfilePageState extends State<_ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Profile photo ─────────────────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.circular(20.r),
               child: AspectRatio(
@@ -1055,7 +1150,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                   widget.user.profile,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
-                    color: _teal.withValues(alpha:0.1),
+                    color: _teal.withValues(alpha: 0.1),
                     child: const Icon(
                       Icons.person_rounded,
                       color: _teal,
@@ -1066,6 +1161,8 @@ class _ProfilePageState extends State<_ProfilePage> {
               ),
             ),
             SizedBox(height: 20.h),
+
+            // ── Name ──────────────────────────────────────────────────────
             Text(
               widget.user.username,
               style: TextStyle(
@@ -1075,6 +1172,8 @@ class _ProfilePageState extends State<_ProfilePage> {
                 fontFamily: 'Poppins',
               ),
             ),
+
+            // ── Location ──────────────────────────────────────────────────
             if (widget.user.location.isNotEmpty) ...[
               SizedBox(height: 8.h),
               Row(
@@ -1096,18 +1195,11 @@ class _ProfilePageState extends State<_ProfilePage> {
                 ],
               ),
             ],
+
+            // ── Skills ────────────────────────────────────────────────────
             if (widget.user.skills.isNotEmpty) ...[
               SizedBox(height: 24.h),
-              Text(
-                'SKILLS',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: Colors.white38,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins',
-                  letterSpacing: 1.2,
-                ),
-              ),
+              _sectionLabel('SKILLS'),
               SizedBox(height: 10.h),
               Wrap(
                 spacing: 8,
@@ -1119,10 +1211,10 @@ class _ProfilePageState extends State<_ProfilePage> {
                       vertical: 7.h,
                     ),
                     decoration: BoxDecoration(
-                      color: _teal.withValues(alpha:0.1),
+                      color: _teal.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: _teal.withValues(alpha:0.3),
+                        color: _teal.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -1139,6 +1231,55 @@ class _ProfilePageState extends State<_ProfilePage> {
                 }).toList(),
               ),
             ],
+
+            // ── Full profile details (loaded from backend) ─────────────────
+            if (_isLoadingProfile)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.h),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: _teal,
+                    strokeWidth: 2,
+                  ),
+                ),
+              )
+            else ...[
+              // Education
+              if (_fullProfile?.college.isNotEmpty == true) ...[
+                SizedBox(height: 24.h),
+                _sectionLabel('EDUCATION'),
+                SizedBox(height: 10.h),
+                _infoRow(Icons.school_rounded, _fullProfile!.college),
+                if (_fullProfile!.branch.isNotEmpty) ...[
+                  SizedBox(height: 8.h),
+                  _infoRow(Icons.account_tree_rounded, _fullProfile!.branch),
+                ],
+              ],
+
+              // User type
+              if (_fullProfile?.userType.isNotEmpty == true) ...[
+                SizedBox(height: 24.h),
+                _sectionLabel('USER TYPE'),
+                SizedBox(height: 10.h),
+                _infoRow(Icons.work_outline_rounded, _fullProfile!.userType),
+              ],
+
+              // Social links
+              if (_hasAnySocialLink) ...[
+                SizedBox(height: 24.h),
+                _sectionLabel('LINKS'),
+                SizedBox(height: 10.h),
+                if (_fullProfile!.linkedInUrl.isNotEmpty)
+                  _linkRow('LinkedIn', _fullProfile!.linkedInUrl),
+                if (_fullProfile!.gitHubUrl.isNotEmpty)
+                  _linkRow('GitHub', _fullProfile!.gitHubUrl),
+                if (_fullProfile!.twitterUrl.isNotEmpty)
+                  _linkRow('Twitter', _fullProfile!.twitterUrl),
+                if (_fullProfile!.portfolioUrl.isNotEmpty)
+                  _linkRow('Portfolio', _fullProfile!.portfolioUrl),
+              ],
+            ],
+
             SizedBox(height: 32.h),
           ],
         ),
