@@ -136,12 +136,16 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
+        final msg = (response[1] as String?) ?? 'Login failed';
+        final isNotFound = msg.toLowerCase().contains('sign up') ||
+            msg.toLowerCase().contains('no account');
         Get.snackbar(
-          response[1],
-          'Please try again',
+          isNotFound ? 'Account Not Found' : 'Login Failed',
+          msg,
           colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert),
+          backgroundColor: isNotFound ? kLightBlue : kOrange,
+          icon: Icon(isNotFound ? Icons.person_add_outlined : Icons.add_alert),
+          duration: const Duration(seconds: 4),
         );
       }
     } catch (e) {
@@ -242,10 +246,16 @@ class LoginNotifier extends ChangeNotifier {
         final message = (response.length > 1 && response[1] != null)
             ? response[1].toString()
             : 'Login failed';
-
-        Get.snackbar('Login Failed', message,
-            colorText: kLight, backgroundColor: kOrange,
-            icon: const Icon(Icons.error));
+        final isNotFound = message.toLowerCase().contains('sign up') ||
+            message.toLowerCase().contains('no account');
+        Get.snackbar(
+          isNotFound ? 'Account Not Found' : 'Login Failed',
+          message,
+          colorText: kLight,
+          backgroundColor: isNotFound ? kLightBlue : kOrange,
+          icon: Icon(isNotFound ? Icons.person_add_outlined : Icons.error),
+          duration: const Duration(seconds: 4),
+        );
       }
     } catch (e) {
       _isLoading = false;
