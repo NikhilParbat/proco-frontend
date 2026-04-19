@@ -28,6 +28,19 @@ class _ObLocationPageState extends State<ObLocationPage> {
   bool _locationLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    final provider = context.read<OnboardingFlowProvider>();
+    if (provider.hasLocation) {
+      _markerPosition = LatLng(provider.latitude, provider.longitude);
+      _markerVisible = true;
+      if (provider.displayAddress.isNotEmpty) {
+        _searchController.text = provider.displayAddress;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _mapController.dispose();
     _searchController.dispose();

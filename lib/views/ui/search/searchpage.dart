@@ -16,7 +16,42 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  TextEditingController search = TextEditingController();
+  final TextEditingController search = TextEditingController();
+
+  List<JobsResponse> _results = [];
+  bool _isLoading = false;
+  String _error = '';
+
+  Future<void> _search() async {
+    final query = search.text.trim();
+    if (query.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = '';
+      _results = [];
+    });
+
+    final response = await JobsHelper.searchJobs(query);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+      if (response.success && response.data != null) {
+        _results = response.data!;
+      } else {
+        _error = response.message;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    search.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,44 +61,43 @@ class _SearchPageState extends State<SearchPage> {
         title: CustomField(
           hintText: 'Search for a job',
           controller: search,
-          onEditingComplete: () {
-            setState(() {});
-          },
+          onEditingComplete: _search,
           suffixIcon: GestureDetector(
-            onTap: () {
-              setState(() {});
-            },
+            onTap: _search,
             child: const Icon(AntDesign.search1),
           ),
         ),
         elevation: 0,
       ),
-      body: search.text.isNotEmpty
-          ? Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.0.w, vertical: 12.h),
-              child: FutureBuilder<List<JobsResponse>>(
-                future: JobsHelper.searchJobs(search.text),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Text('Error ${snapshot.error}');
-                  } else if (snapshot.data!.isEmpty) {
-                    return const SearchLoading(text: 'Job not found');
-                  } else {
-                    final jobs = snapshot.data;
-                    return ListView.builder(
-                      itemCount: jobs!.length,
-                      itemBuilder: (context, index) {
-                        final job = jobs[index];
-                        return VerticalTileWidget(job: job);
-                      },
-                    );
-                  }
-                },
-              ),
-            )
-          : const SearchLoading(text: 'Start Searching For Jobs'),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        child: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (search.text.isEmpty) {
+      return const SearchLoading(text: 'Start Searching For Jobs');
+    }
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error.isNotEmpty) {
+      return Center(
+        child: Text(_error, style: const TextStyle(color: Colors.red)),
+      );
+    }
+
+    if (_results.isEmpty) {
+      return const SearchLoading(text: 'Job not found');
+    }
+
+    return ListView.builder(
+      itemCount: _results.length,
+      itemBuilder: (context, index) => VerticalTileWidget(job: _results[index]),
     );
   }
 }
