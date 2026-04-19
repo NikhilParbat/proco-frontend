@@ -122,21 +122,20 @@ class _JobListingPageState extends State<JobListingPage> {
       ),
       body: Consumer<JobsNotifier>(
         builder: (context, jobsNotifier, child) {
-          return FutureBuilder<List<JobsResponse>>(
-            future: jobsNotifier.userJobs,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: _teal),
-                );
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return _buildEmptyState();
-              }
+          if (jobsNotifier.isLoadingUserJobs) {
+            return const Center(
+              child: CircularProgressIndicator(color: _teal),
+            );
+          }
 
-              jobs = snapshot.data!;
-              filterJobs();
+          if (jobsNotifier.userJobs.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          jobs = jobsNotifier.userJobs;
+          filterJobs();
+
+          return Builder(builder: (context) {
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,8 +288,7 @@ class _JobListingPageState extends State<JobListingPage> {
                   ),
                 ],
               );
-            },
-          );
+          });
         },
       ),
     );

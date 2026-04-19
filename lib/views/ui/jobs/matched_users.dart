@@ -42,11 +42,10 @@ class _MatchedUsersState extends State<MatchedUsers> {
     _jobId = prefs.getString('currentJobId') ?? '';
     if (!mounted) return;
     final notifier = Provider.of<JobsNotifier>(context, listen: false);
-    notifier.getSwipedUsersId(_jobId);
-    final users = await notifier.swipedUsers;
+    await notifier.getSwipedUsersId(_jobId);
     if (!mounted) return;
     setState(() {
-      _users = users ?? [];
+      _users = List.from(notifier.swipedUsers);
       _loading = false;
     });
   }
