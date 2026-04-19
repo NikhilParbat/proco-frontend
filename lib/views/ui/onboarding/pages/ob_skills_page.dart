@@ -12,8 +12,15 @@ class ObSkillsPage extends StatefulWidget {
 }
 
 class _ObSkillsPageState extends State<ObSkillsPage> {
-  final TextEditingController _controller = TextEditingController();
-  final List<String> _skills = [];
+  late final TextEditingController _controller;
+  late final List<String> _skills;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    _skills = List.from(context.read<OnboardingFlowProvider>().skills);
+  }
 
   void _addSkill() {
     final skill = _controller.text.trim();

@@ -79,6 +79,62 @@ class UserHelper {
     }
   }
 
+  /// Called once during onboarding to create the user's profile (POST).
+  /// Returns null on success, or an error message string on failure.
+  static Future<String?> createProfile(ProfileUpdateReq model, File? image) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null || token.isEmpty) {
+      debugPrint('createProfile: token is missing in SharedPreferences');
+      return 'Not authenticated — please log in again.';
+    }
+
+    final url = Config.url(Config.createProfileUrl);
+    var request = https.MultipartRequest('POST', url);
+    request.headers['token'] = 'Bearer $token';
+
+    if (model.name.isNotEmpty) request.fields['username'] = model.name;
+    request.fields['city'] = model.city;
+    request.fields['state'] = model.state;
+    request.fields['country'] = model.country;
+    request.fields['phone'] = model.phone;
+    request.fields['college'] = model.college;
+    request.fields['branch'] = model.branch;
+    request.fields['gender'] = model.gender ?? '';
+    request.fields['dob'] = model.dob;
+    request.fields['userType'] = model.userType;
+    request.fields['linkedInUrl'] = model.linkedInUrl;
+    request.fields['gitHubUrl'] = model.gitHubUrl;
+    request.fields['twitterUrl'] = model.twitterUrl;
+    request.fields['portfolioUrl'] = model.portfolioUrl;
+    request.fields['latitude'] = model.latitude.toString();
+    request.fields['longitude'] = model.longitude.toString();
+    request.fields['skills'] = jsonEncode(model.skills);
+
+    if (image != null) {
+      request.files.add(
+        await https.MultipartFile.fromPath('profile', image.path),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final responseBody = await streamedResponse.stream.bytesToString();
+
+    debugPrint('createProfile status: ${streamedResponse.statusCode}');
+    debugPrint('createProfile body:   $responseBody');
+
+    if (streamedResponse.statusCode == 200 || streamedResponse.statusCode == 201) return null;
+
+    try {
+      final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
+      final msg = decoded['message'] as String?;
+      return '[${streamedResponse.statusCode}] ${msg ?? responseBody}';
+    } catch (_) {
+      return '[${streamedResponse.statusCode}] $responseBody';
+    }
+  }
+
   static Future<ProfileRes?> getProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');

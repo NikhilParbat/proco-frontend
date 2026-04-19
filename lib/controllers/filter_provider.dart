@@ -8,10 +8,13 @@ import 'package:proco/services/helpers/filter_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FilterNotifier extends ChangeNotifier {
-  Future<List<FilterResponse>>? filterList;
-  Future<FilterResponse>? recentFilter;
-  Future<GetFilterRes>? filter;
-  Future<List<FilterResponse>>? userFilters;
+  List<FilterResponse> filterList = [];
+  FilterResponse? recentFilter;
+  GetFilterRes? filter;
+  List<FilterResponse> userFilters = [];
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
   // ── Active filter (shown as chips on homepage) ──────────────────────────
   GetFilterRes? activeFilter;
@@ -39,61 +42,68 @@ class FilterNotifier extends ChangeNotifier {
   }
 
   Future<void> clearFilter(String agentId) async {
-    try {
-      await FilterHelper.createFilter(
-        CreateFilterRequest(
-          agentId: agentId,
-          selectedOptions: [],
-          opportunityTypes: {for (final t in kOpportunityTypes) t: false},
-          selectedLocationOption: '',
-          selectedCity: '',
-          selectedState: '',
-          selectedCountry: '',
-          customOptions: [],
-        ),
+    final response = await FilterHelper.createFilter(
+      CreateFilterRequest(
+        agentId: agentId,
+        selectedOptions: [],
+        opportunityTypes: {for (final t in kOpportunityTypes) t: false},
+        selectedLocationOption: '',
+        selectedCity: '',
+        selectedState: '',
+        selectedCountry: '',
+        customOptions: [],
+      ),
+    );
+
+    if (!response.success) {
+      Get.snackbar(
+        'Error',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
       );
-    } catch (_) {}
+    }
+
     activeFilter = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('activeFilter');
     notifyListeners();
   }
 
-  // Method to get filters
-  void getFilters() {
-    filterList = FilterHelper.getFilters();
+  Future<void> getFilters() async {
+    _isLoading = true;
     notifyListeners();
-  }
 
-  // Method to get recent filters
-  void getRecentFilters() {
-    recentFilter = FilterHelper.getRecentFilters();
-    notifyListeners();
-  }
+    final response = await FilterHelper.getFilters();
 
-  // Method to get a specific filter
-  void getFilter(String filterId) {
-    filter = FilterHelper.getFilter(filterId);
-    notifyListeners();
-  }
+    _isLoading = false;
 
-  // Method to create a new filter
-  Future<void> createFilter(String agentId, CreateFilterRequest model) async {
-    try {
-      await FilterHelper.createFilter(model).then((_) async {
-        Get.snackbar(
-          'Filter Added Successfully',
-          '',
-          colorText: kLight,
-          backgroundColor: kLightBlue,
-          icon: const Icon(Icons.check_circle),
-        );
-        getUserFilters(agentId);
-      });
-    } catch (e) {
+    if (response.success && response.data != null) {
+      filterList = response.data!;
+    } else {
       Get.snackbar(
-        'Error Creating Filter',
-        e.toString(),
+        'Error',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> getRecentFilters() async {
+    final response = await FilterHelper.getRecentFilters();
+
+    if (response.success && response.data != null) {
+      recentFilter = response.data;
+      notifyListeners();
+    } else {
+      Get.snackbar(
+        'Error',
+        response.message,
         colorText: kLight,
         backgroundColor: kOrange,
         icon: const Icon(Icons.error),
@@ -101,24 +111,88 @@ class FilterNotifier extends ChangeNotifier {
     }
   }
 
-  // Method to update a filter
-  Future<void> updateFilter(
-    String filterId,
-    Map<String, dynamic> filterData,
-  ) async {
-    await FilterHelper.updateFilter(filterId, filterData);
-    // getFilters(); // Refresh the filter list after update
+  Future<void> getFilter(String filterId) async {
+    final response = await FilterHelper.getFilter(filterId);
+
+    if (response.success && response.data != null) {
+      filter = response.data;
+      notifyListeners();
+    } else {
+      Get.snackbar(
+        'Error',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
   }
 
-  // Method to delete a filter
+  Future<void> createFilter(String agentId, CreateFilterRequest model) async {
+    final response = await FilterHelper.createFilter(model);
+
+    if (response.success) {
+      Get.snackbar(
+        'Filter Added Successfully',
+        '',
+        colorText: kLight,
+        backgroundColor: kLightBlue,
+        icon: const Icon(Icons.check_circle),
+      );
+      await getUserFilters(agentId);
+    } else {
+      Get.snackbar(
+        'Error Creating Filter',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
+  }
+
+  Future<void> updateFilter(String filterId, Map<String, dynamic> filterData) async {
+    final response = await FilterHelper.updateFilter(filterId, filterData);
+
+    if (!response.success) {
+      Get.snackbar(
+        'Error Updating Filter',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
+  }
+
   Future<void> deleteFilter(String filterId) async {
-    await FilterHelper.deleteFilter(filterId);
-    // getFilters(); // Refresh the filter list after deletion
+    final response = await FilterHelper.deleteFilter(filterId);
+
+    if (!response.success) {
+      Get.snackbar(
+        'Error Deleting Filter',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
   }
 
-  // Method to get filters for a specific user
-  void getUserFilters(String agentId) {
-    userFilters = FilterHelper.getUserFilters(agentId);
-    notifyListeners();
+  Future<void> getUserFilters(String agentId) async {
+    final response = await FilterHelper.getUserFilters(agentId);
+
+    if (response.success && response.data != null) {
+      userFilters = response.data!;
+      notifyListeners();
+    } else {
+      Get.snackbar(
+        'Error',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
   }
 }

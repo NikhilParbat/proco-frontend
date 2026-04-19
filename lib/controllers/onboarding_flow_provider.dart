@@ -122,7 +122,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
         skills: skills,
       );
 
-      final error = await UserHelper.updateProfile(req, profilePhoto);
+      final error = await UserHelper.createProfile(req, profilePhoto);
 
       if (error == null) {
         final prefs = await SharedPreferences.getInstance();

@@ -129,12 +129,12 @@ class _FilterPageState extends State<FilterPage> {
 
     final userId = prefs.getString('userId') ?? '';
     if (userId.isNotEmpty) {
-      try {
-        final existing = await FilterHelper.getFilter(userId);
-        if (!mounted) return;
-        setState(() => _applyFilterToState(existing));
-        filterNotifier.setActiveFilter(existing);
-      } catch (_) {}
+      final response = await FilterHelper.getFilter(userId);
+      if (!mounted) return;
+      if (response.success && response.data != null) {
+        setState(() => _applyFilterToState(response.data!));
+        filterNotifier.setActiveFilter(response.data!);
+      }
     }
 
     if (mounted) setState(() => _isLoading = false);

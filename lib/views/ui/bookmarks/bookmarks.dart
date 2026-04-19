@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/controllers/exports.dart';
-import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/views/common/app_bar.dart';
 import 'package:proco/views/common/drawer/drawer_widget.dart';
 import 'package:proco/views/ui/bookmarks/bookmark_card_swiper.dart';
@@ -42,35 +41,19 @@ class _BookMarkPageState extends State<BookMarkPage> {
       ),
       body: Consumer<BookMarkNotifier>(
         builder: (context, bookMarkNotifier, child) {
-          return FutureBuilder<List<AllBookmark>>(
-            future: bookMarkNotifier.bookmarks,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: _teal),
-                );
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'Error ${snapshot.error}',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontFamily: 'Poppins',
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return _buildEmpty();
-              }
+          if (bookMarkNotifier.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: _teal),
+            );
+          }
 
-              final bookmarks = snapshot.data!;
+          if (bookMarkNotifier.bookmarks.isEmpty) {
+            return _buildEmpty();
+          }
 
-              return BookmarkCardSwiper(
-                bookmarks: bookmarks,
-                bookmarkNotifier: bookMarkNotifier,
-              );
-            },
+          return BookmarkCardSwiper(
+            bookmarks: bookMarkNotifier.bookmarks,
+            bookmarkNotifier: bookMarkNotifier,
           );
         },
       ),
