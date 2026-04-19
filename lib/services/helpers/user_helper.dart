@@ -15,7 +15,10 @@ class UserHelper {
   static https.Client client = https.Client();
 
   /// Returns null on success, or an error description on failure.
-  static Future<String?> updateProfile(ProfileUpdateReq model, File? image) async {
+  static Future<String?> updateProfile(
+    ProfileUpdateReq model,
+    File? image,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -24,7 +27,7 @@ class UserHelper {
       return 'Not authenticated — please log in again.';
     }
 
-    final url = Config.url( Config.profileUrl);
+    final url = Config.url(Config.profileUrl);
 
     var request = https.MultipartRequest('PUT', url);
 
@@ -81,7 +84,10 @@ class UserHelper {
 
   /// Called once during onboarding to create the user's profile (POST).
   /// Returns null on success, or an error message string on failure.
-  static Future<String?> createProfile(ProfileUpdateReq model, File? image) async {
+  static Future<String?> createProfile(
+    ProfileUpdateReq model,
+    File? image,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -91,7 +97,7 @@ class UserHelper {
     }
 
     final url = Config.url(Config.createProfileUrl);
-    var request = https.MultipartRequest('POST', url);
+    var request = https.MultipartRequest('PUT', url);
     request.headers['token'] = 'Bearer $token';
 
     if (model.name.isNotEmpty) request.fields['username'] = model.name;
@@ -121,10 +127,9 @@ class UserHelper {
     final streamedResponse = await request.send();
     final responseBody = await streamedResponse.stream.bytesToString();
 
-    debugPrint('createProfile status: ${streamedResponse.statusCode}');
-    debugPrint('createProfile body:   $responseBody');
-
-    if (streamedResponse.statusCode == 200 || streamedResponse.statusCode == 201) return null;
+    if (streamedResponse.statusCode == 200 ||
+        streamedResponse.statusCode == 201)
+      return null;
 
     try {
       final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
@@ -151,7 +156,7 @@ class UserHelper {
       'token': 'Bearer $token',
     };
 
-    final url = Config.url( '/api/users');
+    final url = Config.url('/api/users');
     final response = await client.get(url, headers: requestHeaders);
 
     debugPrint('getProfile status: ${response.statusCode}');
@@ -292,7 +297,7 @@ class UserHelper {
 
   static Future<List<SwipedRes>> getUserProfiles(String agentId) async {
     final requestHeaders = {'Content-Type': 'application/json'};
-    final url = Config.url( '${Config.profileUrl}/$agentId');
+    final url = Config.url('${Config.profileUrl}/$agentId');
 
     final response = await client.get(url, headers: requestHeaders);
 

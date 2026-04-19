@@ -24,7 +24,7 @@ class AuthHelper {
     final response = await client.post(
       url,
       headers: requestHeaders,
-      body: jsonEncode(model.toJson()), // ✅ FIXED
+      body: jsonEncode(model.toJson()),
     );
 
     debugPrint('Login Response: ${response.body}');
