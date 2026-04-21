@@ -184,10 +184,8 @@ class _AddJobPageState extends State<AddJobPage> {
       agentId: userId,
       domain: effectiveDomain,
       opportunityType: selectedOpportunityType!,
-      title: _titleController.text.isNotEmpty
-          ? _titleController.text
-          : _titleController.text,
-      location: _locationController.text.trim().isNotEmpty
+      title: _titleController.text,
+      city: _locationController.text.trim().isNotEmpty
           ? _locationController.text.trim()
           : 'Remote',
       latitude: _jobLat,
@@ -200,8 +198,6 @@ class _AddJobPageState extends State<AddJobPage> {
       contract: _contractController.text,
       requirements: requirements,
       imageUrl: '',
-      matchedUsers: [],
-      swipedUsers: [],
     );
 
     if (!mounted) return;

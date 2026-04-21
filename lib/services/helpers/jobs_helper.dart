@@ -302,7 +302,9 @@ class JobsHelper {
       request.fields['contract'] = model.contract;
       request.fields['domain'] = model.domain;
       request.fields['opportunityType'] = model.opportunityType;
-      request.fields['location'] = model.location;
+      request.fields['city'] = model.city;
+      request.fields['state'] = model.state;
+      request.fields['country'] = model.country;
       request.fields['latitude'] = model.latitude.toString();
       request.fields['longitude'] = model.longitude.toString();
       request.fields['requirements'] = jsonEncode(model.requirements);
