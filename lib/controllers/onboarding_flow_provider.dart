@@ -109,7 +109,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
 
     try {
       final req = ProfileUpdateReq(
-        name: name,
+        username: name,
         phone: phone,
         dob: dob,
         userType: role,

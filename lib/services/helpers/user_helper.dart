@@ -6,8 +6,10 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as https;
 import 'package:proco/models/request/auth/profile_update_model.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/profile_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
+import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/services/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,70 +17,90 @@ class UserHelper {
   static https.Client client = https.Client();
 
   /// Returns null on success, or an error description on failure.
-  static Future<String?> updateProfile(
+  static Future<ApiResponse<UserResponse>> updateProfile(
     ProfileUpdateReq model,
     File? image,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null || token.isEmpty) {
-      debugPrint('updateProfile: token is missing in SharedPreferences');
-      return 'Not authenticated — please log in again.';
-    }
-
-    final url = Config.url(Config.profileUrl);
-
-    var request = https.MultipartRequest('PUT', url);
-
-    request.headers['token'] = 'Bearer $token';
-
-    // ✅ Add text fields
-    if (model.name.isNotEmpty) request.fields['username'] = model.name;
-    request.fields['city'] = model.city;
-    request.fields['state'] = model.state;
-    request.fields['country'] = model.country;
-    request.fields['phone'] = model.phone;
-    request.fields['college'] = model.college;
-    request.fields['branch'] = model.branch;
-    request.fields['gender'] = model.gender ?? '';
-    request.fields['dob'] = model.dob;
-    request.fields['userType'] = model.userType;
-    request.fields['linkedInUrl'] = model.linkedInUrl;
-    request.fields['gitHubUrl'] = model.gitHubUrl;
-    request.fields['twitterUrl'] = model.twitterUrl;
-    request.fields['portfolioUrl'] = model.portfolioUrl;
-    request.fields['latitude'] = model.latitude.toString();
-    request.fields['longitude'] = model.longitude.toString();
-
-    // if skills is list
-    request.fields['skills'] = jsonEncode(model.skills);
-
-    // ✅ Add image file
-    if (image != null) {
-      request.files.add(
-        await https.MultipartFile.fromPath(
-          'profile', // MUST match backend multer field
-          image.path,
-        ),
-      );
-    }
-
-    final streamedResponse = await request.send();
-    final responseBody = await streamedResponse.stream.bytesToString();
-
-    debugPrint('updateProfile status: ${streamedResponse.statusCode}');
-    debugPrint('updateProfile body:   $responseBody');
-
-    if (streamedResponse.statusCode == 200) return null;
-
-    // Extract backend message for a useful error snackbar
     try {
-      final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
-      final msg = decoded['message'] as String?;
-      return '[${streamedResponse.statusCode}] ${msg ?? responseBody}';
-    } catch (_) {
-      return '[${streamedResponse.statusCode}] $responseBody';
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null || token.isEmpty) {
+        return ApiResponse(
+          success: false,
+          message: 'Not authenticated — please log in again.',
+        );
+      }
+
+      final url = Config.url(Config.profileUrl);
+      var request = https.MultipartRequest('PUT', url);
+
+      request.headers['token'] = 'Bearer $token';
+
+      // ✅ Only send non-empty fields
+      if (model.username.isNotEmpty) {
+        request.fields['username'] = model.username;
+      }
+      if (model.city.isNotEmpty) request.fields['city'] = model.city;
+      if (model.state.isNotEmpty) request.fields['state'] = model.state;
+      if (model.country.isNotEmpty) request.fields['country'] = model.country;
+      if (model.phone.isNotEmpty) request.fields['phone'] = model.phone;
+      if (model.college.isNotEmpty) request.fields['college'] = model.college;
+      if (model.branch.isNotEmpty) request.fields['branch'] = model.branch;
+      if (model.gender != null) request.fields['gender'] = model.gender!;
+      if (model.dob.isNotEmpty) request.fields['dob'] = model.dob;
+      if (model.userType.isNotEmpty)
+        request.fields['userType'] = model.userType;
+      if (model.linkedInUrl.isNotEmpty) {
+        request.fields['linkedInUrl'] = model.linkedInUrl;
+      }
+      if (model.gitHubUrl.isNotEmpty) {
+        request.fields['gitHubUrl'] = model.gitHubUrl;
+      }
+      if (model.twitterUrl.isNotEmpty) {
+        request.fields['twitterUrl'] = model.twitterUrl;
+      }
+      if (model.portfolioUrl.isNotEmpty) {
+        request.fields['portfolioUrl'] = model.portfolioUrl;
+      }
+
+      // ✅ Only send location if valid
+      if (model.latitude != 0 && model.longitude != 0) {
+        request.fields['latitude'] = model.latitude.toString();
+        request.fields['longitude'] = model.longitude.toString();
+      }
+
+      // ⚠️ OPTIONAL: only if backend supports it
+      if (model.skills.isNotEmpty) {
+        request.fields['skills'] = jsonEncode(model.skills);
+      }
+
+      // ✅ Image
+      if (image != null) {
+        request.files.add(
+          await https.MultipartFile.fromPath('profile', image.path),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final responseBody = await streamedResponse.stream.bytesToString();
+
+      final decoded = jsonDecode(responseBody);
+
+      if (streamedResponse.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          message: decoded['message'],
+          data: UserResponse.fromJson(decoded['data']),
+        );
+      }
+
+      return ApiResponse(
+        success: false,
+        message: decoded['message'] ?? 'Something went wrong',
+      );
+    } catch (e) {
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
@@ -100,7 +122,7 @@ class UserHelper {
     var request = https.MultipartRequest('PUT', url);
     request.headers['token'] = 'Bearer $token';
 
-    if (model.name.isNotEmpty) request.fields['username'] = model.name;
+    if (model.username.isNotEmpty) request.fields['username'] = model.username;
     request.fields['city'] = model.city;
     request.fields['state'] = model.state;
     request.fields['country'] = model.country;
@@ -140,135 +162,52 @@ class UserHelper {
     }
   }
 
-  static Future<ProfileRes?> getProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) {
-      debugPrint('getProfile: token missing in SharedPreferences');
-      return null;
-    }
-
-    debugPrint('getProfile: token found, fetching...');
-
-    final requestHeaders = <String, String>{
-      'Content-Type': 'application/json',
-      'token': 'Bearer $token',
-    };
-
-    final url = Config.url('/api/users');
-    final response = await client.get(url, headers: requestHeaders);
-
-    debugPrint('getProfile status: ${response.statusCode}');
-    debugPrint('getProfile body:   ${response.body}');
-
-    if (response.statusCode == 200) {
-      final profile = profileResFromJson(response.body);
-      return profile;
-    } else {
-      throw Exception(
-        'Profile fetch failed [${response.statusCode}]: ${response.body}',
-      );
-    }
-  }
-
-  // ─── Device Session API ───────────────────────────────────────────────────
-
-  static Future<bool> registerDeviceSession({
-    required String sessionId,
-    required String device,
-    required String platform,
-    required String date,
-  }) async {
+  static Future<ApiResponse<ProfileRes>> getProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      if (token == null) return false;
 
-      final url = Config.url(Config.deviceSessionUrl);
-      final response = await client.post(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-        body: jsonEncode({
-          'sessionId': sessionId,
-          'device': device,
-          'platform': platform,
-          'date': date,
-        }),
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      debugPrint('registerDeviceSession error: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> removeDeviceSession(String sessionId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return false;
-
-      final url = Config.url('${Config.deviceSessionUrl}/$sessionId');
-      final response = await client.delete(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      debugPrint('removeDeviceSession error: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> removeAllDeviceSessions() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return false;
-
-      final url = Config.url(Config.deviceSessionsUrl);
-      final response = await client.delete(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      debugPrint('removeAllDeviceSessions error: $e');
-      return false;
-    }
-  }
-
-  static Future<List<Map<String, dynamic>>> fetchDeviceSessions() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return [];
-
-      final url = Config.url(Config.deviceSessionsUrl);
-      final response = await client.get(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-      );
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        final data = body['data'] as List<dynamic>? ?? [];
-        return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      if (token == null || token.isEmpty) {
+        return ApiResponse(success: false, message: 'Not authenticated');
       }
-      return [];
+
+      debugPrint('getProfile: token found, fetching...');
+
+      final requestHeaders = <String, String>{
+        'Content-Type': 'application/json',
+        'token': 'Bearer $token',
+      };
+
+      final url = Config.url('/api/users');
+      final response = await client.get(url, headers: requestHeaders);
+
+      debugPrint('getProfile status: ${response.statusCode}');
+      debugPrint('getProfile body:   ${response.body}');
+
+      final decoded = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse(
+          success: true,
+          message: decoded['message'] ?? 'Success',
+          data: ProfileRes.fromJson(decoded['data']),
+        );
+      }
+
+      return ApiResponse(
+        success: false,
+        message: decoded['message'] ?? 'Failed to fetch profile',
+      );
     } catch (e) {
-      debugPrint('fetchDeviceSessions error: $e');
-      return [];
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
   /// Fetches a single user's full profile by their userId.
-  ///
   /// Backend contract: GET /api/users/:userId
-  /// Response format: { "success": true, "data": { ...user fields... } }
-  ///
+  /// Response format: { "success": true, "data": { ...user fields... }
   /// Returns null when the user is not found or a network/parse error occurs.
-  static Future<ProfileRes?> fetchUserById(String userId) async {
+  static Future<ApiResponse<UserResponse>> fetchUserById(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -282,16 +221,24 @@ class UserHelper {
       final response = await client.get(url, headers: headers);
 
       debugPrint('fetchUserById [$userId] status: ${response.statusCode}');
+      debugPrint('fetchUserById body: ${response.body}');
+
+      final decoded = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return profileResFromJson(response.body);
+        return ApiResponse(
+          success: true,
+          message: decoded['message'] ?? 'Success',
+          data: UserResponse.fromJson(decoded['data']),
+        );
       }
 
-      debugPrint('fetchUserById failed: ${response.body}');
-      return null;
+      return ApiResponse(
+        success: false,
+        message: decoded['message'] ?? 'Failed to fetch user',
+      );
     } catch (e) {
-      debugPrint('fetchUserById error: $e');
-      return null;
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 

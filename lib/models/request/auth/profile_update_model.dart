@@ -8,13 +8,13 @@ String profileUpdateReqToJson(ProfileUpdateReq data) =>
 
 class ProfileUpdateReq {
   ProfileUpdateReq({
-    this.name = "",
+    this.username = "",
     this.city = "",
     this.state = "",
     this.country = "",
     required this.phone,
     this.profile,
-    required this.skills,
+    this.skills = const [],
     this.college = "",
     this.branch = "",
     this.gender,
@@ -30,7 +30,7 @@ class ProfileUpdateReq {
 
   factory ProfileUpdateReq.fromJson(Map<String, dynamic> json) =>
       ProfileUpdateReq(
-        name: json['name'] ?? "",
+        username: json['username'] ?? "",
         city: json['city'],
         state: json['state'],
         country: json['country'],
@@ -49,7 +49,7 @@ class ProfileUpdateReq {
         longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       );
 
-  String name;
+  String username;
   String city;
   String state;
   String country;
@@ -69,23 +69,21 @@ class ProfileUpdateReq {
   double longitude;
 
   Map<String, dynamic> toJson() => {
-        if (name.isNotEmpty) 'name': name,
-        'city': city,
-        'state': state,
-        'country': country,
-        'phone': phone,
-        'profile': profile,
-        'skills': List<dynamic>.from(skills.map((x) => x)),
-        'college': college,
-        'branch': branch,
-        if (gender != null) 'gender': gender,
-        'dob': dob,
-        'userType': userType,
-        'linkedInUrl': linkedInUrl,
-        'gitHubUrl': gitHubUrl,
-        'twitterUrl': twitterUrl,
-        'portfolioUrl': portfolioUrl,
-        'latitude': latitude,
-        'longitude': longitude,
-      };
+    if (username.isNotEmpty) 'username': username, // ✅ FIXED
+    'city': city,
+    'state': state,
+    'country': country,
+    'phone': phone,
+    'college': college,
+    'branch': branch,
+    if (gender != null) 'gender': gender,
+    'dob': dob,
+    'userType': userType,
+    'linkedInUrl': linkedInUrl,
+    'gitHubUrl': gitHubUrl,
+    'twitterUrl': twitterUrl,
+    'portfolioUrl': portfolioUrl,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 }

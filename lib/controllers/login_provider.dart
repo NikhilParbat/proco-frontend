@@ -6,6 +6,7 @@ import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
+import 'package:proco/services/helpers/device_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/mainscreen.dart';
@@ -329,7 +330,7 @@ class LoginNotifier extends ChangeNotifier {
 
       final date = DateTime.now().toString().substring(0, 10);
 
-      await UserHelper.registerDeviceSession(
+      await DeviceHelper.registerDeviceSession(
         sessionId: sessionId,
         device: deviceName,
         platform: platformName,
@@ -345,7 +346,7 @@ class LoginNotifier extends ChangeNotifier {
   /// Fetches the list of sessions from the backend.
   Future<void> loadDeviceSessions() async {
     try {
-      final raw = await UserHelper.fetchDeviceSessions();
+      final raw = await DeviceHelper.fetchDeviceSessions();
       final sessions = raw
           .map((e) => DeviceSession.fromJson(e))
           .toList()
@@ -367,7 +368,7 @@ class LoginNotifier extends ChangeNotifier {
 
       final session = _deviceSessions[index];
 
-      await UserHelper.removeDeviceSession(session.sessionId);
+      await DeviceHelper.removeDeviceSession(session.sessionId);
 
       final prefs = await SharedPreferences.getInstance();
       final currentSessionId = prefs.getString('deviceSessionId') ?? '';
@@ -385,7 +386,7 @@ class LoginNotifier extends ChangeNotifier {
 
   void logout() async {
     // Best-effort: clear all sessions on the backend before wiping local state.
-    await UserHelper.removeAllDeviceSessions();
+    await DeviceHelper.removeAllDeviceSessions();
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('loggedIn', false);

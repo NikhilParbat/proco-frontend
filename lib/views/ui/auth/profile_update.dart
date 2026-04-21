@@ -74,22 +74,32 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       isLoading = true;
       errorMessage = null;
     });
+
     try {
-      final profileData = await UserHelper.getProfile();
+      final response = await UserHelper.getProfile();
+
+      if (!response.success) {
+        setState(() => errorMessage = response.message);
+        return;
+      }
+
+      final profileData = response.data;
+
       if (profileData != null) {
         setState(() {
-          _phoneController.text = profileData.phone;
-          _cityController.text = profileData.city;
-          _stateController.text = profileData.state;
-          _countryController.text = profileData.country;
-          _collegeController.text = profileData.college;
-          _branchController.text = profileData.branch;
-          skills = List<String>.from(profileData.skills);
+          _phoneController.text = profileData.phone ?? '';
+          _cityController.text = profileData.city ?? '';
+          _stateController.text = profileData.state ?? '';
+          _countryController.text = profileData.country ?? '';
+          _collegeController.text = profileData.college ?? '';
+          _branchController.text = profileData.branch ?? '';
+
+          // ❌ Backend doesn’t return skills anymore
+          skills = [];
+
           final g = profileData.gender;
           _selectedGender = _genderOptions.contains(g) ? g : null;
         });
-      } else {
-        setState(() => errorMessage = 'Could not load profile data');
       }
     } catch (e) {
       setState(() => errorMessage = 'Error loading profile: $e');
@@ -140,19 +150,14 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         imageNotifier.selectedImage,
       );
 
-      if (response == true) {
-        _snack('Success', 'Profile updated successfully', Colors.green);
+      if (response.success) {
+        _snack('Success', response.message, Colors.green);
+
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) Get.offAll(() => const MainScreen());
       } else {
-        setState(
-          () => errorMessage = 'Profile update failed. Please try again.',
-        );
-        _snack(
-          'Update Failed',
-          'Please check your information and try again',
-          Colors.orange,
-        );
+        setState(() => errorMessage = response.message);
+        _snack('Update Failed', response.message, Colors.orange);
       }
     } catch (e) {
       setState(() => errorMessage = 'Error: ${e.toString()}');
@@ -318,9 +323,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
               child: Container(
                 padding: EdgeInsets.all(14.h),
                 decoration: BoxDecoration(
-                  color: _card.withValues(alpha:0.1),
+                  color: _card.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _accent.withValues(alpha:0.5)),
+                  border: Border.all(color: _accent.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   children: [
@@ -435,7 +440,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                     height: 100.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _card.withValues(alpha:0.3),
+                      color: _card.withValues(alpha: 0.3),
                       border: Border.all(color: _accent, width: 2),
                       image: imageNotifier.selectedImage != null
                           ? DecorationImage(
@@ -448,7 +453,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                         ? Icon(
                             Icons.person_rounded,
                             size: 50.w,
-                            color: _accent.withValues(alpha:0.6),
+                            color: _accent.withValues(alpha: 0.6),
                           )
                         : null,
                   ),
@@ -558,11 +563,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           ),
         ),
         SizedBox(height: 4.h),
-        Container(height: 1, color: _card.withValues(alpha:0.5)),
+        Container(height: 1, color: _card.withValues(alpha: 0.5)),
       ],
     );
   }
-
 
   Widget _field({
     required TextEditingController controller,
@@ -587,15 +591,17 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
         prefixIcon: Icon(icon, color: _accent, size: 20),
         filled: true,
-        fillColor: readOnly ? _card.withValues(alpha:0.25) : _card.withValues(alpha:0.25),
+        fillColor: readOnly
+            ? _card.withValues(alpha: 0.25)
+            : _card.withValues(alpha: 0.25),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -623,15 +629,15 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
         prefixIcon: const Icon(Icons.person_outline, color: _accent),
         filled: true,
-        fillColor: _card.withValues(alpha:0.25),
+        fillColor: _card.withValues(alpha: 0.25),
         contentPadding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -675,18 +681,18 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                 size: 20,
               ),
               filled: true,
-              fillColor: _card.withValues(alpha:0.25),
+              fillColor: _card.withValues(alpha: 0.25),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16.w,
                 vertical: 16.h,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -718,9 +724,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         width: double.infinity,
         padding: EdgeInsets.all(14.h),
         decoration: BoxDecoration(
-          color: _card.withValues(alpha:0.15),
+          color: _card.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _card.withValues(alpha:0.3)),
+          border: Border.all(color: _card.withValues(alpha: 0.3)),
         ),
         child: const Text(
           'No skills added yet',
@@ -734,9 +740,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       width: double.infinity,
       padding: EdgeInsets.all(14.h),
       decoration: BoxDecoration(
-        color: _card.withValues(alpha:0.15),
+        color: _card.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha:0.3)),
+        border: Border.all(color: _card.withValues(alpha: 0.3)),
       ),
       child: Wrap(
         spacing: 8,
@@ -788,12 +794,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         width: double.infinity,
         height: 54.h,
         decoration: BoxDecoration(
-          color: onTap == null ? _card.withValues(alpha:0.4) : _card,
+          color: onTap == null ? _card.withValues(alpha: 0.4) : _card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: onTap != null
               ? [
                   BoxShadow(
-                    color: _card.withValues(alpha:0.4),
+                    color: _card.withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),

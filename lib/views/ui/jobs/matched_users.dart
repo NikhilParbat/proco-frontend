@@ -4,8 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/chat/create_chat.dart';
-import 'package:proco/models/response/auth/profile_model.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
+import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/services/helpers/chat_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
@@ -180,7 +181,7 @@ class _MatchedUsersState extends State<MatchedUsers> {
           Icon(
             Icons.people_outline_rounded,
             size: 60,
-            color: _teal.withValues(alpha:0.25),
+            color: _teal.withValues(alpha: 0.25),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -199,12 +200,15 @@ class _MatchedUsersState extends State<MatchedUsers> {
   }
 }
 
+
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Carousel Card — Hinge Standouts style
 // ═══════════════════════════════════════════════════════════════════════════
 class _CarouselCard extends StatelessWidget {
   final SwipedRes user;
   final VoidCallback onTap;
+  
 
   static const Color _teal = Color(0xFF08979F);
 
@@ -232,7 +236,8 @@ class _CarouselCard extends StatelessWidget {
                   child: Image.network(
                     user.profile,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _placeholderBg(),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _placeholderBg(),
                   ),
                 ),
 
@@ -360,7 +365,7 @@ class _CarouselCard extends StatelessWidget {
   }
 
   Widget _placeholderBg() => Container(
-    color: _teal.withValues(alpha:0.1),
+    color: _teal.withValues(alpha: 0.1),
     child: const Center(
       child: Icon(Icons.person_rounded, color: _teal, size: 80),
     ),
@@ -593,8 +598,8 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
               boxShadow: [
                 BoxShadow(
                   color: outlined
-                      ? Colors.black.withValues(alpha:0.06)
-                      : color.withValues(alpha:0.35),
+                      ? Colors.black.withValues(alpha: 0.06)
+                      : color.withValues(alpha: 0.35),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),
@@ -654,7 +659,7 @@ class _SwipeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28.r),
         boxShadow: [
           BoxShadow(
-            color: _navy.withValues(alpha:0.35),
+            color: _navy.withValues(alpha: 0.35),
             blurRadius: 28,
             offset: const Offset(0, 10),
           ),
@@ -676,7 +681,7 @@ class _SwipeCard extends StatelessWidget {
                       user.profile,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: _teal.withValues(alpha:0.08),
+                        color: _teal.withValues(alpha: 0.08),
                         child: const Icon(
                           Icons.person_rounded,
                           color: _teal,
@@ -692,7 +697,7 @@ class _SwipeCard extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              _navy.withValues(alpha:0.6),
+                              _navy.withValues(alpha: 0.6),
                               _navy,
                             ],
                             stops: const [0.5, 0.8, 1.0],
@@ -761,10 +766,10 @@ class _SwipeCard extends StatelessWidget {
                             vertical: 7.h,
                           ),
                           decoration: BoxDecoration(
-                            color: _teal.withValues(alpha:0.12),
+                            color: _teal.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: _teal.withValues(alpha:0.4),
+                              color: _teal.withValues(alpha: 0.4),
                               width: 1,
                             ),
                           ),
@@ -803,10 +808,10 @@ class _SwipeCard extends StatelessWidget {
                                   vertical: 5.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _teal.withValues(alpha:0.08),
+                                  color: _teal.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _teal.withValues(alpha:0.25),
+                                    color: _teal.withValues(alpha: 0.25),
                                     width: 1,
                                   ),
                                 ),
@@ -844,7 +849,7 @@ class _SwipeCard extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: (isRight ? _accept : _reject).withValues(alpha:0.12),
+                  color: (isRight ? _accept : _reject).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(28.r),
                   border: Border.all(
                     color: isRight ? _accept : _reject,
@@ -927,7 +932,7 @@ class _ProfilePageState extends State<_ProfilePage> {
 
   /// Full profile fetched from GET /api/users/:userId.
   /// Null while loading or when the backend returns an error.
-  ProfileRes? _fullProfile;
+  ApiResponse<UserResponse>? _fullProfile;
   bool _isLoadingProfile = true;
 
   @override
@@ -946,63 +951,67 @@ class _ProfilePageState extends State<_ProfilePage> {
       _fullProfile = profile;
       _isLoadingProfile = false;
     });
+    final user = _fullProfile?.data;
   }
 
-  bool get _hasAnySocialLink =>
-      _fullProfile != null &&
-      (_fullProfile!.linkedInUrl.isNotEmpty ||
-          _fullProfile!.gitHubUrl.isNotEmpty ||
-          _fullProfile!.twitterUrl.isNotEmpty ||
-          _fullProfile!.portfolioUrl.isNotEmpty);
+  bool get _hasAnySocialLink {
+    final user = _fullProfile?.data;
+    if (user == null) return false;
+
+    return user.linkedInUrl.isNotEmpty ||
+        user.gitHubUrl.isNotEmpty ||
+        user.twitterUrl.isNotEmpty ||
+        user.portfolioUrl.isNotEmpty;
+  }
 
   Widget _sectionLabel(String text) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 11.sp,
-          color: Colors.white38,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Poppins',
-          letterSpacing: 1.2,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 11.sp,
+      color: Colors.white38,
+      fontWeight: FontWeight.w600,
+      fontFamily: 'Poppins',
+      letterSpacing: 1.2,
+    ),
+  );
 
   Widget _infoRow(IconData icon, String text) => Row(
-        children: [
-          Icon(icon, color: _teal, size: 16),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.white70,
-                fontFamily: 'Poppins',
-              ),
-            ),
+    children: [
+      Icon(icon, color: _teal, size: 16),
+      SizedBox(width: 8.w),
+      Expanded(
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.white70,
+            fontFamily: 'Poppins',
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 
   Widget _linkRow(String label, String url) => Padding(
-        padding: EdgeInsets.only(bottom: 8.h),
-        child: Row(
-          children: [
-            const Icon(Icons.link_rounded, color: _teal, size: 16),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                '$label: $url',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.white70,
-                  fontFamily: 'Poppins',
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+    padding: EdgeInsets.only(bottom: 8.h),
+    child: Row(
+      children: [
+        const Icon(Icons.link_rounded, color: _teal, size: 16),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            '$label: $url',
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.white70,
+              fontFamily: 'Poppins',
             ),
-          ],
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   Future<void> _onMatch() async {
     setState(() => _isMatching = true);
@@ -1094,7 +1103,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: _accept.withValues(alpha:0.4),
+                    color: _accept.withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -1230,7 +1239,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 }).toList(),
               ),
             ],
-
+            
             // ── Full profile details (loaded from backend) ─────────────────
             if (_isLoadingProfile)
               Padding(
@@ -1242,40 +1251,40 @@ class _ProfilePageState extends State<_ProfilePage> {
                   ),
                 ),
               )
-            else ...[
+            else if (user != null) ...[
               // Education
-              if (_fullProfile?.college.isNotEmpty == true) ...[
+              if ((user.college ?? '').isNotEmpty) ...[
                 SizedBox(height: 24.h),
                 _sectionLabel('EDUCATION'),
                 SizedBox(height: 10.h),
-                _infoRow(Icons.school_rounded, _fullProfile!.college),
-                if (_fullProfile!.branch.isNotEmpty) ...[
+                _infoRow(Icons.school_rounded, user.college!),
+                if ((user.branch ?? '').isNotEmpty) ...[
                   SizedBox(height: 8.h),
-                  _infoRow(Icons.account_tree_rounded, _fullProfile!.branch),
+                  _infoRow(Icons.account_tree_rounded, user.branch!),
                 ],
-              ],
+              ]
 
               // User type
-              if (_fullProfile?.userType.isNotEmpty == true) ...[
-                SizedBox(height: 24.h),
-                _sectionLabel('USER TYPE'),
-                SizedBox(height: 10.h),
-                _infoRow(Icons.work_outline_rounded, _fullProfile!.userType),
-              ],
+              // if (_fullProfile?.userType.isNotEmpty == true) ...[
+              //   SizedBox(height: 24.h),
+              //   _sectionLabel('USER TYPE'),
+              //   SizedBox(height: 10.h),
+              //   _infoRow(Icons.work_outline_rounded, _fullProfile!.userType),
+              // ],
 
               // Social links
               if (_hasAnySocialLink) ...[
                 SizedBox(height: 24.h),
                 _sectionLabel('LINKS'),
                 SizedBox(height: 10.h),
-                if (_fullProfile!.linkedInUrl.isNotEmpty)
-                  _linkRow('LinkedIn', _fullProfile!.linkedInUrl),
-                if (_fullProfile!.gitHubUrl.isNotEmpty)
-                  _linkRow('GitHub', _fullProfile!.gitHubUrl),
-                if (_fullProfile!.twitterUrl.isNotEmpty)
-                  _linkRow('Twitter', _fullProfile!.twitterUrl),
-                if (_fullProfile!.portfolioUrl.isNotEmpty)
-                  _linkRow('Portfolio', _fullProfile!.portfolioUrl),
+                if (user.linkedInUrl.isNotEmpty)
+                  _linkRow('LinkedIn', user.linkedInUrl),
+                if (user.gitHubUrl.isNotEmpty)
+                  _linkRow('GitHub', user.gitHubUrl),
+                if (user.twitterUrl.isNotEmpty)
+                  _linkRow('Twitter', user.twitterUrl),
+                if (user.portfolioUrl.isNotEmpty)
+                  _linkRow('Portfolio', user.portfolioUrl),
               ],
             ],
 

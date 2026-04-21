@@ -6,6 +6,7 @@ import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
+import 'package:proco/services/helpers/device_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/ui/mainscreen.dart';
@@ -592,7 +593,7 @@ class SignUpNotifier extends ChangeNotifier {
       final sessionId = prefs.getString('deviceSessionId') ?? const Uuid().v4();
       await prefs.setString('deviceSessionId', sessionId);
 
-      await UserHelper.registerDeviceSession(
+      await DeviceHelper.registerDeviceSession(
         sessionId: sessionId,
         device: deviceName,
         platform: platformName,

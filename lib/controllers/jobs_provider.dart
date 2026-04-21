@@ -8,7 +8,6 @@ import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/models/response/jobs/match_res_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/helpers/jobs_helper.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class JobsNotifier extends ChangeNotifier {
   // ── State fields ───────────────────────────────────────────────────────────
