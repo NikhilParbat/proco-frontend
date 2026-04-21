@@ -83,7 +83,7 @@ class BookMarkNotifier extends ChangeNotifier {
 
     if (response.success) {
       await _removeJob(jobId);
-      bookmarks.removeWhere((b) => b.job.id == jobId);
+      bookmarks.removeWhere((b) => b.job.id == jobId || b.id == jobId);
       notifyListeners();
 
       if (userId.isNotEmpty) {
@@ -122,7 +122,7 @@ class BookMarkNotifier extends ChangeNotifier {
       bookmarks = response.data!;
 
       // Sync local ID cache so SharedPreferences reflects only live bookmarks
-      final activeIds = bookmarks.map((b) => b.job.id).toList();
+      final activeIds = bookmarks.map((b) => b.job.id).where((id) => id.isNotEmpty).toList();
       final prefs = await SharedPreferences.getInstance();
       _jobs = activeIds;
       await prefs.setStringList('jobId', _jobs);

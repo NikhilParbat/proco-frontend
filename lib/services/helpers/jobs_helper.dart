@@ -497,7 +497,8 @@ class JobsHelper {
         return ApiResponse(success: false, message: 'Server is starting up, please try again');
       }
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final decoded = jsonDecode(response.body);
+        final List data = (decoded is Map ? decoded['data'] : decoded) ?? [];
         return ApiResponse(
           success: true,
           message: 'Matched users fetched successfully',

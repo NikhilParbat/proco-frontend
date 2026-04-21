@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:proco/constants/app_constants.dart';
 import 'package:proco/models/response/chat/get_chat.dart';
 import 'package:proco/services/helpers/chat_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatNotifier extends ChangeNotifier {
-  Future<List<GetChats>>? chats;
+  List<GetChats> chats = [];
+  bool isLoading = false;
 
   List<String> _online = [];
   bool _typing = false;
@@ -26,27 +29,36 @@ class ChatNotifier extends ChangeNotifier {
 
   String? userId;
 
-  bool isPinned(String chatId) {
-    // Derived from the server response stored in the chats future
-    return _localPinOverride[chatId] ?? false;
-  }
-
   // Optimistic local pin state while API call is in flight
   final Map<String, bool> _localPinOverride = {};
 
+  bool isPinned(String chatId) => _localPinOverride[chatId] ?? false;
+
   /// ================= LOAD CHATS =================
   Future<void> getChats() async {
-    try {
-      chats = ChatHelper.getConversations().then((list) {
-        for (final c in list) {
-          _localPinOverride[c.id] = c.isPinned;
-        }
-        return list;
-      });
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Chat Fetch Error: $e");
+    isLoading = true;
+    notifyListeners();
+
+    final response = await ChatHelper.getConversations();
+
+    isLoading = false;
+
+    if (response.success && response.data != null) {
+      chats = response.data!;
+      for (final c in chats) {
+        _localPinOverride[c.id] = c.isPinned;
+      }
+    } else {
+      Get.snackbar(
+        'Error',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
     }
+
+    notifyListeners();
   }
 
   /// ================= GET USER ID =================
@@ -58,32 +70,49 @@ class ChatNotifier extends ChangeNotifier {
 
   /// ================= TOGGLE PIN =================
   Future<void> togglePin(String chatId) async {
-    // Optimistic update
     final current = _localPinOverride[chatId] ?? false;
     _localPinOverride[chatId] = !current;
     notifyListeners();
 
-    final result = await ChatHelper.togglePin(chatId);
-    if (result != null) {
-      _localPinOverride[chatId] = result;
+    final response = await ChatHelper.togglePin(chatId);
+    if (response.success && response.data != null) {
+      _localPinOverride[chatId] = response.data!;
     } else {
-      // Revert on failure
       _localPinOverride[chatId] = current;
     }
     notifyListeners();
   }
 
-  /// ================= UNMATCH (removes chat from initiator's view) =================
+  /// ================= UNMATCH =================
   Future<void> unmatchChat(String chatId) async {
-    chats = chats?.then((list) => list.where((c) => c.id != chatId).toList());
+    chats = chats.where((c) => c.id != chatId).toList();
     _localPinOverride.remove(chatId);
     notifyListeners();
-    await ChatHelper.unmatchChat(chatId);
+
+    final response = await ChatHelper.unmatchChat(chatId);
+    if (!response.success) {
+      Get.snackbar(
+        'Error',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
   }
 
-  /// ================= CLEAR CHAT (deletes all messages) =================
+  /// ================= CLEAR CHAT =================
   Future<void> clearChat(String chatId) async {
-    await ChatHelper.clearChat(chatId);
+    final response = await ChatHelper.clearChat(chatId);
+    if (!response.success) {
+      Get.snackbar(
+        'Error',
+        response.message,
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.error),
+      );
+    }
   }
 
   /// ================= FORMAT MESSAGE TIME =================
@@ -91,7 +120,6 @@ class ChatNotifier extends ChangeNotifier {
     try {
       final messageTime = DateTime.parse(timestamp).toLocal();
       final now = DateTime.now();
-
       if (now.year == messageTime.year &&
           now.month == messageTime.month &&
           now.day == messageTime.day) {

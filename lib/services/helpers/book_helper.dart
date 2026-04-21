@@ -132,7 +132,7 @@ class BookMarkHelper {
 
         // Guard against orphaned bookmarks where the job was deleted
         final bookmarks = data
-            .where((e) => e is Map && e['job'] != null)
+            .where((e) => e is Map && e['jobId'] != null)
             .map((e) => AllBookmark.fromJson(e as Map<String, dynamic>))
             .toList();
 

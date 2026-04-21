@@ -46,6 +46,7 @@ class FilterHelper {
     }
   }
 
+  // GET /api/filters/:agentId — returns the single filter for this user
   static Future<ApiResponse<GetFilterRes>> getFilter(String agentId) async {
     try {
       final headers = await _authHeaders();
@@ -66,6 +67,8 @@ class FilterHelper {
           message: 'Filter fetched successfully',
           data: getFilterResFromJson(response.body),
         );
+      } else if (response.statusCode == 404) {
+        return ApiResponse(success: false, message: 'No filter found');
       } else {
         final body = jsonDecode(response.body);
         return ApiResponse(success: false, message: body['message'] ?? 'Failed to get filter');
@@ -76,87 +79,15 @@ class FilterHelper {
     }
   }
 
-  static Future<ApiResponse<List<FilterResponse>>> getUserFilters(String agentId) async {
-    try {
-      final headers = await _authHeaders();
-      final url = Config.url('${Config.filters}/$agentId');
-      final response = await client.get(url, headers: headers);
-
-      debugPrint('getUserFilters url: $url');
-      debugPrint('getUserFilters status: ${response.statusCode}');
-      debugPrint('getUserFilters body: ${response.body}');
-
-      if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
-      }
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        List<FilterResponse> filters;
-
-        if (data['data'] is List) {
-          filters = (data['data'] as List)
-              .map((f) => FilterResponse.fromJson(f as Map<String, dynamic>))
-              .toList();
-        } else if (data['data'] is Map) {
-          filters = [FilterResponse.fromJson(data['data'] as Map<String, dynamic>)];
-        } else {
-          return ApiResponse(success: false, message: 'Unexpected response structure');
-        }
-
-        return ApiResponse(
-          success: true,
-          message: 'User filters fetched successfully',
-          data: filters,
-        );
-      } else {
-        final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to load user filters');
-      }
-    } catch (e) {
-      debugPrint('FilterHelper.getUserFilters error: $e');
-      return ApiResponse(success: false, message: e.toString());
-    }
-  }
-
-  static Future<ApiResponse<FilterResponse>> getRecentFilters() async {
-    try {
-      final headers = await _authHeaders();
-      final url = Config.url(Config.filters, {'new': 'true'});
-      final response = await client.get(url, headers: headers);
-
-      if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
-      }
-
-      if (response.statusCode == 200) {
-        final list = filterResponseFromJson(response.body);
-        if (list.isEmpty) {
-          return ApiResponse(success: false, message: 'No recent filters found');
-        }
-        return ApiResponse(
-          success: true,
-          message: 'Recent filter fetched successfully',
-          data: list.first,
-        );
-      } else {
-        final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to get recent filters');
-      }
-    } catch (e) {
-      debugPrint('FilterHelper.getRecentFilters error: $e');
-      return ApiResponse(success: false, message: e.toString());
-    }
-  }
-
-  static Future<ApiResponse<FilterResponse>> createFilter(CreateFilterRequest model) async {
+  // POST /api/filters — create or upsert filter
+  static Future<ApiResponse<GetFilterRes>> createFilter(CreateFilterRequest model) async {
     try {
       final headers = await _authHeaders();
       final url = Config.url(Config.filters);
       final response = await client.post(
         url,
         headers: headers,
-        body: jsonEncode(model),
+        body: jsonEncode(model.toJson()),
       );
 
       if (response.body.isEmpty) {
@@ -164,16 +95,14 @@ class FilterHelper {
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final body = jsonDecode(response.body);
-        final data = (body is Map && body.containsKey('data')) ? body['data'] : body;
         return ApiResponse(
           success: true,
-          message: body['message'] ?? 'Filter created successfully',
-          data: FilterResponse.fromJson(data as Map<String, dynamic>),
+          message: 'Filter saved successfully',
+          data: getFilterResFromJson(response.body),
         );
       } else {
         final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to create filter');
+        return ApiResponse(success: false, message: body['message'] ?? 'Failed to save filter');
       }
     } catch (e) {
       debugPrint('FilterHelper.createFilter error: $e');
@@ -181,6 +110,7 @@ class FilterHelper {
     }
   }
 
+  // PUT /api/filters/:id — update by filter id
   static Future<ApiResponse<void>> updateFilter(
     String filterId,
     Map<String, dynamic> filterData,
@@ -206,6 +136,7 @@ class FilterHelper {
     }
   }
 
+  // DELETE /api/filters/:id
   static Future<ApiResponse<void>> deleteFilter(String filterId) async {
     try {
       final headers = await _authHeaders();

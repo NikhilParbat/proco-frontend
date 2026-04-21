@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as https;
 import 'package:proco/models/request/chat/create_chat.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/chat/get_chat.dart';
 import 'package:proco/services/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,148 +11,150 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ChatHelper {
   static https.Client client = https.Client();
 
-  /// ================= CREATE CHAT =================
-  static Future<Map<String, dynamic>> createChat(CreateChat model) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+  static Future<Map<String, String>> _authHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    return {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
+    };
+  }
 
-      if (token == null) {
-        return {"success": false, "message": "User not authenticated"};
+  /// POST /api/chats — access or create a 1-1 chat, returns chatId
+  static Future<ApiResponse<String>> createChat(CreateChat model) async {
+    try {
+      final headers = await _authHeaders();
+      if (!headers.containsKey('token')) {
+        return ApiResponse(success: false, message: 'Not authenticated');
       }
 
-      final url = Config.url( Config.chatsUrl);
-
+      final url = Config.url(Config.chatsUrl);
       final response = await client.post(
         url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
+        headers: headers,
         body: jsonEncode(model.toJson()),
       );
 
-      debugPrint("CREATE CHAT RESPONSE: ${response.body}");
+      debugPrint('createChat status: ${response.statusCode}');
+      debugPrint('createChat body:   ${response.body}');
 
-      final decoded = json.decode(response.body);
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
+
+      final decoded = jsonDecode(response.body);
 
       if (response.statusCode == 200 && decoded['success'] == true) {
-        final data = decoded['data'] as Map<String, dynamic>?;
-        final users =
-            (data?['users'] as List?)
-                ?.map((u) => u as Map<String, dynamic>)
-                .toList() ??
-            [];
-        return {"success": true, "chatId": data?['_id'] ?? '', "users": users};
+        final chatId = decoded['data']?['chatId'] as String? ?? '';
+        return ApiResponse(success: true, message: 'Chat ready', data: chatId);
       } else {
-        return {
-          "success": false,
-          "message": decoded['message'] ?? "Failed to create chat",
-        };
+        return ApiResponse(success: false, message: decoded['message'] ?? 'Failed to access chat');
       }
     } catch (e) {
-      debugPrint("Create Chat Error: $e");
-      return {"success": false, "message": "Something went wrong"};
+      debugPrint('ChatHelper.createChat error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
-  /// ================= UNMATCH (delete from initiator's side) =================
-  static Future<bool> unmatchChat(String chatId) async {
+  /// GET /api/chats — get all chats for current user
+  static Future<ApiResponse<List<GetChats>>> getConversations() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return false;
-
-      final url = Config.url( '${Config.chatsUrl}/$chatId/unmatch');
-      final response = await client.patch(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-      );
-
-      final decoded = json.decode(response.body);
-      return response.statusCode == 200 && decoded['success'] == true;
-    } catch (e) {
-      debugPrint('UNMATCH CHAT ERROR: $e');
-      return false;
-    }
-  }
-
-  /// ================= CLEAR CHAT (delete all messages) =================
-  static Future<bool> clearChat(String chatId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return false;
-
-      final url = Config.url( '/api/messages/clear/$chatId');
-      final response = await client.delete(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-      );
-
-      final decoded = json.decode(response.body);
-      return response.statusCode == 200 && decoded['success'] == true;
-    } catch (e) {
-      debugPrint('CLEAR CHAT ERROR: $e');
-      return false;
-    }
-  }
-
-  /// ================= TOGGLE PIN CHAT =================
-  static Future<bool?> togglePin(String chatId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return null;
-
-      final url = Config.url( '${Config.chatsUrl}/$chatId/pin');
-      final response = await client.patch(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-      );
-
-      final decoded = json.decode(response.body);
-      if (response.statusCode == 200 && decoded['success'] == true) {
-        return decoded['data']['pinned'] as bool;
-      }
-      return null;
-    } catch (e) {
-      debugPrint('TOGGLE PIN ERROR: $e');
-      return null;
-    }
-  }
-
-  /// ================= GET CONVERSATIONS =================
-  static Future<List<GetChats>> getConversations() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
-      if (token == null) {
-        throw Exception("User not authenticated");
+      final headers = await _authHeaders();
+      if (!headers.containsKey('token')) {
+        return ApiResponse(success: false, message: 'Not authenticated');
       }
 
-      final url = Config.url( Config.chatsUrl);
+      final url = Config.url(Config.chatsUrl);
+      final response = await client.get(url, headers: headers);
 
-      final response = await client.get(
-        url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
-      );
+      debugPrint('getConversations status: ${response.statusCode}');
+      debugPrint('getConversations body:   ${response.body}');
 
-      debugPrint("GET CHATS RESPONSE: ${response.body}");
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
 
-      final decoded = json.decode(response.body);
+      final decoded = jsonDecode(response.body);
 
       if (response.statusCode == 200 && decoded['success'] == true) {
         final List data = decoded['data'] ?? [];
-
-        return data
+        final chats = data
             .map((e) => GetChats.fromJson(e as Map<String, dynamic>))
             .toList();
+        return ApiResponse(success: true, message: decoded['message'] ?? '', data: chats);
       } else {
-        throw Exception(decoded['message'] ?? "Couldn't load chats");
+        return ApiResponse(success: false, message: decoded['message'] ?? 'Failed to load chats');
       }
-    } catch (e, s) {
-      debugPrint('GET CHATS ERROR: $e');
-      debugPrintStack(stackTrace: s);
-      rethrow;
+    } catch (e) {
+      debugPrint('ChatHelper.getConversations error: $e');
+      return ApiResponse(success: false, message: e.toString());
+    }
+  }
+
+  /// PATCH /api/chats/:id/unmatch
+  static Future<ApiResponse<void>> unmatchChat(String chatId) async {
+    try {
+      final headers = await _authHeaders();
+      final url = Config.url('${Config.chatsUrl}/$chatId/unmatch');
+      final response = await client.patch(url, headers: headers);
+
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200 && decoded['success'] == true) {
+        return ApiResponse(success: true, message: 'Unmatched successfully');
+      }
+      return ApiResponse(success: false, message: decoded['message'] ?? 'Failed to unmatch');
+    } catch (e) {
+      debugPrint('ChatHelper.unmatchChat error: $e');
+      return ApiResponse(success: false, message: e.toString());
+    }
+  }
+
+  /// DELETE /api/messages/clear/:chatId
+  static Future<ApiResponse<void>> clearChat(String chatId) async {
+    try {
+      final headers = await _authHeaders();
+      final url = Config.url('/api/messages/clear/$chatId');
+      final response = await client.delete(url, headers: headers);
+
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200 && decoded['success'] == true) {
+        return ApiResponse(success: true, message: 'Chat cleared');
+      }
+      return ApiResponse(success: false, message: decoded['message'] ?? 'Failed to clear chat');
+    } catch (e) {
+      debugPrint('ChatHelper.clearChat error: $e');
+      return ApiResponse(success: false, message: e.toString());
+    }
+  }
+
+  /// PATCH /api/chats/:id/pin — returns new pin state
+  static Future<ApiResponse<bool>> togglePin(String chatId) async {
+    try {
+      final headers = await _authHeaders();
+      final url = Config.url('${Config.chatsUrl}/$chatId/pin');
+      final response = await client.patch(url, headers: headers);
+
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200 && decoded['success'] == true) {
+        final pinned = decoded['data']?['pinned'] as bool? ?? false;
+        return ApiResponse(success: true, message: 'Pin updated', data: pinned);
+      }
+      return ApiResponse(success: false, message: decoded['message'] ?? 'Failed to update pin');
+    } catch (e) {
+      debugPrint('ChatHelper.togglePin error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 }

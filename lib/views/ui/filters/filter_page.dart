@@ -25,9 +25,13 @@ class _FilterPageState extends State<FilterPage> {
 
   // ─── Data ─────────────────────────────────────────────────────────────────
   final List<String> options = List.from(kDomains);
-  final Map<String, bool> opportunityTypes = {
-    for (final t in kOpportunityTypes) t: false,
-  };
+
+  // ── Opportunity type toggles (matches backend flat fields) ─────────────────
+  bool _internship = false;
+  bool _research = false;
+  bool _freelance = false;
+  bool _competition = false;
+  bool _collaborate = false;
 
   final List<String> states = [
     "California",
@@ -89,11 +93,11 @@ class _FilterPageState extends State<FilterPage> {
       if (!options.contains(custom)) options.add(custom);
     }
 
-    for (final key in existing.opportunityTypes.keys) {
-      if (opportunityTypes.containsKey(key)) {
-        opportunityTypes[key] = existing.opportunityTypes[key] ?? false;
-      }
-    }
+    _internship = existing.internship;
+    _research = existing.research;
+    _freelance = existing.freelance;
+    _competition = existing.competition;
+    _collaborate = existing.collaborate;
 
     selectedLocationOption = existing.selectedLocationOption;
     selectedCity = existing.selectedCity;
@@ -398,6 +402,14 @@ class _FilterPageState extends State<FilterPage> {
 
   // ─── Opportunity type toggles ─────────────────────────────────────────────
   Widget _opportunityToggles() {
+    final entries = [
+      ('Internship', kOpportunityIcons['Internship'] ?? Icons.work_outline_rounded, _internship, (bool v) => setState(() => _internship = v)),
+      ('Research', kOpportunityIcons['Research'] ?? Icons.science_outlined, _research, (bool v) => setState(() => _research = v)),
+      ('Freelance', kOpportunityIcons['Freelance'] ?? Icons.laptop_outlined, _freelance, (bool v) => setState(() => _freelance = v)),
+      ('Competition', kOpportunityIcons['Competition'] ?? Icons.emoji_events_outlined, _competition, (bool v) => setState(() => _competition = v)),
+      ('Collaborate', kOpportunityIcons['Collaborate'] ?? Icons.group_outlined, _collaborate, (bool v) => setState(() => _collaborate = v)),
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: _card.withValues(alpha:0.15),
@@ -405,12 +417,10 @@ class _FilterPageState extends State<FilterPage> {
         border: Border.all(color: _card.withValues(alpha:0.3)),
       ),
       child: Column(
-        children: opportunityTypes.keys.toList().asMap().entries.map((e) {
+        children: entries.asMap().entries.map((e) {
           final idx = e.key;
-          final opportunity = e.value;
-          final isLast = idx == opportunityTypes.length - 1;
-          final isSelected = opportunityTypes[opportunity]!;
-          final icon = kOpportunityIcons[opportunity] ?? Icons.work_outline_rounded;
+          final (label, icon, isSelected, onChanged) = e.value;
+          final isLast = idx == entries.length - 1;
           return Column(
             children: [
               Padding(
@@ -420,47 +430,31 @@ class _FilterPageState extends State<FilterPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          icon,
-                          color: isSelected
-                              ? _accent
-                              : Colors.white38,
-                          size: 18,
-                        ),
+                        Icon(icon, color: isSelected ? _accent : Colors.white38, size: 18),
                         SizedBox(width: 10.w),
                         Text(
-                          opportunity,
+                          label,
                           style: TextStyle(
-                            color: opportunityTypes[opportunity]!
-                                ? _white
-                                : Colors.white60,
+                            color: isSelected ? _white : Colors.white60,
                             fontSize: 15,
-                            fontWeight: opportunityTypes[opportunity]!
-                                ? FontWeight.w500
-                                : FontWeight.normal,
+                            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                           ),
                         ),
                       ],
                     ),
                     Switch(
-                      value: opportunityTypes[opportunity]!,
+                      value: isSelected,
                       activeThumbColor: _accent,
                       activeTrackColor: _card.withValues(alpha:0.6),
                       inactiveThumbColor: Colors.white38,
                       inactiveTrackColor: Colors.white12,
-                      onChanged: (value) =>
-                          setState(() => opportunityTypes[opportunity] = value),
+                      onChanged: onChanged,
                     ),
                   ],
                 ),
               ),
               if (!isLast)
-                Divider(
-                  height: 1,
-                  color: _card.withValues(alpha:0.3),
-                  indent: 16,
-                  endIndent: 16,
-                ),
+                Divider(height: 1, color: _card.withValues(alpha:0.3), indent: 16, endIndent: 16),
             ],
           );
         }).toList(),
@@ -868,7 +862,6 @@ class _FilterPageState extends State<FilterPage> {
         final filterData = CreateFilterRequest(
           agentId: userId ?? '',
           selectedOptions: selectedOptions,
-          opportunityTypes: opportunityTypes,
           selectedLocationOption: selectedLocationOption,
           selectedCity: selectedCity,
           selectedState: selectedState,
@@ -877,6 +870,11 @@ class _FilterPageState extends State<FilterPage> {
           skills: List.from(selectedSkills),
           sortByTime: sortByTime,
           postedWithin: postedWithin,
+          internship: _internship,
+          research: _research,
+          freelance: _freelance,
+          competition: _competition,
+          collaborate: _collaborate,
         );
 
         if (!context.mounted) return;
@@ -895,7 +893,6 @@ class _FilterPageState extends State<FilterPage> {
           GetFilterRes(
             id: '',
             selectedOptions: List.from(selectedOptions),
-            opportunityTypes: Map.from(opportunityTypes),
             selectedLocationOption: selectedLocationOption,
             selectedCity: selectedCity,
             selectedState: selectedState,
@@ -904,6 +901,11 @@ class _FilterPageState extends State<FilterPage> {
             skills: List.from(selectedSkills),
             sortByTime: sortByTime,
             postedWithin: postedWithin,
+            internship: _internship,
+            research: _research,
+            freelance: _freelance,
+            competition: _competition,
+            collaborate: _collaborate,
           ),
         );
 

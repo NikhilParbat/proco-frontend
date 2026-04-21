@@ -428,11 +428,11 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
       duration: const Duration(seconds: 3),
     );
 
-    final result = await ChatHelper.createChat(CreateChat(userId: user.id));
+    final response = await ChatHelper.createChat(CreateChat(userId: user.id));
     if (!mounted) return;
 
-    if (result['success'] == true) {
-      final chatId = result['chatId'] as String;
+    if (response.success && response.data != null) {
+      final chatId = response.data!;
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId') ?? '';
       Get.to(
@@ -446,7 +446,7 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
     } else {
       Get.snackbar(
         'Error',
-        result['message'] ?? 'Failed to create chat',
+        response.message,
         backgroundColor: _reject,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
@@ -1033,15 +1033,15 @@ class _ProfilePageState extends State<_ProfilePage> {
       duration: const Duration(seconds: 3),
     );
 
-    final result = await ChatHelper.createChat(
+    final response = await ChatHelper.createChat(
       CreateChat(userId: widget.user.id),
     );
     if (!mounted) return;
 
     setState(() => _isMatching = false);
 
-    if (result['success'] == true) {
-      final chatId = result['chatId'] as String;
+    if (response.success && response.data != null) {
+      final chatId = response.data!;
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId') ?? '';
       widget.onMatched?.call();
@@ -1056,7 +1056,7 @@ class _ProfilePageState extends State<_ProfilePage> {
     } else {
       Get.snackbar(
         'Error',
-        result['message'] ?? 'Failed to create chat',
+        response.message,
         backgroundColor: _reject,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,

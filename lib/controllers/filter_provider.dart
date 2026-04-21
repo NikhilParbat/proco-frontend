@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class FilterNotifier extends ChangeNotifier {
   List<FilterResponse> filterList = [];
-  FilterResponse? recentFilter;
   GetFilterRes? filter;
   List<FilterResponse> userFilters = [];
 
@@ -46,12 +45,19 @@ class FilterNotifier extends ChangeNotifier {
       CreateFilterRequest(
         agentId: agentId,
         selectedOptions: [],
-        opportunityTypes: {for (final t in kOpportunityTypes) t: false},
         selectedLocationOption: '',
         selectedCity: '',
         selectedState: '',
         selectedCountry: '',
         customOptions: [],
+        skills: [],
+        sortByTime: false,
+        postedWithin: '',
+        internship: false,
+        research: false,
+        freelance: false,
+        competition: false,
+        collaborate: false,
       ),
     );
 
@@ -94,25 +100,8 @@ class FilterNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> getRecentFilters() async {
-    final response = await FilterHelper.getRecentFilters();
-
-    if (response.success && response.data != null) {
-      recentFilter = response.data;
-      notifyListeners();
-    } else {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
-    }
-  }
-
-  Future<void> getFilter(String filterId) async {
-    final response = await FilterHelper.getFilter(filterId);
+  Future<void> getFilter(String agentId) async {
+    final response = await FilterHelper.getFilter(agentId);
 
     if (response.success && response.data != null) {
       filter = response.data;
@@ -133,16 +122,19 @@ class FilterNotifier extends ChangeNotifier {
 
     if (response.success) {
       Get.snackbar(
-        'Filter Added Successfully',
+        'Filter Applied',
         '',
         colorText: kLight,
         backgroundColor: kLightBlue,
         icon: const Icon(Icons.check_circle),
       );
-      await getUserFilters(agentId);
+      if (response.data != null) {
+        filter = response.data;
+        notifyListeners();
+      }
     } else {
       Get.snackbar(
-        'Error Creating Filter',
+        'Error Saving Filter',
         response.message,
         colorText: kLight,
         backgroundColor: kOrange,
@@ -171,23 +163,6 @@ class FilterNotifier extends ChangeNotifier {
     if (!response.success) {
       Get.snackbar(
         'Error Deleting Filter',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
-    }
-  }
-
-  Future<void> getUserFilters(String agentId) async {
-    final response = await FilterHelper.getUserFilters(agentId);
-
-    if (response.success && response.data != null) {
-      userFilters = response.data!;
-      notifyListeners();
-    } else {
-      Get.snackbar(
-        'Error',
         response.message,
         colorText: kLight,
         backgroundColor: kOrange,
