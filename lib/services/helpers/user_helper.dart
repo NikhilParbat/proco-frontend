@@ -49,8 +49,9 @@ class UserHelper {
       if (model.branch.isNotEmpty) request.fields['branch'] = model.branch;
       if (model.gender != null) request.fields['gender'] = model.gender!;
       if (model.dob.isNotEmpty) request.fields['dob'] = model.dob;
-      if (model.userType.isNotEmpty)
+      if (model.userType.isNotEmpty) {
         request.fields['userType'] = model.userType;
+      }
       if (model.linkedInUrl.isNotEmpty) {
         request.fields['linkedInUrl'] = model.linkedInUrl;
       }
@@ -70,9 +71,15 @@ class UserHelper {
         request.fields['longitude'] = model.longitude.toString();
       }
 
-      // ⚠️ OPTIONAL: only if backend supports it
+      // ✅ NEW: Send interests, hobbies, skills as JSON arrays
       if (model.skills.isNotEmpty) {
         request.fields['skills'] = jsonEncode(model.skills);
+      }
+      if (model.interests.isNotEmpty) {
+        request.fields['interests'] = jsonEncode(model.interests);
+      }
+      if (model.hobbies.isNotEmpty) {
+        request.fields['hobbies'] = jsonEncode(model.hobbies);
       }
 
       // ✅ Image
@@ -84,6 +91,9 @@ class UserHelper {
 
       final streamedResponse = await request.send();
       final responseBody = await streamedResponse.stream.bytesToString();
+
+      debugPrint('updateProfile status: ${streamedResponse.statusCode}');
+      debugPrint('updateProfile response: $responseBody');
 
       final decoded = jsonDecode(responseBody);
 
@@ -100,6 +110,7 @@ class UserHelper {
         message: decoded['message'] ?? 'Something went wrong',
       );
     } catch (e) {
+      debugPrint('updateProfile error: $e');
       return ApiResponse(success: false, message: e.toString());
     }
   }
@@ -138,7 +149,11 @@ class UserHelper {
     request.fields['portfolioUrl'] = model.portfolioUrl;
     request.fields['latitude'] = model.latitude.toString();
     request.fields['longitude'] = model.longitude.toString();
+
+    // ✅ NEW: Send interests, hobbies, skills
     request.fields['skills'] = jsonEncode(model.skills);
+    request.fields['interests'] = jsonEncode(model.interests);
+    request.fields['hobbies'] = jsonEncode(model.hobbies);
 
     if (image != null) {
       request.files.add(
@@ -149,9 +164,13 @@ class UserHelper {
     final streamedResponse = await request.send();
     final responseBody = await streamedResponse.stream.bytesToString();
 
+    debugPrint('createProfile status: ${streamedResponse.statusCode}');
+    debugPrint('createProfile response: $responseBody');
+
     if (streamedResponse.statusCode == 200 ||
-        streamedResponse.statusCode == 201)
+        streamedResponse.statusCode == 201) {
       return null;
+    }
 
     try {
       final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
@@ -199,6 +218,7 @@ class UserHelper {
         message: decoded['message'] ?? 'Failed to fetch profile',
       );
     } catch (e) {
+      debugPrint('getProfile error: $e');
       return ApiResponse(success: false, message: e.toString());
     }
   }
@@ -238,6 +258,7 @@ class UserHelper {
         message: decoded['message'] ?? 'Failed to fetch user',
       );
     } catch (e) {
+      debugPrint('fetchUserById error: $e');
       return ApiResponse(success: false, message: e.toString());
     }
   }

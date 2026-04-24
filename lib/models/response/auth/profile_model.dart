@@ -1,154 +1,136 @@
-import 'dart:convert';
-
-ProfileRes profileResFromJson(String str) {
-  final decoded = json.decode(str);
-
-  if (decoded['success'] != true) {
-    throw Exception(decoded['message'] ?? "Failed to fetch profile");
-  }
-
-  return ProfileRes.fromJson(decoded['data'] ?? {});
-}
-
-String profileResToJson(ProfileRes data) => json.encode(data.toJson());
-
 class ProfileRes {
   final String id;
   final String username;
   final String email;
-  final bool isAdmin;
-  final bool isAgent;
-  final List<String> skills;
-  final DateTime updatedAt;
-  final String profile;
-  final String phone;
-  final String college;
-  final String gender;
-  final String branch;
-  final String dob;
-  final String userType;
-  final String linkedInUrl;
-  final String gitHubUrl;
-  final String twitterUrl;
-  final String portfolioUrl;
-  final bool isFirstTimeUser;
-
-  // ── Parsed from nested location object ──────────────────────────────────
-  final double latitude;
-  final double longitude;
-  final String city;
-  final String state;
-  final String country;
+  final String? phone;
+  final bool? isAdmin;
+  final bool? isAgent;
+  final String? profile;
+  final String? college;
+  final String? gender;
+  final String? branch;
+  final double? latitude;
+  final double? longitude;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? dob;
+  final String? linkedInUrl;
+  final String? gitHubUrl;
+  final String? twitterUrl;
+  final String? portfolioUrl;
+  final String? userType;
+  final String? provider;
+  final bool? isFirstTimeUser;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<String> skills; // NEW
+  final List<String> interests; // NEW
+  final List<String> hobbies; // NEW
 
   ProfileRes({
     required this.id,
     required this.username,
     required this.email,
-    required this.isAdmin,
-    required this.isAgent,
-    required this.skills,
-    required this.updatedAt,
-    required this.profile,
-    this.phone = "",
-    this.college = "",
-    this.gender = "",
-    this.branch = "",
-    this.dob = "",
-    this.userType = "",
-    this.linkedInUrl = "",
-    this.gitHubUrl = "",
-    this.twitterUrl = "",
-    this.portfolioUrl = "",
-    this.isFirstTimeUser = true,
-    this.latitude = 0.0,
-    this.longitude = 0.0,
-    this.city = "",
-    this.state = "",
-    this.country = "",
+    this.phone,
+    this.isAdmin,
+    this.isAgent,
+    this.profile,
+    this.college,
+    this.gender,
+    this.branch,
+    this.latitude,
+    this.longitude,
+    this.city,
+    this.state,
+    this.country,
+    this.dob,
+    this.linkedInUrl,
+    this.gitHubUrl,
+    this.twitterUrl,
+    this.portfolioUrl,
+    this.userType,
+    this.provider,
+    this.isFirstTimeUser,
+    this.createdAt,
+    this.updatedAt,
+    this.skills = const [], // NEW
+    this.interests = const [], // NEW
+    this.hobbies = const [], // NEW
   });
 
   factory ProfileRes.fromJson(Map<String, dynamic> json) {
-    // ── Parse nested location object ─────────────────────────────────────
-    // MongoDB schema: location: { type, coordinates: [lng, lat], city, state, country }
-    double lat = 0.0;
-    double lng = 0.0;
-    String city = "";
-    String state = "";
-    String country = "";
-
-    final locationRaw = json['location'];
-    if (locationRaw is Map<String, dynamic>) {
-      // GeoJSON order is [longitude, latitude]
-      final coords = locationRaw['coordinates'];
-      if (coords is List && coords.length >= 2) {
-        lng = (coords[0] as num?)?.toDouble() ?? 0.0;
-        lat = (coords[1] as num?)?.toDouble() ?? 0.0;
-      }
-      city    = locationRaw['city']    as String? ?? "";
-      state   = locationRaw['state']   as String? ?? "";
-      country = locationRaw['country'] as String? ?? "";
-    }
-
     return ProfileRes(
-      id:       json['_id']      ?? "",
-      username: json['username'] ?? "",
-      email:    json['email']    ?? "",
-      isAdmin:  json['isAdmin']  ?? false,
-      isAgent:  json['isAgent']  ?? false,
-      skills: json['skills'] != null
-          ? List<String>.from(json['skills'])
-          : [],
+      id: json['id'] ?? '',
+      username: json['username'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'],
+      isAdmin: json['isAdmin'],
+      isAgent: json['isAgent'],
+      profile: json['profile'],
+      college: json['college'],
+      gender: json['gender'],
+      branch: json['branch'],
+      latitude: json['latitude']?.toDouble(),
+      longitude: json['longitude']?.toDouble(),
+      city: json['city'],
+      state: json['state'],
+      country: json['country'],
+      dob: json['dob'],
+      linkedInUrl: json['linkedInUrl'],
+      gitHubUrl: json['gitHubUrl'],
+      twitterUrl: json['twitterUrl'],
+      portfolioUrl: json['portfolioUrl'],
+      userType: json['userType'],
+      provider: json['provider'],
+      isFirstTimeUser: json['isFirstTimeUser'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
-          : DateTime.now(),
-      profile: json['profile'] ??
-          "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Clip-Art-Transparent-PNG.png",
-      phone:        json['phone']        ?? "",
-      college:      json['college']      ?? "",
-      gender:       json['gender']       ?? "",
-      branch:       json['branch']       ?? "",
-      dob:          json['dob']          ?? "",
-      userType:     json['userType']     ?? "",
-      linkedInUrl:  json['linkedInUrl']  ?? "",
-      gitHubUrl:    json['gitHubUrl']    ?? "",
-      twitterUrl:   json['twitterUrl']   ?? "",
-      portfolioUrl: json['portfolioUrl'] ?? "",
-      isFirstTimeUser: json['isFirstTimeUser'] ?? true,
-      latitude:  lat,
-      longitude: lng,
-      city:    city,
-      state:   state,
-      country: country,
+          : null,
+      // NEW: Parse arrays
+      skills: json['skills'] != null ? List<String>.from(json['skills']) : [],
+      interests: json['interests'] != null
+          ? List<String>.from(json['interests'])
+          : [],
+      hobbies: json['hobbies'] != null
+          ? List<String>.from(json['hobbies'])
+          : [],
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        '_id':      id,
-        'username': username,
-        'email':    email,
-        'isAdmin':  isAdmin,
-        'isAgent':  isAgent,
-        'skills':   skills,
-        'updatedAt': updatedAt.toIso8601String(),
-        'profile':  profile,
-        'phone':    phone,
-        'college':  college,
-        'gender':   gender,
-        'branch':   branch,
-        'dob':      dob,
-        'userType': userType,
-        'linkedInUrl':  linkedInUrl,
-        'gitHubUrl':    gitHubUrl,
-        'twitterUrl':   twitterUrl,
-        'portfolioUrl': portfolioUrl,
-        'isFirstTimeUser': isFirstTimeUser,
-        // Re-serialise nested location so PUT requests stay consistent
-        'location': {
-          'type': 'Point',
-          'coordinates': [longitude, latitude], // GeoJSON: [lng, lat]
-          'city':    city,
-          'state':   state,
-          'country': country,
-        },
-      };
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'email': email,
+      'phone': phone,
+      'isAdmin': isAdmin,
+      'isAgent': isAgent,
+      'profile': profile,
+      'college': college,
+      'gender': gender,
+      'branch': branch,
+      'latitude': latitude,
+      'longitude': longitude,
+      'city': city,
+      'state': state,
+      'country': country,
+      'dob': dob,
+      'linkedInUrl': linkedInUrl,
+      'gitHubUrl': gitHubUrl,
+      'twitterUrl': twitterUrl,
+      'portfolioUrl': portfolioUrl,
+      'userType': userType,
+      'provider': provider,
+      'isFirstTimeUser': isFirstTimeUser,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'skills': skills, // NEW
+      'interests': interests, // NEW
+      'hobbies': hobbies, // NEW
+    };
+  }
 }

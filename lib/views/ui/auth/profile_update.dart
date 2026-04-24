@@ -26,6 +26,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
   // ─── Form ─────────────────────────────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
+  final _userController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
@@ -33,6 +34,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   final _collegeController = TextEditingController();
   final _branchController = TextEditingController();
   final _skillController = TextEditingController();
+  final _interestController = TextEditingController();
+  final _hobbyController = TextEditingController();
 
   double _latitude = 0.0;
   double _longitude = 0.0;
@@ -46,6 +49,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   ];
 
   List<String> skills = [];
+  List<String> interests = [];
+  List<String> hobbies = [];
   bool isLoading = true;
   bool isUpdating = false;
   String? errorMessage;
@@ -68,6 +73,26 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     super.dispose();
   }
 
+  void _addInterest() {
+    final val = _interestController.text.trim();
+    if (val.isEmpty || interests.contains(val)) return;
+
+    setState(() {
+      interests.add(val);
+      _interestController.clear();
+    });
+  }
+
+  void _addHobby() {
+    final val = _hobbyController.text.trim();
+    if (val.isEmpty || hobbies.contains(val)) return;
+
+    setState(() {
+      hobbies.add(val);
+      _hobbyController.clear();
+    });
+  }
+
   // ─── Data ─────────────────────────────────────────────────────────────────
   void _loadProfile() async {
     setState(() {
@@ -87,15 +112,16 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
       if (profileData != null) {
         setState(() {
+          _userController.text = profileData.username;
           _phoneController.text = profileData.phone ?? '';
           _cityController.text = profileData.city ?? '';
           _stateController.text = profileData.state ?? '';
           _countryController.text = profileData.country ?? '';
           _collegeController.text = profileData.college ?? '';
           _branchController.text = profileData.branch ?? '';
-
-          // ❌ Backend doesn’t return skills anymore
-          skills = [];
+          skills = profileData.skills;
+          interests = profileData.interests;
+          hobbies = profileData.hobbies;
 
           final g = profileData.gender;
           _selectedGender = _genderOptions.contains(g) ? g : null;
@@ -133,6 +159,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       final imageNotifier = context.read<ImageNotifier>();
 
       final updateReq = ProfileUpdateReq(
+        username: _userController.text.trim(),
         city: _cityController.text.trim(),
         state: _stateController.text.trim(),
         country: _countryController.text.trim(),
@@ -152,7 +179,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
       if (response.success) {
         _snack('Success', response.message, Colors.green);
-
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) Get.offAll(() => const MainScreen());
       } else {
@@ -181,6 +207,37 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       skills.add(skill);
       _skillController.clear();
     });
+  }
+
+  Widget _tagInput(
+    TextEditingController controller,
+    VoidCallback onAdd,
+    String label,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: controller,
+            onFieldSubmitted: (_) => onAdd(),
+            decoration: InputDecoration(labelText: label),
+          ),
+        ),
+        IconButton(onPressed: onAdd, icon: Icon(Icons.add)),
+      ],
+    );
+  }
+
+  Widget _tagChips(List<String> list, Function(String) onRemove) {
+    if (list.isEmpty) {
+      return Text("No items");
+    }
+
+    return Wrap(
+      children: list.map((item) {
+        return Chip(label: Text(item), onDeleted: () => onRemove(item));
+      }).toList(),
+    );
   }
 
   void _snack(String title, String msg, Color color) {
@@ -403,13 +460,23 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
             ),
             SizedBox(height: 20.h),
 
-            // ── Skills ────────────────────────────────────────────────────
+            // Skills
             _sectionLabel('Skills'),
-            SizedBox(height: 12.h),
-            _skillsInput(),
-            SizedBox(height: 12.h),
-            _skillsChips(),
-            SizedBox(height: 28.h),
+            _tagInput(_skillController, _addSkill, "Add skill"),
+            _tagChips(skills, (val) => setState(() => skills.remove(val))),
+
+            // Interests
+            _sectionLabel('Interests'),
+            _tagInput(_interestController, _addInterest, "Add interest"),
+            _tagChips(
+              interests,
+              (val) => setState(() => interests.remove(val)),
+            ),
+
+            // Hobbies
+            _sectionLabel('Hobbies'),
+            _tagInput(_hobbyController, _addHobby, "Add hobby"),
+            _tagChips(hobbies, (val) => setState(() => hobbies.remove(val))),
 
             // ── Submit ────────────────────────────────────────────────────
             _primaryButton(
@@ -662,125 +729,125 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     );
   }
 
-  Widget _skillsInput() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: _skillController,
-            style: const TextStyle(color: _white, fontSize: 15),
-            onFieldSubmitted: (_) => _addSkill(),
-            decoration: InputDecoration(
-              labelText: 'Add a skill',
-              hintText: 'e.g. Flutter, Python',
-              labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
-              hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
-              prefixIcon: const Icon(
-                Icons.psychology_outlined,
-                color: _accent,
-                size: 20,
-              ),
-              filled: true,
-              fillColor: _card.withValues(alpha: 0.25),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 16.h,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _accent, width: 1.5),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(width: 10.w),
-        GestureDetector(
-          onTap: _addSkill,
-          child: Container(
-            height: 54.h,
-            width: 54.h,
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.add_rounded, color: _white, size: 24),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _skillsInput() {
+  //   return Row(
+  //     children: [
+  //       Expanded(
+  //         child: TextFormField(
+  //           controller: _skillController,
+  //           style: const TextStyle(color: _white, fontSize: 15),
+  //           onFieldSubmitted: (_) => _addSkill(),
+  //           decoration: InputDecoration(
+  //             labelText: 'Add a skill',
+  //             hintText: 'e.g. Flutter, Python',
+  //             labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+  //             hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+  //             prefixIcon: const Icon(
+  //               Icons.psychology_outlined,
+  //               color: _accent,
+  //               size: 20,
+  //             ),
+  //             filled: true,
+  //             fillColor: _card.withValues(alpha: 0.25),
+  //             contentPadding: EdgeInsets.symmetric(
+  //               horizontal: 16.w,
+  //               vertical: 16.h,
+  //             ),
+  //             border: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(14),
+  //               borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+  //             ),
+  //             enabledBorder: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(14),
+  //               borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+  //             ),
+  //             focusedBorder: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(14),
+  //               borderSide: const BorderSide(color: _accent, width: 1.5),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       SizedBox(width: 10.w),
+  //       GestureDetector(
+  //         onTap: _addSkill,
+  //         child: Container(
+  //           height: 54.h,
+  //           width: 54.h,
+  //           decoration: BoxDecoration(
+  //             color: _card,
+  //             borderRadius: BorderRadius.circular(14),
+  //           ),
+  //           child: const Icon(Icons.add_rounded, color: _white, size: 24),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  Widget _skillsChips() {
-    if (skills.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(14.h),
-        decoration: BoxDecoration(
-          color: _card.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _card.withValues(alpha: 0.3)),
-        ),
-        child: const Text(
-          'No skills added yet',
-          style: TextStyle(color: Colors.white38, fontSize: 14),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
+  // Widget _skillsChips() {
+  //   if (skills.isEmpty) {
+  //     return Container(
+  //       width: double.infinity,
+  //       padding: EdgeInsets.all(14.h),
+  //       decoration: BoxDecoration(
+  //         color: _card.withValues(alpha: 0.15),
+  //         borderRadius: BorderRadius.circular(14),
+  //         border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //       ),
+  //       child: const Text(
+  //         'No skills added yet',
+  //         style: TextStyle(color: Colors.white38, fontSize: 14),
+  //         textAlign: TextAlign.center,
+  //       ),
+  //     );
+  //   }
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.h),
-      decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: skills.map((skill) {
-          return Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  skill,
-                  style: const TextStyle(
-                    color: _white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                GestureDetector(
-                  onTap: () => setState(() => skills.remove(skill)),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 14,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: EdgeInsets.all(14.h),
+  //     decoration: BoxDecoration(
+  //       color: _card.withValues(alpha: 0.15),
+  //       borderRadius: BorderRadius.circular(14),
+  //       border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //     ),
+  //     child: Wrap(
+  //       spacing: 8,
+  //       runSpacing: 8,
+  //       children: skills.map((skill) {
+  //         return Container(
+  //           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+  //           decoration: BoxDecoration(
+  //             color: _card,
+  //             borderRadius: BorderRadius.circular(20),
+  //           ),
+  //           child: Row(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Text(
+  //                 skill,
+  //                 style: const TextStyle(
+  //                   color: _white,
+  //                   fontSize: 13,
+  //                   fontWeight: FontWeight.w500,
+  //                 ),
+  //               ),
+  //               SizedBox(width: 6.w),
+  //               GestureDetector(
+  //                 onTap: () => setState(() => skills.remove(skill)),
+  //                 child: const Icon(
+  //                   Icons.close_rounded,
+  //                   size: 14,
+  //                   color: Colors.white70,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       }).toList(),
+  //     ),
+  //   );
+  // }
 
   Widget _primaryButton(
     String label,

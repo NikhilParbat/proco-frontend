@@ -7,7 +7,6 @@ import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/helpers/device_helper.dart';
-import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';

@@ -200,15 +200,12 @@ class _MatchedUsersState extends State<MatchedUsers> {
   }
 }
 
-
-
 // ═══════════════════════════════════════════════════════════════════════════
 // Carousel Card — Hinge Standouts style
 // ═══════════════════════════════════════════════════════════════════════════
 class _CarouselCard extends StatelessWidget {
   final SwipedRes user;
   final VoidCallback onTap;
-  
 
   static const Color _teal = Color(0xFF08979F);
 
@@ -951,17 +948,16 @@ class _ProfilePageState extends State<_ProfilePage> {
       _fullProfile = profile;
       _isLoadingProfile = false;
     });
-    final user = _fullProfile?.data;
   }
 
   bool get _hasAnySocialLink {
     final user = _fullProfile?.data;
     if (user == null) return false;
 
-    return user.linkedInUrl.isNotEmpty ||
-        user.gitHubUrl.isNotEmpty ||
-        user.twitterUrl.isNotEmpty ||
-        user.portfolioUrl.isNotEmpty;
+    return user.linkedInUrl!.isNotEmpty ||
+        user.gitHubUrl!.isNotEmpty ||
+        user.twitterUrl!.isNotEmpty ||
+        user.portfolioUrl!.isNotEmpty;
   }
 
   Widget _sectionLabel(String text) => Text(
@@ -992,7 +988,7 @@ class _ProfilePageState extends State<_ProfilePage> {
     ],
   );
 
-  Widget _linkRow(String label, String url) => Padding(
+  Widget _linkRow(String label, String? url) => Padding(
     padding: EdgeInsets.only(bottom: 8.h),
     child: Row(
       children: [
@@ -1068,6 +1064,7 @@ class _ProfilePageState extends State<_ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = _fullProfile?.data;
     return Scaffold(
       backgroundColor: _navy,
       appBar: AppBar(
@@ -1239,7 +1236,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 }).toList(),
               ),
             ],
-            
+
             // ── Full profile details (loaded from backend) ─────────────────
             if (_isLoadingProfile)
               Padding(
@@ -1262,7 +1259,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                   SizedBox(height: 8.h),
                   _infoRow(Icons.account_tree_rounded, user.branch!),
                 ],
-              ]
+              ],
 
               // User type
               // if (_fullProfile?.userType.isNotEmpty == true) ...[
@@ -1277,13 +1274,13 @@ class _ProfilePageState extends State<_ProfilePage> {
                 SizedBox(height: 24.h),
                 _sectionLabel('LINKS'),
                 SizedBox(height: 10.h),
-                if (user.linkedInUrl.isNotEmpty)
+                if (user.linkedInUrl!.isNotEmpty)
                   _linkRow('LinkedIn', user.linkedInUrl),
-                if (user.gitHubUrl.isNotEmpty)
+                if (user.gitHubUrl!.isNotEmpty)
                   _linkRow('GitHub', user.gitHubUrl),
-                if (user.twitterUrl.isNotEmpty)
+                if (user.twitterUrl!.isNotEmpty)
                   _linkRow('Twitter', user.twitterUrl),
-                if (user.portfolioUrl.isNotEmpty)
+                if (user.portfolioUrl!.isNotEmpty)
                   _linkRow('Portfolio', user.portfolioUrl),
               ],
             ],
