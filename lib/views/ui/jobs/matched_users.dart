@@ -153,10 +153,10 @@ class _MatchedUsersState extends State<MatchedUsers> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => _ProfilePage(
-                        user: users[index],
+                      builder: (_) => _SwipeDetailPage(
+                        users: users,
+                        initialIndex: index,
                         jobId: jobId,
-                        onMatched: () => _removeUser(users[index].id),
                       ),
                     ),
                   ),
@@ -339,7 +339,7 @@ class _CarouselCard extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                'Profile',
+                                'View Details',
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.white,
@@ -1266,14 +1266,6 @@ class _ProfilePageState extends State<_ProfilePage> {
                   _infoRow(Icons.account_tree_rounded, user.branch!),
                 ],
               ],
-
-              // User type
-              // if (_fullProfile?.userType.isNotEmpty == true) ...[
-              //   SizedBox(height: 24.h),
-              //   _sectionLabel('USER TYPE'),
-              //   SizedBox(height: 10.h),
-              //   _infoRow(Icons.work_outline_rounded, _fullProfile!.userType),
-              // ],
 
               // Social links
               if (_hasAnySocialLink) ...[
