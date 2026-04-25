@@ -282,4 +282,34 @@ class UserHelper {
       throw Exception('Failed to load user profiles');
     }
   }
+
+  static Future<ApiResponse<void>> deleteAccount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final url = Config.url('/api/users');
+      final response = await client.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return ApiResponse(success: true, message: 'Account deleted');
+      }
+      if (response.body.isNotEmpty) {
+        final body = jsonDecode(response.body);
+        return ApiResponse(
+          success: false,
+          message: body['message'] ?? 'Failed to delete account',
+        );
+      }
+      return ApiResponse(success: false, message: 'Failed to delete account');
+    } catch (e) {
+      debugPrint('deleteAccount error: $e');
+      return ApiResponse(success: false, message: e.toString());
+    }
+  }
 }

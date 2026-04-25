@@ -10,9 +10,9 @@ import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/auth/profile_screen.dart';
 import 'package:proco/views/ui/bookmarks/bookmarks.dart';
 import 'package:proco/views/ui/chat/chat_list.dart';
-import 'package:proco/views/ui/device_mgt/devices_info.dart';
 import 'package:proco/views/ui/homepage.dart';
 import 'package:proco/views/ui/jobs/user_job_page.dart';
+import 'package:proco/views/ui/settings/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
@@ -97,7 +97,7 @@ class _MainScreenState extends State<MainScreen> {
             : const LoginPage(drawer: false);
       case 3:
         return loginNotifier.loggedIn
-            ? const DeviceManagement()
+            ? const SettingsPage()
             : const LoginPage(drawer: false);
       case 4:
         return loginNotifier.loggedIn
