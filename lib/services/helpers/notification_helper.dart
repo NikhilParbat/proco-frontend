@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/views/ui/settings/notifications_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationItem {
   final String title;
@@ -60,8 +62,17 @@ class NotificationHelper {
       _sendTokenToBackend(newToken, authToken);
     });
 
-    // Foreground: show in-app snackbar + add to notification list
-    FirebaseMessaging.onMessage.listen((message) {
+    // Foreground: check user prefs before showing in-app snackbar
+    FirebaseMessaging.onMessage.listen((message) async {
+      final prefs = await SharedPreferences.getInstance();
+      final type = message.data['type'] ?? '';
+      if (type == 'match') {
+        final enabled = prefs.getBool(kPrefNotifMatches) ?? true;
+        if (!enabled) return;
+      } else {
+        final enabled = prefs.getBool(kPrefNotifChat) ?? true;
+        if (!enabled) return;
+      }
       _addFromRemoteMessage(message);
       Get.snackbar(
         message.notification?.title ?? 'New Message',
