@@ -10,6 +10,7 @@ import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/services/helpers/chat_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
+import 'package:proco/views/ui/jobs/match_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -413,18 +414,6 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
       listen: false,
     ).addMatchedUsers(widget.jobId, user.id);
 
-    Get.snackbar(
-      "It's a Match!",
-      "You matched with ${user.username}",
-      backgroundColor: _accept,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      icon: const Icon(Icons.favorite, color: Colors.white),
-      duration: const Duration(seconds: 3),
-    );
-
     final response = await ChatHelper.createChat(CreateChat(userId: user.id));
     if (!mounted) return;
 
@@ -432,12 +421,25 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
       final chatId = response.data!;
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId') ?? '';
-      Get.to(
-        () => ChatPage(
-          id: chatId,
-          title: user.username,
-          profile: user.profile,
-          user: [currentUserId, user.id],
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black54,
+        builder: (dialogContext) => MatchDialog(
+          user: user,
+          onGoToChat: () {
+            Navigator.of(dialogContext).pop();
+            Get.to(
+              () => ChatPage(
+                id: chatId,
+                title: user.username,
+                profile: user.profile,
+                user: [currentUserId, user.id],
+              ),
+            );
+          },
+          onBackToList: () => Navigator.of(dialogContext).pop(),
         ),
       );
     } else {
@@ -1017,18 +1019,6 @@ class _ProfilePageState extends State<_ProfilePage> {
       listen: false,
     ).addMatchedUsers(widget.jobId, widget.user.id);
 
-    Get.snackbar(
-      "It's a Match!",
-      "You matched with ${widget.user.username}",
-      backgroundColor: _accept,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      icon: const Icon(Icons.favorite, color: Colors.white),
-      duration: const Duration(seconds: 3),
-    );
-
     final response = await ChatHelper.createChat(
       CreateChat(userId: widget.user.id),
     );
@@ -1041,12 +1031,28 @@ class _ProfilePageState extends State<_ProfilePage> {
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId') ?? '';
       widget.onMatched?.call();
-      Get.to(
-        () => ChatPage(
-          id: chatId,
-          title: widget.user.username,
-          profile: widget.user.profile,
-          user: [currentUserId, widget.user.id],
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black54,
+        builder: (dialogContext) => MatchDialog(
+          user: widget.user,
+          onGoToChat: () {
+            Navigator.of(dialogContext).pop();
+            Get.to(
+              () => ChatPage(
+                id: chatId,
+                title: widget.user.username,
+                profile: widget.user.profile,
+                user: [currentUserId, widget.user.id],
+              ),
+            );
+          },
+          onBackToList: () {
+            Navigator.of(dialogContext).pop();
+            if (mounted) Navigator.of(context).pop();
+          },
         ),
       );
     } else {
