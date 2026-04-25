@@ -6,24 +6,13 @@ SendMessage sendMessageFromJson(String str) =>
 String sendMessageToJson(SendMessage data) => json.encode(data.toJson());
 
 class SendMessage {
-  SendMessage({
-    required this.content,
-    required this.chatId,
-    required this.receiver,
-  });
+  SendMessage({required this.content, required this.chatId});
 
-  factory SendMessage.fromJson(Map<String, dynamic> json) => SendMessage(
-        content: json['content'],
-        chatId: json['chatId'],
-        receiver: json['receiver'],
-      );
+  factory SendMessage.fromJson(Map<String, dynamic> json) =>
+      SendMessage(content: json['content'], chatId: json['chatId']);
+
   final String content;
   final String chatId;
-  final String receiver;
 
-  Map<String, dynamic> toJson() => {
-        'content': content,
-        'chatId': chatId,
-        'receiver': receiver,
-      };
+  Map<String, dynamic> toJson() => {'content': content, 'chatId': chatId};
 }

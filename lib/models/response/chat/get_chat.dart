@@ -14,8 +14,6 @@ String getChatsToJson(List<GetChats> data) =>
 class GetChats {
   final String id;
   final String chatName;
-  final bool isGroupChat;
-  final String? groupAdmin;
   final String? latestMessageId;
   final List<Sender> users;
   final DateTime createdAt;
@@ -26,10 +24,8 @@ class GetChats {
   GetChats({
     required this.id,
     required this.chatName,
-    required this.isGroupChat,
     required this.users,
     required this.createdAt,
-    this.groupAdmin,
     this.latestMessageId,
     this.isPinned = false,
     this.isUnmatched = false,
@@ -37,59 +33,61 @@ class GetChats {
   });
 
   factory GetChats.fromJson(Map<String, dynamic> json) => GetChats(
-        id: json['id'] ?? '',
-        chatName: json['chatName'] ?? '',
-        isGroupChat: json['isGroupChat'] ?? false,
-        groupAdmin: json['groupAdmin'],
-        latestMessageId: json['latestMessageId'],
-        users: (json['users'] as List?)
-                ?.map((e) => Sender.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            [],
-        createdAt: json['createdAt'] != null
-            ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
-            : DateTime.now(),
-        isPinned: json['isPinned'] ?? false,
-        isUnmatched: json['isUnmatched'] ?? false,
-        unmatchedBy: json['unmatchedBy'],
-      );
+    id: json['id'] ?? '',
+    chatName: json['chatName'] ?? '',
+    latestMessageId: json['latestMessageId'],
+    users:
+        (json['users'] as List?)
+            ?.map((e) => Sender.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [],
+    createdAt: json['createdAt'] != null
+        ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
+        : DateTime.now(),
+    isPinned: json['isPinned'] ?? false,
+    isUnmatched: json['isUnmatched'] ?? false,
+    unmatchedBy: json['unmatchedBy'],
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'chatName': chatName,
-        'isGroupChat': isGroupChat,
-        'groupAdmin': groupAdmin,
-        'latestMessageId': latestMessageId,
-        'users': users.map((x) => x.toJson()).toList(),
-        'createdAt': createdAt.toIso8601String(),
-        'isPinned': isPinned,
-        'isUnmatched': isUnmatched,
-        'unmatchedBy': unmatchedBy,
-      };
+    'id': id,
+    'chatName': chatName,
+    'latestMessageId': latestMessageId,
+    'users': users.map((x) => x.toJson()).toList(),
+    'createdAt': createdAt.toIso8601String(),
+    'isPinned': isPinned,
+    'isUnmatched': isUnmatched,
+    'unmatchedBy': unmatchedBy,
+  };
 }
 
 class Sender {
   final String id;
   final String username;
   final String profile;
+  final String? lastMessage;
 
   Sender({
     required this.id,
     required this.username,
     required this.profile,
+    this.lastMessage,
   });
 
   factory Sender.fromJson(Map<String, dynamic> json) => Sender(
-        id: json['id'] ?? '',
-        username: json['username'] ?? '',
-        profile: json['profile'] ?? '',
-      );
+    id: json['id'] ?? '',
+    username: json['username'] ?? '',
+    profile: json['profile'] ?? '',
+    lastMessage: json['lastMessage'] ?? '',
+  );
 
-  factory Sender.empty() => Sender(id: '', username: '', profile: '');
+  factory Sender.empty() =>
+      Sender(id: '', username: '', profile: '', lastMessage: '');
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'username': username,
-        'profile': profile,
-      };
+    'id': id,
+    'username': username,
+    'profile': profile,
+    'lastMessage': lastMessage,
+  };
 }

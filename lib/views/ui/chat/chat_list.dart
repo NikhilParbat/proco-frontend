@@ -65,22 +65,15 @@ class _ChatsListState extends State<ChatsList> {
           return ListView.separated(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             itemCount: chats.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 1,
-              indent: 76.w,
-              color: Colors.grey.shade100,
-            ),
+            separatorBuilder: (context, index) =>
+                Divider(height: 1, indent: 76.w, color: Colors.grey.shade100),
             itemBuilder: (context, index) {
               final chat = chats[index];
-              final otherUsers = chat.users.where(
-                (u) => u.id != chatNotifier.userId,
-              );
-              final noUser = otherUsers.isEmpty;
-              final other = noUser ? null : otherUsers.first;
+              final other = chat.users.isNotEmpty ? chat.users[0] : null;
 
               final String name = other?.username ?? 'Unknown User';
               final String profile = other?.profile ?? kDefaultImage;
-              const String preview = 'No messages yet';
+              final String preview = other?.lastMessage ?? 'No messages yet';
               final String time = chatNotifier.msgTime(
                 chat.createdAt.toString(),
               );
@@ -92,7 +85,7 @@ class _ChatsListState extends State<ChatsList> {
                     id: chat.id,
                     title: name,
                     profile: profile,
-                    user: [chat.users[0].id, chat.users[1].id],
+                    user: chat.users.map((u) => u.id).toList(),
                     isUnmatched: chat.isUnmatched,
                   ),
                 ),

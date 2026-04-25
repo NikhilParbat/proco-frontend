@@ -103,7 +103,7 @@ class _ChatPageState extends State<ChatPage> {
         messages.add(msg);
       }
     }
-    messages.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+    messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
   // ─── Socket ───────────────────────────────────────────────────────────────
@@ -139,12 +139,12 @@ class _ChatPageState extends State<ChatPage> {
       socket!.on('stop typing', (_) => chatNotifier.typingStatus = false);
       socket!.on('message received', (data) {
         final msg = ReceivedMessage.fromJson(data);
-        if (msg.sender.id != chatNotifier.userId &&
+        if (msg.senderId != chatNotifier.userId &&
             !_loadedMessageIds.contains(msg.id)) {
           _loadedMessageIds.add(msg.id);
           setState(() {
             messages.add(msg);
-            messages.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+            messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
           });
           _scrollToBottom();
         }
@@ -161,7 +161,7 @@ class _ChatPageState extends State<ChatPage> {
     _sendingNotifier.value = true;
 
     final result = await MesssagingHelper.sendMessage(
-      SendMessage(content: content, chatId: chatId, receiver: recv),
+      SendMessage(content: content, chatId: chatId),
     );
 
     _sendingNotifier.value = false;
@@ -172,7 +172,7 @@ class _ChatPageState extends State<ChatPage> {
         _loadedMessageIds.add(message.id);
         setState(() {
           messages.add(message);
-          messages.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
+          messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
           _messageController.clear();
         });
       } else {
@@ -247,7 +247,7 @@ class _ChatPageState extends State<ChatPage> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _teal.withValues(alpha:0.08),
+                  color: _teal.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -290,7 +290,7 @@ class _ChatPageState extends State<ChatPage> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha:0.08),
+                  color: Colors.orange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -331,7 +331,7 @@ class _ChatPageState extends State<ChatPage> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha:0.08),
+                  color: Colors.red.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -462,12 +462,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Consumer<ChatNotifier>(
       builder: (context, chatNotifier, child) {
-        if (widget.user.isNotEmpty) {
-          receiver = widget.user.firstWhere(
-            (id) => id != chatNotifier.userId,
-            orElse: () => '651815ae14b96155c15c3c12',
-          );
-        }
+        receiver = widget.user.isNotEmpty ? widget.user[0] : '';
 
         final isOnline = chatNotifier.online.contains(receiver);
 
@@ -493,7 +488,7 @@ class _ChatPageState extends State<ChatPage> {
                           width: 36.w,
                           height: 36.w,
                           decoration: BoxDecoration(
-                            color: _teal.withValues(alpha:0.08),
+                            color: _teal.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -615,7 +610,7 @@ class _ChatPageState extends State<ChatPage> {
                                 Icon(
                                   Icons.chat_bubble_outline_rounded,
                                   size: 52,
-                                  color: _teal.withValues(alpha:0.25),
+                                  color: _teal.withValues(alpha: 0.25),
                                 ),
                                 SizedBox(height: 12.h),
                                 Text(
@@ -645,9 +640,17 @@ class _ChatPageState extends State<ChatPage> {
                           reverse: true,
                           controller: _scrollController,
                           itemBuilder: (context, index) {
-                            final data = messages[messages.length - 1 - index];
-                            final isMine =
-                                data.sender.id == chatNotifier.userId;
+                            if (messages.isEmpty) return SizedBox();
+
+                            final reversedIndex = messages.length - 1 - index;
+
+                            if (reversedIndex < 0 ||
+                                reversedIndex >= messages.length) {
+                              return const SizedBox();
+                            }
+
+                            final data = messages[reversedIndex];
+                            final isMine = data.senderId == chatNotifier.userId;
 
                             // Show time if first msg or > 5 min gap
                             bool showTime = index == messages.length - 1;
@@ -655,8 +658,8 @@ class _ChatPageState extends State<ChatPage> {
                               final prev =
                                   messages[messages.length - 2 - index];
                               showTime =
-                                  data.updatedAt
-                                      .difference(prev.updatedAt)
+                                  data.createdAt
+                                      .difference(prev.createdAt)
                                       .inMinutes
                                       .abs() >
                                   5;
@@ -750,7 +753,7 @@ class _ChatPageState extends State<ChatPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                chatNotifier.msgTime(data.updatedAt.toString()),
+                chatNotifier.msgTime(data.createdAt.toString()),
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 11.sp,
@@ -778,7 +781,9 @@ class _ChatPageState extends State<ChatPage> {
 
               // Bubble
               Container(
-                constraints: BoxConstraints(maxWidth: width * 0.70),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.70,
+                ),
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: isMine ? _sentBg : _recvBg,
@@ -790,7 +795,7 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha:0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -823,7 +828,7 @@ class _ChatPageState extends State<ChatPage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -837,7 +842,10 @@ class _ChatPageState extends State<ChatPage> {
               decoration: BoxDecoration(
                 color: _bgChat,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _teal.withValues(alpha:0.2), width: 1),
+                border: Border.all(
+                  color: _teal.withValues(alpha: 0.2),
+                  width: 1,
+                ),
               ),
               child: TextField(
                 controller: _messageController,
@@ -888,11 +896,11 @@ class _ChatPageState extends State<ChatPage> {
                 width: 44.w,
                 height: 44.w,
                 decoration: BoxDecoration(
-                  color: sending ? _teal.withValues(alpha:0.5) : _teal,
+                  color: sending ? _teal.withValues(alpha: 0.5) : _teal,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: _teal.withValues(alpha:0.35),
+                      color: _teal.withValues(alpha: 0.35),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
