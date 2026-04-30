@@ -5,6 +5,7 @@ import 'package:proco/views/common/app_bar.dart';
 import 'package:proco/views/common/drawer/drawer_widget.dart';
 import 'package:proco/views/ui/device_mgt/devices_info.dart';
 import 'package:proco/views/ui/settings/account_page.dart';
+import 'package:proco/views/ui/settings/help_support_page.dart';
 import 'package:proco/views/ui/settings/notifications_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -47,6 +48,16 @@ class SettingsPage extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const NotificationsPage()),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            _SettingsTile(
+              icon: Icons.help_outline_rounded,
+              label: 'Help & Support',
+              subtitle: 'FAQs and contact support',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HelpSupportPage()),
               ),
             ),
             SizedBox(height: 16.h),
