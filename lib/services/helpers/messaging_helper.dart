@@ -26,7 +26,7 @@ class MesssagingHelper {
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // ✅ FIXED
+          'token': 'Bearer $token', // ✅ FIXED
         },
         body: jsonEncode(model.toJson()),
       );
