@@ -29,7 +29,7 @@ class SwipedRes {
 
   factory SwipedRes.fromJson(Map<String, dynamic> json) {
     return SwipedRes(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       username: json['username'] ?? '',
       location: json['location'] ?? '',
       skills: json['skills'] != null
@@ -40,7 +40,7 @@ class SwipedRes {
   }
 
   Map<String, dynamic> toJson() => {
-        '_id': id,
+        'id': id,
         'username': username,
         'skills': skills,
         'location': location,

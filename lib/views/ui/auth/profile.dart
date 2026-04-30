@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/profile_provider.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/profile_model.dart';
 import 'package:proco/views/common/app_bar.dart';
 import 'package:proco/views/common/drawer/drawer_widget.dart';
@@ -48,7 +49,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Consumer<ProfileNotifier>(
         builder: (context, profileNotifier, child) {
-          return FutureBuilder<ProfileRes?>(
+          return FutureBuilder<ApiResponse<ProfileRes>>(
             future: profileNotifier.profile,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -57,10 +58,23 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               } else if (snapshot.hasError) {
                 return _buildErrorView('Error: ${snapshot.error}');
-              } else if (!snapshot.hasData || snapshot.data == null) {
+              } else if (!snapshot.hasData) {
                 return _buildErrorView('No profile data available');
               }
-              return _buildProfile(snapshot.data!);
+
+              final response = snapshot.data!;
+
+              if (!response.success) {
+                return _buildErrorView(response.message);
+              }
+
+              final user = response.data;
+
+              if (user == null) {
+                return _buildErrorView('No user data found');
+              }
+
+              return _buildProfile(user);
             },
           );
         },
@@ -75,8 +89,11 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 60, color: Colors.redAccent),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 60,
+              color: Colors.redAccent,
+            ),
             const SizedBox(height: 16),
             Text(
               message,
@@ -85,8 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () =>
-                  context.read<ProfileNotifier>().getProfile(),
+              onPressed: () => context.read<ProfileNotifier>().getProfile(),
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
@@ -100,48 +116,35 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfile(ProfileRes userData) {
+  Widget _buildProfile(ProfileRes user) {
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildProfileHeader(userData),
+          _buildProfileHeader(user),
           SizedBox(height: 24.h),
 
           _sectionLabel('Personal Info'),
           SizedBox(height: 12.h),
-          _infoTile(Icons.email_outlined, 'Email', userData.email),
+          _infoTile(Icons.email_outlined, 'Email', user.email),
           SizedBox(height: 12.h),
-          _infoTile(
-            Icons.phone_outlined,
-            'Phone',
-            userData.phone.isEmpty ? 'Not set' : userData.phone,
-          ),
+          _infoTile(Icons.phone_outlined, 'Phone', user.phone ?? 'Not set'),
           SizedBox(height: 12.h),
-          _infoTile(
-            Icons.cake_outlined,
-            'Date of Birth',
-            userData.dob.isEmpty ? 'Not set' : userData.dob,
-          ),
-          SizedBox(height: 12.h),
-          _infoTile(
-            Icons.person_outline,
-            'Role',
-            userData.userType.isEmpty ? 'Not set' : userData.userType,
-          ),
-          SizedBox(height: 12.h),
-          _infoTile(
-            Icons.wc_outlined,
-            'Gender',
-            userData.gender.isEmpty ? 'Not set' : userData.gender,
-          ),
+          _infoTile(Icons.wc_outlined, 'Gender', user.gender ?? 'Not set'),
           SizedBox(height: 20.h),
 
-          // Location — reads from the nested location.city/state/country fields
           _sectionLabel('Location'),
           SizedBox(height: 12.h),
-          _buildLocationSection(userData),
+          _infoTile(Icons.location_on_outlined, 'City', user.city ?? 'Not set'),
+          SizedBox(height: 12.h),
+          _infoTile(Icons.map_outlined, 'State', user.state ?? 'Not set'),
+          SizedBox(height: 12.h),
+          _infoTile(
+            Icons.public_outlined,
+            'Country',
+            user.country ?? 'Not set',
+          ),
           SizedBox(height: 20.h),
 
           _sectionLabel('Education'),
@@ -149,19 +152,10 @@ class _ProfilePageState extends State<ProfilePage> {
           _infoTile(
             Icons.apartment_outlined,
             'College',
-            userData.college.isEmpty ? 'Not set' : userData.college,
+            user.college ?? 'Not set',
           ),
           SizedBox(height: 12.h),
-          _infoTile(
-            Icons.school_outlined,
-            'Branch',
-            userData.branch.isEmpty ? 'Not set' : userData.branch,
-          ),
-          SizedBox(height: 20.h),
-
-          _sectionLabel('Skills'),
-          SizedBox(height: 12.h),
-          _buildSkillsSection(userData.skills),
+          _infoTile(Icons.school_outlined, 'Branch', user.branch ?? 'Not set'),
           SizedBox(height: 30.h),
         ],
       ),
@@ -169,37 +163,37 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// Renders city / state / country individually, or a single "Not set" tile.
-  Widget _buildLocationSection(ProfileRes userData) {
-    final bool hasCity = userData.city.isNotEmpty;
-    final bool hasState = userData.state.isNotEmpty;
-    final bool hasCountry = userData.country.isNotEmpty;
+  // Widget _buildLocationSection(ProfileRes userData) {
+  //   final bool hasCity = userData.city.isNotEmpty;
+  //   final bool hasState = userData.state.isNotEmpty;
+  //   final bool hasCountry = userData.country.isNotEmpty;
 
-    if (!hasCity && !hasState && !hasCountry) {
-      return _infoTile(Icons.location_on_outlined, 'Location', 'Not set');
-    }
+  //   if (!hasCity && !hasState && !hasCountry) {
+  //     return _infoTile(Icons.location_on_outlined, 'Location', 'Not set');
+  //   }
 
-    return Column(
-      children: [
-        if (hasCity) ...[
-          _infoTile(Icons.location_city_outlined, 'City', userData.city),
-          SizedBox(height: 12.h),
-        ],
-        if (hasState) ...[
-          _infoTile(Icons.map_outlined, 'State', userData.state),
-          SizedBox(height: 12.h),
-        ],
-        if (hasCountry)
-          _infoTile(Icons.flag_outlined, 'Country', userData.country),
-      ],
-    );
-  }
+  //   return Column(
+  //     children: [
+  //       if (hasCity) ...[
+  //         _infoTile(Icons.location_city_outlined, 'City', userData.city),
+  //         SizedBox(height: 12.h),
+  //       ],
+  //       if (hasState) ...[
+  //         _infoTile(Icons.map_outlined, 'State', userData.state),
+  //         SizedBox(height: 12.h),
+  //       ],
+  //       if (hasCountry)
+  //         _infoTile(Icons.flag_outlined, 'Country', userData.country),
+  //     ],
+  //   );
+  // }
 
-  Widget _buildProfileHeader(ProfileRes userData) {
+  Widget _buildProfileHeader(ProfileRes user) {
     final locationString = [
-      userData.city,
-      userData.state,
-      userData.country,
-    ].where((p) => p.isNotEmpty).join(', ');
+      user.city,
+      user.state,
+      user.country,
+    ].where((p) => p != null && p.isNotEmpty).join(', ');
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -212,10 +206,10 @@ class _ProfilePageState extends State<ProfilePage> {
             border: Border.all(color: _accent, width: 2),
           ),
           child: ClipOval(
-            child: userData.profile == 'null' || userData.profile.isEmpty
+            child: (user.profile == null || user.profile!.isEmpty)
                 ? Image.asset('assets/images/user.png', fit: BoxFit.cover)
                 : CachedNetworkImage(
-                    imageUrl: userData.profile,
+                    imageUrl: user.profile!,
                     fit: BoxFit.cover,
                     errorWidget: (context, url, error) => Image.asset(
                       'assets/images/user.png',
@@ -228,17 +222,15 @@ class _ProfilePageState extends State<ProfilePage> {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                userData.username,
+                user.username,
                 style: TextStyle(
                   color: _white,
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w600,
                 ),
                 overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
               if (locationString.isNotEmpty) ...[
                 const SizedBox(height: 4),
@@ -252,10 +244,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         style: TextStyle(
                           color: Colors.white60,
                           fontSize: 13.sp,
-                          fontWeight: FontWeight.w400,
                         ),
                         overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
                       ),
                     ),
                   ],
@@ -264,7 +254,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ),
-        SizedBox(width: 8.w),
         GestureDetector(
           onTap: () => Get.to(() => const UpdateProfilePage()),
           child: Container(
@@ -347,52 +336,52 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSkillsSection(List<String> skills) {
-    if (skills.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(14.h),
-        decoration: BoxDecoration(
-          color: _card.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _card.withValues(alpha: 0.3)),
-        ),
-        child: const Text(
-          'No skills added yet',
-          style: TextStyle(color: Colors.white38, fontSize: 14),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.h),
-      decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: skills.map((skill) {
-          return Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              skill,
-              style: const TextStyle(
-                color: _white,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  // Widget _buildSkillsSection(List<String> skills) {
+  //   if (skills.isEmpty) {
+  //     return Container(
+  //       width: double.infinity,
+  //       padding: EdgeInsets.all(14.h),
+  //       decoration: BoxDecoration(
+  //         color: _card.withValues(alpha: 0.15),
+  //         borderRadius: BorderRadius.circular(14),
+  //         border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //       ),
+  //       child: const Text(
+  //         'No skills added yet',
+  //         style: TextStyle(color: Colors.white38, fontSize: 14),
+  //         textAlign: TextAlign.center,
+  //       ),
+  //     );
+  //   }
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: EdgeInsets.all(14.h),
+  //     decoration: BoxDecoration(
+  //       color: _card.withValues(alpha: 0.15),
+  //       borderRadius: BorderRadius.circular(14),
+  //       border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //     ),
+  //     child: Wrap(
+  //       spacing: 8,
+  //       runSpacing: 8,
+  //       children: skills.map((skill) {
+  //         return Container(
+  //           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+  //           decoration: BoxDecoration(
+  //             color: _card,
+  //             borderRadius: BorderRadius.circular(20),
+  //           ),
+  //           child: Text(
+  //             skill,
+  //             style: const TextStyle(
+  //               color: _white,
+  //               fontSize: 13,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //           ),
+  //         );
+  //       }).toList(),
+  //     ),
+  //   );
+  // }
 }

@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/auth_service.dart';
+import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
-import 'package:proco/services/helpers/user_helper.dart';
+import 'package:proco/services/helpers/device_helper.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
@@ -28,9 +29,9 @@ class DeviceSession {
 
   factory DeviceSession.fromJson(Map<String, dynamic> json) => DeviceSession(
     sessionId: json['sessionId'] ?? '',
-    device:    json['device']    ?? 'Unknown Device',
-    platform:  json['platform']  ?? 'Unknown Platform',
-    date:      json['date']      ?? '',
+    device: json['device'] ?? 'Unknown Device',
+    platform: json['platform'] ?? 'Unknown Platform',
+    date: json['date'] ?? '',
   );
 }
 
@@ -104,14 +105,16 @@ class LoginNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> userLogin(LoginModel model) async {
+  Future<void> userLogin(LoginRequestModel model) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      var response = await AuthHelper.login(model);
+      final response = await AuthHelper.login(model);
 
-      if (response[0]) {
+      if (response.success && response.data != null) {
+        final user = response.data!;
+
         await saveDeviceSession();
 
         Get.snackbar(
@@ -123,11 +126,12 @@ class LoginNotifier extends ChangeNotifier {
         );
 
         await Future.delayed(const Duration(seconds: 1));
+
         _isLoading = false;
         notifyListeners();
 
-        final isFirstTimeUser = response.length > 1 && response[1] == true;
-        if (isFirstTimeUser) {
+        // ✅ Use typed value instead of guessing from array
+        if (user.isFirstTimeUser == true) {
           Get.offAll(() => const OnboardingFlow(), transition: Transition.fade);
         } else {
           Get.offAll(() => const MainScreen(), transition: Transition.fade);
@@ -136,9 +140,12 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        final msg = (response[1] as String?) ?? 'Login failed';
-        final isNotFound = msg.toLowerCase().contains('sign up') ||
+        final msg = response.message;
+
+        final isNotFound =
+            msg.toLowerCase().contains('sign up') ||
             msg.toLowerCase().contains('no account');
+
         Get.snackbar(
           isNotFound ? 'Account Not Found' : 'Login Failed',
           msg,
@@ -159,6 +166,7 @@ class LoginNotifier extends ChangeNotifier {
         backgroundColor: kOrange,
         icon: const Icon(Icons.add_alert),
       );
+
       debugPrint('Login Error: $e');
     }
   }
@@ -175,9 +183,13 @@ class LoginNotifier extends ChangeNotifier {
       if (userCredential == null) {
         _isLoading = false;
         notifyListeners();
-        Get.snackbar('Login Cancelled', 'Please try again',
-            colorText: kLight, backgroundColor: kOrange,
-            icon: const Icon(Icons.add_alert));
+        Get.snackbar(
+          'Login Cancelled',
+          'Please try again',
+          colorText: kLight,
+          backgroundColor: kOrange,
+          icon: const Icon(Icons.add_alert),
+        );
         return;
       }
 
@@ -185,9 +197,13 @@ class LoginNotifier extends ChangeNotifier {
       if (firebaseUser == null) {
         _isLoading = false;
         notifyListeners();
-        Get.snackbar('Authentication Error', 'Could not retrieve user information',
-            colorText: kLight, backgroundColor: kOrange,
-            icon: const Icon(Icons.add_alert));
+        Get.snackbar(
+          'Authentication Error',
+          'Could not retrieve user information',
+          colorText: kLight,
+          backgroundColor: kOrange,
+          icon: const Icon(Icons.add_alert),
+        );
         return;
       }
 
@@ -195,21 +211,28 @@ class LoginNotifier extends ChangeNotifier {
       if (idToken == null) {
         _isLoading = false;
         notifyListeners();
-        Get.snackbar('Authentication Error', 'Could not retrieve authentication token',
-            colorText: kLight, backgroundColor: kOrange,
-            icon: const Icon(Icons.add_alert));
+        Get.snackbar(
+          'Authentication Error',
+          'Could not retrieve authentication token',
+          colorText: kLight,
+          backgroundColor: kOrange,
+          icon: const Icon(Icons.add_alert),
+        );
         return;
       }
 
-      final response = await AuthHelper.googleLogin(
+      final model = GoogleAuthModel(
         idToken: idToken,
         email: firebaseUser.email ?? '',
         displayName: firebaseUser.displayName,
+        photoURL: firebaseUser.photoURL,
       );
+
+      final response = await AuthHelper.googleLogin(model);
 
       Get.closeAllSnackbars();
 
-      if (response.isNotEmpty && response[0] == true) {
+      if (response.success) {
         await saveDeviceSession();
 
         final prefs = await SharedPreferences.getInstance();
@@ -219,7 +242,8 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        final isFirstTimeUser = response.length > 1 && response[1] == true;
+        final user = response.data!; // ✅ FIX
+        final isFirstTimeUser = user.isFirstTimeUser == true; // ✅ FIX
 
         Get.snackbar(
           'Login Success',
@@ -243,11 +267,12 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        final message = (response.length > 1 && response[1] != null)
-            ? response[1].toString()
-            : 'Login failed';
-        final isNotFound = message.toLowerCase().contains('sign up') ||
+        final message = response.message; // ✅ FIX
+
+        final isNotFound =
+            message.toLowerCase().contains('sign up') ||
             message.toLowerCase().contains('no account');
+
         Get.snackbar(
           isNotFound ? 'Account Not Found' : 'Login Failed',
           isNotFound
@@ -263,12 +288,16 @@ class LoginNotifier extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       debugPrint('Google Sign-In Error: $e');
-      Get.snackbar('Login Failed', 'An unexpected error occurred',
-          colorText: kLight, backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert));
+
+      Get.snackbar(
+        'Login Failed',
+        'An unexpected error occurred',
+        colorText: kLight,
+        backgroundColor: kOrange,
+        icon: const Icon(Icons.add_alert),
+      );
     }
   }
-
   // ─── Device Session Management (backend-backed) ───────────────────────────
 
   /// Collects device info, generates a unique sessionId, registers it with the
@@ -276,36 +305,37 @@ class LoginNotifier extends ChangeNotifier {
   Future<void> saveDeviceSession() async {
     try {
       final deviceInfo = DeviceInfoPlugin();
-      String deviceName   = 'Unknown Device';
+      String deviceName = 'Unknown Device';
       String platformName = 'Unknown Platform';
 
       if (GetPlatform.isAndroid) {
         final info = await deviceInfo.androidInfo;
-        deviceName   = '${info.manufacturer} ${info.model}';
+        deviceName = '${info.manufacturer} ${info.model}';
         platformName = 'Android ${info.version.release}';
       } else if (GetPlatform.isIOS) {
         final info = await deviceInfo.iosInfo;
-        deviceName   = info.name;
+        deviceName = info.name;
         platformName = '${info.systemName} ${info.systemVersion}';
       } else if (GetPlatform.isWeb) {
         final info = await deviceInfo.webBrowserInfo;
-        deviceName   = info.browserName.name;
+        deviceName = info.browserName.name;
         platformName = 'Web';
       }
 
-      final prefs     = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
       // Reuse the existing sessionId for this installation so we don't create
       // duplicate entries on every login.
-      String sessionId = prefs.getString('deviceSessionId') ?? const Uuid().v4();
+      String sessionId =
+          prefs.getString('deviceSessionId') ?? const Uuid().v4();
       await prefs.setString('deviceSessionId', sessionId);
 
       final date = DateTime.now().toString().substring(0, 10);
 
-      await UserHelper.registerDeviceSession(
+      await DeviceHelper.registerDeviceSession(
         sessionId: sessionId,
-        device:    deviceName,
-        platform:  platformName,
-        date:      date,
+        device: deviceName,
+        platform: platformName,
+        date: date,
       );
 
       await loadDeviceSessions();
@@ -317,7 +347,7 @@ class LoginNotifier extends ChangeNotifier {
   /// Fetches the list of sessions from the backend.
   Future<void> loadDeviceSessions() async {
     try {
-      final raw = await UserHelper.fetchDeviceSessions();
+      final raw = await DeviceHelper.fetchDeviceSessions();
       final sessions = raw
           .map((e) => DeviceSession.fromJson(e))
           .toList()
@@ -339,9 +369,9 @@ class LoginNotifier extends ChangeNotifier {
 
       final session = _deviceSessions[index];
 
-      await UserHelper.removeDeviceSession(session.sessionId);
+      await DeviceHelper.removeDeviceSession(session.sessionId);
 
-      final prefs            = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
       final currentSessionId = prefs.getString('deviceSessionId') ?? '';
 
       if (session.sessionId == currentSessionId) {
@@ -357,7 +387,7 @@ class LoginNotifier extends ChangeNotifier {
 
   void logout() async {
     // Best-effort: clear all sessions on the backend before wiping local state.
-    await UserHelper.removeAllDeviceSessions();
+    await DeviceHelper.removeAllDeviceSessions();
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('loggedIn', false);
@@ -372,8 +402,8 @@ class LoginNotifier extends ChangeNotifier {
     await AuthService().signOut();
 
     _deviceSessions = [];
-    _loggedIn       = false;
-    _entrypoint     = false;
+    _loggedIn = false;
+    _entrypoint = false;
     notifyListeners();
 
     await Future.delayed(const Duration(seconds: 1));

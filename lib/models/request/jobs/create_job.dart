@@ -11,7 +11,6 @@ class CreateJobsRequest {
     required this.latitude,
     required this.longitude,
     this.title = '',
-    this.location = '',
     this.company = '',
     this.description = '',
     this.salary = '',
@@ -20,15 +19,15 @@ class CreateJobsRequest {
     this.contract = '',
     this.requirements = const [],
     this.imageUrl = '',
-    this.matchedUsers = const [],
-    this.swipedUsers = const [],
+    this.city = '',
+    this.state = '',
+    this.country = '',
   });
 
   final String agentId;
   final String domain;
   final String opportunityType;
   final String title;
-  final String location;
   final String company;
   final String description;
   final String salary;
@@ -37,17 +36,17 @@ class CreateJobsRequest {
   final String contract;
   final List<String> requirements;
   final String imageUrl;
-  final List<String> matchedUsers;
-  final List<String> swipedUsers;
   final double latitude;
   final double longitude;
+  final String city;
+  final String state;
+  final String country;
 
   Map<String, dynamic> toJson() => {
         'agentId': agentId,
         'domain': domain,
         'opportunityType': opportunityType,
         'title': title,
-        'location': location,
         'company': company,
         'description': description,
         'salary': salary,
@@ -56,9 +55,10 @@ class CreateJobsRequest {
         'contract': contract,
         'requirements': requirements.map((x) => x).toList(),
         'imageUrl': imageUrl,
-        'matchedUsers': matchedUsers.map((x) => x).toList(),
-        'swipedUsers': swipedUsers.map((x) => x).toList(),
         'latitude': latitude,
         'longitude': longitude,
+        'city': city,
+        'state': state,
+        'country': country,
       };
 }

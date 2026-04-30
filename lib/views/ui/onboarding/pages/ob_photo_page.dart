@@ -18,6 +18,12 @@ class _ObPhotoPageState extends State<ObPhotoPage> {
   File? _pickedFile;
   bool _picking = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _pickedFile = context.read<OnboardingFlowProvider>().profilePhoto;
+  }
+
   Future<void> _pick(ImageSource source) async {
     setState(() => _picking = true);
     try {

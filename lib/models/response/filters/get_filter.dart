@@ -2,7 +2,6 @@ import 'dart:convert';
 
 GetFilterRes getFilterResFromJson(String str) {
   final decoded = json.decode(str);
-  // Backend wraps response as {message, data} — unwrap data key
   final map = (decoded is Map && decoded.containsKey('data'))
       ? decoded['data'] as Map<String, dynamic>
       : decoded as Map<String, dynamic>;
@@ -15,7 +14,6 @@ class GetFilterRes {
   GetFilterRes({
     required this.id,
     required this.selectedOptions,
-    required this.opportunityTypes,
     required this.selectedLocationOption,
     required this.selectedCity,
     required this.selectedState,
@@ -24,35 +22,39 @@ class GetFilterRes {
     required this.skills,
     required this.sortByTime,
     required this.postedWithin,
+    required this.internship,
+    required this.research,
+    required this.freelance,
+    required this.competition,
+    required this.collaborate,
   });
 
   factory GetFilterRes.fromJson(Map<String, dynamic> json) => GetFilterRes(
-        id: json['_id'] ?? '',
+        id: json['id'] ?? '',
         selectedOptions: json['selectedOptions'] != null
-            ? List<String>.from(json['selectedOptions'].map((x) => x))
+            ? List<String>.from(json['selectedOptions'])
             : [],
-        opportunityTypes: json['opportunityTypes'] != null
-            ? Map<String, bool>.from(
-                (json['opportunityTypes'] as Map).map(
-                    (k, v) => MapEntry(k.toString(), v == true)))
-            : {},
         selectedLocationOption: json['selectedLocationOption'] ?? '',
         selectedCity: json['selectedCity'] ?? '',
         selectedState: json['selectedState'] ?? '',
         selectedCountry: json['selectedCountry'] ?? '',
         customOptions: json['customOptions'] != null
-            ? List<String>.from(json['customOptions'].map((x) => x))
+            ? List<String>.from(json['customOptions'])
             : [],
         skills: json['skills'] != null
-            ? List<String>.from(json['skills'].map((x) => x))
+            ? List<String>.from(json['skills'])
             : [],
         sortByTime: json['sortByTime'] == true,
         postedWithin: json['postedWithin'] as String? ?? '',
+        internship: json['internship'] == true,
+        research: json['research'] == true,
+        freelance: json['freelance'] == true,
+        competition: json['competition'] == true,
+        collaborate: json['collaborate'] == true,
       );
 
   final String id;
   final List<String> selectedOptions;
-  final Map<String, bool> opportunityTypes;
   final String selectedLocationOption;
   final String selectedCity;
   final String selectedState;
@@ -61,19 +63,27 @@ class GetFilterRes {
   final List<String> skills;
   final bool sortByTime;
   final String postedWithin;
+  final bool internship;
+  final bool research;
+  final bool freelance;
+  final bool competition;
+  final bool collaborate;
 
   Map<String, dynamic> toJson() => {
-        '_id': id,
-        'selectedOptions': List<dynamic>.from(selectedOptions.map((x) => x)),
-        'opportunityTypes': Map<String, dynamic>.from(
-            opportunityTypes.map((k, v) => MapEntry(k, v))),
+        'id': id,
+        'selectedOptions': List<dynamic>.from(selectedOptions),
         'selectedLocationOption': selectedLocationOption,
         'selectedCity': selectedCity,
         'selectedState': selectedState,
         'selectedCountry': selectedCountry,
-        'customOptions': List<dynamic>.from(customOptions.map((x) => x)),
-        'skills': List<dynamic>.from(skills.map((x) => x)),
+        'customOptions': List<dynamic>.from(customOptions),
+        'skills': List<dynamic>.from(skills),
         'sortByTime': sortByTime,
         'postedWithin': postedWithin,
+        'internship': internship,
+        'research': research,
+        'freelance': freelance,
+        'competition': competition,
+        'collaborate': collaborate,
       };
 }

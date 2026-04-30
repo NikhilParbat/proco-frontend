@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
+import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/views/ui/bookmarks/bookmark_detail_page.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BookmarkCardSwiper extends StatefulWidget {
   final List<AllBookmark> bookmarks;
@@ -30,12 +33,19 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
   late final CardSwiperController _controller;
   late List<AllBookmark> _bookmarks;
   bool _isFinished = false;
+  String _currentUserId = '';
 
   @override
   void initState() {
     super.initState();
     _controller = CardSwiperController();
     _bookmarks = List.from(widget.bookmarks);
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) setState(() => _currentUserId = prefs.getString('userId') ?? '');
   }
 
   @override
@@ -79,7 +89,12 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
               widget.bookmarkNotifier.deleteBookMark(bookmark.job.id);
             } else if (direction == CardSwiperDirection.right ||
                 direction == CardSwiperDirection.top) {
-              // Swipe right or up → view job detail
+              if (direction == CardSwiperDirection.right &&
+                  _currentUserId.isNotEmpty) {
+                context
+                    .read<JobsNotifier>()
+                    .addSwipedUsers(bookmark.job.id, _currentUserId, 'right');
+              }
               Navigator.push(
                 context,
                 MaterialPageRoute(

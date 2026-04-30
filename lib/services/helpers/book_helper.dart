@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as https;
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/services/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,115 +11,145 @@ import 'package:shared_preferences/shared_preferences.dart';
 class BookMarkHelper {
   static https.Client client = https.Client();
 
+  static Future<Map<String, String>> _authHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    return {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
+    };
+  }
+
   /// ================= ADD BOOKMARK =================
-  static Future<Map<String, dynamic>> addBookmarks(
+  static Future<ApiResponse<void>> addBookmarks(
     BookmarkReqResModel model,
   ) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final headers = await _authHeaders();
 
-      if (token == null) {
-        return {"success": false, "message": "User not authenticated"};
+      if (!headers.containsKey('token')) {
+        return ApiResponse(success: false, message: 'Not authenticated — please log in again.');
       }
 
-      final requestHeaders = <String, String>{
-        'Content-Type': 'application/json',
-        'token': 'Bearer $token',
-      };
-
-      final url = Config.url( Config.bookmarkUrl);
+      final url = Config.url(Config.bookmarkUrl);
 
       final response = await client.post(
         url,
-        headers: requestHeaders,
+        headers: headers,
         body: jsonEncode(model.toJson()),
       );
 
-      debugPrint("ADD BOOKMARK RESPONSE: ${response.body}");
+      debugPrint('addBookmarks status: ${response.statusCode}');
+      debugPrint('addBookmarks body:   ${response.body}');
 
-      final decoded = json.decode(response.body);
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again.');
+      }
+
+      final decoded = jsonDecode(response.body);
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           decoded['success'] == true) {
-        return {"success": true};
+        return ApiResponse(
+          success: true,
+          message: decoded['message'] ?? 'Bookmark added successfully',
+        );
       } else {
-        return {
-          "success": false,
-          "message": decoded['message'] ?? "Failed to add bookmark",
-        };
+        return ApiResponse(
+          success: false,
+          message: decoded['message'] ?? 'Failed to add bookmark',
+        );
       }
     } catch (e) {
-      debugPrint("Add Bookmark Error: $e");
-      return {"success": false, "message": "Something went wrong"};
+      debugPrint('BookMarkHelper.addBookmarks error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
   /// ================= DELETE BOOKMARK =================
-  static Future<bool> deleteBookmarks(String jobId) async {
+  static Future<ApiResponse<void>> deleteBookmarks(String jobId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final headers = await _authHeaders();
 
-      if (token == null) return false;
+      if (!headers.containsKey('token')) {
+        return ApiResponse(success: false, message: 'Not authenticated — please log in again.');
+      }
 
-      final requestHeaders = <String, String>{
-        'Content-Type': 'application/json',
-        'token': 'Bearer $token',
-      };
+      final url = Config.url('${Config.bookmarkUrl}/$jobId');
 
-      final url = Config.url( '${Config.bookmarkUrl}/$jobId');
+      final response = await client.delete(url, headers: headers);
 
-      final response = await client.delete(url, headers: requestHeaders);
+      debugPrint('deleteBookmarks status: ${response.statusCode}');
+      debugPrint('deleteBookmarks body:   ${response.body}');
 
-      debugPrint("DELETE BOOKMARK RESPONSE: ${response.body}");
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again.');
+      }
 
-      final decoded = json.decode(response.body);
+      final decoded = jsonDecode(response.body);
 
-      return response.statusCode == 200 && decoded['success'] == true;
+      if (response.statusCode == 200 && decoded['success'] == true) {
+        return ApiResponse(
+          success: true,
+          message: decoded['message'] ?? 'Bookmark deleted successfully',
+        );
+      } else {
+        return ApiResponse(
+          success: false,
+          message: decoded['message'] ?? 'Failed to delete bookmark',
+        );
+      }
     } catch (e) {
-      debugPrint("Delete Bookmark Error: $e");
-      return false;
+      debugPrint('BookMarkHelper.deleteBookmarks error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
   /// ================= GET ALL BOOKMARKS =================
-  static Future<List<AllBookmark>> getBookmarks() async {
+  static Future<ApiResponse<List<AllBookmark>>> getBookmarks() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final headers = await _authHeaders();
 
-      if (token == null) {
-        throw Exception("User not authenticated");
+      if (!headers.containsKey('token')) {
+        return ApiResponse(success: false, message: 'Not authenticated — please log in again.');
       }
 
-      final requestHeaders = <String, String>{
-        'Content-Type': 'application/json',
-        'token': 'Bearer $token',
-      };
+      final url = Config.url(Config.bookmarkUrl);
 
-      final url = Config.url( Config.bookmarkUrl);
+      final response = await client.get(url, headers: headers);
 
-      final response = await client.get(url, headers: requestHeaders);
+      debugPrint('getBookmarks status: ${response.statusCode}');
+      debugPrint('getBookmarks body:   ${response.body}');
 
-      debugPrint("GET BOOKMARKS RESPONSE: ${response.body}");
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again.');
+      }
 
-      final decoded = json.decode(response.body);
+      final decoded = jsonDecode(response.body);
 
       if (response.statusCode == 200 && decoded['success'] == true) {
         final List data = decoded['data'] ?? [];
 
         // Guard against orphaned bookmarks where the job was deleted
-        return data
-            .where((e) => e is Map && e['job'] != null)
+        final bookmarks = data
+            .where((e) => e is Map && e['jobId'] != null)
             .map((e) => AllBookmark.fromJson(e as Map<String, dynamic>))
             .toList();
+
+        return ApiResponse(
+          success: true,
+          message: decoded['message'] ?? 'Bookmarks fetched successfully',
+          data: bookmarks,
+        );
       } else {
-        throw Exception(decoded['message'] ?? "Failed to load bookmarks");
+        return ApiResponse(
+          success: false,
+          message: decoded['message'] ?? 'Failed to load bookmarks',
+        );
       }
     } catch (e) {
-      debugPrint("Get Bookmarks Error: $e");
-      rethrow;
+      debugPrint('BookMarkHelper.getBookmarks error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 }

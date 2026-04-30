@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/jobs_provider.dart';
-import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/app_bar.dart';
 import 'package:proco/views/common/loader.dart';
 import 'package:proco/views/ui/jobs/widgets/job_tile.dart';
@@ -14,7 +13,6 @@ class JobListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final joblist = Provider.of<JobsNotifier>(context);
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(50.h),
@@ -26,29 +24,26 @@ class JobListPage extends StatelessWidget {
           ),
         ),
       ),
-      body: FutureBuilder<List<JobsResponse>>(
-        future: joblist.jobList,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Consumer<JobsNotifier>(
+        builder: (context, joblist, child) {
+          if (joblist.isLoadingJobList) {
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Text('Error ${snapshot.error}');
-          } else if (snapshot.data!.isEmpty) {
-            return const SearchLoading(text: 'No Oppotunities to display');
-          } else {
-            final job = snapshot.data;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: ListView.builder(
-                itemCount: job!.length,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  final jobs = job[index];
-                  return VerticalTileWidget(job: jobs);
-                },
-              ),
-            );
           }
+
+          if (joblist.jobList.isEmpty) {
+            return const SearchLoading(text: 'No Opportunities to display');
+          }
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ListView.builder(
+              itemCount: joblist.jobList.length,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return VerticalTileWidget(job: joblist.jobList[index]);
+              },
+            ),
+          );
         },
       ),
     );

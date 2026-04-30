@@ -21,7 +21,9 @@ List<JobsResponse> jobsResponseFromJson(String str) {
 class JobsResponse {
   final String id;
   final String title;
-  final String location;
+  final String city;
+  final String state;
+  final String country;
   final String company;
   final bool hiring;
   final String description;
@@ -31,20 +33,20 @@ class JobsResponse {
   final List<String> requirements;
   final String imageUrl;
   final String agentId;
-  final List<String> swipedUsers;
-  final List<String> matchedUsers;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String domain;
   final String opportunityType;
-  final String city;
   final double latitude;
   final double longitude;
+  final List<String> matchedUsers;
 
   JobsResponse({
     required this.id,
     required this.title,
-    required this.location,
+    required this.city,
+    required this.state,
+    required this.country,
     required this.company,
     required this.hiring,
     required this.description,
@@ -54,83 +56,68 @@ class JobsResponse {
     required this.requirements,
     required this.imageUrl,
     required this.agentId,
-    required this.swipedUsers,
-    required this.matchedUsers,
     required this.createdAt,
     required this.updatedAt,
     this.domain = '',
     this.opportunityType = '',
-    this.city = '',
     this.latitude = 0.0,
     this.longitude = 0.0,
+    this.matchedUsers = const [],
   });
 
+  String get location {
+    return [city, state, country].where((s) => s.isNotEmpty).join(', ');
+  }
+
   factory JobsResponse.fromJson(Map<String, dynamic> json) {
-    // 1. Check if location is a Map (new GeoJSON format) or a String (old format)
-    final dynamic rawLocation = json['location'];
-    
-    String displayLocation = "";
-    double lat = 0.0;
-    double lng = 0.0;
-    String extractedCity = json['city'] ?? "";
-
-    if (rawLocation is Map<String, dynamic>) {
-      // It's a Map: Extract the city/state and coordinates
-      displayLocation = rawLocation['city'] ?? rawLocation['state'] ?? "";
-      extractedCity = rawLocation['city'] ?? "";
-      
-      final List<dynamic>? coordinates = rawLocation['coordinates'];
-      if (coordinates != null && coordinates.length >= 2) {
-        // MongoDB stores [lng, lat]
-        lng = (coordinates[0] as num).toDouble();
-        lat = (coordinates[1] as num).toDouble();
-      }
-    } else if (rawLocation is String) {
-      // It's already a String: Use it directly
-      displayLocation = rawLocation;
-    }
-
     return JobsResponse(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       title: json['title'] ?? '',
-      // ✅ FIXED: Use the 'displayLocation' string we extracted above
-      // instead of 'json['location']' which might be a Map
-      location: displayLocation, 
+      city: json['city'] ?? '',
+      state: json['state'] ?? '',
+      country: json['country'] ?? '',
       company: json['company'] ?? '',
       hiring: json['hiring'] ?? false,
       description: json['description'] ?? '',
       salary: json['salary'] ?? '',
       period: json['period'] ?? '',
       contract: json['contract'] ?? '',
-      requirements: json['requirements'] != null
-          ? List<String>.from(json['requirements'].map((x) => x.toString()))
-          : [],
-      imageUrl: json['imageUrl'] ?? '',
-      agentId: json['agentId'] ?? '',
-      swipedUsers: json['swipedUsers'] != null
-          ? List<String>.from(json['swipedUsers'].map((x) => x.toString()))
-          : [],
+      requirements: _parseRequirements(json['requirements']),
+      imageUrl: json['imageUrl'] ?? json['image_url'] ?? '',
+      agentId: json['agentId'] ?? json['agent_id'] ?? '',
+      createdAt: json['createdAt'] != null && json['createdAt'] != ''
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null && json['updatedAt'] != ''
+          ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      domain: json['domain'] ?? '',
+      opportunityType: json['opportunityType'] ?? json['opportunity_type'] ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       matchedUsers: json['matchedUsers'] != null
           ? List<String>.from(json['matchedUsers'].map((x) => x.toString()))
           : [],
-      createdAt: json['createdAt'] != null && json['createdAt'] != ''
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null && json['updatedAt'] != ''
-          ? DateTime.parse(json['updatedAt'])
-          : DateTime.now(),
-      domain: json['domain'] ?? '',
-      opportunityType: json['opportunityType'] ?? '',
-      city: extractedCity,
-      longitude: lng,
-      latitude: lat,
     );
   }
 
+  static List<String> _parseRequirements(dynamic raw) {
+    if (raw == null) return [];
+    if (raw is List) {
+      return raw.map((e) {
+        if (e is Map) return (e['requirement'] ?? e['text'] ?? '').toString();
+        return e.toString();
+      }).where((s) => s.isNotEmpty).toList();
+    }
+    return [];
+  }
+
   Map<String, dynamic> toJson() => {
-        '_id': id,
+        'id': id,
         'title': title,
-        'location': location,
+        'city': city,
+        'state': state,
+        'country': country,
         'company': company,
         'hiring': hiring,
         'description': description,
@@ -140,14 +127,12 @@ class JobsResponse {
         'requirements': requirements,
         'imageUrl': imageUrl,
         'agentId': agentId,
-        'swipedUsers': swipedUsers,
-        'matchedUsers': matchedUsers,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
         'domain': domain,
         'opportunityType': opportunityType,
-        'city': city,
         'latitude': latitude,
         'longitude': longitude,
+        'matchedUsers': matchedUsers,
       };
 }

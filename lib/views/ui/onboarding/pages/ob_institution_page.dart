@@ -13,7 +13,15 @@ class ObInstitutionPage extends StatefulWidget {
 }
 
 class _ObInstitutionPageState extends State<ObInstitutionPage> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: context.read<OnboardingFlowProvider>().institution,
+    );
+  }
 
   @override
   void dispose() {

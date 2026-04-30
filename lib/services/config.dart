@@ -4,7 +4,7 @@ class Config {
   // ─── Environment toggle ───────────────────────────────────────────────────
   // Set _isProd = false when running on an emulator (local Node server).
   // Set _isProd = true  when building an APK / release build (Render.com).
-  static const bool _isProd = false;
+  static const bool _isProd = true;
 
   // ─── API hosts (no scheme, no trailing slash) ─────────────────────────────
 
@@ -20,6 +20,12 @@ class Config {
         : Uri.http(host, path, queryParameters);
   }
 
+  static String socketUrl() {
+    final host = _isProd ? _prodHost : _devHost;
+
+    return _isProd ? 'https://$host' : 'http://$host';
+  }
+
   // ─── Paths ────────────────────────────────────────────────────────────────
   static const String loginUrl = '/api/login';
   static const String signupUrl = '/api/register';
@@ -32,6 +38,7 @@ class Config {
   static const String search = '/api/jobs/search';
   static const String job = '/api/jobs';
   static const String profileUrl = '/api/users/update';
+  static const String createProfileUrl = '/api/users/update';
   static const String getprofileUrl = '/api/users/';
   static const String bookmarkUrl = '/api/bookmarks';
   static const String chatsUrl = '/api/chats';

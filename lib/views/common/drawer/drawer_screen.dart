@@ -62,8 +62,8 @@ class _DrawerScreenState extends State<DrawerScreen> {
                       : kLightGrey,
                 ),
                 drawerItem(
-                  MaterialCommunityIcons.devices,
-                  'Devices',
+                  Icons.settings_rounded,
+                  'Settings',
                   3,
                   zoomNotifier.currentIndex == 3
                       ? kLight

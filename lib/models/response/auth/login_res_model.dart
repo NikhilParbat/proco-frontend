@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+/// ======================== LOGIN RESPONSE ========================
+
 LoginResponseModel loginResponseModelFromJson(String str) =>
     LoginResponseModel.fromJson(json.decode(str));
 
@@ -9,27 +11,40 @@ String loginResponseModelToJson(LoginResponseModel data) =>
 class LoginResponseModel {
   LoginResponseModel({
     required this.id,
-    required this.profile,
+    required this.username,
+    required this.email,
     required this.userToken,
+    this.isAdmin,
+    this.isAgent,
+    required this.isFirstTimeUser,
   });
 
-  factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] ?? {};
-
-    return LoginResponseModel(
-      id: data['_id'] ?? '',
-      profile: data['profile'] ?? '',
-      userToken: data['userToken'] ?? '',
-    );
-  }
+  factory LoginResponseModel.fromJson(Map<String, dynamic> json) =>
+      LoginResponseModel(
+        id: json['id'],
+        username: json['username'],
+        email: json['email'],
+        userToken: json['userToken'],
+        isAdmin: json['isAdmin'],
+        isAgent: json['isAgent'],
+        isFirstTimeUser: json['isFirstTimeUser'] ?? true,
+      );
 
   final String id;
-  final String profile;
+  final String username;
+  final String email;
+  final bool? isAdmin;
+  final bool? isAgent;
+  final bool isFirstTimeUser;
   final String userToken;
 
   Map<String, dynamic> toJson() => {
-        '_id': id,
-        'profile': profile,
-        'userToken': userToken,
-      };
+    'id': id,
+    'username': username,
+    'email': email,
+    'isAdmin': isAdmin,
+    'isAgent': isAgent,
+    'isFirstTimeUser': isFirstTimeUser,
+    'userToken': userToken,
+  };
 }

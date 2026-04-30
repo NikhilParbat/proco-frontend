@@ -28,29 +28,29 @@ class _JobPageState extends State<JobPage> {
   static const Color _white = Colors.white; // ✅ renamed from _card
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<JobsNotifier>().getJob(widget.id);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Consumer<JobsNotifier>(
       builder: (context, jobsNotifier, child) {
-        jobsNotifier.getJob(widget.id);
         return Scaffold(
           backgroundColor: _bg,
-          body: FutureBuilder(
-            future: jobsNotifier.job,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          body: Builder(
+            builder: (context) {
+              if (jobsNotifier.isLoadingCurrentJob || jobsNotifier.currentJob == null) {
                 return const Center(
                   child: CircularProgressIndicator(color: _teal),
                 );
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'Error ${snapshot.error}',
-                    style: appstyle(14, Colors.red, FontWeight.normal),
-                  ),
-                );
-              } else {
-                final job = snapshot.data!;
-                return Stack(
+              }
+
+              final job = jobsNotifier.currentJob!;
+              return Stack(
                   children: [
                     // ── Scrollable body ───────────────────────────────────
                     CustomScrollView(
@@ -92,7 +92,6 @@ class _JobPageState extends State<JobPage> {
                     ),
                   ],
                 );
-              }
             },
           ),
         );

@@ -4,11 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/chat/create_chat.dart';
-import 'package:proco/models/response/auth/profile_model.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
+import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/services/helpers/chat_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
+import 'package:proco/views/ui/jobs/match_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,18 +44,17 @@ class _MatchedUsersState extends State<MatchedUsers> {
     _jobId = prefs.getString('currentJobId') ?? '';
     if (!mounted) return;
     final notifier = Provider.of<JobsNotifier>(context, listen: false);
-    notifier.getSwipedUsersId(_jobId);
-    final users = await notifier.swipedUsers;
+    await notifier.getSwipedUsersId(_jobId);
     if (!mounted) return;
     setState(() {
-      _users = users ?? [];
+      _users = List.from(notifier.swipedUsers);
       _loading = false;
     });
   }
 
-  void _removeUser(String userId) {
-    setState(() => _users.removeWhere((u) => u.id == userId));
-  }
+  // void _removeUser(String userId) {
+  //   setState(() => _users.removeWhere((u) => u.id == userId));
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -152,10 +153,10 @@ class _MatchedUsersState extends State<MatchedUsers> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => _ProfilePage(
-                        user: users[index],
+                      builder: (_) => _SwipeDetailPage(
+                        users: users,
+                        initialIndex: index,
                         jobId: jobId,
-                        onMatched: () => _removeUser(users[index].id),
                       ),
                     ),
                   ),
@@ -181,7 +182,7 @@ class _MatchedUsersState extends State<MatchedUsers> {
           Icon(
             Icons.people_outline_rounded,
             size: 60,
-            color: _teal.withValues(alpha:0.25),
+            color: _teal.withValues(alpha: 0.25),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -233,7 +234,8 @@ class _CarouselCard extends StatelessWidget {
                   child: Image.network(
                     user.profile,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _placeholderBg(),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _placeholderBg(),
                   ),
                 ),
 
@@ -337,7 +339,7 @@ class _CarouselCard extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                'Profile',
+                                'View Details',
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.white,
@@ -361,7 +363,7 @@ class _CarouselCard extends StatelessWidget {
   }
 
   Widget _placeholderBg() => Container(
-    color: _teal.withValues(alpha:0.1),
+    color: _teal.withValues(alpha: 0.1),
     child: const Center(
       child: Icon(Icons.person_rounded, color: _teal, size: 80),
     ),
@@ -412,37 +414,38 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
       listen: false,
     ).addMatchedUsers(widget.jobId, user.id);
 
-    Get.snackbar(
-      "It's a Match!",
-      "You matched with ${user.username}",
-      backgroundColor: _accept,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      icon: const Icon(Icons.favorite, color: Colors.white),
-      duration: const Duration(seconds: 3),
-    );
-
-    final result = await ChatHelper.createChat(CreateChat(userId: user.id));
+    final response = await ChatHelper.createChat(CreateChat(userId: user.id));
     if (!mounted) return;
 
-    if (result['success'] == true) {
-      final chatId = result['chatId'] as String;
+    if (response.success && response.data != null) {
+      final chatId = response.data!;
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId') ?? '';
-      Get.to(
-        () => ChatPage(
-          id: chatId,
-          title: user.username,
-          profile: user.profile,
-          user: [currentUserId, user.id],
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black54,
+        builder: (dialogContext) => MatchDialog(
+          user: user,
+          onGoToChat: () {
+            Navigator.of(dialogContext).pop();
+            Get.to(
+              () => ChatPage(
+                id: chatId,
+                title: user.username,
+                profile: user.profile,
+                user: [currentUserId, user.id],
+              ),
+            );
+          },
+          onBackToList: () => Navigator.of(dialogContext).pop(),
         ),
       );
     } else {
       Get.snackbar(
         'Error',
-        result['message'] ?? 'Failed to create chat',
+        response.message,
         backgroundColor: _reject,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
@@ -594,8 +597,8 @@ class _SwipeDetailPageState extends State<_SwipeDetailPage> {
               boxShadow: [
                 BoxShadow(
                   color: outlined
-                      ? Colors.black.withValues(alpha:0.06)
-                      : color.withValues(alpha:0.35),
+                      ? Colors.black.withValues(alpha: 0.06)
+                      : color.withValues(alpha: 0.35),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),
@@ -655,7 +658,7 @@ class _SwipeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28.r),
         boxShadow: [
           BoxShadow(
-            color: _navy.withValues(alpha:0.35),
+            color: _navy.withValues(alpha: 0.35),
             blurRadius: 28,
             offset: const Offset(0, 10),
           ),
@@ -677,7 +680,7 @@ class _SwipeCard extends StatelessWidget {
                       user.profile,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: _teal.withValues(alpha:0.08),
+                        color: _teal.withValues(alpha: 0.08),
                         child: const Icon(
                           Icons.person_rounded,
                           color: _teal,
@@ -693,7 +696,7 @@ class _SwipeCard extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              _navy.withValues(alpha:0.6),
+                              _navy.withValues(alpha: 0.6),
                               _navy,
                             ],
                             stops: const [0.5, 0.8, 1.0],
@@ -762,10 +765,10 @@ class _SwipeCard extends StatelessWidget {
                             vertical: 7.h,
                           ),
                           decoration: BoxDecoration(
-                            color: _teal.withValues(alpha:0.12),
+                            color: _teal.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: _teal.withValues(alpha:0.4),
+                              color: _teal.withValues(alpha: 0.4),
                               width: 1,
                             ),
                           ),
@@ -804,10 +807,10 @@ class _SwipeCard extends StatelessWidget {
                                   vertical: 5.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _teal.withValues(alpha:0.08),
+                                  color: _teal.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: _teal.withValues(alpha:0.25),
+                                    color: _teal.withValues(alpha: 0.25),
                                     width: 1,
                                   ),
                                 ),
@@ -845,7 +848,7 @@ class _SwipeCard extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: (isRight ? _accept : _reject).withValues(alpha:0.12),
+                  color: (isRight ? _accept : _reject).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(28.r),
                   border: Border.all(
                     color: isRight ? _accept : _reject,
@@ -928,7 +931,7 @@ class _ProfilePageState extends State<_ProfilePage> {
 
   /// Full profile fetched from GET /api/users/:userId.
   /// Null while loading or when the backend returns an error.
-  ProfileRes? _fullProfile;
+  ApiResponse<UserResponse>? _fullProfile;
   bool _isLoadingProfile = true;
 
   @override
@@ -949,61 +952,64 @@ class _ProfilePageState extends State<_ProfilePage> {
     });
   }
 
-  bool get _hasAnySocialLink =>
-      _fullProfile != null &&
-      (_fullProfile!.linkedInUrl.isNotEmpty ||
-          _fullProfile!.gitHubUrl.isNotEmpty ||
-          _fullProfile!.twitterUrl.isNotEmpty ||
-          _fullProfile!.portfolioUrl.isNotEmpty);
+  bool get _hasAnySocialLink {
+    final user = _fullProfile?.data;
+    if (user == null) return false;
+
+    return user.linkedInUrl!.isNotEmpty ||
+        user.gitHubUrl!.isNotEmpty ||
+        user.twitterUrl!.isNotEmpty ||
+        user.portfolioUrl!.isNotEmpty;
+  }
 
   Widget _sectionLabel(String text) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 11.sp,
-          color: Colors.white38,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Poppins',
-          letterSpacing: 1.2,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 11.sp,
+      color: Colors.white38,
+      fontWeight: FontWeight.w600,
+      fontFamily: 'Poppins',
+      letterSpacing: 1.2,
+    ),
+  );
 
   Widget _infoRow(IconData icon, String text) => Row(
-        children: [
-          Icon(icon, color: _teal, size: 16),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.white70,
-                fontFamily: 'Poppins',
-              ),
-            ),
+    children: [
+      Icon(icon, color: _teal, size: 16),
+      SizedBox(width: 8.w),
+      Expanded(
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.white70,
+            fontFamily: 'Poppins',
           ),
-        ],
-      );
-
-  Widget _linkRow(String label, String url) => Padding(
-        padding: EdgeInsets.only(bottom: 8.h),
-        child: Row(
-          children: [
-            const Icon(Icons.link_rounded, color: _teal, size: 16),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                '$label: $url',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.white70,
-                  fontFamily: 'Poppins',
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
         ),
-      );
+      ),
+    ],
+  );
+
+  Widget _linkRow(String label, String? url) => Padding(
+    padding: EdgeInsets.only(bottom: 8.h),
+    child: Row(
+      children: [
+        const Icon(Icons.link_rounded, color: _teal, size: 16),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            '$label: $url',
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.white70,
+              fontFamily: 'Poppins',
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Future<void> _onMatch() async {
     setState(() => _isMatching = true);
@@ -1013,42 +1019,46 @@ class _ProfilePageState extends State<_ProfilePage> {
       listen: false,
     ).addMatchedUsers(widget.jobId, widget.user.id);
 
-    Get.snackbar(
-      "It's a Match!",
-      "You matched with ${widget.user.username}",
-      backgroundColor: _accept,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      icon: const Icon(Icons.favorite, color: Colors.white),
-      duration: const Duration(seconds: 3),
-    );
-
-    final result = await ChatHelper.createChat(
+    final response = await ChatHelper.createChat(
       CreateChat(userId: widget.user.id),
     );
     if (!mounted) return;
 
     setState(() => _isMatching = false);
 
-    if (result['success'] == true) {
-      final chatId = result['chatId'] as String;
+    if (response.success && response.data != null) {
+      final chatId = response.data!;
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId') ?? '';
       widget.onMatched?.call();
-      Get.to(
-        () => ChatPage(
-          id: chatId,
-          title: widget.user.username,
-          profile: widget.user.profile,
-          user: [currentUserId, widget.user.id],
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black54,
+        builder: (dialogContext) => MatchDialog(
+          user: widget.user,
+          onGoToChat: () {
+            Navigator.of(dialogContext).pop();
+            Get.to(
+              () => ChatPage(
+                id: chatId,
+                title: widget.user.username,
+                profile: widget.user.profile,
+                user: [currentUserId, widget.user.id],
+              ),
+            );
+          },
+          onBackToList: () {
+            Navigator.of(dialogContext).pop();
+            if (mounted) Navigator.of(context).pop();
+          },
         ),
       );
     } else {
       Get.snackbar(
         'Error',
-        result['message'] ?? 'Failed to create chat',
+        response.message,
         backgroundColor: _reject,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
@@ -1060,6 +1070,7 @@ class _ProfilePageState extends State<_ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = _fullProfile?.data;
     return Scaffold(
       backgroundColor: _navy,
       appBar: AppBar(
@@ -1095,7 +1106,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: _accept.withValues(alpha:0.4),
+                    color: _accept.withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -1243,25 +1254,17 @@ class _ProfilePageState extends State<_ProfilePage> {
                   ),
                 ),
               )
-            else ...[
+            else if (user != null) ...[
               // Education
-              if (_fullProfile?.college.isNotEmpty == true) ...[
+              if ((user.college ?? '').isNotEmpty) ...[
                 SizedBox(height: 24.h),
                 _sectionLabel('EDUCATION'),
                 SizedBox(height: 10.h),
-                _infoRow(Icons.school_rounded, _fullProfile!.college),
-                if (_fullProfile!.branch.isNotEmpty) ...[
+                _infoRow(Icons.school_rounded, user.college!),
+                if ((user.branch ?? '').isNotEmpty) ...[
                   SizedBox(height: 8.h),
-                  _infoRow(Icons.account_tree_rounded, _fullProfile!.branch),
+                  _infoRow(Icons.account_tree_rounded, user.branch!),
                 ],
-              ],
-
-              // User type
-              if (_fullProfile?.userType.isNotEmpty == true) ...[
-                SizedBox(height: 24.h),
-                _sectionLabel('USER TYPE'),
-                SizedBox(height: 10.h),
-                _infoRow(Icons.work_outline_rounded, _fullProfile!.userType),
               ],
 
               // Social links
@@ -1269,14 +1272,14 @@ class _ProfilePageState extends State<_ProfilePage> {
                 SizedBox(height: 24.h),
                 _sectionLabel('LINKS'),
                 SizedBox(height: 10.h),
-                if (_fullProfile!.linkedInUrl.isNotEmpty)
-                  _linkRow('LinkedIn', _fullProfile!.linkedInUrl),
-                if (_fullProfile!.gitHubUrl.isNotEmpty)
-                  _linkRow('GitHub', _fullProfile!.gitHubUrl),
-                if (_fullProfile!.twitterUrl.isNotEmpty)
-                  _linkRow('Twitter', _fullProfile!.twitterUrl),
-                if (_fullProfile!.portfolioUrl.isNotEmpty)
-                  _linkRow('Portfolio', _fullProfile!.portfolioUrl),
+                if (user.linkedInUrl!.isNotEmpty)
+                  _linkRow('LinkedIn', user.linkedInUrl),
+                if (user.gitHubUrl!.isNotEmpty)
+                  _linkRow('GitHub', user.gitHubUrl),
+                if (user.twitterUrl!.isNotEmpty)
+                  _linkRow('Twitter', user.twitterUrl),
+                if (user.portfolioUrl!.isNotEmpty)
+                  _linkRow('Portfolio', user.portfolioUrl),
               ],
             ],
 

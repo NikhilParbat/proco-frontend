@@ -1,15 +1,14 @@
-// models/request/auth/google_auth_model.dart
 class GoogleAuthModel {
-  String? idToken;
-  String? email;
-  String? displayName;
-  String? photoURL;
-  double? latitude;
-  double? longitude;
+  final String idToken;
+  final String email;
+  final String? displayName;
+  final String? photoURL;
+  final double? latitude;
+  final double? longitude;
 
   GoogleAuthModel({
-    this.idToken,
-    this.email,
+    required this.idToken,
+    required this.email,
     this.displayName,
     this.photoURL,
     this.latitude,

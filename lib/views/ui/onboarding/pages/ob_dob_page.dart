@@ -22,6 +22,24 @@ class _ObDobPageState extends State<ObDobPage> {
   String? _selectedMonth;
   String? _selectedYear;
 
+  @override
+  void initState() {
+    super.initState();
+    final saved = context.read<OnboardingFlowProvider>().dob;
+    // dob is stored as "YYYY-MM-DD"
+    if (saved.isNotEmpty) {
+      final parts = saved.split('-');
+      if (parts.length == 3) {
+        _selectedYear = parts[0];
+        final monthIdx = int.tryParse(parts[1]);
+        if (monthIdx != null && monthIdx >= 1 && monthIdx <= 12) {
+          _selectedMonth = _months[monthIdx - 1];
+        }
+        _selectedDay = parts[2];
+      }
+    }
+  }
+
   List<String> get _days =>
       List.generate(31, (i) => (i + 1).toString().padLeft(2, '0'));
 

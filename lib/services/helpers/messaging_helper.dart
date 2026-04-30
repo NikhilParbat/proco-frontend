@@ -20,11 +20,14 @@ class MesssagingHelper {
         return {"success": false, "message": "User not authenticated"};
       }
 
-      final url = Config.url( Config.messagingUrl);
+      final url = Config.url(Config.messagingUrl);
 
       final response = await client.post(
         url,
-        headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json',
+          'token': 'Bearer $token', // ✅ FIXED
+        },
         body: jsonEncode(model.toJson()),
       );
 
@@ -65,7 +68,7 @@ class MesssagingHelper {
         throw Exception("User not authenticated");
       }
 
-      final url = Config.url( '${Config.messagingUrl}/$chatId', {
+      final url = Config.url('${Config.messagingUrl}/$chatId', {
         'page': offset.toString(),
       });
 
@@ -76,10 +79,16 @@ class MesssagingHelper {
 
       debugPrint("GET MESSAGES RESPONSE: ${response.body}");
 
-      if (response.statusCode == 200) {
-        return receivedMessageFromJson(response.body);
+      final decoded = json.decode(response.body);
+
+      if (response.statusCode == 200 && decoded['success'] == true) {
+        final List data = decoded['data'] ?? [];
+
+        return data
+            .map((e) => ReceivedMessage.fromJson(e as Map<String, dynamic>))
+            .toList();
       } else {
-        throw Exception('Failed to load messages');
+        throw Exception(decoded['message'] ?? 'Failed to load messages');
       }
     } catch (e, s) {
       debugPrint('Error Occurred: -------------- $e ---------------');

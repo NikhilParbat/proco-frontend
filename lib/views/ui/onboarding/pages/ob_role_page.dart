@@ -20,6 +20,13 @@ class _ObRolePageState extends State<ObRolePage> {
   String? _selected;
 
   @override
+  void initState() {
+    super.initState();
+    final saved = context.read<OnboardingFlowProvider>().role;
+    if (saved.isNotEmpty) _selected = saved;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = context.read<OnboardingFlowProvider>();
 

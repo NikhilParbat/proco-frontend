@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as https;
 import 'package:proco/models/request/filters/create_filter.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/filters/filter_response.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/config.dart';
@@ -10,173 +11,147 @@ import 'package:shared_preferences/shared_preferences.dart';
 class FilterHelper {
   static https.Client client = https.Client();
 
-  static Future<List<FilterResponse>> getFilters() async {
+  static Future<Map<String, String>> _authHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    return {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
+    };
+  }
+
+  static Future<ApiResponse<List<FilterResponse>>> getFilters() async {
     try {
-      final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Config.url( Config.filters);
-      final response = await client.get(url, headers: requestHeaders);
+      final headers = await _authHeaders();
+      final url = Config.url(Config.filters);
+      final response = await client.get(url, headers: headers);
+
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
 
       if (response.statusCode == 200) {
-        return filterResponseFromJson(response.body);
+        return ApiResponse(
+          success: true,
+          message: 'Filters fetched successfully',
+          data: filterResponseFromJson(response.body),
+        );
       } else {
-        throw Exception('Failed to get filters');
+        final body = jsonDecode(response.body);
+        return ApiResponse(success: false, message: body['message'] ?? 'Failed to get filters');
       }
-    } catch (e, s) {
-      debugPrint('Error Occurred: $e');
-      debugPrintStack(stackTrace: s);
-      rethrow;
+    } catch (e) {
+      debugPrint('FilterHelper.getFilters error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
-  static Future<GetFilterRes> getFilter(String agentId) async {
+  // GET /api/filters/:agentId — returns the single filter for this user
+  static Future<ApiResponse<GetFilterRes>> getFilter(String agentId) async {
     try {
-      final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Config.url( '${Config.filters}/$agentId');
-      final response = await client.get(url, headers: requestHeaders);
+      final headers = await _authHeaders();
+      final url = Config.url('${Config.filters}/$agentId');
+      final response = await client.get(url, headers: headers);
 
-      debugPrint('Request Headers: ${{'Content-Type': 'application/json'}}');
-      debugPrint('Request URL: $url');
-      debugPrint('Response Code: ${response.statusCode}');
-      debugPrint('Response Body: ${response.body}');
+      debugPrint('getFilter url: $url');
+      debugPrint('getFilter status: ${response.statusCode}');
+      debugPrint('getFilter body: ${response.body}');
+
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
+
       if (response.statusCode == 200) {
-        return getFilterResFromJson(response.body);
+        return ApiResponse(
+          success: true,
+          message: 'Filter fetched successfully',
+          data: getFilterResFromJson(response.body),
+        );
+      } else if (response.statusCode == 404) {
+        return ApiResponse(success: false, message: 'No filter found');
       } else {
-        throw Exception('Failed to get a filter');
+        final body = jsonDecode(response.body);
+        return ApiResponse(success: false, message: body['message'] ?? 'Failed to get filter');
       }
-    } catch (e, s) {
-      debugPrint('Error Occurred: $e');
-      debugPrintStack(stackTrace: s);
-      rethrow;
+    } catch (e) {
+      debugPrint('FilterHelper.getFilter error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
-  static Future<List<FilterResponse>> getUserFilters(String agentId) async {
-    final requestHeaders = {'Content-Type': 'application/json'};
-    final url = Config.url( '${Config.filters}/$agentId');
-    final response = await client.get(url, headers: requestHeaders);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      // Log the response for debugging
-      debugPrint('Request URL: $url');
-      debugPrint('Request Headers: ${{'Content-Type': 'application/json'}}');
-
-      debugPrint('Response Code: ${response.statusCode}');
-      debugPrint('Response Body: ${response.body}');
-
-      // Check if data['data'] is a Map or List
-      if (data['data'] is List) {
-        // If it's a List, parse as a list of FilterResponse
-        return (data['data'] as List)
-            .map((filter) => FilterResponse.fromJson(filter))
-            .toList();
-      } else if (data['data'] is Map) {
-        // If it's a Map, wrap it in a list and parse the single item
-        return [FilterResponse.fromJson(data['data'] as Map<String, dynamic>)];
-      } else {
-        throw Exception('Unexpected response structure');
-      }
-    } else {
-      debugPrint('Failed to load filters: ${response.statusCode}');
-      throw Exception('Failed to load user filters');
-    }
-  }
-
-  static Future<FilterResponse> getRecentFilters() async {
-    final requestHeaders = <String, String>{'Content-Type': 'application/json'};
-
-    final url = Config.url( Config.filters, {'new': 'true'});
-    final response = await client.get(url, headers: requestHeaders);
-
-    if (response.statusCode == 200) {
-      final filtersList = filterResponseFromJson(response.body);
-
-      final recent = filtersList.first;
-      return recent;
-    } else {
-      throw Exception('Failed to get the filters');
-    }
-  }
-
-  static Future<FilterResponse> createFilter(CreateFilterRequest model) async {
+  // POST /api/filters — create or upsert filter
+  static Future<ApiResponse<GetFilterRes>> createFilter(CreateFilterRequest model) async {
     try {
-      final url = Config.url( Config.filters);
-
-      // API Request
+      final headers = await _authHeaders();
+      final url = Config.url(Config.filters);
       final response = await client.post(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(model),
+        headers: headers,
+        body: jsonEncode(model.toJson()),
       );
 
-      // Log the response for debugging
-      // debugPrint('Request URL: $url');
-      // debugPrint('Request Headers: ${{
-      //   'Content-Type': 'application/json',
-      // }}');
-      // debugPrint('Request Body: ${jsonEncode(model)}');
-
-      // debugPrint('Response Code: ${response.statusCode}');
-      // debugPrint('Response Body: ${response.body}');
+      if (response.body.isEmpty) {
+        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final body = json.decode(response.body);
-        final data = body is Map && body.containsKey('data')
-            ? body['data']
-            : body;
-        return FilterResponse.fromJson(data as Map<String, dynamic>);
+        return ApiResponse(
+          success: true,
+          message: 'Filter saved successfully',
+          data: getFilterResFromJson(response.body),
+        );
       } else {
-        // Throw exception with detailed error
-        throw Exception('Failed to create a filter: ${response.body}');
+        final body = jsonDecode(response.body);
+        return ApiResponse(success: false, message: body['message'] ?? 'Failed to save filter');
       }
-    } catch (e, s) {
-      debugPrint('Error Occurred: $e');
-      debugPrintStack(stackTrace: s);
-      rethrow;
+    } catch (e) {
+      debugPrint('FilterHelper.createFilter error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
-  static Future<void> updateFilter(
+  // PUT /api/filters/:id — update by filter id
+  static Future<ApiResponse<void>> updateFilter(
     String filterId,
     Map<String, dynamic> filterData,
   ) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      var token = prefs.getString('token');
-      final url = Config.url( '${Config.filters}/$filterId');
+      final headers = await _authHeaders();
+      final url = Config.url('${Config.filters}/$filterId');
       final response = await client.put(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'token': 'Bearer $token', // Include the token here
-        },
+        headers: headers,
         body: jsonEncode(filterData),
       );
 
-      if (response.statusCode != 200) {
-        throw Exception('Failed to update the filter');
+      if (response.statusCode == 200) {
+        return ApiResponse(success: true, message: 'Filter updated successfully');
+      } else {
+        final body = jsonDecode(response.body);
+        return ApiResponse(success: false, message: body['message'] ?? 'Failed to update filter');
       }
-    } catch (e, s) {
-      debugPrint('Error Occurred: $e');
-      debugPrintStack(stackTrace: s);
-      rethrow;
+    } catch (e) {
+      debugPrint('FilterHelper.updateFilter error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 
-  static Future<void> deleteFilter(String filterId) async {
+  // DELETE /api/filters/:id
+  static Future<ApiResponse<void>> deleteFilter(String filterId) async {
     try {
-      final requestHeaders = {'Content-Type': 'application/json'};
-      final url = Config.url( '${Config.filters}/$filterId');
-      final response = await client.delete(url, headers: requestHeaders);
+      final headers = await _authHeaders();
+      final url = Config.url('${Config.filters}/$filterId');
+      final response = await client.delete(url, headers: headers);
 
-      if (response.statusCode != 204) {
-        throw Exception('Failed to delete the filter');
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return ApiResponse(success: true, message: 'Filter deleted successfully');
+      } else {
+        final body = jsonDecode(response.body);
+        return ApiResponse(success: false, message: body['message'] ?? 'Failed to delete filter');
       }
-    } catch (e, s) {
-      debugPrint('Error Occurred: $e');
-      debugPrintStack(stackTrace: s);
-      rethrow;
+    } catch (e) {
+      debugPrint('FilterHelper.deleteFilter error: $e');
+      return ApiResponse(success: false, message: e.toString());
     }
   }
 }

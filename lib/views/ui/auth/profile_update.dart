@@ -26,6 +26,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
   // ─── Form ─────────────────────────────────────────────────────────────────
   final _formKey = GlobalKey<FormState>();
+  final _userController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
@@ -33,6 +34,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   final _collegeController = TextEditingController();
   final _branchController = TextEditingController();
   final _skillController = TextEditingController();
+  final _interestController = TextEditingController();
+  final _hobbyController = TextEditingController();
 
   double _latitude = 0.0;
   double _longitude = 0.0;
@@ -46,6 +49,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   ];
 
   List<String> skills = [];
+  List<String> interests = [];
+  List<String> hobbies = [];
   bool isLoading = true;
   bool isUpdating = false;
   String? errorMessage;
@@ -68,28 +73,59 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     super.dispose();
   }
 
+  void _addInterest() {
+    final val = _interestController.text.trim();
+    if (val.isEmpty || interests.contains(val)) return;
+
+    setState(() {
+      interests.add(val);
+      _interestController.clear();
+    });
+  }
+
+  void _addHobby() {
+    final val = _hobbyController.text.trim();
+    if (val.isEmpty || hobbies.contains(val)) return;
+
+    setState(() {
+      hobbies.add(val);
+      _hobbyController.clear();
+    });
+  }
+
   // ─── Data ─────────────────────────────────────────────────────────────────
   void _loadProfile() async {
     setState(() {
       isLoading = true;
       errorMessage = null;
     });
+
     try {
-      final profileData = await UserHelper.getProfile();
+      final response = await UserHelper.getProfile();
+
+      if (!response.success) {
+        setState(() => errorMessage = response.message);
+        return;
+      }
+
+      final profileData = response.data;
+
       if (profileData != null) {
         setState(() {
-          _phoneController.text = profileData.phone;
-          _cityController.text = profileData.city;
-          _stateController.text = profileData.state;
-          _countryController.text = profileData.country;
-          _collegeController.text = profileData.college;
-          _branchController.text = profileData.branch;
-          skills = List<String>.from(profileData.skills);
+          _userController.text = profileData.username;
+          _phoneController.text = profileData.phone ?? '';
+          _cityController.text = profileData.city ?? '';
+          _stateController.text = profileData.state ?? '';
+          _countryController.text = profileData.country ?? '';
+          _collegeController.text = profileData.college ?? '';
+          _branchController.text = profileData.branch ?? '';
+          skills = profileData.skills;
+          interests = profileData.interests;
+          hobbies = profileData.hobbies;
+
           final g = profileData.gender;
           _selectedGender = _genderOptions.contains(g) ? g : null;
         });
-      } else {
-        setState(() => errorMessage = 'Could not load profile data');
       }
     } catch (e) {
       setState(() => errorMessage = 'Error loading profile: $e');
@@ -123,6 +159,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       final imageNotifier = context.read<ImageNotifier>();
 
       final updateReq = ProfileUpdateReq(
+        username: _userController.text.trim(),
         city: _cityController.text.trim(),
         state: _stateController.text.trim(),
         country: _countryController.text.trim(),
@@ -140,19 +177,13 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         imageNotifier.selectedImage,
       );
 
-      if (response == true) {
-        _snack('Success', 'Profile updated successfully', Colors.green);
+      if (response.success) {
+        _snack('Success', response.message, Colors.green);
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) Get.offAll(() => const MainScreen());
       } else {
-        setState(
-          () => errorMessage = 'Profile update failed. Please try again.',
-        );
-        _snack(
-          'Update Failed',
-          'Please check your information and try again',
-          Colors.orange,
-        );
+        setState(() => errorMessage = response.message);
+        _snack('Update Failed', response.message, Colors.orange);
       }
     } catch (e) {
       setState(() => errorMessage = 'Error: ${e.toString()}');
@@ -176,6 +207,37 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       skills.add(skill);
       _skillController.clear();
     });
+  }
+
+  Widget _tagInput(
+    TextEditingController controller,
+    VoidCallback onAdd,
+    String label,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: controller,
+            onFieldSubmitted: (_) => onAdd(),
+            decoration: InputDecoration(labelText: label),
+          ),
+        ),
+        IconButton(onPressed: onAdd, icon: Icon(Icons.add)),
+      ],
+    );
+  }
+
+  Widget _tagChips(List<String> list, Function(String) onRemove) {
+    if (list.isEmpty) {
+      return Text("No items");
+    }
+
+    return Wrap(
+      children: list.map((item) {
+        return Chip(label: Text(item), onDeleted: () => onRemove(item));
+      }).toList(),
+    );
   }
 
   void _snack(String title, String msg, Color color) {
@@ -318,9 +380,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
               child: Container(
                 padding: EdgeInsets.all(14.h),
                 decoration: BoxDecoration(
-                  color: _card.withValues(alpha:0.1),
+                  color: _card.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _accent.withValues(alpha:0.5)),
+                  border: Border.all(color: _accent.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   children: [
@@ -398,13 +460,23 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
             ),
             SizedBox(height: 20.h),
 
-            // ── Skills ────────────────────────────────────────────────────
+            // Skills
             _sectionLabel('Skills'),
-            SizedBox(height: 12.h),
-            _skillsInput(),
-            SizedBox(height: 12.h),
-            _skillsChips(),
-            SizedBox(height: 28.h),
+            _tagInput(_skillController, _addSkill, "Add skill"),
+            _tagChips(skills, (val) => setState(() => skills.remove(val))),
+
+            // Interests
+            _sectionLabel('Interests'),
+            _tagInput(_interestController, _addInterest, "Add interest"),
+            _tagChips(
+              interests,
+              (val) => setState(() => interests.remove(val)),
+            ),
+
+            // Hobbies
+            _sectionLabel('Hobbies'),
+            _tagInput(_hobbyController, _addHobby, "Add hobby"),
+            _tagChips(hobbies, (val) => setState(() => hobbies.remove(val))),
 
             // ── Submit ────────────────────────────────────────────────────
             _primaryButton(
@@ -435,7 +507,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                     height: 100.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _card.withValues(alpha:0.3),
+                      color: _card.withValues(alpha: 0.3),
                       border: Border.all(color: _accent, width: 2),
                       image: imageNotifier.selectedImage != null
                           ? DecorationImage(
@@ -448,7 +520,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                         ? Icon(
                             Icons.person_rounded,
                             size: 50.w,
-                            color: _accent.withValues(alpha:0.6),
+                            color: _accent.withValues(alpha: 0.6),
                           )
                         : null,
                   ),
@@ -558,11 +630,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           ),
         ),
         SizedBox(height: 4.h),
-        Container(height: 1, color: _card.withValues(alpha:0.5)),
+        Container(height: 1, color: _card.withValues(alpha: 0.5)),
       ],
     );
   }
-
 
   Widget _field({
     required TextEditingController controller,
@@ -587,15 +658,17 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
         prefixIcon: Icon(icon, color: _accent, size: 20),
         filled: true,
-        fillColor: readOnly ? _card.withValues(alpha:0.25) : _card.withValues(alpha:0.25),
+        fillColor: readOnly
+            ? _card.withValues(alpha: 0.25)
+            : _card.withValues(alpha: 0.25),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -623,15 +696,15 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
         prefixIcon: const Icon(Icons.person_outline, color: _accent),
         filled: true,
-        fillColor: _card.withValues(alpha:0.25),
+        fillColor: _card.withValues(alpha: 0.25),
         contentPadding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -656,125 +729,125 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     );
   }
 
-  Widget _skillsInput() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: _skillController,
-            style: const TextStyle(color: _white, fontSize: 15),
-            onFieldSubmitted: (_) => _addSkill(),
-            decoration: InputDecoration(
-              labelText: 'Add a skill',
-              hintText: 'e.g. Flutter, Python',
-              labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
-              hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
-              prefixIcon: const Icon(
-                Icons.psychology_outlined,
-                color: _accent,
-                size: 20,
-              ),
-              filled: true,
-              fillColor: _card.withValues(alpha:0.25),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 16.h,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha:0.4)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _accent, width: 1.5),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(width: 10.w),
-        GestureDetector(
-          onTap: _addSkill,
-          child: Container(
-            height: 54.h,
-            width: 54.h,
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.add_rounded, color: _white, size: 24),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _skillsInput() {
+  //   return Row(
+  //     children: [
+  //       Expanded(
+  //         child: TextFormField(
+  //           controller: _skillController,
+  //           style: const TextStyle(color: _white, fontSize: 15),
+  //           onFieldSubmitted: (_) => _addSkill(),
+  //           decoration: InputDecoration(
+  //             labelText: 'Add a skill',
+  //             hintText: 'e.g. Flutter, Python',
+  //             labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+  //             hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+  //             prefixIcon: const Icon(
+  //               Icons.psychology_outlined,
+  //               color: _accent,
+  //               size: 20,
+  //             ),
+  //             filled: true,
+  //             fillColor: _card.withValues(alpha: 0.25),
+  //             contentPadding: EdgeInsets.symmetric(
+  //               horizontal: 16.w,
+  //               vertical: 16.h,
+  //             ),
+  //             border: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(14),
+  //               borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+  //             ),
+  //             enabledBorder: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(14),
+  //               borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+  //             ),
+  //             focusedBorder: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(14),
+  //               borderSide: const BorderSide(color: _accent, width: 1.5),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       SizedBox(width: 10.w),
+  //       GestureDetector(
+  //         onTap: _addSkill,
+  //         child: Container(
+  //           height: 54.h,
+  //           width: 54.h,
+  //           decoration: BoxDecoration(
+  //             color: _card,
+  //             borderRadius: BorderRadius.circular(14),
+  //           ),
+  //           child: const Icon(Icons.add_rounded, color: _white, size: 24),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  Widget _skillsChips() {
-    if (skills.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(14.h),
-        decoration: BoxDecoration(
-          color: _card.withValues(alpha:0.15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _card.withValues(alpha:0.3)),
-        ),
-        child: const Text(
-          'No skills added yet',
-          style: TextStyle(color: Colors.white38, fontSize: 14),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
+  // Widget _skillsChips() {
+  //   if (skills.isEmpty) {
+  //     return Container(
+  //       width: double.infinity,
+  //       padding: EdgeInsets.all(14.h),
+  //       decoration: BoxDecoration(
+  //         color: _card.withValues(alpha: 0.15),
+  //         borderRadius: BorderRadius.circular(14),
+  //         border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //       ),
+  //       child: const Text(
+  //         'No skills added yet',
+  //         style: TextStyle(color: Colors.white38, fontSize: 14),
+  //         textAlign: TextAlign.center,
+  //       ),
+  //     );
+  //   }
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.h),
-      decoration: BoxDecoration(
-        color: _card.withValues(alpha:0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha:0.3)),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: skills.map((skill) {
-          return Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  skill,
-                  style: const TextStyle(
-                    color: _white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                GestureDetector(
-                  onTap: () => setState(() => skills.remove(skill)),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 14,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: EdgeInsets.all(14.h),
+  //     decoration: BoxDecoration(
+  //       color: _card.withValues(alpha: 0.15),
+  //       borderRadius: BorderRadius.circular(14),
+  //       border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //     ),
+  //     child: Wrap(
+  //       spacing: 8,
+  //       runSpacing: 8,
+  //       children: skills.map((skill) {
+  //         return Container(
+  //           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+  //           decoration: BoxDecoration(
+  //             color: _card,
+  //             borderRadius: BorderRadius.circular(20),
+  //           ),
+  //           child: Row(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Text(
+  //                 skill,
+  //                 style: const TextStyle(
+  //                   color: _white,
+  //                   fontSize: 13,
+  //                   fontWeight: FontWeight.w500,
+  //                 ),
+  //               ),
+  //               SizedBox(width: 6.w),
+  //               GestureDetector(
+  //                 onTap: () => setState(() => skills.remove(skill)),
+  //                 child: const Icon(
+  //                   Icons.close_rounded,
+  //                   size: 14,
+  //                   color: Colors.white70,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       }).toList(),
+  //     ),
+  //   );
+  // }
 
   Widget _primaryButton(
     String label,
@@ -788,12 +861,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         width: double.infinity,
         height: 54.h,
         decoration: BoxDecoration(
-          color: onTap == null ? _card.withValues(alpha:0.4) : _card,
+          color: onTap == null ? _card.withValues(alpha: 0.4) : _card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: onTap != null
               ? [
                   BoxShadow(
-                    color: _card.withValues(alpha:0.4),
+                    color: _card.withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),

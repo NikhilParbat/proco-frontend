@@ -5,6 +5,9 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/views/ui/settings/notifications_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/services/notification_background.dart';
 
 class NotificationItem {
   final String title;
@@ -21,6 +24,8 @@ class NotificationItem {
 }
 
 class NotificationHelper {
+  static bool _initialized = false;
+  static bool _bgHandlerSet = false;
   static final List<NotificationItem> _notifications = [];
   static final List<VoidCallback> _listeners = [];
 
@@ -38,9 +43,17 @@ class NotificationHelper {
   }
 
   static Future<void> initialize(String userId, String authToken) async {
+    if (_initialized) return;
+
     final messaging = FirebaseMessaging.instance;
 
-    // Request OS-level permission (required on iOS and Android 13+)
+    // 🔥 Enable Firebase Messaging ONLY when needed
+    await messaging.setAutoInitEnabled(true);
+
+    // 🔥 Setup background handler lazily
+    _setupBackgroundHandler();
+
+    // Request OS permission
     final settings = await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -49,20 +62,32 @@ class NotificationHelper {
 
     if (settings.authorizationStatus == AuthorizationStatus.denied) return;
 
-    // Get device FCM token and register it with backend
+    // Get token
     final token = await messaging.getToken();
     if (token != null) {
       await _sendTokenToBackend(token, authToken);
     }
 
-    // Re-register if token rotates
+    // Token refresh
     messaging.onTokenRefresh.listen((newToken) {
       _sendTokenToBackend(newToken, authToken);
     });
 
-    // Foreground: show in-app snackbar + add to notification list
-    FirebaseMessaging.onMessage.listen((message) {
+    // Foreground messages
+    FirebaseMessaging.onMessage.listen((message) async {
+      final prefs = await SharedPreferences.getInstance();
+      final type = message.data['type'] ?? '';
+
+      if (type == 'match') {
+        final enabled = prefs.getBool(kPrefNotifMatches) ?? true;
+        if (!enabled) return;
+      } else {
+        final enabled = prefs.getBool(kPrefNotifChat) ?? true;
+        if (!enabled) return;
+      }
+
       _addFromRemoteMessage(message);
+
       Get.snackbar(
         message.notification?.title ?? 'New Message',
         message.notification?.body ?? '',
@@ -74,16 +99,25 @@ class NotificationHelper {
       );
     });
 
-    // App brought to foreground by tapping a notification
+    // App opened from notification
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _addFromRemoteMessage(message);
     });
 
-    // Check if app was opened from a terminated-state notification
     final initial = await messaging.getInitialMessage();
     if (initial != null) {
       _addFromRemoteMessage(initial);
     }
+
+    _initialized = true;
+  }
+
+  static void _setupBackgroundHandler() {
+    if (_bgHandlerSet) return;
+
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    _bgHandlerSet = true;
   }
 
   static void _addFromRemoteMessage(RemoteMessage message) {
@@ -108,7 +142,7 @@ class NotificationHelper {
     String authToken,
   ) async {
     try {
-      final url = Config.url( Config.fcmTokenUrl);
+      final url = Config.url(Config.fcmTokenUrl);
       await http.post(
         url,
         headers: {

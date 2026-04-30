@@ -61,30 +61,41 @@ class ProfileEditState extends ChangeNotifier {
     isLoading = true;
     error = null;
     notifyListeners();
+
     try {
-      final data = await UserHelper.getProfile();
+      final response = await UserHelper.getProfile();
+
+      if (!response.success) {
+        error = response.message;
+        return;
+      }
+
+      final data = response.data;
+
       if (data != null) {
         username = data.username;
         email = data.email;
-        phone = data.phone;
-        gender = data.gender;
-        city = data.city;
-        state = data.state;
-        country = data.country;
-        college = data.college;
-        branch = data.branch;
-        skills = List<String>.from(data.skills);
-        profileImageUrl = data.profile;
-        dob = data.dob;
-        userType = data.userType;
-        linkedInUrl = data.linkedInUrl;
-        gitHubUrl = data.gitHubUrl;
-        twitterUrl = data.twitterUrl;
-        portfolioUrl = data.portfolioUrl;
-        latitude = data.latitude;
-        longitude = data.longitude;
-      } else {
-        error = 'Could not load profile';
+        phone = data.phone ?? '';
+        gender = data.gender ?? '';
+        city = data.city ?? '';
+        state = data.state ?? '';
+        country = data.country ?? '';
+        college = data.college ?? '';
+        branch = data.branch ?? '';
+        profileImageUrl = data.profile ?? '';
+        latitude = data.latitude ?? 0.0;
+        longitude = data.longitude ?? 0.0;
+
+        // ⚠️ Backend does NOT send these (yet)
+        dob = '';
+        userType = '';
+        linkedInUrl = '';
+        gitHubUrl = '';
+        twitterUrl = '';
+        portfolioUrl = '';
+
+        // ⚠️ Skills not in response
+        skills = [];
       }
     } catch (e) {
       error = e.toString();
@@ -97,9 +108,12 @@ class ProfileEditState extends ChangeNotifier {
   // ── Save to backend ───────────────────────────────────────────────────────────
   Future<bool> saveProfile(File? image) async {
     isSaving = true;
+    error = null;
     notifyListeners();
+
     try {
       final req = ProfileUpdateReq(
+        username: username, // ✅ IMPORTANT (you were missing this)
         city: city,
         state: state,
         country: country,
@@ -109,6 +123,7 @@ class ProfileEditState extends ChangeNotifier {
         branch: branch,
         gender: gender.isEmpty ? null : gender,
         dob: dob,
+        userType: userType,
         linkedInUrl: linkedInUrl,
         gitHubUrl: gitHubUrl,
         twitterUrl: twitterUrl,
@@ -116,11 +131,35 @@ class ProfileEditState extends ChangeNotifier {
         latitude: latitude,
         longitude: longitude,
       );
-      final err = await UserHelper.updateProfile(req, image);
+
+      final response = await UserHelper.updateProfile(req, image);
+
       isSaving = false;
-      if (err != null) error = err;
+
+      if (!response.success) {
+        error = response.message;
+        notifyListeners();
+        return false;
+      }
+
+      final user = response.data;
+      if (user != null) {
+        username = user.username;
+        email = user.email;
+        phone = user.phone ?? '';
+        city = user.city ?? '';
+        state = user.state ?? '';
+        country = user.country ?? '';
+        college = user.college ?? '';
+        branch = user.branch ?? '';
+        gender = user.gender ?? '';
+        latitude = user.latitude ?? 0.0;
+        longitude = user.longitude ?? 0.0;
+        profileImageUrl = user.profile ?? '';
+      }
+
       notifyListeners();
-      return err == null; // null = success, non-null = error message
+      return true;
     } catch (e) {
       isSaving = false;
       error = e.toString();

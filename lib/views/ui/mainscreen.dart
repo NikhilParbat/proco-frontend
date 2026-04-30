@@ -3,20 +3,21 @@ import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:proco/views/common/drawer/drawer_screen.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/auth/profile_screen.dart';
 import 'package:proco/views/ui/bookmarks/bookmarks.dart';
 import 'package:proco/views/ui/chat/chat_list.dart';
-import 'package:proco/views/ui/device_mgt/devices_info.dart';
 import 'package:proco/views/ui/homepage.dart';
 import 'package:proco/views/ui/jobs/user_job_page.dart';
+import 'package:proco/views/ui/settings/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final SharedPreferences? prefs; // ✅ Make it optional
+
+  const MainScreen({super.key, this.prefs});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -25,8 +26,37 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final ZoomDrawerController _drawerController = ZoomDrawerController();
 
+  String _userId = '';
+  bool _isInitialized = false;
+  SharedPreferences? _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializePrefs();
+  }
+
+  Future<void> _initializePrefs() async {
+    _prefs = widget.prefs ?? await SharedPreferences.getInstance();
+
+    _userId = _prefs?.getString('userId') ?? '';
+
+    if (mounted) {
+      setState(() => _isInitialized = true);
+    }
+
+    // ✅ ONLY light task
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<LoginNotifier>().getPrefs();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) return const SizedBox();
+
     return Consumer<ZoomNotifier>(
       builder: (context, zoomNotifier, child) {
         return ZoomDrawer(
@@ -37,11 +67,7 @@ class _MainScreenState extends State<MainScreen> {
               zoomNotifier.currentIndex = index;
             },
           ),
-          mainScreen: Builder(
-            builder: (context) {
-              return currentScreen();
-            },
-          ),
+          mainScreen: _buildCurrentScreen(zoomNotifier.currentIndex),
           borderRadius: 30,
           showShadow: true,
           angle: 0,
@@ -52,41 +78,12 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted) {
-        context.read<LoginNotifier>().getPrefs();
-        _preloadJobs();
-        _setupNotifications();
-      }
-    });
-  }
+  Widget _buildCurrentScreen(int index) {
+    final loginNotifier = context.read<LoginNotifier>();
 
-  Future<void> _preloadJobs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? '';
-    if (mounted) {
-      context.read<JobsNotifier>().preloadJobs(userId);
-    }
-  }
-
-  Future<void> _setupNotifications() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? '';
-    final token = prefs.getString('token') ?? '';
-    if (userId.isNotEmpty && token.isNotEmpty) {
-      await NotificationHelper.initialize(userId, token);
-    }
-  }
-
-  Widget currentScreen() {
-    final zoomNotifier = Provider.of<ZoomNotifier>(context, listen: false);
-    final loginNotifier = Provider.of<LoginNotifier>(context, listen: false);
-    switch (zoomNotifier.currentIndex) {
+    switch (index) {
       case 0:
-        return const HomePage();
+        return HomePage(userId: _userId);
       case 1:
         return loginNotifier.loggedIn
             ? const ChatsList()
@@ -97,7 +94,7 @@ class _MainScreenState extends State<MainScreen> {
             : const LoginPage(drawer: false);
       case 3:
         return loginNotifier.loggedIn
-            ? const DeviceManagement()
+            ? const SettingsPage()
             : const LoginPage(drawer: false);
       case 4:
         return loginNotifier.loggedIn
@@ -108,7 +105,7 @@ class _MainScreenState extends State<MainScreen> {
             ? const ProfilePage()
             : const LoginPage(drawer: false);
       default:
-        return const HomePage();
+        return HomePage(userId: _userId);
     }
   }
 }

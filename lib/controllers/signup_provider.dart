@@ -3,9 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/auth_service.dart';
+import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
-import 'package:proco/services/helpers/user_helper.dart';
+import 'package:proco/services/helpers/device_helper.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
@@ -14,7 +15,11 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:uuid/uuid.dart';
 
 class SignUpNotifier extends ChangeNotifier {
-  final SignupModel signupModel = SignupModel();
+  SignupRequestModel signupModel = SignupRequestModel(
+    username: '',
+    email: '',
+    password: '',
+  );
 
   // ─── Step navigation ────────────────────────────────────────────────────────
   // Steps: 0=choice, 1=email, 2=password, 3=verify email
@@ -172,8 +177,12 @@ class SignUpNotifier extends ChangeNotifier {
 
       if (_firebaseUser == null) {
         isLoading = false;
-        Get.snackbar('Sign Up Failed', 'Could not create account. Please try again.',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Sign Up Failed',
+          'Could not create account. Please try again.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
         return;
       }
 
@@ -181,7 +190,9 @@ class SignUpNotifier extends ChangeNotifier {
       debugPrint('Verification email sent to ${_firebaseUser!.email}');
 
       isLoading = false;
-      changeStep(3); // verification pending screen — user taps button to confirm
+      changeStep(
+        3,
+      ); // verification pending screen — user taps button to confirm
     } on FirebaseAuthException catch (e) {
       isLoading = false;
       final message = _firebaseAuthMessage(e.code);
@@ -294,8 +305,12 @@ class SignUpNotifier extends ChangeNotifier {
       final idToken = await user.getIdToken();
       if (idToken == null) {
         isLoading = false;
-        Get.snackbar('Error', 'Could not retrieve auth token.',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Error',
+          'Could not retrieve auth token.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
         return;
       }
 
@@ -305,7 +320,7 @@ class SignUpNotifier extends ChangeNotifier {
         username: signupModel.username,
       );
 
-      if (response[0] == true) {
+      if (response.success) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('entrypoint', true);
 
@@ -329,16 +344,22 @@ class SignUpNotifier extends ChangeNotifier {
         );
       } else {
         isLoading = false;
-        final msg = (response.length > 1 && response[1] != null)
-            ? response[1].toString()
-            : 'Registration failed';
-        Get.snackbar('Sign Up Failed', msg,
-            backgroundColor: Colors.red, colorText: Colors.white);
+
+        Get.snackbar(
+          'Sign Up Failed',
+          response.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       isLoading = false;
-      Get.snackbar('Error', e.toString(),
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -411,7 +432,7 @@ class SignUpNotifier extends ChangeNotifier {
         return;
       }
 
-      final response = await AuthHelper.googleSignup(
+      final model = GoogleAuthModel(
         idToken: idToken,
         email: firebaseUser.email ?? '',
         displayName: firebaseUser.displayName,
@@ -420,9 +441,11 @@ class SignUpNotifier extends ChangeNotifier {
         longitude: _longitude != 0.0 ? _longitude : null,
       );
 
+      final response = await AuthHelper.googleSignup(model);
+
       Get.closeAllSnackbars();
 
-      if (response.isNotEmpty && response[0] == true) {
+      if (response.success) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('loggedIn', true);
         await prefs.setBool('entrypoint', true);
@@ -432,12 +455,9 @@ class SignUpNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        // response[1] is isFirstTimeUser:
-        //   true  → brand-new account or re-signup after deletion → go through onboarding
-        //   false → existing email/password account linked via Google → go straight to dashboard
-        final isFirstTimeUser = response.length > 1 && response[1] == true;
+        final user = response.data!;
 
-        if (isFirstTimeUser) {
+        if (user.isFirstTimeUser == true) {
           Get.snackbar(
             'Welcome!',
             'Let\'s set up your profile.',
@@ -445,7 +465,9 @@ class SignUpNotifier extends ChangeNotifier {
             backgroundColor: kLightBlue,
             icon: const Icon(Icons.check),
           );
+
           await Future.delayed(const Duration(seconds: 1));
+
           Get.offAll(
             () => OnboardingFlow(initialName: firebaseUser.displayName ?? ''),
             transition: Transition.fade,
@@ -458,7 +480,9 @@ class SignUpNotifier extends ChangeNotifier {
             backgroundColor: kLightBlue,
             icon: const Icon(Icons.check),
           );
+
           await Future.delayed(const Duration(seconds: 1));
+
           Get.offAll(() => const MainScreen(), transition: Transition.fade);
         }
       } else {
@@ -466,15 +490,12 @@ class SignUpNotifier extends ChangeNotifier {
         // Triggered when the backend returns 409 (googleSignup endpoint).
         // Firebase already authenticated them, so we use the same idToken
         // to log them straight in.
-        final loginResponse = await AuthHelper.googleLogin(
-          idToken: idToken,
-          email: firebaseUser.email ?? '',
-          displayName: firebaseUser.displayName,
-        );
+
+        final loginResponse = await AuthHelper.googleLogin(model);
 
         Get.closeAllSnackbars();
 
-        if (loginResponse.isNotEmpty && loginResponse[0] == true) {
+        if (loginResponse.success) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('loggedIn', true);
           await prefs.setBool('entrypoint', true);
@@ -484,13 +505,9 @@ class SignUpNotifier extends ChangeNotifier {
           _isLoading = false;
           notifyListeners();
 
-          // loginResponse[1] carries isFirstTimeUser — true means the backend
-          // record belongs to a previously deleted account that was re-created.
-          // In that case we must run onboarding rather than skipping it.
-          final isFirstTimeUser =
-              loginResponse.length > 1 && loginResponse[1] == true;
+          final user = loginResponse.data!;
 
-          if (isFirstTimeUser) {
+          if (user.isFirstTimeUser == true) {
             Get.snackbar(
               'Welcome!',
               'Let\'s finish setting up your profile.',
@@ -498,7 +515,9 @@ class SignUpNotifier extends ChangeNotifier {
               backgroundColor: kLightBlue,
               icon: const Icon(Icons.check),
             );
+
             await Future.delayed(const Duration(seconds: 1));
+
             Get.offAll(
               () => OnboardingFlow(initialName: firebaseUser.displayName ?? ''),
               transition: Transition.fade,
@@ -511,19 +530,19 @@ class SignUpNotifier extends ChangeNotifier {
               backgroundColor: kLightBlue,
               icon: const Icon(Icons.check),
             );
+
             await Future.delayed(const Duration(seconds: 1));
+
             Get.offAll(() => const MainScreen(), transition: Transition.fade);
           }
+
           return;
         }
-
         // Both signup and login failed — show the original signup error.
         _isLoading = false;
         notifyListeners();
 
-        final message = (response.length > 1 && response[1] != null)
-            ? response[1].toString()
-            : 'Sign up failed';
+        final message = response.message;
 
         Get.snackbar(
           'Sign Up Failed',
@@ -552,32 +571,32 @@ class SignUpNotifier extends ChangeNotifier {
   Future<void> _saveDeviceSession() async {
     try {
       final deviceInfo = DeviceInfoPlugin();
-      String deviceName   = 'Unknown Device';
+      String deviceName = 'Unknown Device';
       String platformName = 'Unknown Platform';
 
       if (GetPlatform.isAndroid) {
         final info = await deviceInfo.androidInfo;
-        deviceName   = '${info.manufacturer} ${info.model}';
+        deviceName = '${info.manufacturer} ${info.model}';
         platformName = 'Android ${info.version.release}';
       } else if (GetPlatform.isIOS) {
         final info = await deviceInfo.iosInfo;
-        deviceName   = info.name;
+        deviceName = info.name;
         platformName = '${info.systemName} ${info.systemVersion}';
       } else if (GetPlatform.isWeb) {
         final info = await deviceInfo.webBrowserInfo;
-        deviceName   = info.browserName.name;
+        deviceName = info.browserName.name;
         platformName = 'Web';
       }
 
-      final prefs     = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
       final sessionId = prefs.getString('deviceSessionId') ?? const Uuid().v4();
       await prefs.setString('deviceSessionId', sessionId);
 
-      await UserHelper.registerDeviceSession(
+      await DeviceHelper.registerDeviceSession(
         sessionId: sessionId,
-        device:    deviceName,
-        platform:  platformName,
-        date:      DateTime.now().toString().substring(0, 10),
+        device: deviceName,
+        platform: platformName,
+        date: DateTime.now().toString().substring(0, 10),
       );
     } catch (e) {
       debugPrint('SignUpNotifier: error saving device session: $e');
