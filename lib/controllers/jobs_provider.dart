@@ -50,12 +50,15 @@ class JobsNotifier extends ChangeNotifier {
 
   /// Load page 1 from on-device cache immediately, then refresh from network.
   /// Resets pagination state — call on app start or after filter changes.
+  /// Pass [forceRefresh] = true after a filter change to bypass the cache guard.
   Future<void> preloadJobs(
     String userId, {
     List<String> bookmarkedIds = const [],
+    bool forceRefresh = false,
   }) async {
-    // ✅ Prevent duplicate calls with same parameters
-    if (_lastPreloadUserId == userId &&
+    // Prevent duplicate calls with same parameters unless explicitly forced
+    if (!forceRefresh &&
+        _lastPreloadUserId == userId &&
         _listEquals(_lastBookmarkedIds, bookmarkedIds) &&
         cachedJobs.isNotEmpty) {
       return;
@@ -64,23 +67,32 @@ class JobsNotifier extends ChangeNotifier {
     _lastPreloadUserId = userId;
     _lastBookmarkedIds = List.from(bookmarkedIds);
 
+    if (forceRefresh) {
+      cachedJobs = [];
+      _displayDirty = true;
+      notifyListeners(); // show loading state immediately
+    }
+
     // ✅ Debounce rapid calls
-    _preloadDebouncer.run(() => _executePreloadJobs(userId, bookmarkedIds));
+    _preloadDebouncer.run(() => _executePreloadJobs(userId, bookmarkedIds, skipDiskCache: forceRefresh));
   }
 
   Future<void> _executePreloadJobs(
     String userId,
-    List<String> bookmarkedIds,
-  ) async {
+    List<String> bookmarkedIds, {
+    bool skipDiskCache = false,
+  }) async {
     _currentPage = 1;
     hasMorePages = true;
 
-    JobsHelper.getCachedJobs(userId).then((cached) {
-      if (cached.isNotEmpty && cachedJobs.isEmpty) {
-        cachedJobs = cached;
-        notifyListeners();
-      }
-    });
+    if (!skipDiskCache) {
+      JobsHelper.getCachedJobs(userId).then((cached) {
+        if (cached.isNotEmpty && cachedJobs.isEmpty) {
+          cachedJobs = cached;
+          notifyListeners();
+        }
+      });
+    }
 
     isLoadingJobs = cachedJobs.isEmpty;
     if (cachedJobs.isEmpty) notifyListeners();

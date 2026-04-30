@@ -117,7 +117,7 @@ class FilterNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> createFilter(String agentId, CreateFilterRequest model) async {
+  Future<bool> createFilter(String agentId, CreateFilterRequest model) async {
     final response = await FilterHelper.createFilter(model);
 
     if (response.success) {
@@ -132,6 +132,7 @@ class FilterNotifier extends ChangeNotifier {
         filter = response.data;
         notifyListeners();
       }
+      return true;
     } else {
       Get.snackbar(
         'Error Saving Filter',
@@ -140,6 +141,7 @@ class FilterNotifier extends ChangeNotifier {
         backgroundColor: kOrange,
         icon: const Icon(Icons.error),
       );
+      return false;
     }
   }
 

@@ -59,7 +59,7 @@ class _ChatsListState extends State<ChatsList> {
               final aPinned = chatNotifier.isPinned(a.id) ? 0 : 1;
               final bPinned = chatNotifier.isPinned(b.id) ? 0 : 1;
               if (aPinned != bPinned) return aPinned.compareTo(bPinned);
-              return b.createdAt.compareTo(a.createdAt);
+              return b.updatedAt.compareTo(a.updatedAt);
             });
 
           return ListView.separated(
@@ -73,7 +73,9 @@ class _ChatsListState extends State<ChatsList> {
 
               final String name = other?.username ?? 'Unknown User';
               final String profile = other?.profile ?? kDefaultImage;
-              final String preview = other?.lastMessage ?? 'No messages yet';
+              final String preview = chat.latestMessage?.isNotEmpty == true
+                  ? chat.latestMessage!
+                  : 'No messages yet';
               final String time = chatNotifier.msgTime(
                 chat.createdAt.toString(),
               );

@@ -36,6 +36,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   final _skillController = TextEditingController();
   final _interestController = TextEditingController();
   final _hobbyController = TextEditingController();
+  final _dobController = TextEditingController();
 
   double _latitude = 0.0;
   double _longitude = 0.0;
@@ -46,6 +47,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     'Female',
     'Other',
     'Prefer not to say',
+  ];
+
+  String? _selectedUserType;
+  static const List<String> _userTypeOptions = [
+    'Student',
+    'Young Professional',
   ];
 
   List<String> skills = [];
@@ -63,6 +70,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
 
   @override
   void dispose() {
+    _userController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
     _stateController.dispose();
@@ -70,6 +78,9 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     _collegeController.dispose();
     _branchController.dispose();
     _skillController.dispose();
+    _interestController.dispose();
+    _hobbyController.dispose();
+    _dobController.dispose();
     super.dispose();
   }
 
@@ -119,12 +130,16 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           _countryController.text = profileData.country ?? '';
           _collegeController.text = profileData.college ?? '';
           _branchController.text = profileData.branch ?? '';
+          _dobController.text = profileData.dob ?? '';
           skills = profileData.skills;
           interests = profileData.interests;
           hobbies = profileData.hobbies;
 
           final g = profileData.gender;
           _selectedGender = _genderOptions.contains(g) ? g : null;
+
+          final ut = profileData.userType;
+          _selectedUserType = _userTypeOptions.contains(ut) ? ut : null;
         });
       }
     } catch (e) {
@@ -168,6 +183,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         college: _collegeController.text.trim(),
         branch: _branchController.text.trim(),
         gender: _selectedGender,
+        dob: _dobController.text.trim(),
+        userType: _selectedUserType ?? '',
+        interests: interests,
+        hobbies: hobbies,
         latitude: _latitude,
         longitude: _longitude,
       );
@@ -344,9 +363,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
               },
             ),
             SizedBox(height: 12.h),
-            // _label('Gender'),
-            // SizedBox(height: 6.h),
             _genderDropdown(),
+            SizedBox(height: 12.h),
+            _userTypeDropdown(),
+            SizedBox(height: 12.h),
+            _dobPicker(),
             SizedBox(height: 20.h),
 
             // ── Location ──────────────────────────────────────────────────
@@ -726,6 +747,109 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           .toList(),
       onChanged: (val) => setState(() => _selectedGender = val),
       validator: (v) => v == null ? 'Required' : null,
+    );
+  }
+
+  Widget _userTypeDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedUserType,
+      decoration: InputDecoration(
+        labelText: 'Role',
+        labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+        prefixIcon: const Icon(Icons.work_outline_rounded, color: _accent),
+        filled: true,
+        fillColor: _card.withValues(alpha: 0.25),
+        contentPadding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _accent, width: 1.5),
+        ),
+      ),
+      hint: const Text('Select role', style: TextStyle(color: Colors.white30)),
+      dropdownColor: _bg,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _accent),
+      style: const TextStyle(color: Colors.white, fontSize: 15),
+      borderRadius: BorderRadius.circular(14),
+      items: _userTypeOptions
+          .map((t) => DropdownMenuItem(
+                value: t,
+                child: Text(t, style: const TextStyle(color: Colors.white)),
+              ))
+          .toList(),
+      onChanged: (val) => setState(() => _selectedUserType = val),
+    );
+  }
+
+  Widget _dobPicker() {
+    return GestureDetector(
+      onTap: () async {
+        final now = DateTime.now();
+        final initial = _dobController.text.isNotEmpty
+            ? DateTime.tryParse(_dobController.text) ?? now
+            : DateTime(now.year - 18);
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: initial,
+          firstDate: DateTime(1940),
+          lastDate: DateTime(now.year - 10),
+          builder: (ctx, child) => Theme(
+            data: ThemeData.dark().copyWith(
+              colorScheme: const ColorScheme.dark(
+                primary: _accent,
+                onPrimary: _white,
+                surface: Color(0xFF040326),
+              ),
+            ),
+            child: child!,
+          ),
+        );
+        if (picked != null) {
+          setState(() {
+            _dobController.text =
+                '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+          });
+        }
+      },
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: _dobController,
+          style: const TextStyle(color: _white, fontSize: 15),
+          decoration: InputDecoration(
+            labelText: 'Date of Birth',
+            hintText: 'YYYY-MM-DD',
+            labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+            hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+            prefixIcon:
+                const Icon(Icons.cake_outlined, color: _accent, size: 20),
+            suffixIcon: const Icon(Icons.calendar_today_outlined,
+                color: _accent, size: 16),
+            filled: true,
+            fillColor: _card.withValues(alpha: 0.25),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: _accent, width: 1.5),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

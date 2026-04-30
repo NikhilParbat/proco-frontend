@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
-import 'package:proco/views/ui/bookmarks/bookmark_detail_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -78,28 +79,26 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
           allowedSwipeDirection: const AllowedSwipeDirection.only(
             left: true,
             right: true,
-            up: true,
           ),
           isLoop: false,
           onEnd: () => setState(() => _isFinished = true),
           onSwipe: (previousIndex, currentIndex, direction) {
             final bookmark = _bookmarks[previousIndex];
             if (direction == CardSwiperDirection.left) {
-              // Swipe left → remove bookmark
               widget.bookmarkNotifier.deleteBookMark(bookmark.job.id);
-            } else if (direction == CardSwiperDirection.right ||
-                direction == CardSwiperDirection.top) {
-              if (direction == CardSwiperDirection.right &&
-                  _currentUserId.isNotEmpty) {
+            } else if (direction == CardSwiperDirection.right) {
+              if (_currentUserId.isNotEmpty) {
                 context
                     .read<JobsNotifier>()
-                    .addSwipedUsers(bookmark.job.id, _currentUserId, 'right');
+                    .addMatchedUsers(bookmark.job.id, _currentUserId);
               }
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BookmarkDetailPage(bookmark: bookmark),
-                ),
+              Get.snackbar(
+                'Matched!',
+                'You matched with ${bookmark.job.company.isNotEmpty ? bookmark.job.company : bookmark.job.title}',
+                colorText: kLight,
+                backgroundColor: const Color(0xFF089F20),
+                icon: const Icon(Icons.favorite_rounded, color: Colors.white),
+                duration: const Duration(seconds: 2),
               );
             }
             return true;
@@ -109,9 +108,7 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
             CardSwiperDirection? liveDirection;
             const threshold = 0.15;
             if (index == 0) {
-              if (pctY < -threshold) {
-                liveDirection = CardSwiperDirection.top;
-              } else if (pctX > threshold) {
+              if (pctX > threshold) {
                 liveDirection = CardSwiperDirection.right;
               } else if (pctX < -threshold) {
                 liveDirection = CardSwiperDirection.left;
@@ -347,26 +344,15 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
 
   // ─── Swipe overlay ────────────────────────────────────────────────────────
   Widget _buildSwipeOverlay(CardSwiperDirection direction) {
-    final isLeft  = direction == CardSwiperDirection.left;
-    final isRight = direction == CardSwiperDirection.right;
+    final isLeft = direction == CardSwiperDirection.left;
 
-    final Color color  = isLeft ? _red : isRight ? _green : _teal;
-    final IconData icon = isLeft
-        ? Icons.bookmark_remove_rounded
-        : isRight
-        ? Icons.open_in_new_rounded
-        : Icons.info_outline_rounded;
-    final String label = isLeft ? 'REMOVE' : isRight ? 'VIEW' : 'DETAIL';
-    final Alignment alignment = isLeft
-        ? Alignment.topLeft
-        : isRight
-        ? Alignment.topRight
-        : Alignment.topCenter;
+    final Color color = isLeft ? _red : _green;
+    final IconData icon = isLeft ? Icons.bookmark_remove_rounded : Icons.favorite_rounded;
+    final String label = isLeft ? 'REMOVE' : 'MATCH';
+    final Alignment alignment = isLeft ? Alignment.topLeft : Alignment.topRight;
     final EdgeInsets padding = isLeft
         ? EdgeInsets.only(top: 30.h, left: 22.w)
-        : isRight
-        ? EdgeInsets.only(top: 30.h, right: 22.w)
-        : EdgeInsets.only(top: 22.h);
+        : EdgeInsets.only(top: 30.h, right: 22.w);
 
     return Positioned.fill(
       child: Container(
@@ -424,19 +410,11 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
         ),
         SizedBox(width: 14.w),
         _fab(
-          icon: Icons.open_in_new_rounded,
+          icon: Icons.favorite_rounded,
           color: _green,
-          label: 'View',
+          label: 'Match',
           onTap: () => _controller.swipe(CardSwiperDirection.right),
           size: 64,
-        ),
-        SizedBox(width: 14.w),
-        _fab(
-          icon: Icons.info_outline_rounded,
-          color: _teal,
-          label: 'Detail',
-          onTap: () => _controller.swipe(CardSwiperDirection.top),
-          size: 50,
         ),
       ],
     );

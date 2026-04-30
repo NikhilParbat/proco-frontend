@@ -29,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   // ✅ Memoize filter check
   bool _isFilterActive(GetFilterRes f) {
     return f.selectedOptions.isNotEmpty ||
+        f.customOptions.isNotEmpty ||
         f.skills.isNotEmpty ||
         f.internship ||
         f.research ||
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage> {
       context.read<JobsNotifier>().preloadJobs(
         widget.userId,
         bookmarkedIds: bookmarkedIds,
+        forceRefresh: true,
       );
     }
   }
@@ -194,6 +196,7 @@ class _FilterChipsBar extends StatelessWidget {
 
         final chips = <String>[
           ...f.selectedOptions,
+          ...f.customOptions,
           ...f.skills,
           if (f.internship) 'Internship',
           if (f.research) 'Research',
@@ -246,7 +249,10 @@ class _FilterChipsBar extends StatelessWidget {
                   onTap: () async {
                     await context.read<FilterNotifier>().clearFilter(userId);
                     if (context.mounted) {
-                      context.read<JobsNotifier>().preloadJobs(userId);
+                      context.read<JobsNotifier>().preloadJobs(
+                        userId,
+                        forceRefresh: true,
+                      );
                     }
                   },
                   child: Container(

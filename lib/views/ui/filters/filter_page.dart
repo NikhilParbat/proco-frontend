@@ -91,6 +91,7 @@ class _FilterPageState extends State<FilterPage> {
     }
     for (final custom in existing.customOptions) {
       if (!options.contains(custom)) options.add(custom);
+      if (!selectedOptions.contains(custom)) selectedOptions.add(custom);
     }
 
     _internship = existing.internship;
@@ -885,29 +886,33 @@ class _FilterPageState extends State<FilterPage> {
           listen: false,
         );
 
-        await filterNotifier.createFilter(userId!, filterData);
+        final success = await filterNotifier.createFilter(userId!, filterData);
 
         if (!context.mounted) return;
+        if (!success) return;
 
-        filterNotifier.setActiveFilter(
-          GetFilterRes(
-            id: '',
-            selectedOptions: List.from(selectedOptions),
-            selectedLocationOption: selectedLocationOption,
-            selectedCity: selectedCity,
-            selectedState: selectedState,
-            selectedCountry: selectedCountry,
-            customOptions: customInput,
-            skills: List.from(selectedSkills),
-            sortByTime: sortByTime,
-            postedWithin: postedWithin,
-            internship: _internship,
-            research: _research,
-            freelance: _freelance,
-            competition: _competition,
-            collaborate: _collaborate,
-          ),
-        );
+        // Use the server response if available so the id is correct;
+        // fall back to local state if the response had no data.
+        final savedFilter = filterNotifier.filter ??
+            GetFilterRes(
+              id: '',
+              selectedOptions: List.from(selectedOptions),
+              selectedLocationOption: selectedLocationOption,
+              selectedCity: selectedCity,
+              selectedState: selectedState,
+              selectedCountry: selectedCountry,
+              customOptions: customInput,
+              skills: List.from(selectedSkills),
+              sortByTime: sortByTime,
+              postedWithin: postedWithin,
+              internship: _internship,
+              research: _research,
+              freelance: _freelance,
+              competition: _competition,
+              collaborate: _collaborate,
+            );
+
+        filterNotifier.setActiveFilter(savedFilter);
 
         // ignore: use_build_context_synchronously
         Navigator.pop(context);
