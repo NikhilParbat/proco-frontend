@@ -38,7 +38,9 @@ class _AddJobPageState extends State<AddJobPage> {
   final _salaryController = TextEditingController();
   final _periodController = TextEditingController();
   final _contractController = TextEditingController();
-  final List<TextEditingController> _reqControllers = [TextEditingController()];
+
+  // FIX: Start with an empty list — we populate it properly in initState
+  final List<TextEditingController> _reqControllers = [];
   final _imageUrlController = TextEditingController();
 
   // ─── State ────────────────────────────────────────────────────────────────
@@ -57,8 +59,10 @@ class _AddJobPageState extends State<AddJobPage> {
   void initState() {
     super.initState();
     _imageNotifier = ImageNotifier();
+
     final j = widget.job;
     if (j != null) {
+      // ── Edit mode: populate all fields ───────────────────────────────────
       _titleController.text = j.title;
       _companyController.text = j.company;
       _descriptionController.text = j.description;
@@ -71,24 +75,33 @@ class _AddJobPageState extends State<AddJobPage> {
       _locationPicked = true;
       _imageUrlController.text = j.imageUrl;
       _reverseGeocodeExistingLocation();
-      // Requirements
+
+      // FIX: Always populate requirements; fall back to one empty field so
+      // the section is never blank when the job has no requirements yet.
+      _reqControllers.clear();
       if (j.requirements.isNotEmpty) {
-        _reqControllers.clear();
         for (final r in j.requirements) {
           _reqControllers.add(TextEditingController(text: r));
         }
+      } else {
+        _reqControllers.add(TextEditingController());
       }
-      // Domain kDomains
+
+      // Domain
       if (kDomains.contains(j.domain)) {
         selectedDomain = j.domain;
       } else if (j.domain.isNotEmpty) {
         selectedDomain = 'Custom…';
         _customDomainController.text = j.domain;
       }
+
       // Opportunity type
       if (kOpportunityTypes.contains(j.opportunityType)) {
         selectedOpportunityType = j.opportunityType;
       }
+    } else {
+      // ── Create mode: start with one empty requirement field ───────────────
+      _reqControllers.add(TextEditingController());
     }
   }
 
@@ -102,6 +115,7 @@ class _AddJobPageState extends State<AddJobPage> {
     _periodController.dispose();
     _contractController.dispose();
     _customDomainController.dispose();
+    _imageUrlController.dispose();
     for (final c in _reqControllers) {
       c.dispose();
     }
@@ -115,11 +129,14 @@ class _AddJobPageState extends State<AddJobPage> {
   void _removeRequirement(int index) => setState(() {
     _reqControllers[index].dispose();
     _reqControllers.removeAt(index);
+    // Always keep at least one field visible
+    if (_reqControllers.isEmpty) {
+      _reqControllers.add(TextEditingController());
+    }
   });
 
   Future<void> _reverseGeocodeExistingLocation() async {
     try {
-      // Reuse the LocationService we built
       final address = await LocationService.getAddressFromLatLng(
         _jobLat,
         _jobLng,
@@ -127,13 +144,11 @@ class _AddJobPageState extends State<AddJobPage> {
 
       if (mounted) {
         setState(() {
-          // This fills the "Display Location" and the "Map Box" text
           _locationController.text = "${address.city}, ${address.state}";
         });
       }
     } catch (e) {
       debugPrint("Failed to fetch address for Edit mode: $e");
-      // Fallback to the saved string if geocoding fails
       if (mounted) {
         setState(() => _locationController.text = widget.job!.location);
       }
@@ -147,12 +162,12 @@ class _AddJobPageState extends State<AddJobPage> {
   ) async {
     // Validate required dropdowns
     if (selectedDomain == null || selectedOpportunityType == null) {
-      _snack(('Please select a domain and opportunity type.'));
+      _snack('Please select a domain and opportunity type.');
       return;
     }
 
     if (_titleController.text.trim().isEmpty) {
-      _snack('Please enter a opportunity title.');
+      _snack('Please enter an opportunity title.');
       return;
     }
 
@@ -161,9 +176,7 @@ class _AddJobPageState extends State<AddJobPage> {
         : selectedDomain!;
 
     if (effectiveDomain.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a custom domain.')),
-      );
+      _snack('Please enter a custom domain.');
       return;
     }
 
@@ -172,40 +185,38 @@ class _AddJobPageState extends State<AddJobPage> {
 
     if (userId.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You must be logged in to list a opportunity.'),
-        ),
-      );
+      _snack('You must be logged in to list an opportunity.');
       return;
     }
 
+    // FIX: Filter out blank entries before sending
     final requirements = _reqControllers
-        .map((c) => c.text)
-        .where((t) => t.trim().isNotEmpty)
+        .map((c) => c.text.trim())
+        .where((t) => t.isNotEmpty)
         .toList();
 
     final jobData = CreateJobsRequest(
       agentId: userId,
       domain: effectiveDomain,
       opportunityType: selectedOpportunityType!,
-      title: _titleController.text,
+      title: _titleController.text.trim(),
       city: _locationController.text.trim().isNotEmpty
           ? _locationController.text.trim()
           : 'Remote',
       latitude: _jobLat,
       longitude: _jobLng,
-      company: _companyController.text,
-      description: _descriptionController.text,
-      salary: _salaryController.text,
-      period: _periodController.text,
+      company: _companyController.text.trim(),
+      description: _descriptionController.text.trim(),
+      salary: _salaryController.text.trim(),
+      period: _periodController.text.trim(),
       hiring: _isHiring,
-      contract: _contractController.text,
+      contract: _contractController.text.trim(),
       requirements: requirements,
       imageUrl: _isEditMode ? _imageUrlController.text : '',
     );
 
     if (!mounted) return;
+
     if (_isEditMode) {
       await notifier.updateJob(
         widget.job!.id,
@@ -269,7 +280,6 @@ class _AddJobPageState extends State<AddJobPage> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
-      // create: (_) => ImageNotifier(),
       value: _imageNotifier,
       child: _buildScaffold(context),
     );
@@ -475,6 +485,8 @@ class _AddJobPageState extends State<AddJobPage> {
               // ── Section: Requirements ─────────────────────────────────────
               _sectionLabel('Requirements'),
               SizedBox(height: 12.h),
+
+              // FIX: Use setState-safe list rendering
               ..._reqControllers.asMap().entries.map((entry) {
                 final i = entry.key;
                 return Padding(
@@ -513,6 +525,7 @@ class _AddJobPageState extends State<AddJobPage> {
                   ),
                 );
               }),
+
               GestureDetector(
                 onTap: _addRequirement,
                 child: Container(

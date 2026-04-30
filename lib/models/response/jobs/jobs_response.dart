@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+
 List<JobsResponse> jobsResponseFromJson(String str) {
   final decoded = json.decode(str);
 
@@ -70,6 +72,8 @@ class JobsResponse {
   }
 
   factory JobsResponse.fromJson(Map<String, dynamic> json) {
+    debugPrint('🔍 RAW JSON KEYS: ${json.keys.toList()}');
+    debugPrint('🔍 RAW REQUIREMENTS: ${json['requirements']}');
     return JobsResponse(
       id: json['id'] ?? json['_id'] ?? '',
       title: json['title'] ?? '',
@@ -92,7 +96,8 @@ class JobsResponse {
           ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
       domain: json['domain'] ?? '',
-      opportunityType: json['opportunityType'] ?? json['opportunity_type'] ?? '',
+      opportunityType:
+          json['opportunityType'] ?? json['opportunity_type'] ?? '',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       matchedUsers: json['matchedUsers'] != null
@@ -103,36 +108,60 @@ class JobsResponse {
 
   static List<String> _parseRequirements(dynamic raw) {
     if (raw == null) return [];
-    if (raw is List) {
-      return raw.map((e) {
-        if (e is Map) return (e['requirement'] ?? e['text'] ?? '').toString();
-        return e.toString();
-      }).where((s) => s.isNotEmpty).toList();
+
+    if (raw is String) {
+      // Sometimes backends return a JSON-encoded string
+      try {
+        final decoded = jsonDecode(raw);
+        return _parseRequirements(decoded);
+      } catch (_) {
+        return raw.isNotEmpty ? [raw] : [];
+      }
     }
+
+    if (raw is List) {
+      return raw
+          .map((e) {
+            if (e is Map) {
+              // Try every common column name your backend might use
+              return (e['requirement'] ??
+                      e['text'] ??
+                      e['value'] ??
+                      e['name'] ??
+                      e['description'] ??
+                      '')
+                  .toString();
+            }
+            return e.toString();
+          })
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+
     return [];
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'city': city,
-        'state': state,
-        'country': country,
-        'company': company,
-        'hiring': hiring,
-        'description': description,
-        'salary': salary,
-        'period': period,
-        'contract': contract,
-        'requirements': requirements,
-        'imageUrl': imageUrl,
-        'agentId': agentId,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'domain': domain,
-        'opportunityType': opportunityType,
-        'latitude': latitude,
-        'longitude': longitude,
-        'matchedUsers': matchedUsers,
-      };
+    'id': id,
+    'title': title,
+    'city': city,
+    'state': state,
+    'country': country,
+    'company': company,
+    'hiring': hiring,
+    'description': description,
+    'salary': salary,
+    'period': period,
+    'contract': contract,
+    'requirements': requirements,
+    'imageUrl': imageUrl,
+    'agentId': agentId,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'domain': domain,
+    'opportunityType': opportunityType,
+    'latitude': latitude,
+    'longitude': longitude,
+    'matchedUsers': matchedUsers,
+  };
 }
