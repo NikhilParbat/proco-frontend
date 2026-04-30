@@ -358,8 +358,8 @@ class JobsNotifier extends ChangeNotifier {
         });
 
         Get.snackbar(
-          'Query Created Successfully',
-          'Your job listing has been added.',
+          'Opportunity Created Successfully',
+          'Your opportunity listing has been added.',
           colorText: kLight,
           backgroundColor: kLightBlue,
           icon: const Icon(Icons.check_circle),
@@ -509,7 +509,7 @@ class JobsNotifier extends ChangeNotifier {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF040326),
         title: const Text(
-          'Failed to List Query',
+          'Failed to List Opportunity',
           style: TextStyle(color: Colors.white),
         ),
         content: Text(message, style: const TextStyle(color: Colors.white70)),

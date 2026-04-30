@@ -287,8 +287,7 @@ class _HelpSupportPageState extends State<HelpSupportPage>
               splashColor: _accent.withValues(alpha: 0.08),
               highlightColor: _accent.withValues(alpha: 0.04),
               child: Padding(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -389,21 +388,22 @@ class _HelpSupportPageState extends State<HelpSupportPage>
               controller: _subjectController,
               hint: 'e.g. Problem with matching',
               maxLines: 1,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Subject is required' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Subject is required'
+                  : null,
             ),
             SizedBox(height: 14.h),
 
-            // Query
-            _buildInputLabel('Your Query'),
+            // opportunity
+            _buildInputLabel('Your opportunity'),
             SizedBox(height: 6.h),
             _buildTextField(
               controller: _queryController,
-              hint:
-                  'Describe your issue or question in detail…',
+              hint: 'Describe your issue or question in detail…',
               maxLines: 5,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Query cannot be empty' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'opportunity cannot be empty'
+                  : null,
             ),
             SizedBox(height: 20.h),
 
@@ -475,8 +475,7 @@ class _HelpSupportPageState extends State<HelpSupportPage>
         hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
         filled: true,
         fillColor: _card.withValues(alpha: 0.18),
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: _card.withValues(alpha: 0.35)),

@@ -255,7 +255,7 @@ class _JobListingPageState extends State<JobListingPage> {
                                 ).then((_) => loadJobs()),
                                 onDelete: () {
                                   Get.defaultDialog(
-                                    title: "Delete Query",
+                                    title: "Delete Opportunity",
                                     middleText:
                                         "Are you sure you want to delete this listing?",
                                     textConfirm: "Delete",
@@ -277,7 +277,7 @@ class _JobListingPageState extends State<JobListingPage> {
 
                                       Get.snackbar(
                                         "Deleted",
-                                        "Query removed successfully",
+                                        "Opportunity removed successfully",
                                         backgroundColor: Colors.red,
                                         colorText: Colors.white,
                                       );

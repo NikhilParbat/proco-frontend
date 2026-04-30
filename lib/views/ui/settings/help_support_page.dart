@@ -11,14 +11,14 @@ class HelpSupportPage extends StatelessWidget {
 
   static const _faqs = [
     _Faq(
-      question: 'How do I create a query?',
+      question: 'How do I create a opportunity?',
       answer:
-          'Go to "My Queries" from the drawer, then tap the + button to post a new query with details about what you\'re looking for.',
+          'Go to "My Opportunities" from the drawer, then tap the + button to post a new opportunity with details about what you\'re looking for.',
     ),
     _Faq(
       question: 'How does matching work?',
       answer:
-          'When a query poster swipes right on an interested applicant, it\'s a match! Both users are then able to chat with each other.',
+          'When a opportunity poster swipes right on an interested applicant, it\'s a match! Both users are then able to chat with each other.',
     ),
     _Faq(
       question: 'How do I enable or disable notifications?',
@@ -109,8 +109,7 @@ class HelpSupportPage extends StatelessWidget {
             GestureDetector(
               onTap: _launchEmail,
               child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
                 decoration: BoxDecoration(
                   color: _card,
                   borderRadius: BorderRadius.circular(16.r),
@@ -204,8 +203,11 @@ class _FaqTileState extends State<_FaqTile> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-          childrenPadding:
-              EdgeInsets.only(left: 16.w, right: 16.w, bottom: 14.h),
+          childrenPadding: EdgeInsets.only(
+            left: 16.w,
+            right: 16.w,
+            bottom: 14.h,
+          ),
           onExpansionChanged: (v) => setState(() => _expanded = v),
           trailing: Icon(
             _expanded

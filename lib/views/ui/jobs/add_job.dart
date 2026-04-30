@@ -148,10 +148,9 @@ class _AddJobPageState extends State<AddJobPage> {
     }
 
     if (_titleController.text.trim().isEmpty) {
-      _snack('Please enter a query title.');
+      _snack('Please enter a opportunity title.');
       return;
     }
-
 
     final effectiveDomain = selectedDomain == 'Custom…'
         ? _customDomainController.text.trim()
@@ -170,7 +169,9 @@ class _AddJobPageState extends State<AddJobPage> {
     if (userId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must be logged in to list a query.')),
+        const SnackBar(
+          content: Text('You must be logged in to list a opportunity.'),
+        ),
       );
       return;
     }
@@ -205,7 +206,7 @@ class _AddJobPageState extends State<AddJobPage> {
       await notifier.updateJob(widget.job!.id, jobData.toJson());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Query updated successfully')),
+          const SnackBar(content: Text('opportunity updated successfully')),
         );
         Navigator.pop(context);
       }
@@ -270,7 +271,7 @@ class _AddJobPageState extends State<AddJobPage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(50.h),
         child: CustomAppBar(
-          text: _isEditMode ? 'Edit Query' : 'List Query',
+          text: _isEditMode ? 'Edit opportunity' : 'List opportunity',
           child: Padding(
             padding: EdgeInsets.all(10.0.h),
             child: IconButton(
@@ -287,7 +288,7 @@ class _AddJobPageState extends State<AddJobPage> {
             children: [
               // ── Page header ───────────────────────────────────────────────
               Text(
-                'Query Details',
+                'Opportunity Details',
                 style: appstyle(28, _white, FontWeight.w700),
               ),
               SizedBox(height: 4.h),
@@ -302,7 +303,7 @@ class _AddJobPageState extends State<AddJobPage> {
               SizedBox(height: 12.h),
               _field(
                 _titleController,
-                'Query Title *',
+                'Opportunity Title *',
                 Icons.work_outline_rounded,
                 false,
                 maxLength: 50,
@@ -569,7 +570,7 @@ class _AddJobPageState extends State<AddJobPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Query Status',
+                            'Opportunity Status',
                             style: appstyle(14, _white, FontWeight.w600),
                           ),
                           Text(
@@ -686,7 +687,7 @@ class _AddJobPageState extends State<AddJobPage> {
                   ),
                   child: Center(
                     child: Text(
-                      _isEditMode ? 'Update Query' : 'List Query',
+                      _isEditMode ? 'Update Opportunity' : 'List Opportunity',
                       style: appstyle(16, Colors.white, FontWeight.w700),
                     ),
                   ),
