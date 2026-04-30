@@ -37,7 +37,9 @@ class _JobListingPageState extends State<JobListingPage> {
   @override
   void initState() {
     super.initState();
-    loadJobs();
+    Future.delayed(Duration(seconds: 1), () {
+      loadJobs();
+    });
   }
 
   void filterJobs() {
@@ -123,9 +125,7 @@ class _JobListingPageState extends State<JobListingPage> {
       body: Consumer<JobsNotifier>(
         builder: (context, jobsNotifier, child) {
           if (jobsNotifier.isLoadingUserJobs) {
-            return const Center(
-              child: CircularProgressIndicator(color: _teal),
-            );
+            return const Center(child: CircularProgressIndicator(color: _teal));
           }
 
           if (jobsNotifier.userJobs.isEmpty) {
@@ -135,8 +135,8 @@ class _JobListingPageState extends State<JobListingPage> {
           jobs = jobsNotifier.userJobs;
           filterJobs();
 
-          return Builder(builder: (context) {
-
+          return Builder(
+            builder: (context) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -186,7 +186,9 @@ class _JobListingPageState extends State<JobListingPage> {
                                     boxShadow: isSelected
                                         ? [
                                             BoxShadow(
-                                              color: _teal.withValues(alpha:0.3),
+                                              color: _teal.withValues(
+                                                alpha: 0.3,
+                                              ),
                                               blurRadius: 8,
                                               offset: const Offset(0, 3),
                                             ),
@@ -288,7 +290,8 @@ class _JobListingPageState extends State<JobListingPage> {
                   ),
                 ],
               );
-          });
+            },
+          );
         },
       ),
     );
@@ -302,7 +305,7 @@ class _JobListingPageState extends State<JobListingPage> {
           Icon(
             Icons.work_outline_rounded,
             size: 64,
-            color: _teal.withValues(alpha:0.35),
+            color: _teal.withValues(alpha: 0.35),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -372,7 +375,7 @@ class JobCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: _navy.withValues(alpha:0.3),
+              color: _navy.withValues(alpha: 0.3),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -392,7 +395,7 @@ class JobCard extends StatelessWidget {
                     job.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: _teal.withValues(alpha:0.12),
+                      color: _teal.withValues(alpha: 0.12),
                       child: const Icon(
                         Icons.business_rounded,
                         color: _teal,
@@ -407,7 +410,10 @@ class JobCard extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, _navy.withValues(alpha:0.7)],
+                          colors: [
+                            Colors.transparent,
+                            _navy.withValues(alpha: 0.7),
+                          ],
                           stops: const [0.5, 1.0],
                         ),
                       ),
@@ -449,7 +455,7 @@ class JobCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _teal.withValues(alpha:0.85),
+                        color: _teal.withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(

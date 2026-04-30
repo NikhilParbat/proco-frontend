@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -15,8 +16,28 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
+
     _notifications = List.from(NotificationHelper.notifications);
     NotificationHelper.addListener(_onUpdated);
+
+    _initializeNotifications();
+  }
+
+  bool _initialized = false;
+
+  Future<void> _initializeNotifications() async {
+    if (_initialized) return;
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId') ?? '';
+    final token = prefs.getString('token') ?? '';
+
+    if (userId.isNotEmpty && token.isNotEmpty) {
+      await NotificationHelper.initialize(userId, token);
+      _initialized = true;
+    }
   }
 
   @override

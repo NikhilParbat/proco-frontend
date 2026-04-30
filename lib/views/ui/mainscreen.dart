@@ -3,7 +3,6 @@ import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:proco/views/common/drawer/drawer_screen.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/login.dart';
@@ -27,9 +26,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final ZoomDrawerController _drawerController = ZoomDrawerController();
 
-  // ✅ Cache user data
   String _userId = '';
-  String _token = '';
   bool _isInitialized = false;
   SharedPreferences? _prefs;
 
@@ -39,72 +36,26 @@ class _MainScreenState extends State<MainScreen> {
     _initializePrefs();
   }
 
-  // ✅ Load prefs if not provided
   Future<void> _initializePrefs() async {
-    if (widget.prefs != null) {
-      _prefs = widget.prefs;
-      _extractUserData();
-    } else {
-      _prefs = await SharedPreferences.getInstance();
-      _extractUserData();
+    _prefs = widget.prefs ?? await SharedPreferences.getInstance();
+
+    _userId = _prefs?.getString('userId') ?? '';
+
+    if (mounted) {
+      setState(() => _isInitialized = true);
     }
 
-    // ✅ Schedule background tasks AFTER build
+    // ✅ ONLY light task
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _initBackgroundTasks();
+        context.read<LoginNotifier>().getPrefs();
       }
     });
   }
 
-  void _extractUserData() {
-    if (_prefs != null) {
-      _userId = _prefs!.getString('userId') ?? '';
-      _token = _prefs!.getString('token') ?? '';
-      if (mounted) {
-        setState(() => _isInitialized = true);
-      }
-    }
-  }
-
-  // ✅ All heavy operations run asynchronously, non-blocking
-  Future<void> _initBackgroundTasks() async {
-    // Run in parallel
-    await Future.wait([
-      _loadLoginPrefs(),
-      _preloadJobsIfNeeded(),
-      _setupNotificationsIfNeeded(),
-    ]);
-  }
-
-  Future<void> _loadLoginPrefs() async {
-    if (mounted) {
-      context.read<LoginNotifier>().getPrefs();
-    }
-  }
-
-  Future<void> _preloadJobsIfNeeded() async {
-    // ✅ Only preload if on HomePage (index 0)
-    final zoomNotifier = context.read<ZoomNotifier>();
-    if (zoomNotifier.currentIndex == 0 && _userId.isNotEmpty) {
-      if (mounted) {
-        context.read<JobsNotifier>().preloadJobs(_userId);
-      }
-    }
-  }
-
-  Future<void> _setupNotificationsIfNeeded() async {
-    if (_userId.isNotEmpty && _token.isNotEmpty) {
-      await NotificationHelper.initialize(_userId, _token);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    // ✅ Show loading while initializing prefs
-    if (!_isInitialized) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    if (!_isInitialized) return const SizedBox();
 
     return Consumer<ZoomNotifier>(
       builder: (context, zoomNotifier, child) {
@@ -114,14 +65,6 @@ class _MainScreenState extends State<MainScreen> {
             controller: _drawerController,
             indexSetter: (index) {
               zoomNotifier.currentIndex = index;
-              // ✅ Preload jobs when navigating to HomePage
-              if (index == 0 && _userId.isNotEmpty) {
-                Future.microtask(() {
-                  if (mounted) {
-                    context.read<JobsNotifier>().preloadJobs(_userId);
-                  }
-                });
-              }
             },
           ),
           mainScreen: _buildCurrentScreen(zoomNotifier.currentIndex),
@@ -135,13 +78,12 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // ✅ Memoized screen builder
   Widget _buildCurrentScreen(int index) {
     final loginNotifier = context.read<LoginNotifier>();
 
     switch (index) {
       case 0:
-        return HomePage(userId: _userId); // ✅ Pass userId
+        return HomePage(userId: _userId);
       case 1:
         return loginNotifier.loggedIn
             ? const ChatsList()

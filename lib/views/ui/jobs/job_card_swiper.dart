@@ -33,6 +33,31 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   static const Color _red = Color(0xFFD23838);
   static const Color _green = Color(0xFF089F20);
 
+  static final LinearGradient _cardGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Colors.transparent, _navy.withValues(alpha: 0.85)],
+    stops: const [0.5, 1.0],
+  );
+
+  bool isExpanded(String id) {
+    return _expandedDesc[id] ?? false;
+  }
+
+  void toggleExpanded(String id) {
+    setState(() {
+      _expandedDesc[id] = !(_expandedDesc[id] ?? false);
+    });
+  }
+
+  late final int _imageCacheWidth;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _imageCacheWidth = (MediaQuery.of(context).size.width * 1.2).toInt();
+  }
+
   /// When the fraction of remaining cards drops to or below this value,
   /// the next page is silently prefetched. 0.25 = 25% remaining.
   static const double _prefetchThreshold = 0.25;
@@ -63,7 +88,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   void didUpdateWidget(JobCardSwiper oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.jobs.length > _jobs.length) {
-      _jobs = widget.jobs; // no setState
+      _expandedDesc.removeWhere(
+        (key, _) => !widget.jobs.any((j) => j.id == key),
+      );
     }
   }
 
@@ -77,83 +104,97 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   Widget build(BuildContext context) {
     if (_isFinished) return _buildFinishedState();
 
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      children: [
-        // ── Card swiper ──────────────────────────────────────────────────────
-        CardSwiper(
-          controller: _controller,
-          scale: 0.5,
-          cardsCount: _jobs.length,
-          numberOfCardsDisplayed: _jobs.length.clamp(1, 2),
-          allowedSwipeDirection: const AllowedSwipeDirection.only(
-            left: true,
-            right: true,
-            up: true,
+    return RepaintBoundary(
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          // ── Card swiper (isolated repaint) ────────────────────────────────────
+          RepaintBoundary(
+            child: CardSwiper(
+              controller: _controller,
+              scale: 0.5,
+              cardsCount: _jobs.length,
+              numberOfCardsDisplayed: _jobs.length.clamp(1, 2),
+              allowedSwipeDirection: const AllowedSwipeDirection.only(
+                left: true,
+                right: true,
+                up: true,
+              ),
+              isLoop: false,
+              onEnd: () => setState(() => _isFinished = true),
+
+              onSwipe: (previousIndex, currentIndex, direction) {
+                final job = _jobs[previousIndex];
+
+                // ── Swipe actions ───────────────────────────────────────────────
+                if (direction == CardSwiperDirection.right) {
+                  widget.jobNotifier.addSwipedUsers(
+                    job.id,
+                    widget.currentUserId,
+                    'right',
+                  );
+                } else if (direction == CardSwiperDirection.left) {
+                  widget.jobNotifier.addSwipedUsers(
+                    job.id,
+                    widget.currentUserId,
+                    'left',
+                  );
+                } else if (direction == CardSwiperDirection.top) {
+                  widget.bookmarkNotifier.addBookMark(
+                    BookmarkReqResModel(job: job.id),
+                    job.id,
+                  );
+                }
+
+                // ── Undo state ─────────────────────────────────────────────────
+                setState(() {
+                  _canUndo = true;
+                  _lastSwipedJobId = job.id;
+                });
+
+                // ── Prefetch next page (non-blocking) ──────────────────────────
+                final remaining = _jobs.length - previousIndex - 1;
+                final fractionRemaining = remaining / _jobs.length;
+
+                if (fractionRemaining <= _prefetchThreshold &&
+                    !widget.jobNotifier.isFetchingMore &&
+                    widget.jobNotifier.hasMorePages) {
+                  Future.microtask(() {
+                    widget.jobNotifier.loadNextPage(
+                      widget.currentUserId,
+                      bookmarkedIds: widget.bookmarkNotifier.jobs,
+                    );
+                  });
+                }
+
+                return true;
+              },
+
+              cardBuilder: (context, index, pctX, pctY) {
+                final job = _jobs[index];
+                CardSwiperDirection? liveDirection;
+
+                const threshold = 0.15;
+
+                if (index == 0) {
+                  if (pctY < -threshold) {
+                    liveDirection = CardSwiperDirection.top;
+                  } else if (pctX > threshold) {
+                    liveDirection = CardSwiperDirection.right;
+                  } else if (pctX < -threshold) {
+                    liveDirection = CardSwiperDirection.left;
+                  }
+                }
+
+                return _buildCard(job, liveDirection);
+              },
+            ),
           ),
-          isLoop: false,
-          onEnd: () => setState(() => _isFinished = true),
-          onSwipe: (previousIndex, currentIndex, direction) {
-            final job = _jobs[previousIndex];
-            if (direction == CardSwiperDirection.right) {
-              widget.jobNotifier.addSwipedUsers(
-                job.id,
-                widget.currentUserId,
-                'right',
-              );
-            } else if (direction == CardSwiperDirection.left) {
-              widget.jobNotifier.addSwipedUsers(
-                job.id,
-                widget.currentUserId,
-                'left',
-              );
-            } else if (direction == CardSwiperDirection.top) {
-              widget.bookmarkNotifier.addBookMark(
-                BookmarkReqResModel(job: job.id),
-                job.id,
-              );
-            }
 
-            // Swiped forward — undo is available again
-            setState(() {
-              _canUndo = true;
-              _lastSwipedJobId = job.id;
-            });
-
-            // Prefetch next page when remaining cards fall below threshold
-            final remaining = _jobs.length - previousIndex - 1;
-            final fractionRemaining = remaining / _jobs.length;
-            if (fractionRemaining <= _prefetchThreshold &&
-                !widget.jobNotifier.isFetchingMore &&
-                widget.jobNotifier.hasMorePages) {
-              widget.jobNotifier.loadNextPage(
-                widget.currentUserId,
-                bookmarkedIds: widget.bookmarkNotifier.jobs,
-              );
-            }
-
-            return true;
-          },
-          cardBuilder: (context, index, pctX, pctY) {
-            final job = _jobs[index];
-            CardSwiperDirection? liveDirection;
-            const threshold = 0.15;
-            if (index == 0) {
-              if (pctY < -threshold) {
-                liveDirection = CardSwiperDirection.top;
-              } else if (pctX > threshold) {
-                liveDirection = CardSwiperDirection.right;
-              } else if (pctX < -threshold) {
-                liveDirection = CardSwiperDirection.left;
-              }
-            }
-            return _buildCard(job, liveDirection);
-          },
-        ),
-
-        // ── Floating action buttons ──────────────────────────────────────────
-        Positioned(bottom: 48.h, child: _buildFabRow()),
-      ],
+          // ── Floating action buttons ───────────────────────────────────────────
+          Positioned(bottom: 48.h, child: _buildFabRow()),
+        ],
+      ),
     );
   }
 
@@ -166,14 +207,14 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             color: _navy,
             borderRadius: BorderRadius.circular(28.r),
             boxShadow: [
-              BoxShadow(
-                color: _navy.withValues(alpha: 0.4),
-                blurRadius: 28,
-                offset: const Offset(0, 12),
+              const BoxShadow(
+                color: Colors.black26,
+                blurRadius: 12,
+                offset: Offset(0, 6),
               ),
             ],
           ),
-          clipBehavior: Clip.antiAlias,
+          clipBehavior: Clip.hardEdge,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -210,23 +251,12 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                       ),
 
                       // ✅ prevents loading full-size images (important for performance)
-                      memCacheWidth: (MediaQuery.of(context).size.width * 1.2)
-                          .toInt(),
+                      memCacheWidth: _imageCacheWidth,
                     ),
 
                     Positioned.fill(
                       child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              _navy.withValues(alpha: 0.85),
-                            ],
-                            stops: const [0.5, 1.0],
-                          ),
-                        ),
+                        decoration: BoxDecoration(gradient: _cardGradient),
                       ),
                     ),
 
@@ -368,14 +398,15 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                         ),
                       if (job.salary.isNotEmpty) SizedBox(height: 8.h),
                       if (job.description.isNotEmpty) ...[
-                        StatefulBuilder(
-                          builder: (_, setLocal) {
-                            final expanded = _expandedDesc[job.id] ?? false;
+                        Builder(
+                          builder: (_) {
+                            final expanded = isExpanded(job.id);
                             final full = job.description;
                             final needsTruncation = full.length > 200;
                             final shown = needsTruncation && !expanded
                                 ? '${full.substring(0, 200)}…'
                                 : full;
+
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -391,15 +422,12 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                                 if (needsTruncation) ...[
                                   SizedBox(height: 2.h),
                                   GestureDetector(
-                                    onTap: () => setLocal(
-                                      () => _expandedDesc[job.id] = !expanded,
-                                    ),
+                                    onTap: () => toggleExpanded(job.id),
                                     child: Text(
                                       expanded ? 'Show less' : 'Read more',
                                       style: TextStyle(
                                         fontSize: 11.sp,
                                         color: _teal,
-                                        fontFamily: 'Poppins',
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),

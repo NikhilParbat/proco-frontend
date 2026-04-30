@@ -190,8 +190,6 @@ class UserHelper {
         return ApiResponse(success: false, message: 'Not authenticated');
       }
 
-      debugPrint('getProfile: token found, fetching...');
-
       final requestHeaders = <String, String>{
         'Content-Type': 'application/json',
         'token': 'Bearer $token',
@@ -200,8 +198,8 @@ class UserHelper {
       final url = Config.url('/api/users');
       final response = await client.get(url, headers: requestHeaders);
 
-      debugPrint('getProfile status: ${response.statusCode}');
-      debugPrint('getProfile body:   ${response.body}');
+      // debugPrint('getProfile status: ${response.statusCode}');
+      // debugPrint('getProfile body:   ${response.body}');
 
       final decoded = jsonDecode(response.body);
 

@@ -55,6 +55,41 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    // Step 1: Load jobs AFTER UI renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
+
+        final bookmarkedIds = context.read<BookMarkNotifier>().jobs;
+
+        context.read<JobsNotifier>().preloadJobs(
+          widget.userId,
+          bookmarkedIds: bookmarkedIds,
+        );
+      });
+    });
+
+    // // Step 2: Delay notifications (heavy)
+    // Future.delayed(const Duration(seconds: 2), () {
+    //   if (!mounted) return;
+
+    //   Future.delayed(const Duration(seconds: 2), () async {
+    //     if (!mounted) return;
+
+    //     final prefs = await SharedPreferences.getInstance();
+    //     final token = prefs.getString('token') ?? '';
+
+    //     if (widget.userId.isNotEmpty && token.isNotEmpty) {
+    //       NotificationHelper.initialize(widget.userId, token);
+    //     }
+    //   });
+    // });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
@@ -265,11 +300,15 @@ class _JobsList extends StatelessWidget {
 
         if (jobs.isEmpty) return const _EmptyState();
 
-        return JobCardSwiper(
-          jobs: jobs,
-          currentUserId: userId,
-          jobNotifier: jobNotifier,
-          bookmarkNotifier: bookmarkNotifier,
+        return SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: JobCardSwiper(
+            jobs: jobs,
+            currentUserId: userId,
+            jobNotifier: jobNotifier,
+            bookmarkNotifier: bookmarkNotifier,
+          ),
         );
       },
     );
