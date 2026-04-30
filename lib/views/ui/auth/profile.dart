@@ -336,52 +336,52 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSkillsSection(List<String> skills) {
-    if (skills.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(14.h),
-        decoration: BoxDecoration(
-          color: _card.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _card.withValues(alpha: 0.3)),
-        ),
-        child: const Text(
-          'No skills added yet',
-          style: TextStyle(color: Colors.white38, fontSize: 14),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.h),
-      decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: skills.map((skill) {
-          return Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              skill,
-              style: const TextStyle(
-                color: _white,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  // Widget _buildSkillsSection(List<String> skills) {
+  //   if (skills.isEmpty) {
+  //     return Container(
+  //       width: double.infinity,
+  //       padding: EdgeInsets.all(14.h),
+  //       decoration: BoxDecoration(
+  //         color: _card.withValues(alpha: 0.15),
+  //         borderRadius: BorderRadius.circular(14),
+  //         border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //       ),
+  //       child: const Text(
+  //         'No skills added yet',
+  //         style: TextStyle(color: Colors.white38, fontSize: 14),
+  //         textAlign: TextAlign.center,
+  //       ),
+  //     );
+  //   }
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: EdgeInsets.all(14.h),
+  //     decoration: BoxDecoration(
+  //       color: _card.withValues(alpha: 0.15),
+  //       borderRadius: BorderRadius.circular(14),
+  //       border: Border.all(color: _card.withValues(alpha: 0.3)),
+  //     ),
+  //     child: Wrap(
+  //       spacing: 8,
+  //       runSpacing: 8,
+  //       children: skills.map((skill) {
+  //         return Container(
+  //           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+  //           decoration: BoxDecoration(
+  //             color: _card,
+  //             borderRadius: BorderRadius.circular(20),
+  //           ),
+  //           child: Text(
+  //             skill,
+  //             style: const TextStyle(
+  //               color: _white,
+  //               fontSize: 13,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //           ),
+  //         );
+  //       }).toList(),
+  //     ),
+  //   );
+  // }
 }

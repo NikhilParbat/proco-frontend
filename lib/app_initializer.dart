@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/chat_provider.dart';
 import 'package:proco/controllers/filter_provider.dart';
@@ -11,7 +10,8 @@ import 'package:proco/controllers/onboarding_provider.dart';
 import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/controllers/signup_provider.dart';
 import 'package:proco/controllers/zoom_provider.dart';
-import 'package:proco/main.dart';
+import 'package:proco/my_app.dart';
+import 'package:proco/services/firebase_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,10 +24,12 @@ class AppInitializer extends StatefulWidget {
 
 class _AppInitializerState extends State<AppInitializer> {
   bool isLoading = true;
-
   bool isLoggedIn = false;
   bool onboardingComplete = false;
   int onboardingPage = 0;
+
+  // ✅ Cache SharedPreferences instance
+  late SharedPreferences _prefs;
 
   @override
   void initState() {
@@ -36,45 +38,80 @@ class _AppInitializerState extends State<AppInitializer> {
   }
 
   Future<void> _initApp() async {
-    await dotenv.load(fileName: ".env");
+    // Get SharedPreferences once and cache it
+    _prefs = await SharedPreferences.getInstance();
 
-    final prefs = await SharedPreferences.getInstance();
-
-    final token = prefs.getString('token');
+    final token = _prefs.getString('token');
     isLoggedIn = token != null && token.isNotEmpty;
-    onboardingComplete = prefs.getBool('onboardingComplete') ?? false;
-    onboardingPage = prefs.getInt('onboardingPage') ?? 0;
+    onboardingComplete = _prefs.getBool('onboardingComplete') ?? false;
+    onboardingPage = _prefs.getInt('onboardingPage') ?? 0;
 
-    await ScreenUtil.ensureScreenSize();
+    // Render UI ASAP
+    if (mounted) {
+      setState(() => isLoading = false);
+    }
 
-    setState(() => isLoading = false);
+    // ✅ Load everything else in background
+    Future.wait([
+      dotenv.load(fileName: ".env").catchError((e) {
+        debugPrint('Failed to load .env: $e');
+      }),
+      FirebaseService.initializeAsync(), // ✅ Non-blocking Firebase
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => OnBoardNotifier()),
-        ChangeNotifierProvider(create: (_) => LoginNotifier()),
+        // ✅ Core providers (always needed)
         ChangeNotifierProvider(create: (_) => ZoomNotifier()),
-        ChangeNotifierProvider(create: (_) => SignUpNotifier()),
-        ChangeNotifierProvider(create: (_) => JobsNotifier()),
-        ChangeNotifierProvider(create: (_) => BookMarkNotifier()),
-        ChangeNotifierProvider(create: (_) => ImageNotifier()),
-        ChangeNotifierProvider(create: (_) => ProfileNotifier()),
-        ChangeNotifierProvider(create: (_) => ChatNotifier()),
-        ChangeNotifierProvider(create: (_) => FilterNotifier()),
+        ChangeNotifierProvider(create: (_) => LoginNotifier()),
+
+        // ✅ Lazy providers (only created when accessed)
+        ChangeNotifierProvider(create: (_) => OnBoardNotifier(), lazy: true),
+        ChangeNotifierProvider(create: (_) => SignUpNotifier(), lazy: true),
+        ChangeNotifierProvider(create: (_) => ImageNotifier(), lazy: true),
+
+        // ✅ Super lazy providers (depend on login state)
+        ChangeNotifierProxyProvider<LoginNotifier, JobsNotifier>(
+          create: (_) => JobsNotifier(),
+          update: (_, login, prev) => prev ?? JobsNotifier(),
+          lazy: true,
+        ),
+        ChangeNotifierProxyProvider<LoginNotifier, BookMarkNotifier>(
+          create: (_) => BookMarkNotifier(),
+          update: (_, login, prev) => prev ?? BookMarkNotifier(),
+          lazy: true,
+        ),
+        ChangeNotifierProxyProvider<LoginNotifier, ProfileNotifier>(
+          create: (_) => ProfileNotifier(),
+          update: (_, login, prev) => prev ?? ProfileNotifier(),
+          lazy: true,
+        ),
+        ChangeNotifierProxyProvider<LoginNotifier, ChatNotifier>(
+          create: (_) => ChatNotifier(),
+          update: (_, login, prev) => prev ?? ChatNotifier(),
+          lazy: true,
+        ),
+        ChangeNotifierProxyProvider<LoginNotifier, FilterNotifier>(
+          create: (_) => FilterNotifier(),
+          update: (_, login, prev) => prev ?? FilterNotifier(),
+          lazy: true,
+        ),
       ],
       child: MyApp(
         isLoggedIn: isLoggedIn,
         onboardingComplete: onboardingComplete,
         onboardingPage: onboardingPage,
+        prefs: _prefs,
       ),
     );
   }

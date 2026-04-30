@@ -52,9 +52,9 @@ class _MatchedUsersState extends State<MatchedUsers> {
     });
   }
 
-  void _removeUser(String userId) {
-    setState(() => _users.removeWhere((u) => u.id == userId));
-  }
+  // void _removeUser(String userId) {
+  //   setState(() => _users.removeWhere((u) => u.id == userId));
+  // }
 
   @override
   Widget build(BuildContext context) {

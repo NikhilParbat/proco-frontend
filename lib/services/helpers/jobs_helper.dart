@@ -34,7 +34,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         return ApiResponse(
@@ -44,7 +47,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to get filtered jobs');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to get filtered jobs',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getFilteredJobs error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -70,7 +76,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         return ApiResponse(
@@ -80,7 +89,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to get filtered jobs (page $page)');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to get filtered jobs (page $page)',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getFilteredJobsPaged error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -96,7 +108,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         return ApiResponse(
@@ -106,7 +121,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to get jobs');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to get jobs',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getJobs error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -125,7 +143,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         return ApiResponse(
@@ -135,7 +156,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to get jobs (page $page)');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to get jobs (page $page)',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getJobsPaged error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -151,7 +175,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         return ApiResponse(
@@ -161,7 +188,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to get job');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to get job',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getJob error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -179,7 +209,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -197,7 +230,9 @@ class JobsHelper {
           data = decoded['data'] ?? [];
         }
 
-        final jobs = data.map((j) => JobsResponse.fromJson(j as Map<String, dynamic>)).toList();
+        final jobs = data
+            .map((j) => JobsResponse.fromJson(j as Map<String, dynamic>))
+            .toList();
 
         final jobIds = jobs.map((j) => j.id).toList();
         await saveJobIdsToPrefs(jobIds);
@@ -210,7 +245,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to load user jobs');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to load user jobs',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getUserJobs error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -226,7 +264,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         final list = jobsResponseFromJson(response.body);
@@ -240,7 +281,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to get recent job');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to get recent job',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getRecent error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -258,7 +302,10 @@ class JobsHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         return ApiResponse(
@@ -268,7 +315,10 @@ class JobsHelper {
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Search failed');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Search failed',
+      );
     } catch (e) {
       debugPrint('JobsHelper.searchJobs error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -319,12 +369,17 @@ class JobsHelper {
       final response = await https.Response.fromStream(streamedResponse);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
-        final data = (body is Map && body.containsKey('data')) ? body['data'] : body;
+        final data = (body is Map && body.containsKey('data'))
+            ? body['data']
+            : body;
         return ApiResponse(
           success: true,
           message: body['message'] ?? 'Job created successfully',
@@ -358,13 +413,19 @@ class JobsHelper {
       );
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         return ApiResponse(success: true, message: 'Job updated successfully');
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to update job');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to update job',
+      );
     } catch (e) {
       debugPrint('JobsHelper.updateJob error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -380,13 +441,19 @@ class JobsHelper {
       final response = await client.delete(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200 || response.statusCode == 204) {
         return ApiResponse(success: true, message: 'Job deleted successfully');
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to delete job');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to delete job',
+      );
     } catch (e) {
       debugPrint('JobsHelper.deleteJob error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -406,7 +473,10 @@ class JobsHelper {
       debugPrint('getSwipedUsers [$jobId] body: ${response.body}');
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -420,11 +490,16 @@ class JobsHelper {
         return ApiResponse(
           success: true,
           message: 'Swiped users fetched successfully',
-          data: data.map((u) => SwipedRes.fromJson(u as Map<String, dynamic>)).toList(),
+          data: data
+              .map((u) => SwipedRes.fromJson(u as Map<String, dynamic>))
+              .toList(),
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to load swiped users');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to load swiped users',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getSwipededUsersId error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -496,7 +571,10 @@ class JobsHelper {
       debugPrint('getMatchedUsers [$jobId] body: ${response.body}');
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -504,11 +582,16 @@ class JobsHelper {
         return ApiResponse(
           success: true,
           message: 'Matched users fetched successfully',
-          data: data.map((u) => MatchedRes.fromJson(u as Map<String, dynamic>)).toList(),
+          data: data
+              .map((u) => MatchedRes.fromJson(u as Map<String, dynamic>))
+              .toList(),
         );
       }
       final body = jsonDecode(response.body);
-      return ApiResponse(success: false, message: body['message'] ?? 'Failed to load matched users');
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Failed to load matched users',
+      );
     } catch (e) {
       debugPrint('JobsHelper.getMatchedUsersId error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -561,13 +644,18 @@ class JobsHelper {
       final jsonStr = prefs.getString('userJobsCache_$agentId');
       if (jsonStr == null) return [];
       final List data = jsonDecode(jsonStr);
-      return data.map((e) => JobsResponse.fromJson(e as Map<String, dynamic>)).toList();
+      return data
+          .map((e) => JobsResponse.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }
   }
 
-  static Future<void> saveJobsCache(String userId, List<JobsResponse> jobs) async {
+  static Future<void> saveJobsCache(
+    String userId,
+    List<JobsResponse> jobs,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final data = jobs.map((j) => j.toJson()).toList();
     await prefs.setString('jobsFeedCache_$userId', jsonEncode(data));
@@ -579,7 +667,9 @@ class JobsHelper {
       final jsonStr = prefs.getString('jobsFeedCache_$userId');
       if (jsonStr == null) return [];
       final List data = jsonDecode(jsonStr);
-      return data.map((e) => JobsResponse.fromJson(e as Map<String, dynamic>)).toList();
+      return data
+          .map((e) => JobsResponse.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }
@@ -589,5 +679,18 @@ class JobsHelper {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('currentJobId', jobId);
     debugPrint('Current job set to: $jobId');
+  }
+
+  static Future<void> saveCachedUserJobs(
+    String userId,
+    List<JobsResponse> jobs,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = jsonEncode(jobs.map((j) => j.toJson()).toList());
+      await prefs.setString('user_jobs_$userId', jsonString);
+    } catch (e) {
+      debugPrint('Save user jobs cache error: $e');
+    }
   }
 }

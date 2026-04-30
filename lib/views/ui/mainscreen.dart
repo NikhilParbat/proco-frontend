@@ -16,7 +16,9 @@ import 'package:proco/views/ui/settings/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final SharedPreferences? prefs; // ✅ Make it optional
+
+  const MainScreen({super.key, this.prefs});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -25,8 +27,85 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final ZoomDrawerController _drawerController = ZoomDrawerController();
 
+  // ✅ Cache user data
+  String _userId = '';
+  String _token = '';
+  bool _isInitialized = false;
+  SharedPreferences? _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializePrefs();
+  }
+
+  // ✅ Load prefs if not provided
+  Future<void> _initializePrefs() async {
+    if (widget.prefs != null) {
+      _prefs = widget.prefs;
+      _extractUserData();
+    } else {
+      _prefs = await SharedPreferences.getInstance();
+      _extractUserData();
+    }
+
+    // ✅ Schedule background tasks AFTER build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initBackgroundTasks();
+      }
+    });
+  }
+
+  void _extractUserData() {
+    if (_prefs != null) {
+      _userId = _prefs!.getString('userId') ?? '';
+      _token = _prefs!.getString('token') ?? '';
+      if (mounted) {
+        setState(() => _isInitialized = true);
+      }
+    }
+  }
+
+  // ✅ All heavy operations run asynchronously, non-blocking
+  Future<void> _initBackgroundTasks() async {
+    // Run in parallel
+    await Future.wait([
+      _loadLoginPrefs(),
+      _preloadJobsIfNeeded(),
+      _setupNotificationsIfNeeded(),
+    ]);
+  }
+
+  Future<void> _loadLoginPrefs() async {
+    if (mounted) {
+      context.read<LoginNotifier>().getPrefs();
+    }
+  }
+
+  Future<void> _preloadJobsIfNeeded() async {
+    // ✅ Only preload if on HomePage (index 0)
+    final zoomNotifier = context.read<ZoomNotifier>();
+    if (zoomNotifier.currentIndex == 0 && _userId.isNotEmpty) {
+      if (mounted) {
+        context.read<JobsNotifier>().preloadJobs(_userId);
+      }
+    }
+  }
+
+  Future<void> _setupNotificationsIfNeeded() async {
+    if (_userId.isNotEmpty && _token.isNotEmpty) {
+      await NotificationHelper.initialize(_userId, _token);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // ✅ Show loading while initializing prefs
+    if (!_isInitialized) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Consumer<ZoomNotifier>(
       builder: (context, zoomNotifier, child) {
         return ZoomDrawer(
@@ -35,13 +114,17 @@ class _MainScreenState extends State<MainScreen> {
             controller: _drawerController,
             indexSetter: (index) {
               zoomNotifier.currentIndex = index;
+              // ✅ Preload jobs when navigating to HomePage
+              if (index == 0 && _userId.isNotEmpty) {
+                Future.microtask(() {
+                  if (mounted) {
+                    context.read<JobsNotifier>().preloadJobs(_userId);
+                  }
+                });
+              }
             },
           ),
-          mainScreen: Builder(
-            builder: (context) {
-              return currentScreen();
-            },
-          ),
+          mainScreen: _buildCurrentScreen(zoomNotifier.currentIndex),
           borderRadius: 30,
           showShadow: true,
           angle: 0,
@@ -52,41 +135,13 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted) {
-        context.read<LoginNotifier>().getPrefs();
-        _preloadJobs();
-        _setupNotifications();
-      }
-    });
-  }
+  // ✅ Memoized screen builder
+  Widget _buildCurrentScreen(int index) {
+    final loginNotifier = context.read<LoginNotifier>();
 
-  Future<void> _preloadJobs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? '';
-    if (mounted) {
-      context.read<JobsNotifier>().preloadJobs(userId);
-    }
-  }
-
-  Future<void> _setupNotifications() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? '';
-    final token = prefs.getString('token') ?? '';
-    if (userId.isNotEmpty && token.isNotEmpty) {
-      await NotificationHelper.initialize(userId, token);
-    }
-  }
-
-  Widget currentScreen() {
-    final zoomNotifier = Provider.of<ZoomNotifier>(context, listen: false);
-    final loginNotifier = Provider.of<LoginNotifier>(context, listen: false);
-    switch (zoomNotifier.currentIndex) {
+    switch (index) {
       case 0:
-        return const HomePage();
+        return HomePage(userId: _userId); // ✅ Pass userId
       case 1:
         return loginNotifier.loggedIn
             ? const ChatsList()
@@ -108,7 +163,7 @@ class _MainScreenState extends State<MainScreen> {
             ? const ProfilePage()
             : const LoginPage(drawer: false);
       default:
-        return const HomePage();
+        return HomePage(userId: _userId);
     }
   }
 }

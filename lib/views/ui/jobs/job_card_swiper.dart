@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -53,7 +54,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   void initState() {
     super.initState();
     _controller = CardSwiperController();
-    _jobs = List.from(widget.jobs);
+    _jobs = widget.jobs;
   }
 
   /// When the parent pushes more cards (next page loaded), append them
@@ -62,7 +63,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   void didUpdateWidget(JobCardSwiper oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.jobs.length > _jobs.length) {
-      setState(() => _jobs = List.from(widget.jobs));
+      _jobs = widget.jobs; // no setState
     }
   }
 
@@ -166,7 +167,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             borderRadius: BorderRadius.circular(28.r),
             boxShadow: [
               BoxShadow(
-                color: _navy.withValues(alpha:0.4),
+                color: _navy.withValues(alpha: 0.4),
                 blurRadius: 28,
                 offset: const Offset(0, 12),
               ),
@@ -182,18 +183,37 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      job.imageUrl,
+                    CachedNetworkImage(
+                      imageUrl: job.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: _teal.withValues(alpha:0.12),
+
+                      // ✅ smooth loading (no jank)
+                      placeholder: (context, url) => Container(
+                        color: _teal.withValues(alpha: 0.12),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+
+                      // ✅ your original fallback
+                      errorWidget: (context, url, error) => Container(
+                        color: _teal.withValues(alpha: 0.12),
                         child: const Icon(
                           Icons.business_rounded,
                           color: _teal,
                           size: 64,
                         ),
                       ),
+
+                      // ✅ prevents loading full-size images (important for performance)
+                      memCacheWidth: (MediaQuery.of(context).size.width * 1.2)
+                          .toInt(),
                     ),
+
                     Positioned.fill(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -202,13 +222,14 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              _navy.withValues(alpha:0.85),
+                              _navy.withValues(alpha: 0.85),
                             ],
                             stops: const [0.5, 1.0],
                           ),
                         ),
                       ),
                     ),
+
                     if (job.hiring)
                       Positioned(
                         top: 14.h,
@@ -233,6 +254,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                           ),
                         ),
                       ),
+
                     Positioned(
                       bottom: 12.h,
                       left: 16.w,
@@ -308,14 +330,14 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                         Row(
                           children: [
                             if (job.domain.isNotEmpty)
-                              _chip(job.domain, _teal.withValues(alpha:0.35)),
+                              _chip(job.domain, _teal.withValues(alpha: 0.35)),
                             if (job.domain.isNotEmpty &&
                                 job.opportunityType.isNotEmpty)
                               SizedBox(width: 6.w),
                             if (job.opportunityType.isNotEmpty)
                               _chip(
                                 job.opportunityType,
-                                _teal.withValues(alpha:0.35),
+                                _teal.withValues(alpha: 0.35),
                               ),
                           ],
                         ),
@@ -369,8 +391,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                                 if (needsTruncation) ...[
                                   SizedBox(height: 2.h),
                                   GestureDetector(
-                                    onTap: () => setLocal(() =>
-                                        _expandedDesc[job.id] = !expanded),
+                                    onTap: () => setLocal(
+                                      () => _expandedDesc[job.id] = !expanded,
+                                    ),
                                     child: Text(
                                       expanded ? 'Show less' : 'Read more',
                                       style: TextStyle(
@@ -470,7 +493,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: color.withValues(alpha:0.15),
+          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(28.r),
           border: Border.all(color: color, width: 3),
         ),
@@ -632,7 +655,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               width: 90.w,
               height: 90.w,
               decoration: BoxDecoration(
-                color: _teal.withValues(alpha:0.12),
+                color: _teal.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.coffee_rounded, size: 44.w, color: _teal),

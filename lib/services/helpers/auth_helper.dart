@@ -122,8 +122,6 @@ class AuthHelper {
         body: jsonEncode(model.toJson()),
       );
 
-      debugPrint('Google Login Response: ${response.body}');
-
       // ✅ Handle empty response
       if (response.body.isEmpty) {
         return ApiResponse(

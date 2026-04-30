@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
+import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/jobs/get_job.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/models/response/jobs/match_res_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/helpers/jobs_helper.dart';
+import 'package:proco/utils/debouncer.dart';
 
 class JobsNotifier extends ChangeNotifier {
   // ── State fields ───────────────────────────────────────────────────────────
@@ -33,6 +35,16 @@ class JobsNotifier extends ChangeNotifier {
   bool isCreatingJob = false;
   bool hasMorePages = true;
   int _currentPage = 1;
+  List<JobsResponse> _displayJobs = [];
+  bool _displayDirty = true;
+
+  // ✅ Debouncer for rapid preload calls
+  final _preloadDebouncer = Debouncer(milliseconds: 300);
+  final _nextPageDebouncer = Debouncer(milliseconds: 500);
+
+  // ✅ Cache last request to prevent duplicate calls
+  String? _lastPreloadUserId;
+  List<String> _lastBookmarkedIds = [];
 
   // ─── Feed preloading (paginated, cache-first) ─────────────────────────────
 
@@ -42,31 +54,60 @@ class JobsNotifier extends ChangeNotifier {
     String userId, {
     List<String> bookmarkedIds = const [],
   }) async {
+    // ✅ Prevent duplicate calls with same parameters
+    if (_lastPreloadUserId == userId &&
+        _listEquals(_lastBookmarkedIds, bookmarkedIds) &&
+        cachedJobs.isNotEmpty) {
+      return;
+    }
+
+    _lastPreloadUserId = userId;
+    _lastBookmarkedIds = List.from(bookmarkedIds);
+
+    // ✅ Debounce rapid calls
+    _preloadDebouncer.run(() => _executePreloadJobs(userId, bookmarkedIds));
+  }
+
+  Future<void> _executePreloadJobs(
+    String userId,
+    List<String> bookmarkedIds,
+  ) async {
     _currentPage = 1;
     hasMorePages = true;
 
-    final cached = await JobsHelper.getCachedJobs(userId);
-    if (cached.isNotEmpty) {
-      cachedJobs = cached;
-      notifyListeners();
-    }
+    JobsHelper.getCachedJobs(userId).then((cached) {
+      if (cached.isNotEmpty && cachedJobs.isEmpty) {
+        cachedJobs = cached;
+        notifyListeners();
+      }
+    });
 
     isLoadingJobs = cachedJobs.isEmpty;
     if (cachedJobs.isEmpty) notifyListeners();
 
-    final response = userId.isNotEmpty
-        ? await JobsHelper.getFilteredJobsPaged(
-            userId,
-            1,
-            _pageSize,
-            excludeIds: bookmarkedIds,
-          )
-        : await JobsHelper.getJobsPaged(1, _pageSize);
+    // ✅ Network request in background
+    try {
+      final response = userId.isNotEmpty
+          ? await JobsHelper.getFilteredJobsPaged(
+              userId,
+              1,
+              _pageSize,
+              excludeIds: bookmarkedIds,
+            )
+          : await JobsHelper.getJobsPaged(1, _pageSize);
 
-    if (response.success && response.data != null) {
-      cachedJobs = response.data!;
-      hasMorePages = response.data!.length >= _pageSize;
-      await JobsHelper.saveJobsCache(userId, response.data!);
+      if (response.success && response.data != null) {
+        cachedJobs = response.data!;
+        _displayDirty = true;
+        hasMorePages = response.data!.length >= _pageSize;
+
+        // ✅ Save cache in background (don't await)
+        JobsHelper.saveJobsCache(userId, response.data!).catchError((e) {
+          debugPrint('Cache save error: $e');
+        });
+      }
+    } catch (e) {
+      debugPrint('Preload jobs error: $e');
     }
 
     isLoadingJobs = false;
@@ -80,27 +121,50 @@ class JobsNotifier extends ChangeNotifier {
     List<String> bookmarkedIds = const [],
   }) async {
     if (isFetchingMore || !hasMorePages) return;
+
+    // ✅ Debounce rapid pagination requests
+    _nextPageDebouncer.run(() => _executeLoadNextPage(userId, bookmarkedIds));
+  }
+
+  Future<void> _executeLoadNextPage(
+    String userId,
+    List<String> bookmarkedIds,
+  ) async {
+    if (isFetchingMore || !hasMorePages) return;
+
     isFetchingMore = true;
     notifyListeners();
 
     _currentPage++;
-    final response = userId.isNotEmpty
-        ? await JobsHelper.getFilteredJobsPaged(
-            userId,
-            _currentPage,
-            _pageSize,
-            excludeIds: bookmarkedIds,
-          )
-        : await JobsHelper.getJobsPaged(_currentPage, _pageSize);
 
-    if (response.success && response.data != null) {
-      final next = response.data!;
-      if (next.isEmpty || next.length < _pageSize) hasMorePages = false;
-      if (next.isNotEmpty) {
-        cachedJobs = [...cachedJobs, ...next];
-        await JobsHelper.saveJobsCache(userId, cachedJobs);
+    try {
+      final response = userId.isNotEmpty
+          ? await JobsHelper.getFilteredJobsPaged(
+              userId,
+              _currentPage,
+              _pageSize,
+              excludeIds: bookmarkedIds,
+            )
+          : await JobsHelper.getJobsPaged(_currentPage, _pageSize);
+
+      if (response.success && response.data != null) {
+        final next = response.data!;
+        if (next.isEmpty || next.length < _pageSize) hasMorePages = false;
+        if (next.isNotEmpty) {
+          cachedJobs.addAll(next); // ✅ also optimized (no list copy)
+
+          _displayDirty = true; // 🔥 ADD THIS LINE
+
+          // ✅ Save cache in background
+          JobsHelper.saveJobsCache(userId, cachedJobs).catchError((e) {
+            debugPrint('Cache save error: $e');
+          });
+        }
+      } else {
+        _currentPage--;
       }
-    } else {
+    } catch (e) {
+      debugPrint('Load next page error: $e');
       _currentPage--;
     }
 
@@ -111,145 +175,160 @@ class JobsNotifier extends ChangeNotifier {
   // ─── Get all jobs ──────────────────────────────────────────────────────────
 
   Future<void> getJobs() async {
+    if (isLoadingJobList) return; // ✅ Prevent duplicate calls
+
     isLoadingJobList = true;
     notifyListeners();
 
-    final response = await JobsHelper.getJobs();
+    try {
+      final response = await JobsHelper.getJobs();
 
-    isLoadingJobList = false;
-
-    if (response.success && response.data != null) {
-      jobList = response.data!;
-    } else {
-      Get.snackbar(
-        'Error Loading Jobs',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error_outline),
-      );
+      if (response.success && response.data != null) {
+        jobList = response.data!;
+      } else {
+        _showErrorSnackbar('Error Loading Jobs', response.message);
+      }
+    } catch (e) {
+      debugPrint('Get jobs error: $e');
+      _showErrorSnackbar('Error Loading Jobs', e.toString());
     }
 
+    isLoadingJobList = false;
     notifyListeners();
   }
 
   // ─── Get filtered jobs ─────────────────────────────────────────────────────
 
   Future<void> getFilteredJobs(String agentId) async {
+    if (isLoadingJobList) return;
+
     isLoadingJobList = true;
     notifyListeners();
 
-    final response = await JobsHelper.getFilteredJobs(agentId);
+    try {
+      final response = await JobsHelper.getFilteredJobs(agentId);
 
-    isLoadingJobList = false;
-
-    if (response.success && response.data != null) {
-      jobList = response.data!;
-    } else {
-      Get.snackbar(
-        'Error Loading Jobs',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error_outline),
-      );
+      if (response.success && response.data != null) {
+        jobList = response.data!;
+      } else {
+        _showErrorSnackbar('Error Loading Jobs', response.message);
+      }
+    } catch (e) {
+      debugPrint('Get filtered jobs error: $e');
+      _showErrorSnackbar('Error Loading Jobs', e.toString());
     }
 
+    isLoadingJobList = false;
     notifyListeners();
   }
 
   // ─── Get single job ────────────────────────────────────────────────────────
 
   Future<void> getJob(String jobId) async {
+    if (isLoadingCurrentJob) return;
+
     isLoadingCurrentJob = true;
     currentJob = null;
     notifyListeners();
 
-    final response = await JobsHelper.getJob(jobId);
+    try {
+      final response = await JobsHelper.getJob(jobId);
 
-    isLoadingCurrentJob = false;
-
-    if (response.success && response.data != null) {
-      currentJob = response.data;
-    } else {
-      Get.snackbar(
-        'Error Loading Job',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error_outline),
-      );
+      if (response.success && response.data != null) {
+        currentJob = response.data;
+      } else {
+        _showErrorSnackbar('Error Loading Job', response.message);
+      }
+    } catch (e) {
+      debugPrint('Get job error: $e');
+      _showErrorSnackbar('Error Loading Job', e.toString());
     }
 
+    isLoadingCurrentJob = false;
     notifyListeners();
   }
 
   // ─── Get most recent job ───────────────────────────────────────────────────
 
   Future<void> getRecent() async {
-    final response = await JobsHelper.getRecent();
+    try {
+      final response = await JobsHelper.getRecent();
 
-    if (response.success && response.data != null) {
-      recent = response.data;
-      notifyListeners();
-    } else {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error_outline),
-      );
+      if (response.success && response.data != null) {
+        recent = response.data;
+        notifyListeners();
+      } else {
+        _showErrorSnackbar('Error', response.message);
+      }
+    } catch (e) {
+      debugPrint('Get recent error: $e');
     }
   }
 
   // ─── Get jobs for a specific user ─────────────────────────────────────────
 
   Future<void> getUserJobs(String agentId) async {
+    if (isLoadingUserJobs) return;
+
+    // ✅ Load from cache first
+    await loadCachedUserJobs(agentId);
+
     isLoadingUserJobs = true;
     notifyListeners();
 
-    final response = await JobsHelper.getUserJobs(agentId);
+    try {
+      final response = await JobsHelper.getUserJobs(agentId);
 
-    isLoadingUserJobs = false;
+      if (response.success && response.data != null) {
+        userJobs = response.data!;
 
-    if (response.success && response.data != null) {
-      userJobs = response.data!;
-    } else {
-      Get.snackbar(
-        'Error Loading Your Jobs',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error_outline),
-      );
+        // ✅ Save to cache in background
+        JobsHelper.saveCachedUserJobs(agentId, response.data!).catchError((e) {
+          debugPrint('User jobs cache save error: $e');
+        });
+      } else {
+        _showErrorSnackbar('Error Loading Your Jobs', response.message);
+      }
+    } catch (e) {
+      debugPrint('Get user jobs error: $e');
+      _showErrorSnackbar('Error Loading Your Jobs', e.toString());
     }
 
+    isLoadingUserJobs = false;
     notifyListeners();
   }
 
   // ─── Load cached user jobs for instant display ────────────────────────────
 
   Future<void> loadCachedUserJobs(String agentId) async {
-    final cached = await JobsHelper.getCachedUserJobs(agentId);
-    if (cached.isNotEmpty) {
-      userJobs = cached;
-      notifyListeners();
+    try {
+      final cached = await JobsHelper.getCachedUserJobs(agentId);
+      if (cached.isNotEmpty) {
+        userJobs = cached;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Load cached user jobs error: $e');
     }
   }
 
   // ─── Displayable feed (filtered for current user) ─────────────────────────
-
   List<JobsResponse> getDisplayableJobs(
     String currentUserId, {
     List<String> bookmarkedIds = const [],
   }) {
+    if (!_displayDirty) return _displayJobs;
+
     final bookmarkedSet = bookmarkedIds.toSet();
-    return cachedJobs.where((j) {
+
+    _displayJobs = cachedJobs.where((j) {
       return j.agentId != currentUserId &&
           j.hiring == true &&
           !bookmarkedSet.contains(j.id);
     }).toList();
+
+    _displayDirty = false;
+    return _displayJobs;
   }
 
   // ─── Create job ────────────────────────────────────────────────────────────
@@ -259,107 +338,108 @@ class JobsNotifier extends ChangeNotifier {
     BuildContext context, {
     File? imageFile,
   }) async {
+    if (isCreatingJob) return;
+
     isCreatingJob = true;
     notifyListeners();
 
-    final response = await JobsHelper.createJob(model, imageFile: imageFile);
+    try {
+      final response = await JobsHelper.createJob(model, imageFile: imageFile);
+
+      if (response.success) {
+        // ✅ Optimized: Run in parallel, don't block UI
+        Future.wait([
+          getJobs(),
+          getUserJobs(model.agentId),
+          preloadJobs(model.agentId),
+        ]).catchError((e) {
+          debugPrint('Post-create refresh error: $e');
+          return <List<void>>[];
+        });
+
+        Get.snackbar(
+          'Query Created Successfully',
+          'Your job listing has been added.',
+          colorText: kLight,
+          backgroundColor: kLightBlue,
+          icon: const Icon(Icons.check_circle),
+          duration: const Duration(seconds: 2),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 300));
+        Get.back();
+      } else {
+        if (context.mounted) {
+          _showCreateJobErrorDialog(context, response.message);
+        }
+      }
+    } catch (e) {
+      debugPrint('Create job error: $e');
+      if (context.mounted) {
+        _showCreateJobErrorDialog(context, e.toString());
+      }
+    }
 
     isCreatingJob = false;
     notifyListeners();
-
-    if (response.success) {
-      await getJobs();
-      await getUserJobs(model.agentId);
-      await preloadJobs(model.agentId);
-
-      Get.snackbar(
-        'Query Created Successfully',
-        'Your job listing has been added.',
-        colorText: kLight,
-        backgroundColor: kLightBlue,
-        icon: const Icon(Icons.check_circle),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.back();
-    } else {
-      if (context.mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            backgroundColor: const Color(0xFF040326),
-            title: const Text(
-              'Failed to List Query',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: Text(
-              response.message,
-              style: const TextStyle(color: Colors.white70),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK', style: TextStyle(color: kTealLight)),
-              ),
-            ],
-          ),
-        );
-      }
-    }
   }
 
   // ─── Update job ────────────────────────────────────────────────────────────
 
   Future<void> updateJob(String jobId, Map<String, dynamic> jobData) async {
-    final response = await JobsHelper.updateJob(jobId, jobData);
+    try {
+      final response = await JobsHelper.updateJob(jobId, jobData);
 
-    if (response.success) {
-      await getJobs();
-    } else {
-      Get.snackbar(
-        'Error Updating Job',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error_outline),
-      );
+      if (response.success) {
+        await getJobs();
+      } else {
+        _showErrorSnackbar('Error Updating Job', response.message);
+      }
+    } catch (e) {
+      debugPrint('Update job error: $e');
+      _showErrorSnackbar('Error Updating Job', e.toString());
     }
   }
 
   // ─── Delete job ────────────────────────────────────────────────────────────
 
   Future<void> deleteJob(String jobId) async {
-    final response = await JobsHelper.deleteJob(jobId);
+    try {
+      final response = await JobsHelper.deleteJob(jobId);
 
-    if (response.success) {
-      await getJobs();
-    } else {
-      Get.snackbar(
-        'Error Deleting Job',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error_outline),
-      );
+      if (response.success) {
+        await getJobs();
+      } else {
+        _showErrorSnackbar('Error Deleting Job', response.message);
+      }
+    } catch (e) {
+      debugPrint('Delete job error: $e');
+      _showErrorSnackbar('Error Deleting Job', e.toString());
     }
   }
 
   // ─── Swiped users ──────────────────────────────────────────────────────────
 
   Future<void> getSwipedUsersId(String jobId) async {
+    if (isLoadingSwipedUsers) return;
+
     isLoadingSwipedUsers = true;
     notifyListeners();
 
-    final response = await JobsHelper.getSwipededUsersId(jobId);
+    try {
+      final response = await JobsHelper.getSwipededUsersId(jobId);
 
-    isLoadingSwipedUsers = false;
-
-    if (response.success && response.data != null) {
-      swipedUsers = response.data!;
-    } else {
+      if (response.success && response.data != null) {
+        swipedUsers = response.data!;
+      } else {
+        swipedUsers = [];
+      }
+    } catch (e) {
+      debugPrint('Get swiped users error: $e');
       swipedUsers = [];
     }
 
+    isLoadingSwipedUsers = false;
     notifyListeners();
   }
 
@@ -368,30 +448,94 @@ class JobsNotifier extends ChangeNotifier {
     String userId,
     String action,
   ) async {
-    // Fire-and-forget — no snackbar, runs silently in background
-    await JobsHelper.addSwipedUsers(jobId, userId, action);
+    // ✅ Fire-and-forget with error handling
+    JobsHelper.addSwipedUsers(jobId, userId, action).catchError((e) {
+      debugPrint('Add swiped users error: $e');
+      return ApiResponse(success: false, message: e.toString());
+    });
   }
 
   Future<void> undoSwipe(String jobId, String userId) async {
-    await JobsHelper.undoSwipe(jobId, userId);
+    try {
+      await JobsHelper.undoSwipe(jobId, userId);
+    } catch (e) {
+      debugPrint('Undo swipe error: $e');
+    }
   }
 
   // ─── Matched users ─────────────────────────────────────────────────────────
 
   Future<void> getMatchedUsersId(String jobId) async {
-    final response = await JobsHelper.getMatchedUsersId(jobId);
+    try {
+      final response = await JobsHelper.getMatchedUsersId(jobId);
 
-    if (response.success && response.data != null) {
-      matchedUsers = response.data!;
+      if (response.success && response.data != null) {
+        matchedUsers = response.data!;
+      } else {
+        matchedUsers = [];
+      }
       notifyListeners();
-    } else {
+    } catch (e) {
+      debugPrint('Get matched users error: $e');
       matchedUsers = [];
       notifyListeners();
     }
   }
 
   Future<void> addMatchedUsers(String jobId, String userId) async {
-    // Fire-and-forget — runs silently in background
-    await JobsHelper.addMatchedUsers(jobId, userId);
+    // ✅ Fire-and-forget with error handling
+    JobsHelper.addMatchedUsers(jobId, userId).catchError((e) {
+      debugPrint('Add matched users error: $e');
+      return ApiResponse(success: false, message: e.toString());
+    });
+  }
+
+  // ✅ Helper methods ────────────────────────────────────────────────────────
+
+  void _showErrorSnackbar(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      colorText: kLight,
+      backgroundColor: kOrange,
+      icon: const Icon(Icons.error_outline),
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  void _showCreateJobErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF040326),
+        title: const Text(
+          'Failed to List Query',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(message, style: const TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: kTealLight)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  // ✅ Clean up resources
+  @override
+  void dispose() {
+    _preloadDebouncer.dispose();
+    _nextPageDebouncer.dispose();
+    super.dispose();
   }
 }
