@@ -398,19 +398,50 @@ class JobsHelper {
   }
 
   // ─── Update job ────────────────────────────────────────────────────────────
-
   static Future<ApiResponse<void>> updateJob(
     String jobId,
-    Map<String, dynamic> jobData,
-  ) async {
+    CreateJobsRequest model, {
+    File? imageFile,
+  }) async {
     try {
-      final headers = await _authHeaders();
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
       final url = Config.url('${Config.jobs}/$jobId');
-      final response = await client.put(
-        url,
-        headers: headers,
-        body: jsonEncode(jobData),
-      );
+
+      final request = https.MultipartRequest('PUT', url);
+
+      if (token != null && token.isNotEmpty) {
+        request.headers['token'] = 'Bearer $token';
+      }
+
+      // ─── Fields (same as createJob) ───
+      request.fields['title'] = model.title;
+      request.fields['agentId'] = model.agentId;
+      request.fields['company'] = model.company;
+      request.fields['description'] = model.description;
+      request.fields['salary'] = model.salary;
+      request.fields['period'] = model.period;
+      request.fields['hiring'] = model.hiring.toString();
+      request.fields['contract'] = model.contract;
+      request.fields['domain'] = model.domain;
+      request.fields['opportunityType'] = model.opportunityType;
+      request.fields['city'] = model.city;
+      request.fields['state'] = model.state;
+      request.fields['country'] = model.country;
+      request.fields['latitude'] = model.latitude.toString();
+      request.fields['longitude'] = model.longitude.toString();
+      request.fields['requirements'] = jsonEncode(model.requirements);
+
+      // ─── Image (key fix) ───
+      if (imageFile != null) {
+        request.files.add(
+          await https.MultipartFile.fromPath('image', imageFile.path),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await https.Response.fromStream(streamedResponse);
 
       if (response.body.isEmpty) {
         return ApiResponse(
@@ -418,9 +449,11 @@ class JobsHelper {
           message: 'Server is starting up, please try again',
         );
       }
+
       if (response.statusCode == 200) {
         return ApiResponse(success: true, message: 'Job updated successfully');
       }
+
       final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
@@ -431,7 +464,6 @@ class JobsHelper {
       return ApiResponse(success: false, message: e.toString());
     }
   }
-
   // ─── Delete job ────────────────────────────────────────────────────────────
 
   static Future<ApiResponse<void>> deleteJob(String jobId) async {

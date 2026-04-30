@@ -386,19 +386,60 @@ class JobsNotifier extends ChangeNotifier {
 
   // ─── Update job ────────────────────────────────────────────────────────────
 
-  Future<void> updateJob(String jobId, Map<String, dynamic> jobData) async {
+  Future<void> updateJob(
+    String jobId,
+    CreateJobsRequest model,
+    BuildContext context, {
+    File? imageFile,
+  }) async {
+    if (isCreatingJob) return;
+
+    isCreatingJob = true;
+    notifyListeners();
+
     try {
-      final response = await JobsHelper.updateJob(jobId, jobData);
+      final response = await JobsHelper.updateJob(
+        jobId,
+        model,
+        imageFile: imageFile,
+      );
 
       if (response.success) {
-        await getJobs();
+        // ✅ Same optimized refresh as create
+        Future.wait([
+          getJobs(),
+          getUserJobs(model.agentId),
+          preloadJobs(model.agentId),
+        ]).catchError((e) {
+          debugPrint('Post-update refresh error: $e');
+          return <List<void>>[];
+        });
+
+        Get.snackbar(
+          'Opportunity Updated Successfully',
+          'Your changes have been saved.',
+          colorText: kLight,
+          backgroundColor: kLightBlue,
+          icon: const Icon(Icons.check_circle),
+          duration: const Duration(seconds: 2),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 300));
+        Get.back();
       } else {
-        _showErrorSnackbar('Error Updating Job', response.message);
+        if (context.mounted) {
+          _showCreateJobErrorDialog(context, response.message);
+        }
       }
     } catch (e) {
       debugPrint('Update job error: $e');
-      _showErrorSnackbar('Error Updating Job', e.toString());
+      if (context.mounted) {
+        _showCreateJobErrorDialog(context, e.toString());
+      }
     }
+
+    isCreatingJob = false;
+    notifyListeners();
   }
 
   // ─── Delete job ────────────────────────────────────────────────────────────

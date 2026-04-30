@@ -39,6 +39,7 @@ class _AddJobPageState extends State<AddJobPage> {
   final _periodController = TextEditingController();
   final _contractController = TextEditingController();
   final List<TextEditingController> _reqControllers = [TextEditingController()];
+  final _imageUrlController = TextEditingController();
 
   // ─── State ────────────────────────────────────────────────────────────────
   double _jobLat = 0.0;
@@ -50,10 +51,12 @@ class _AddJobPageState extends State<AddJobPage> {
   final _customDomainController = TextEditingController();
 
   bool get _isEditMode => widget.job != null;
+  late final ImageNotifier _imageNotifier;
 
   @override
   void initState() {
     super.initState();
+    _imageNotifier = ImageNotifier();
     final j = widget.job;
     if (j != null) {
       _titleController.text = j.title;
@@ -66,6 +69,7 @@ class _AddJobPageState extends State<AddJobPage> {
       _jobLat = j.latitude;
       _jobLng = j.longitude;
       _locationPicked = true;
+      _imageUrlController.text = j.imageUrl;
       _reverseGeocodeExistingLocation();
       // Requirements
       if (j.requirements.isNotEmpty) {
@@ -198,15 +202,20 @@ class _AddJobPageState extends State<AddJobPage> {
       hiring: _isHiring,
       contract: _contractController.text,
       requirements: requirements,
-      imageUrl: '',
+      imageUrl: _isEditMode ? _imageUrlController.text : '',
     );
 
     if (!mounted) return;
     if (_isEditMode) {
-      await notifier.updateJob(widget.job!.id, jobData.toJson());
+      await notifier.updateJob(
+        widget.job!.id,
+        jobData,
+        context,
+        imageFile: imageNotifier.selectedImage,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('opportunity updated successfully')),
+          const SnackBar(content: Text('Opportunity updated successfully')),
         );
         Navigator.pop(context);
       }
@@ -259,8 +268,9 @@ class _AddJobPageState extends State<AddJobPage> {
   // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ImageNotifier(),
+    return ChangeNotifierProvider.value(
+      // create: (_) => ImageNotifier(),
+      value: _imageNotifier,
       child: _buildScaffold(context),
     );
   }
