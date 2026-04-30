@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
+import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/views/common/drawer/drawer_screen.dart';
 import 'package:proco/views/common/exports.dart';
@@ -40,12 +41,16 @@ class _MainScreenState extends State<MainScreen> {
     _prefs = widget.prefs ?? await SharedPreferences.getInstance();
 
     _userId = _prefs?.getString('userId') ?? '';
+    final token = _prefs?.getString('token') ?? '';
+
+    if (_userId.isNotEmpty && token.isNotEmpty) {
+      NotificationHelper.initialize(_userId, token);
+    }
 
     if (mounted) {
       setState(() => _isInitialized = true);
     }
 
-    // ✅ ONLY light task
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<LoginNotifier>().getPrefs();

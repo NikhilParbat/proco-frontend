@@ -35,6 +35,7 @@ class ProfileEditState extends ChangeNotifier {
   bool showPhone = true;
   bool showGender = true;
   bool showDob = true;
+  bool showUserType = true;
   bool showCollege = true;
   bool showSkills = true;
   bool showLinkedIn = true;
@@ -85,17 +86,13 @@ class ProfileEditState extends ChangeNotifier {
         profileImageUrl = data.profile ?? '';
         latitude = data.latitude ?? 0.0;
         longitude = data.longitude ?? 0.0;
-
-        // ⚠️ Backend does NOT send these (yet)
-        dob = '';
-        userType = '';
-        linkedInUrl = '';
-        gitHubUrl = '';
-        twitterUrl = '';
-        portfolioUrl = '';
-
-        // ⚠️ Skills not in response
-        skills = [];
+        dob = data.dob ?? '';
+        userType = data.userType ?? '';
+        linkedInUrl = data.linkedInUrl ?? '';
+        gitHubUrl = data.gitHubUrl ?? '';
+        twitterUrl = data.twitterUrl ?? '';
+        portfolioUrl = data.portfolioUrl ?? '';
+        skills = List<String>.from(data.skills);
       }
     } catch (e) {
       error = e.toString();
@@ -153,6 +150,13 @@ class ProfileEditState extends ChangeNotifier {
         college = user.college ?? '';
         branch = user.branch ?? '';
         gender = user.gender ?? '';
+        dob = user.dob ?? '';
+        userType = user.userType ?? '';
+        linkedInUrl = user.linkedInUrl ?? '';
+        gitHubUrl = user.gitHubUrl ?? '';
+        twitterUrl = user.twitterUrl ?? '';
+        portfolioUrl = user.portfolioUrl ?? '';
+        skills = List<String>.from(user.skills);
         latitude = user.latitude ?? 0.0;
         longitude = user.longitude ?? 0.0;
         profileImageUrl = user.profile ?? '';
@@ -182,6 +186,7 @@ class ProfileEditState extends ChangeNotifier {
     showPhone = prefs.getBool('vis_phone') ?? true;
     showGender = prefs.getBool('vis_gender') ?? true;
     showDob = prefs.getBool('vis_dob') ?? true;
+    showUserType = prefs.getBool('vis_usertype') ?? true;
     showCollege = prefs.getBool('vis_college') ?? true;
     showSkills = prefs.getBool('vis_skills') ?? true;
     showLinkedIn = prefs.getBool('vis_linkedin') ?? true;
@@ -208,6 +213,10 @@ class ProfileEditState extends ChangeNotifier {
       case 'dob':
         showDob = !showDob;
         await prefs.setBool('vis_dob', showDob);
+        break;
+      case 'usertype':
+        showUserType = !showUserType;
+        await prefs.setBool('vis_usertype', showUserType);
         break;
       case 'college':
         showCollege = !showCollege;
@@ -248,6 +257,9 @@ class ProfileEditState extends ChangeNotifier {
         break;
       case 'dob':
         dob = value;
+        break;
+      case 'userType':
+        userType = value;
         break;
       case 'city':
         city = value;

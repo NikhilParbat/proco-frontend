@@ -34,6 +34,11 @@ class _EditTabState extends State<EditTab> {
     'Prefer not to say',
   ];
 
+  static const List<String> _userTypeOptions = [
+    'Student',
+    'Young Professional',
+  ];
+
   final _formKey = GlobalKey<FormState>();
 
   static const List<String> _months = [
@@ -57,6 +62,7 @@ class _EditTabState extends State<EditTab> {
   final _skillCtrl = TextEditingController();
 
   String? _selectedGender;
+  String? _selectedUserType;
   bool _initialized = false;
 
   @override
@@ -85,6 +91,7 @@ class _EditTabState extends State<EditTab> {
       _twitterCtrl = TextEditingController(text: s.twitterUrl);
       _portfolioCtrl = TextEditingController(text: s.portfolioUrl);
       _selectedGender = _genderOptions.contains(s.gender) ? s.gender : null;
+      _selectedUserType = _userTypeOptions.contains(s.userType) ? s.userType : null;
       _initialized = true;
     }
   }
@@ -123,6 +130,7 @@ class _EditTabState extends State<EditTab> {
     s.setField('twitter', _twitterCtrl.text.trim());
     s.setField('portfolio', _portfolioCtrl.text.trim());
     s.setField('gender', _selectedGender ?? '');
+    s.setField('userType', _selectedUserType ?? '');
 
     final imageNotifier = context.read<ImageNotifier>();
     final ok = await s.saveProfile(imageNotifier.selectedImage);
@@ -193,6 +201,8 @@ class _EditTabState extends State<EditTab> {
               _genderRowWithToggle(state),
               SizedBox(height: 10.h),
               _dobSectionWithToggle(state),
+              SizedBox(height: 10.h),
+              _userTypeRowWithToggle(state),
               SizedBox(height: 20.h),
 
               // ── Location ──────────────────────────────────────────────────
@@ -1148,6 +1158,98 @@ class _EditTabState extends State<EditTab> {
               )
               .toList(),
           onChanged: (val) => setState(() => _selectedGender = val),
+        ),
+      ],
+    );
+  }
+
+  // ── User type (Role) row with visibility toggle ───────────────────────────
+  Widget _userTypeRowWithToggle(ProfileEditState state) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.badge_outlined, color: _teal, size: 15),
+            SizedBox(width: 6.w),
+            Text(
+              'Role',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 12.sp,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            const Spacer(),
+            Text(
+              state.showUserType ? 'Visible' : 'Hidden',
+              style: TextStyle(
+                color: state.showUserType ? _tealLight : Colors.white38,
+                fontSize: 11.sp,
+                fontFamily: 'Poppins',
+              ),
+            ),
+            SizedBox(width: 2.w),
+            SizedBox(
+              height: 24,
+              child: Transform.scale(
+                scale: 0.75,
+                child: Switch(
+                  value: state.showUserType,
+                  onChanged: (_) => state.toggleVisibility('usertype'),
+                  activeThumbColor: _teal,
+                  activeTrackColor: _teal.withValues(alpha: 0.3),
+                  inactiveThumbColor: Colors.white38,
+                  inactiveTrackColor: Colors.white12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 5.h),
+        DropdownButtonFormField<String>(
+          value: _selectedUserType,
+          decoration: InputDecoration(
+            hintText: 'Select role',
+            hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+            prefixIcon: const Icon(
+              Icons.work_outline_rounded,
+              color: _teal,
+              size: 18,
+            ),
+            filled: true,
+            fillColor: _card,
+            contentPadding: EdgeInsets.symmetric(
+              vertical: 13.h,
+              horizontal: 14.w,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: _teal.withValues(alpha: 0.25)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: _teal.withValues(alpha: 0.25)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _teal, width: 1.5),
+            ),
+          ),
+          dropdownColor: const Color(0xFF0D2233),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _teal),
+          style: TextStyle(color: _white, fontSize: 14.sp),
+          borderRadius: BorderRadius.circular(12),
+          items: _userTypeOptions
+              .map(
+                (t) => DropdownMenuItem(
+                  value: t,
+                  child: Text(t, style: const TextStyle(color: _white)),
+                ),
+              )
+              .toList(),
+          onChanged: (val) => setState(() => _selectedUserType = val),
         ),
       ],
     );
