@@ -250,7 +250,9 @@ class LoginNotifier extends ChangeNotifier {
             message.toLowerCase().contains('no account');
         Get.snackbar(
           isNotFound ? 'Account Not Found' : 'Login Failed',
-          message,
+          isNotFound
+              ? 'No account found for this Google account. Please sign up first.'
+              : message,
           colorText: kLight,
           backgroundColor: isNotFound ? kLightBlue : kOrange,
           icon: Icon(isNotFound ? Icons.person_add_outlined : Icons.error),
