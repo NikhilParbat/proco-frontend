@@ -20,6 +20,12 @@ class Config {
         : Uri.http(host, path, queryParameters);
   }
 
+  static String socketUrl() {
+    final host = _isProd ? _prodHost : _devHost;
+
+    return _isProd ? 'https://$host' : 'http://$host';
+  }
+
   // ─── Paths ────────────────────────────────────────────────────────────────
   static const String loginUrl = '/api/login';
   static const String signupUrl = '/api/register';

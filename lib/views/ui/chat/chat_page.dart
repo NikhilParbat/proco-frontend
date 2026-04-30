@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:proco/controllers/chat_provider.dart';
 import 'package:proco/models/request/messaging/send_message.dart';
 import 'package:proco/models/response/messaging/messaging_res.dart';
+import 'package:proco/services/config.dart';
 import 'package:proco/services/helpers/messaging_helper.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/mainscreen.dart';
@@ -117,8 +118,7 @@ class _ChatPageState extends State<ChatPage> {
     final chatNotifier = context.read<ChatNotifier>();
 
     socket = io.io(
-      'http://10.0.2.2:3000',
-      // 'https://proco-server-api.onrender.com',
+      Config.socketUrl(),
       io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
