@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:proco/controllers/chat_provider.dart';
 import 'package:proco/models/request/messaging/send_message.dart';
 import 'package:proco/models/response/messaging/messaging_res.dart';
 import 'package:proco/services/config.dart';
 import 'package:proco/services/helpers/messaging_helper.dart';
 import 'package:proco/views/common/exports.dart';
-import 'package:proco/views/ui/mainscreen.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -440,8 +438,8 @@ class _ChatPageState extends State<ChatPage> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
+              Navigator.pop(context);
               await context.read<ChatNotifier>().unmatchChat(widget.id);
-              Get.offAll(() => const MainScreen());
             },
             child: const Text(
               'Unmatch',
@@ -483,7 +481,7 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       // Back
                       GestureDetector(
-                        onTap: () => Get.to(() => const MainScreen()),
+                        onTap: () => Navigator.pop(context),
                         child: Container(
                           width: 36.w,
                           height: 36.w,
