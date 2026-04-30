@@ -62,24 +62,24 @@ class _DrawerScreenState extends State<DrawerScreen> {
                       : kLightGrey,
                 ),
                 drawerItem(
-                  Icons.settings_rounded,
-                  'Settings',
+                  FontAwesome5Regular.clipboard,
+                  'My Queries',
                   3,
                   zoomNotifier.currentIndex == 3
                       ? kLight
                       : kLightGrey,
                 ),
                 drawerItem(
-                  FontAwesome5Regular.clipboard,
-                  'My Queries',
+                  FontAwesome5Regular.user_circle,
+                  'Profile',
                   4,
                   zoomNotifier.currentIndex == 4
                       ? kLight
                       : kLightGrey,
                 ),
                 drawerItem(
-                  FontAwesome5Regular.user_circle,
-                  'Profile',
+                  Icons.settings_rounded,
+                  'Settings',
                   5,
                   zoomNotifier.currentIndex == 5
                       ? kLight

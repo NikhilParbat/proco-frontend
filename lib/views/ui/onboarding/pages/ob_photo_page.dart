@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/views/ui/onboarding/widgets/ob_scaffold.dart';
@@ -25,6 +26,14 @@ class _ObPhotoPageState extends State<ObPhotoPage> {
   }
 
   Future<void> _pick(ImageSource source) async {
+    final permission =
+        source == ImageSource.camera ? Permission.camera : Permission.photos;
+    final status = await permission.request();
+    if (!status.isGranted && !status.isLimited) {
+      if (status.isPermanentlyDenied) openAppSettings();
+      return;
+    }
+
     setState(() => _picking = true);
     try {
       final result = await ImagePicker().pickImage(

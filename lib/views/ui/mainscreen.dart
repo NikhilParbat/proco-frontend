@@ -99,15 +99,15 @@ class _MainScreenState extends State<MainScreen> {
             : const LoginPage(drawer: false);
       case 3:
         return loginNotifier.loggedIn
-            ? const SettingsPage()
+            ? const JobListingPage()
             : const LoginPage(drawer: false);
       case 4:
         return loginNotifier.loggedIn
-            ? const JobListingPage()
+            ? const ProfilePage()
             : const LoginPage(drawer: false);
       case 5:
         return loginNotifier.loggedIn
-            ? const ProfilePage()
+            ? const SettingsPage()
             : const LoginPage(drawer: false);
       default:
         return HomePage(userId: _userId);

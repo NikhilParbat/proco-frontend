@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
@@ -626,7 +627,7 @@ class _AddJobPageState extends State<AddJobPage> {
               _sectionLabel('Media'),
               SizedBox(height: 12.h),
               GestureDetector(
-                onTap: () => imageNotifier.pickImage(),
+                onTap: () => _showImageSourceSheet(imageNotifier),
                 child: Container(
                   height: 160.h,
                   decoration: BoxDecoration(
@@ -720,6 +721,93 @@ class _AddJobPageState extends State<AddJobPage> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  // ─── Image source picker ──────────────────────────────────────────────────
+  void _showImageSourceSheet(ImageNotifier imageNotifier) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _navy,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: EdgeInsets.only(bottom: 16.h),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              Text(
+                'Add Photo',
+                style: TextStyle(
+                  color: _white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              _sourceOption(
+                icon: Icons.camera_alt_rounded,
+                label: 'Take a Photo',
+                onTap: () {
+                  Navigator.pop(context);
+                  imageNotifier.pickImage(source: ImageSource.camera);
+                },
+              ),
+              SizedBox(height: 10.h),
+              _sourceOption(
+                icon: Icons.photo_library_rounded,
+                label: 'Choose from Gallery',
+                onTap: () {
+                  Navigator.pop(context);
+                  imageNotifier.pickImage(source: ImageSource.gallery);
+                },
+              ),
+              SizedBox(height: 6.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          color: _teal.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _teal.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: _tealLt, size: 22),
+            SizedBox(width: 14.w),
+            Text(label,
+                style: TextStyle(
+                    color: _white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500)),
+          ],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:proco/constants/app_constants.dart';
 
 class ImageNotifier extends ChangeNotifier {
@@ -11,7 +12,23 @@ class ImageNotifier extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  Future<bool> _requestPermission(ImageSource source) async {
+    final permission = source == ImageSource.camera
+        ? Permission.camera
+        : (Platform.isAndroid
+            ? Permission.photos
+            : Permission.photos);
+
+    final status = await permission.request();
+    if (status.isGranted || status.isLimited) return true;
+    if (status.isPermanentlyDenied) await openAppSettings();
+    return false;
+  }
+
   Future<void> pickImage({ImageSource source = ImageSource.gallery}) async {
+    final granted = await _requestPermission(source);
+    if (!granted) return;
+
     try {
       _setLoading(true);
       _clearError();

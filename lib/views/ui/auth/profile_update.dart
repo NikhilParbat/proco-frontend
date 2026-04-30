@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:proco/controllers/image_provider.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
@@ -553,22 +554,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                     child: GestureDetector(
                       onTap: imageNotifier.isLoading
                           ? null
-                          : () async {
-                              await imageNotifier.pickImage();
-                              if (imageNotifier.errorMessage != null) {
-                                _snack(
-                                  'Image Error',
-                                  imageNotifier.errorMessage!,
-                                  Colors.red,
-                                );
-                              } else if (imageNotifier.selectedImage != null) {
-                                _snack(
-                                  'Success',
-                                  'Image uploaded successfully',
-                                  Colors.green,
-                                );
-                              }
-                            },
+                          : () => _showImageSourceSheet(imageNotifier),
                       child: Container(
                         width: 32.w,
                         height: 32.w,
@@ -972,6 +958,92 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   //     ),
   //   );
   // }
+
+  void _showImageSourceSheet(ImageNotifier imageNotifier) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: EdgeInsets.only(bottom: 16.h),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              Text(
+                'Change Photo',
+                style: TextStyle(
+                  color: _white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              _sourceOption(
+                icon: Icons.camera_alt_rounded,
+                label: 'Take a Photo',
+                onTap: () {
+                  Navigator.pop(context);
+                  imageNotifier.pickImage(source: ImageSource.camera);
+                },
+              ),
+              SizedBox(height: 10.h),
+              _sourceOption(
+                icon: Icons.photo_library_rounded,
+                label: 'Choose from Gallery',
+                onTap: () {
+                  Navigator.pop(context);
+                  imageNotifier.pickImage(source: ImageSource.gallery);
+                },
+              ),
+              SizedBox(height: 6.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          color: _card.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _card.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: _accent, size: 22),
+            SizedBox(width: 14.w),
+            Text(label,
+                style: TextStyle(
+                    color: _white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _primaryButton(
     String label,
