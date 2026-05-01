@@ -44,7 +44,7 @@ class _MainScreenState extends State<MainScreen> {
     final token = _prefs?.getString('token') ?? '';
 
     if (_userId.isNotEmpty && token.isNotEmpty) {
-      NotificationHelper.initialize(_userId, token);
+      await NotificationHelper.initialize(_userId, token);
     }
 
     if (mounted) {
@@ -52,8 +52,19 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<LoginNotifier>().getPrefs();
+      if (!mounted) return;
+      context.read<LoginNotifier>().getPrefs();
+
+      // Wire up live tab switching (background notification taps)
+      NotificationHelper.registerTabNavigator((tab) {
+        if (mounted) context.read<ZoomNotifier>().currentIndex = tab;
+      });
+
+      // Navigate to the correct tab if the app was opened from a notification
+      final pendingTab = NotificationHelper.pendingTabIndex;
+      if (pendingTab != null) {
+        NotificationHelper.pendingTabIndex = null;
+        context.read<ZoomNotifier>().currentIndex = pendingTab;
       }
     });
   }

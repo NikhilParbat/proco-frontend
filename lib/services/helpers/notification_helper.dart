@@ -29,6 +29,10 @@ class NotificationHelper {
   static final List<NotificationItem> _notifications = [];
   static final List<VoidCallback> _listeners = [];
 
+  // Tab index to jump to when the app opens from a tapped notification:
+  // 1 = Chat list, 2 = Bookmarks
+  static int? pendingTabIndex;
+
   static List<NotificationItem> get notifications =>
       List.unmodifiable(_notifications);
 
@@ -99,14 +103,17 @@ class NotificationHelper {
       );
     });
 
-    // App opened from notification
+    // App opened by tapping a notification (background state)
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _addFromRemoteMessage(message);
+      _setPendingTab(message);
     });
 
+    // App opened by tapping a notification (terminated state)
     final initial = await messaging.getInitialMessage();
     if (initial != null) {
       _addFromRemoteMessage(initial);
+      _setPendingTab(initial);
     }
 
     _initialized = true;
@@ -118,6 +125,27 @@ class NotificationHelper {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     _bgHandlerSet = true;
+  }
+
+  static void Function(int)? _tabNavigator;
+
+  /// Call this from MainScreen to wire up live tab switching.
+  static void registerTabNavigator(void Function(int) fn) {
+    _tabNavigator = fn;
+  }
+
+  static void _setPendingTab(RemoteMessage message) {
+    final type = message.data['type'] ?? '';
+    int? tab;
+    if (type == 'chat') tab = 1;
+    if (type == 'match') tab = 2;
+    if (tab == null) return;
+
+    if (_tabNavigator != null) {
+      _tabNavigator!(tab);
+    } else {
+      pendingTabIndex = tab;
+    }
   }
 
   static void _addFromRemoteMessage(RemoteMessage message) {
