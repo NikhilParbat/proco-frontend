@@ -26,7 +26,7 @@ class _HelpSupportPageState extends State<HelpSupportPage>
   int? _expandedIndex;
   bool _isSending = false;
 
-  static const String _supportEmail = 'support@proco.app';
+  static const String _supportEmail = 'proco.dev01@gmail.com';
 
   final List<_FaqItem> _faqs = const [
     _FaqItem(
