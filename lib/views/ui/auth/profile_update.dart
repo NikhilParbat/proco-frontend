@@ -517,65 +517,102 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   Widget _buildImagePicker() {
     return Consumer<ImageNotifier>(
       builder: (context, imageNotifier, _) {
+        // Internal palette for the UI
+        const Color pPurple = Color(0xFF6C63FF);
+        const Color pWhite = Colors.white;
+
         return Column(
           children: [
-            // ── Avatar ──────────────────────────────────────────────────
             Center(
               child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  // Profile picture circle
-                  Container(
-                    width: 100.w,
-                    height: 100.w,
+                  // Inner Circle - Animated for smooth changes
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                    width: 110.w,
+                    height: 110.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _card.withValues(alpha: 0.3),
-                      border: Border.all(color: _accent, width: 2),
-                      image: imageNotifier.selectedImage != null
-                          ? DecorationImage(
-                              image: FileImage(imageNotifier.selectedImage!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+                      color: pWhite,
+                      boxShadow: [
+                        BoxShadow(
+                          color: pPurple.withOpacity(0.15),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                      border: Border.all(
+                        color: imageNotifier.hasImage
+                            ? pPurple
+                            : pPurple.withOpacity(0.2),
+                        width: 2.5,
+                      ),
                     ),
-                    child: imageNotifier.selectedImage == null
-                        ? Icon(
-                            Icons.person_rounded,
-                            size: 50.w,
-                            color: _accent.withValues(alpha: 0.6),
-                          )
-                        : null,
+                    child: ClipOval(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: imageNotifier.selectedImage != null
+                            ? Image.file(
+                                imageNotifier.selectedImage!,
+                                key: ValueKey(
+                                  imageNotifier.selectedImage!.path,
+                                ),
+                                width: 110.w,
+                                height: 110.w,
+                                fit: BoxFit.cover,
+                              )
+                            : Icon(
+                                Icons.person_rounded,
+                                key: const ValueKey('placeholder'),
+                                size: 55.w,
+                                color: pPurple.withOpacity(0.3),
+                              ),
+                      ),
+                    ),
                   ),
 
-                  // Edit button
+                  // Interactive Edit Button
                   Positioned(
-                    bottom: 0,
-                    right: 0,
+                    bottom: 4,
+                    right: 4,
                     child: GestureDetector(
                       onTap: imageNotifier.isLoading
                           ? null
                           : () => _showImageSourceSheet(imageNotifier),
-                      child: Container(
-                        width: 32.w,
-                        height: 32.w,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 36.w,
+                        height: 36.w,
                         decoration: BoxDecoration(
-                          color: _card,
+                          color: pPurple,
                           shape: BoxShape.circle,
-                          border: Border.all(color: _bg, width: 2),
+                          border: Border.all(color: pWhite, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        child: imageNotifier.isLoading
-                            ? const Padding(
-                                padding: EdgeInsets.all(6),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: _white,
+                        child: Center(
+                          child: imageNotifier.isLoading
+                              ? SizedBox(
+                                  width: 18.w,
+                                  height: 18.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: pWhite,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.camera_alt_rounded,
+                                  size: 18.w,
+                                  color: pWhite,
                                 ),
-                              )
-                            : Icon(
-                                Icons.camera_alt_rounded,
-                                size: 16.w,
-                                color: _white,
-                              ),
+                        ),
                       ),
                     ),
                   ),
@@ -583,36 +620,36 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
               ),
             ),
 
-            // ── Status text below avatar ─────────────────────────────────
-            SizedBox(height: 10.h),
-            Center(
-              child: imageNotifier.isLoading
+            SizedBox(height: 16.h),
+
+            // Dynamic Status Message
+            AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 500),
+              child: imageNotifier.errorMessage != null
                   ? Text(
-                      'Uploading...',
-                      style: TextStyle(color: _accent, fontSize: 12.sp),
+                      imageNotifier.errorMessage!,
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
                     )
-                  : imageNotifier.selectedImage != null
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle_rounded,
-                          color: Colors.green,
-                          size: 14.w,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          'Image uploaded',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 12.sp,
-                          ),
-                        ),
-                      ],
+                  : imageNotifier.hasImage
+                  ? Text(
+                      "Looking good!",
+                      style: TextStyle(
+                        color: pPurple,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     )
                   : Text(
-                      'Tap the camera icon to upload a photo',
-                      style: TextStyle(color: Colors.white38, fontSize: 12.sp),
+                      "Add a profile photo",
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 12.sp,
+                      ),
                     ),
             ),
           ],
@@ -620,7 +657,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       },
     );
   }
-
   // ─── Reusable widgets ─────────────────────────────────────────────────────
 
   Widget _sectionLabel(String text) {
@@ -765,10 +801,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       style: const TextStyle(color: Colors.white, fontSize: 15),
       borderRadius: BorderRadius.circular(14),
       items: _userTypeOptions
-          .map((t) => DropdownMenuItem(
-                value: t,
-                child: Text(t, style: const TextStyle(color: Colors.white)),
-              ))
+          .map(
+            (t) => DropdownMenuItem(
+              value: t,
+              child: Text(t, style: const TextStyle(color: Colors.white)),
+            ),
+          )
           .toList(),
       onChanged: (val) => setState(() => _selectedUserType = val),
     );
@@ -813,14 +851,22 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
             hintText: 'YYYY-MM-DD',
             labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
             hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
-            prefixIcon:
-                const Icon(Icons.cake_outlined, color: _accent, size: 20),
-            suffixIcon: const Icon(Icons.calendar_today_outlined,
-                color: _accent, size: 16),
+            prefixIcon: const Icon(
+              Icons.cake_outlined,
+              color: _accent,
+              size: 20,
+            ),
+            suffixIcon: const Icon(
+              Icons.calendar_today_outlined,
+              color: _accent,
+              size: 16,
+            ),
             filled: true,
             fillColor: _card.withValues(alpha: 0.25),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
@@ -1034,11 +1080,14 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           children: [
             Icon(icon, color: _accent, size: 22),
             SizedBox(width: 14.w),
-            Text(label,
-                style: TextStyle(
-                    color: _white,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: TextStyle(
+                color: _white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),

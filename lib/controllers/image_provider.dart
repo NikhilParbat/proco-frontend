@@ -12,12 +12,14 @@ class ImageNotifier extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  // Modern Purple Theme Colors (to be used in UI)
+  static const Color primaryPurple = Color(0xFF6C63FF); // Modern vibrant purple
+  static const Color lightPurple = Color(0xFFF3F2FF);
+
   Future<bool> _requestPermission(ImageSource source) async {
     final permission = source == ImageSource.camera
         ? Permission.camera
-        : (Platform.isAndroid
-            ? Permission.photos
-            : Permission.photos);
+        : (Platform.isAndroid ? Permission.photos : Permission.photos);
 
     final status = await permission.request();
     if (status.isGranted || status.isLimited) return true;
@@ -43,10 +45,9 @@ class ImageNotifier extends ChangeNotifier {
         return;
       }
 
-      // Reject files larger than 2 MB
       final fileSize = await pickedFile.length();
       if (fileSize > 2 * 1024 * 1024) {
-        _setError('Image must be under 2 MB. Please choose a smaller photo.');
+        _setError('Photo is a bit too large (limit 2MB).');
         _setLoading(false);
         return;
       }
@@ -59,10 +60,9 @@ class ImageNotifier extends ChangeNotifier {
       }
 
       selectedImage = File(croppedFile.path);
-
       notifyListeners();
     } catch (e) {
-      _setError('Something went wrong: ${e.toString()}');
+      _setError('Something went wrong. Try again!');
     } finally {
       _setLoading(false);
     }
@@ -74,24 +74,29 @@ class ImageNotifier extends ChangeNotifier {
         sourcePath: imageFile.path,
         maxHeight: 800,
         maxWidth: 600,
-        compressQuality: 70,
+        compressQuality: 85,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: 'Crop Image',
-            toolbarColor: kLightBlue,
-            toolbarWidgetColor: kLight,
+            toolbarTitle: 'Adjust your photo',
+            toolbarColor: Colors.white,
+            toolbarWidgetColor: primaryPurple, // Purple text/icons on white bar
+            activeControlsWidgetColor: primaryPurple,
+            statusBarColor: Colors.white,
+            backgroundColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.ratio5x4,
             lockAspectRatio: true,
           ),
-          IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: true),
+          IOSUiSettings(
+            title: 'Adjust your photo',
+            aspectRatioLockEnabled: true,
+          ),
         ],
       );
 
       if (cropped == null) return null;
-
       return XFile(cropped.path);
     } catch (e) {
-      _setError('Cropping failed: ${e.toString()}');
+      _setError('Cropping failed. Please try again.');
       return null;
     }
   }
@@ -102,7 +107,6 @@ class ImageNotifier extends ChangeNotifier {
   }
 
   bool get hasImage => selectedImage != null;
-
   File? get imageFile => selectedImage;
 
   void _setLoading(bool value) {
