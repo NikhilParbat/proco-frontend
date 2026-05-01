@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/filter_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
-import 'package:proco/views/common/app_bar.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
 import 'package:proco/views/ui/filters/filter_page.dart';
 import 'package:proco/views/ui/jobs/job_card_swiper.dart';
 import 'package:proco/views/ui/notification/notification_page.dart';
@@ -23,7 +21,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // static const Color _navy = Color(0xFF040326);
-  static const Color _teal = Color(0xFF08979F);
   static const Color _bg = Color(0xFFF4F6FA);
 
   // ✅ Memoize filter check
@@ -93,33 +90,52 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+    double fw(double v) => sw * v / 678.0;
+    double fh(double v) => sh * v / 1440.0;
+
     return Scaffold(
       backgroundColor: _bg,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(0.065.sh),
-        child: CustomAppBar(
-          actions: [
-            // ✅ Isolated filter button widget
-            _FilterButton(
-              onPressed: _refreshAfterFilter,
-              isFilterActive: _isFilterActive,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        // Logo canvas X=82, phone frame canvas X=44 → left=38; logo W=205
+        leadingWidth: fw(38 + 205),
+        leading: Padding(
+          padding: EdgeInsets.only(left: fw(38)),
+          child: GestureDetector(
+            onTap: _refreshAfterFilter,
+            child: SvgPicture.asset(
+              'assets/Lagcon.svg',
+              width: fw(205),
+              height: fh(61),
+              fit: BoxFit.contain,
             ),
-            Padding(
-              padding: EdgeInsets.only(right: 6.w),
-              child: IconButton(
-                icon: const Icon(FontAwesome.bell, color: _teal, size: 18),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationPage()),
-                ),
-              ),
-            ),
-          ],
-          child: Padding(
-            padding: EdgeInsets.only(left: 0.010.sh),
-            child: const DrawerWidget(),
           ),
         ),
+        actions: [
+          // ✅ Isolated filter button widget
+          _FilterButton(
+            onPressed: _refreshAfterFilter,
+            isFilterActive: _isFilterActive,
+          ),
+          Padding(
+            padding: EdgeInsets.only(right: 6.w),
+            child: IconButton(
+              icon: SvgPicture.asset(
+                'assets/noti.svg',
+                width: 24,
+                height: 28,
+              ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -156,7 +172,11 @@ class _FilterButton extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               IconButton(
-                icon: const Icon(FontAwesome.filter, color: Color(0xFF08979F)),
+                icon: SvgPicture.asset(
+                  'assets/filters.svg',
+                  width: 28,
+                  height: 26,
+                ),
                 onPressed: onPressed,
               ),
               if (hasFilter)

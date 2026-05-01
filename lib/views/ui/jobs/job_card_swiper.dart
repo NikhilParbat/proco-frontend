@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
@@ -26,19 +28,9 @@ class JobCardSwiper extends StatefulWidget {
 }
 
 class _JobCardSwiperState extends State<JobCardSwiper> {
-  static const Color _navy = Color(0xFF040326);
   static const Color _teal = Color(0xFF08979F);
-  static const Color _tealLt = Color(0xFF0BBFCA);
-  static const Color _orange = Color(0xFFf55631);
   static const Color _red = Color(0xFFD23838);
   static const Color _green = Color(0xFF089F20);
-
-  static final LinearGradient _cardGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Colors.transparent, _navy.withValues(alpha: 0.85)],
-    stops: const [0.5, 1.0],
-  );
 
   bool isExpanded(String id) {
     return _expandedDesc[id] ?? false;
@@ -104,9 +96,16 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   Widget build(BuildContext context) {
     if (_isFinished) return _buildFinishedState();
 
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+    double fw(double v) => sw * v / 678.0;
+    double fh(double v) => sh * v / 1440.0;
+
     return RepaintBoundary(
       child: Stack(
         alignment: Alignment.bottomCenter,
+        fit: StackFit.expand,
+        clipBehavior: Clip.none,
         children: [
           // ── Card swiper (isolated repaint) ────────────────────────────────────
           RepaintBoundary(
@@ -186,304 +185,282 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                   }
                 }
 
-                return _buildCard(job, liveDirection);
+                // Side margin reduced by 1.5 Figma units each side (34→32.5)
+                // Shifted 6dp upward via Transform to better match Figma
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: sw * 2 / 678),
+                  child: Transform.translate(
+                    offset: const Offset(0, -6),
+                    child: _buildCard(job, liveDirection),
+                  ),
+                );
               },
             ),
           ),
 
-          // ── Floating action buttons ───────────────────────────────────────────
-          Positioned(bottom: 48.h, child: _buildFabRow()),
+          // ── Button Group SVG (canvas: X=92, frame canvas X=44 → left=48) ────
+          Positioned(
+            left: fw(48),
+            bottom: fh(35),
+            width: fw(582),
+            height: fh(133),
+            child: _buildButtonGroup(fw, fh),
+          ),
         ],
       ),
     );
   }
 
   // ─── Card ─────────────────────────────────────────────────────────────────
+  // Figma card: 609×1222. Image: canvas X=94→left=16, Y=39 (card-local), W=580, H=498.
   Widget _buildCard(JobsResponse job, CardSwiperDirection? liveDirection) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: _navy,
-            borderRadius: BorderRadius.circular(28.r),
-            boxShadow: [
-              const BoxShadow(
-                color: Colors.black26,
-                blurRadius: 12,
-                offset: Offset(0, 6),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.hardEdge,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Top image (44%) ──────────────────────────────────────────
-              Expanded(
-                flex: 44,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CachedNetworkImage(
-                      imageUrl: job.imageUrl,
-                      fit: BoxFit.cover,
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final cw = constraints.maxWidth;
+        final ch = constraints.maxHeight;
+        double cfx(double v) => cw * v / 609.0;
+        double cfy(double v) => ch * v / 1222.0;
 
-                      // ✅ smooth loading (no jank)
-                      placeholder: (context, url) => Container(
-                        color: _teal.withValues(alpha: 0.12),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
-
-                      // ✅ your original fallback
-                      errorWidget: (context, url, error) => Container(
-                        color: _teal.withValues(alpha: 0.12),
-                        child: const Icon(
-                          Icons.business_rounded,
-                          color: _teal,
-                          size: 64,
-                        ),
-                      ),
-
-                      // ✅ prevents loading full-size images (important for performance)
-                      memCacheWidth: _imageCacheWidth,
-                    ),
-
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(gradient: _cardGradient),
-                      ),
-                    ),
-
-                    if (job.hiring)
-                      Positioned(
-                        top: 14.h,
-                        right: 14.w,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10.w,
-                            vertical: 5.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _green,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Actively Hiring',
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    Positioned(
-                      bottom: 12.h,
-                      left: 16.w,
-                      right: 16.w,
-                      child: Text(
-                        job.company.isNotEmpty
-                            ? job.company
-                            : 'Unknown Company',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: _tealLt,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  width: 1.5,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x3F000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
+              clipBehavior: Clip.hardEdge,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Gap above image (Y=39 within card)
+                  SizedBox(height: cfy(39)),
 
-              // ── Bottom info (56%) ────────────────────────────────────────
-              Expanded(
-                flex: 56,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(18.w, 4.h, 18.w, 108.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        job.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Poppins',
-                          height: 1.2,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_rounded,
-                            color: _orange,
-                            size: 13,
-                          ),
-                          SizedBox(width: 3.w),
-                          Expanded(
-                            child: Text(
-                              job.location,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: Colors
-                                    .white70, // Slightly brighter for readability
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w500,
+                  // Image area: W=580, H=498; left=16, right=13 within card
+                  Container(
+                    height: cfy(498),
+                    margin: EdgeInsets.only(left: cfx(16), right: cfx(13)),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: job.imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (ctx, _) => Container(
+                            color: const Color(
+                              0xFF08979F,
+                            ).withValues(alpha: 0.08),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             ),
                           ),
-                          if (job.contract.isNotEmpty) ...[
-                            SizedBox(width: 8.w),
-                            _chip(job.contract, Colors.white12),
+                          errorWidget: (ctx, _, _) => Container(
+                            color: const Color(
+                              0xFF08979F,
+                            ).withValues(alpha: 0.08),
+                            child: const Icon(
+                              Icons.business_rounded,
+                              color: Color(0xFF08979F),
+                              size: 48,
+                            ),
+                          ),
+                          memCacheWidth: _imageCacheWidth,
+                        ),
+                        if (job.opportunityType.isNotEmpty)
+                          Positioned(
+                            left: 12.w,
+                            top: 14.h,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/ot.svg',
+                                  width: 90.w,
+                                  height: 23.h,
+                                  fit: BoxFit.fill,
+                                ),
+                                Text(
+                                  job.opportunityType.toUpperCase(),
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 9.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Positioned(
+                          right: 8.w,
+                          top: 8.h,
+                          child: SvgPicture.asset(
+                            'assets/userbox.svg',
+                            width: 82.w,
+                            height: 50.h,
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Content section (remainder of card height)
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        cfx(16),
+                        cfy(12),
+                        cfx(16),
+                        cfy(108),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            job.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 20.sp,
+                              color: const Color(0xFF0B0D13),
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          if (job.domain.isNotEmpty) ...[
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/domain.svg',
+                                  height: 26.h,
+                                  fit: BoxFit.fitHeight,
+                                ),
+                                Text(
+                                  job.domain,
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                          ],
+                          if (job.location.isNotEmpty) ...[
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/location.svg',
+                                  width: 10.w,
+                                  height: 14.h,
+                                ),
+                                SizedBox(width: 4.w),
+                                Expanded(
+                                  child: Text(
+                                    'Opportunity Location: ${job.location}',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 11.sp,
+                                      color: const Color(0xFF666666),
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                          ],
+                          if (job.description.isNotEmpty) ...[
+                            Text(
+                              job.description,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11.sp,
+                                color: const Color(0xFF555555),
+                                height: 1.45,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                          ],
+                          if (job.requirements.isNotEmpty) ...[
+                            Text(
+                              'Requirements',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 13.sp,
+                                color: const Color(0xFFA195B5),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 4.h),
+                            ...job.requirements
+                                .take(3)
+                                .map(
+                                  (req) => Padding(
+                                    padding: EdgeInsets.only(bottom: 3.h),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 5.h),
+                                          child: Container(
+                                            width: 4,
+                                            height: 4,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF555555),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 6.w),
+                                        Expanded(
+                                          child: Text(
+                                            req,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.dmSans(
+                                              fontSize: 11.sp,
+                                              color: const Color(0xFF555555),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                           ],
                         ],
                       ),
-                      SizedBox(height: 8.h),
-                      if (job.domain.isNotEmpty ||
-                          job.opportunityType.isNotEmpty)
-                        Row(
-                          children: [
-                            if (job.domain.isNotEmpty)
-                              _chip(job.domain, _teal.withValues(alpha: 0.35)),
-                            if (job.domain.isNotEmpty &&
-                                job.opportunityType.isNotEmpty)
-                              SizedBox(width: 6.w),
-                            if (job.opportunityType.isNotEmpty)
-                              _chip(
-                                job.opportunityType,
-                                _teal.withValues(alpha: 0.35),
-                              ),
-                          ],
-                        ),
-                      if (job.domain.isNotEmpty ||
-                          job.opportunityType.isNotEmpty)
-                        SizedBox(height: 8.h),
-                      if (job.salary.isNotEmpty)
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.payments_outlined,
-                              color: _tealLt,
-                              size: 13,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              job.period.isNotEmpty
-                                  ? '${job.salary} · ${job.period}'
-                                  : job.salary,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: _tealLt,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (job.salary.isNotEmpty) SizedBox(height: 8.h),
-                      if (job.description.isNotEmpty) ...[
-                        Builder(
-                          builder: (_) {
-                            final expanded = isExpanded(job.id);
-                            final full = job.description;
-                            final needsTruncation = full.length > 200;
-                            final shown = needsTruncation && !expanded
-                                ? '${full.substring(0, 200)}…'
-                                : full;
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  shown,
-                                  style: TextStyle(
-                                    fontSize: 11.sp,
-                                    color: Colors.white54,
-                                    fontFamily: 'Poppins',
-                                    height: 1.4,
-                                  ),
-                                ),
-                                if (needsTruncation) ...[
-                                  SizedBox(height: 2.h),
-                                  GestureDetector(
-                                    onTap: () => toggleExpanded(job.id),
-                                    child: Text(
-                                      expanded ? 'Show less' : 'Read more',
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: _teal,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            );
-                          },
-                        ),
-                        SizedBox(height: 8.h),
-                      ],
-                      ...job.requirements
-                          .take(2)
-                          .map(
-                            (req) => Padding(
-                              padding: EdgeInsets.only(bottom: 4.h),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 5.h),
-                                    child: Container(
-                                      width: 5,
-                                      height: 5,
-                                      decoration: const BoxDecoration(
-                                        color: _teal,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Expanded(
-                                    child: Text(
-                                      req,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: Colors.white60,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
-        if (liveDirection != null) _buildSwipeOverlay(liveDirection),
-      ],
+            ),
+            if (liveDirection != null) _buildSwipeOverlay(liveDirection),
+          ],
+        );
+      },
     );
   }
 
@@ -559,115 +536,60 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     );
   }
 
-  // ─── FAB row ──────────────────────────────────────────────────────────────
-  Widget _buildFabRow() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _fab(
-          icon: Icons.rotate_left_rounded,
-          color: _canUndo ? _teal : Colors.white24,
-          label: 'Undo',
-          onTap: _canUndo
-              ? () {
-                  _controller.undo();
-                  if (_lastSwipedJobId != null) {
-                    widget.jobNotifier.undoSwipe(
-                      _lastSwipedJobId!,
-                      widget.currentUserId,
-                    );
-                  }
-                  setState(() {
-                    _canUndo = false;
-                    _lastSwipedJobId = null;
-                  });
-                }
-              : () {},
-          size: 50,
-        ),
-        SizedBox(width: 14.w),
-        _fab(
-          icon: Icons.close_rounded,
-          color: _red,
-          label: 'Pass',
-          onTap: () => _controller.swipe(CardSwiperDirection.left),
-          size: 64,
-        ),
-        SizedBox(width: 14.w),
-        _fab(
-          icon: Icons.star_rounded,
-          color: _green,
-          label: 'Apply',
-          onTap: () => _controller.swipe(CardSwiperDirection.right),
-          size: 64,
-        ),
-        SizedBox(width: 14.w),
-        _fab(
-          icon: Icons.bookmark_rounded,
-          color: _teal,
-          label: 'Save',
-          onTap: () => _controller.swipe(CardSwiperDirection.top),
-          size: 50,
-        ),
-      ],
-    );
-  }
+  // ─── Button Group SVG ────────────────────────────────────────────────────
+  // SVG viewBox: 590×143. Button centres at x ≈ 30, 173, 315, 458.
+  // Tap-area splits at midpoints: 101, 244, 386.
+  // Order (L→R): heart/apply, X/pass, bookmark/save, back/undo.
+  Widget _buildButtonGroup(
+    double Function(double) fw,
+    double Function(double) fh,
+  ) {
+    final totalW = fw(582);
+    final totalH = fh(133);
 
-  Widget _fab({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback onTap,
-    required double size,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: size.w,
-            height: size.w,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              boxShadow: [
-                // top-edge highlight — gives the raised dome feel
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-                // coloured glow
-                BoxShadow(
-                  color: color.withValues(alpha: 0.55),
-                  blurRadius: 16,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 6),
-                ),
-                // hard dark base — the "depth" layer
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 8,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+    const splits = [0.0, 101 / 590, 244 / 590, 386 / 590, 1.0];
+
+    final tapActions = <VoidCallback>[
+      () => _controller.swipe(CardSwiperDirection.right),
+      () => _controller.swipe(CardSwiperDirection.left),
+      () => _controller.swipe(CardSwiperDirection.top),
+      () {
+        if (!_canUndo) return;
+        _controller.undo();
+        if (_lastSwipedJobId != null) {
+          widget.jobNotifier.undoSwipe(_lastSwipedJobId!, widget.currentUserId);
+        }
+        setState(() {
+          _canUndo = false;
+          _lastSwipedJobId = null;
+        });
+      },
+    ];
+
+    return Stack(
+      children: [
+        SvgPicture.asset(
+          'assets/Button Group.svg',
+          width: totalW,
+          height: totalH,
+          fit: BoxFit.fill,
+        ),
+        ...List.generate(4, (i) {
+          final leftFrac = splits[i];
+          final rightFrac = splits[i + 1];
+          return Positioned(
+            left: leftFrac * totalW,
+            top: 0,
+            width: (rightFrac - leftFrac) * totalW,
+            height: totalH,
+            child: GestureDetector(
+              onTap: tapActions[i],
+              behavior: HitTestBehavior.opaque,
+              child: const SizedBox.expand(),
             ),
-            child: Icon(icon, color: Colors.white, size: size * 0.44),
-          ),
-          SizedBox(height: 5.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.sp,
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
-            ),
-          ),
-        ],
-      ),
+          );
+        }),
+      ],
     );
   }
 
@@ -711,26 +633,6 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  // ─── Chip ─────────────────────────────────────────────────────────────────
-  Widget _chip(String text, Color bg) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11.sp,
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Poppins',
         ),
       ),
     );
