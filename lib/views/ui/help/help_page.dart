@@ -31,78 +31,53 @@ class _HelpSupportPageState extends State<HelpSupportPage>
   final List<_FaqItem> _faqs = const [
     _FaqItem(
       icon: Feather.info,
-      question: 'What is Proco and what is it used for?',
+      question: 'What is Lagoon and what is it used for?',
       answer:
-          'Proco is a smart opportunity-matching platform that connects people based on their skills, interests, location, and goals. Whether you want to join a competition, collaborate on a research project, contribute to open-source, or find freelance work, Proco finds the right people and the right opportunities for you — automatically.',
-    ),
-    _FaqItem(
-      icon: Feather.zap,
-      question: 'How does Proco connect me to opportunities?',
-      answer:
-          'Our algorithm analyses your profile — your skills, hobbies, interests, and location — and displays you with opportunities posted by other users nearby and globally. The more complete your profile, the better your matches.',
+          'Lagoon is a smart networking platform that connects students based on their skills and interests. Whether you want to join a competition, collaborate on a project, conduct research, or find freelance gigs and internships, Lagoon finds the right teammates for you.',
     ),
     _FaqItem(
       icon: Feather.shuffle,
       question: 'What does swiping left or right mean?',
       answer:
-          'Swipe RIGHT on an opportunity or a person to express interest / connect. Swipe LEFT to pass. If both you and another user swipe right on each other, a connection is formed and you can start collaborating.',
+          'Swipe RIGHT on an opportunity or a person to express interest. Swipe LEFT to pass. If both parties swipe right on each other, a match is formed and you can start collaborating immediately.',
     ),
     _FaqItem(
       icon: Feather.plus_circle,
       question: 'How do I create an opportunity?',
       answer:
-          'Tap the "+" button on the My Opportunities tab. Fill in the title, description, required skills, timeline, and collaboration type (competition, project, research, freelance, etc.). Once posted, Proco will surface it to relevant users nearby and with matching expertise.',
+          'Tap the "+" button on the My Opportunities tab. Fill in the details and select a category: Competition, Collaboration, Research, Freelance, or Internship. Once posted, Lagoon will surface it to relevant users.',
     ),
     _FaqItem(
-      icon: Feather.users,
-      question: 'How does user matching work?',
+      icon: Feather.filter,
+      question: 'How do I find specific types of work?',
       answer:
-          'Proco uses a multi-factor algorithm that considers your proximity to other users, overlapping skills, mutual interests, hobbies, and stated requirements. Users who are geographically close and have complementary or matching skill sets are ranked higher in your feed, increasing the chance of meaningful collaboration.',
+          'Use the Filters menu in the discovery stack. You can toggle between Competitions, Collaborations, Research, Freelance, and Internships to see only the opportunities that match your current goals.',
     ),
     _FaqItem(
-      icon: Feather.map_pin,
-      question: 'Why does proximity matter for matching?',
+      icon: Feather.eye_off,
+      question: 'Can I hide my profile temporarily?',
       answer:
-          'Collaborating with people nearby makes in-person meetups, competitions, and project sessions much more practical. Proximity-based matching ensures you find teammates you can actually work with side by side, while remote opportunities are also surfaced when relevant.',
-    ),
-    _FaqItem(
-      icon: Feather.briefcase,
-      question: 'What types of opportunities are available?',
-      answer:
-          'Currently Proco supports Competitions, Open-Source Projects, and Research Collaborations, Freelance and Internship categories. Each type has its own filters so you can quickly find what matters to you.',
+          'Yes. If you’ve found a team or want to take a break, go to Settings and toggle your "Discoverability" off. This hides your profile from the swipe stack until you are ready to connect again.',
     ),
     _FaqItem(
       icon: Feather.user_check,
       question: 'How do I improve my match quality?',
       answer:
-          'Complete every section of your profile — add your skills, list your interests and hobbies, set your location, and describe what you are looking for. The algorithm weighs profile completeness heavily, so an empty profile will receive far fewer and less relevant matches.',
+          'Complete every section of your profile—add your technical skills, list your interests, and link your portfolio. The algorithm prioritizes profile completeness, so a detailed profile leads to more relevant matches.',
     ),
     _FaqItem(
       icon: Feather.message_circle,
       question: 'How do I communicate with a match?',
       answer:
-          'Once a mutual connection is established (both parties swipe right), a chat thread opens automatically. You can discuss project details, share resources, and plan meetings directly inside the Proco messaging screen.',
+          'Once a mutual match is established, a chat thread opens automatically. You can discuss project details, share resources, and plan your collaboration directly inside the Lagoon messaging screen.',
     ),
     _FaqItem(
       icon: Feather.shield,
-      question: 'Is my personal data safe?',
+      question: 'Is Lagoon free to use?',
       answer:
-          'Yes. Proco encrypts all personal data in transit and at rest. Your exact location is never shared with other users — only a general proximity indicator is shown. You control what is visible on your public profile at all times through the Privacy settings.',
-    ),
-    _FaqItem(
-      icon: Feather.bell,
-      question: 'Why am I not receiving notifications?',
-      answer:
-          'Check that notification permissions are enabled for Proco in your device Settings. Inside the app, go to Settings → Notifications and ensure the relevant toggles are on. If the issue persists, try logging out and back in, or contact our support team below.',
-    ),
-    _FaqItem(
-      icon: Feather.refresh_cw,
-      question: 'How do I delete or edit a posted opportunity?',
-      answer:
-          'Open the opportunity card you created, tap the three-dot menu (⋮) in the top-right corner, and select "Edit" or "Delete". Deletions are permanent and will remove the opportunity from all matched users\' feeds immediately.',
+          'Yes, Lagoon is currently completely free for all students. You have full access to posting opportunities, swiping, and messaging at no cost.',
     ),
   ];
-
   @override
   void dispose() {
     _subjectController.dispose();
