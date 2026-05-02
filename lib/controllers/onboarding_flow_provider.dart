@@ -32,6 +32,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
 
   /// Date of birth stored as "YYYY-MM-DD".
   String dob = '';
+  String gender = '';
   String phone = '';
 
   /// Profile photo picked during onboarding.
@@ -43,6 +44,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
   String country = '';
   String displayAddress = '';
   String institution = '';
+  String branch = '';
   List<String> skills = [];
 
   bool get hasLocation => latitude != 0.0 || longitude != 0.0;
@@ -113,6 +115,8 @@ class OnboardingFlowProvider extends ChangeNotifier {
         dob: dob,
         userType: role,
         college: institution,
+        branch: branch,
+        gender: gender,
         latitude: latitude,
         longitude: longitude,
         city: city,

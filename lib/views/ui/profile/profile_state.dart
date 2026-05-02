@@ -71,8 +71,8 @@ class ProfileEditState extends ChangeNotifier {
         twitterUrl = d.twitterUrl ?? '';
         portfolioUrl = d.portfolioUrl ?? '';
         skills = List.from(d.skills);
-        interests = List.from(d.interests ?? []);
-        hobbies = List.from(d.hobbies ?? []);
+        interests = List.from(d.interests);
+        hobbies = List.from(d.hobbies);
       }
     } catch (e) {
       error = e.toString();

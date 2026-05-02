@@ -147,8 +147,10 @@ class UserHelper {
     request.fields['gitHubUrl'] = model.gitHubUrl;
     request.fields['twitterUrl'] = model.twitterUrl;
     request.fields['portfolioUrl'] = model.portfolioUrl;
-    request.fields['latitude'] = model.latitude.toString();
-    request.fields['longitude'] = model.longitude.toString();
+    if (model.latitude != 0 && model.longitude != 0) {
+      request.fields['latitude'] = model.latitude.toString();
+      request.fields['longitude'] = model.longitude.toString();
+    }
 
     // ✅ NEW: Send interests, hobbies, skills
     request.fields['skills'] = jsonEncode(model.skills);
