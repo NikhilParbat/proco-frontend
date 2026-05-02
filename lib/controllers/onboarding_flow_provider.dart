@@ -49,8 +49,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
 
-  // Total pages = 8 (indices 0-7). Skills page (7) calls submit() directly.
-  static const int _totalPages = 8;
+  static const int _totalPages = 1;
 
   void nextPage() {
     if (_currentPage < _totalPages - 1) {

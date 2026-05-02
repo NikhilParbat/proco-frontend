@@ -12,6 +12,8 @@ class HomeCardLayout extends StatelessWidget {
   final String location;
   final String imageUrl;
   final VoidCallback? onMenuTap;
+  final VoidCallback? onNotificationTap;
+  final VoidCallback? onFilterTap;
 
   const HomeCardLayout({
     super.key,
@@ -20,6 +22,8 @@ class HomeCardLayout extends StatelessWidget {
     this.location = 'Remote – Austin, TX',
     this.imageUrl = '',
     this.onMenuTap,
+    this.onNotificationTap,
+    this.onFilterTap,
   });
 
   @override
@@ -36,19 +40,6 @@ class HomeCardLayout extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ── Card background  canvas X=44, Y=0 ──────────────────────────
-          Positioned(
-            left: fw(44),
-            top: 0,
-            child: SvgPicture.asset(
-              'assets/Card Background.svg',
-              width: fw(609),
-              height: fh(1222),
-              fit: BoxFit.fill,
-            ),
-          ),
-
-          // ── Placeholder / job image  canvas X=94, Y=39 ─────────────────
           Positioned(
             left: fw(94),
             top: fh(39),
@@ -107,42 +98,34 @@ class HomeCardLayout extends StatelessWidget {
             ),
           ),
 
-          // ── Lagoon logo / hamburger  Figma X=82, Y=42 → frame X=38 (82−44) ──
+          // ── Top header: Lagcon logo + filter & notification icons ──────────
           Positioned(
             left: fw(38),
+            right: fw(38),
             top: fh(42),
-            child: GestureDetector(
-              onTap: onMenuTap,
-              child: SvgPicture.asset(
-                'assets/Lagcon.svg',
-                width: fw(205),
-                height: fh(61),
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-
-          // ── Filter icon  Figma X=555, Y=58 → frame X=511 (555−44) ─────────
-          Positioned(
-            left: fw(511),
-            top: fh(58),
-            child: SvgPicture.asset(
-              'assets/filters.svg',
-              width: fw(35),
-              height: fh(32),
-              fit: BoxFit.contain,
-            ),
-          ),
-
-          // ── Notification icon  Figma X=630, Y=54 → frame X=586 (630−44) ───
-          Positioned(
-            left: fw(586),
-            top: fh(54),
-            child: SvgPicture.asset(
-              'assets/noti.svg',
-              width: fw(36),
-              height: fh(39),
-              fit: BoxFit.contain,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: onMenuTap,
+                  child: SvgPicture.asset(
+                    'assets/WLagcon.svg',
+                    width: fw(205),
+                    height: fh(61),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: onFilterTap,
+                  child: Icon(Icons.tune, size: fw(32), color: Colors.black),
+                ),
+                SizedBox(width: fw(20)),
+                GestureDetector(
+                  onTap: onNotificationTap,
+                  child: Icon(Icons.notifications_outlined, size: fw(36), color: Colors.black),
+                ),
+              ],
             ),
           ),
 

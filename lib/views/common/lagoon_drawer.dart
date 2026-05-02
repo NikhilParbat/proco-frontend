@@ -32,7 +32,7 @@ class LagoonDrawer extends StatelessWidget {
             Padding(
               padding: EdgeInsets.fromLTRB(13.w, 18.h, 13.w, 14.h),
               child: SvgPicture.asset(
-                'assets/Lagcon.svg',
+                'assets/WLagcon.svg',
                 width: 100.w,
                 height: 26.h,
                 fit: BoxFit.contain,

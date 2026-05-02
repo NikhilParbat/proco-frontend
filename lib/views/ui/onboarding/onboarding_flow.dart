@@ -4,14 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/views/ui/auth/login.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_name_page.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_role_page.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_dob_page.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_phone_page.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_photo_page.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_location_page.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_institution_page.dart';
-import 'package:proco/views/ui/onboarding/pages/ob_skills_page.dart';
+import 'package:proco/views/ui/onboarding/pages/ob_chat_intro_page.dart';
 
 class OnboardingFlow extends StatelessWidget {
   final String initialName;
@@ -39,14 +32,7 @@ class _OnboardingFlowBody extends StatelessWidget {
   const _OnboardingFlowBody();
 
   static const _pages = <Widget>[
-    ObNamePage(),       // 1 — Name
-    ObRolePage(),       // 2 — Student / Young Professional
-    ObDobPage(),        // 3 — Date of birth
-    ObPhonePage(),      // 4 — Phone number
-    ObPhotoPage(),      // 5 — Profile photo
-    ObLocationPage(),   // 6 — Location
-    ObInstitutionPage(), // 7 — University / Office
-    ObSkillsPage(),      // 8 — Skills
+    ObChatIntroPage(),
   ];
 
   @override

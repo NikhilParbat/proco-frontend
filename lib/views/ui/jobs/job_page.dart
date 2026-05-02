@@ -58,7 +58,6 @@ class _JobPageState extends State<JobPage> {
                       // ── Hero header (dark navy) ───────────────────────
                       SliverToBoxAdapter(child: _buildHeader(context, job)),
 
-                      // ── Pill badges row ───────────────────────────────
                       SliverToBoxAdapter(
                         child: Transform.translate(
                           offset: const Offset(0, -20),

@@ -21,7 +21,7 @@ const kLightPurple = Color(0xff6352c5);
 const kDarkPurple = Color(0xff6352c5);
 const kTealLight = Color(0xFF0BBFCA);
 const kTeal = Color(0xFF08979F);
-const kThemeColor = Color.fromARGB(255, 49, 245, 108);
+const kThemeColor = Color.fromARGB(255, 216, 87, 87);
 const kBackgroundColor = Color(0xFFF4F6FA);
 const kCross = Color.fromARGB(234, 14, 15, 15);
 const kBookmark = Color.fromARGB(234, 14, 15, 15);
@@ -91,3 +91,28 @@ List<String> skills = [
 ];
 
 List<String> profile = [];
+// --- Typography Styles ---
+
+// Heading Font: Montserrat
+final kHeadingStyle = TextStyle(
+  fontFamily: 'Montserrat',
+  fontSize: 25.sp,
+  fontWeight: FontWeight.bold,
+  color: kDark,
+);
+
+// Sub-Heading/Sub-text: DM Sans
+final kSubTextStyle = TextStyle(
+  fontFamily: 'DMSans',
+  fontSize: 16.sp,
+  fontWeight: FontWeight.w500,
+  color: const Color.fromARGB(255, 20, 20, 20),
+);
+
+// Small Sub-text/Body: DM Sans
+final kSmallTextStyle = TextStyle(
+  fontFamily: 'DMSans',
+  fontSize: 14.sp,
+  fontWeight: FontWeight.normal,
+  color: kDarkGrey,
+);

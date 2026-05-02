@@ -12,6 +12,7 @@ class CustomTextFieldInput extends StatelessWidget {
     this.obscureText,
     this.maxLength,
     this.inputFormatters,
+    this.hintStyle,
   });
 
   final TextEditingController controller;
@@ -22,6 +23,7 @@ class CustomTextFieldInput extends StatelessWidget {
   final bool? obscureText;
   final int? maxLength;
   final List<TextInputFormatter>? inputFormatters;
+  final TextStyle? hintStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class CustomTextFieldInput extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hintText,
         suffixIcon: suffixIcon,
-        hintStyle: const TextStyle(color: Colors.white70, fontSize: 16),
+        hintStyle: hintStyle ?? const TextStyle(color: Colors.white70, fontSize: 16),
         errorBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.zero,
           borderSide: BorderSide(color: Colors.red, width: 0.5),
