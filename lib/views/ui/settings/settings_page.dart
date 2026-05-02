@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-import 'package:proco/views/common/app_bar.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
+import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/device_mgt/devices_info.dart';
 import 'package:proco/views/ui/settings/account_page.dart';
 import 'package:proco/views/ui/settings/help_support_page.dart';
@@ -17,16 +17,8 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _navy,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(0.065.sh),
-        child: CustomAppBar(
-          text: 'Settings',
-          child: Padding(
-            padding: EdgeInsets.only(left: 0.010.sh),
-            child: const DrawerWidget(),
-          ),
-        ),
-      ),
+      drawer: const LagoonDrawer(),
+      appBar: const LagoonAppBar(),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),

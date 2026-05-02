@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/controllers/exports.dart';
-import 'package:proco/views/common/app_bar.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
+import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/bookmarks/bookmark_card_swiper.dart';
 import 'package:provider/provider.dart';
 
@@ -29,16 +29,8 @@ class _BookMarkPageState extends State<BookMarkPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _navy,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(0.065.sh),
-        child: CustomAppBar(
-          text: 'Saved Jobs',
-          child: Padding(
-            padding: EdgeInsets.only(left: 0.010.sh),
-            child: const DrawerWidget(),
-          ),
-        ),
-      ),
+      drawer: const LagoonDrawer(),
+      appBar: const LagoonAppBar(),
       body: Consumer<BookMarkNotifier>(
         builder: (context, bookMarkNotifier, child) {
           if (bookMarkNotifier.isLoading) {

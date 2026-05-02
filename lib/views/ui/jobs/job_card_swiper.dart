@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
+import 'package:proco/constants/app_constants.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 
@@ -539,10 +541,10 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     );
   }
 
-  // ─── Button Group SVG ────────────────────────────────────────────────────
-  // SVG viewBox: 590×143. Button centres at x ≈ 30, 173, 315, 458.
-  // Tap-area splits at midpoints: 101, 244, 386.
-  // Order (L→R): heart/apply, X/pass, bookmark/save, back/undo.
+  // ─── Button Group ────────────────────────────────────────────────────────
+  // Order (L→R): heart/apply, X/pass, bookmark/save, reply/undo.
+  // Heart is larger; all buttons are vertically centred in the group area
+  // so they straddle the card's bottom edge exactly.
   Widget _buildButtonGroup(
     double Function(double) fw,
     double Function(double) fh,
@@ -550,49 +552,88 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     final totalW = fw(582);
     final totalH = fh(133);
 
-    const splits = [0.0, 101 / 590, 244 / 590, 386 / 590, 1.0];
+    final heartDiameter = totalH;
+    final smallDiameter = totalH * 0.76;
 
-    final tapActions = <VoidCallback>[
-      () => _controller.swipe(CardSwiperDirection.right),
-      () => _controller.swipe(CardSwiperDirection.left),
-      () => _controller.swipe(CardSwiperDirection.top),
-      () {
-        if (!_canUndo) return;
-        _controller.undo();
-        if (_lastSwipedJobId != null) {
-          widget.jobNotifier.undoSwipe(_lastSwipedJobId!, widget.currentUserId);
-        }
-        setState(() {
-          _canUndo = false;
-          _lastSwipedJobId = null;
-        });
-      },
-    ];
-
-    return Stack(
-      children: [
-        SvgPicture.asset(
-          'assets/Button Group.svg',
-          width: totalW,
-          height: totalH,
-          fit: BoxFit.fill,
+    Widget buildBtn({
+      required IconData icon,
+      required Color bgColor,
+      required Color iconColor,
+      required double diameter,
+      required VoidCallback? onTap,
+    }) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: diameter,
+          height: diameter,
+          decoration: BoxDecoration(
+            color: bgColor,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: iconColor, size: diameter * 0.42),
         ),
-        ...List.generate(4, (i) {
-          final leftFrac = splits[i];
-          final rightFrac = splits[i + 1];
-          return Positioned(
-            left: leftFrac * totalW,
-            top: 0,
-            width: (rightFrac - leftFrac) * totalW,
-            height: totalH,
-            child: GestureDetector(
-              onTap: tapActions[i],
-              behavior: HitTestBehavior.opaque,
-              child: const SizedBox.expand(),
-            ),
-          );
-        }),
-      ],
+      );
+    }
+
+    return SizedBox(
+      width: totalW,
+      height: totalH,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          buildBtn(
+            icon: CupertinoIcons.heart_fill,
+            bgColor: kThemeColor,
+            iconColor: Colors.white,
+            diameter: heartDiameter,
+            onTap: () => _controller.swipe(CardSwiperDirection.right),
+          ),
+          buildBtn(
+            icon: CupertinoIcons.xmark,
+            bgColor: kCross,
+            iconColor: Colors.white,
+            diameter: smallDiameter,
+            onTap: () => _controller.swipe(CardSwiperDirection.left),
+          ),
+          buildBtn(
+            icon: CupertinoIcons.bookmark,
+            bgColor: kBookmark,
+            iconColor: Colors.white,
+            diameter: smallDiameter,
+            onTap: () => _controller.swipe(CardSwiperDirection.top),
+          ),
+          buildBtn(
+            icon: Icons.reply,
+            bgColor: krevert,
+            iconColor: _canUndo ? Colors.white : Colors.white38,
+            diameter: smallDiameter,
+            onTap: _canUndo
+                ? () {
+                    _controller.undo();
+                    if (_lastSwipedJobId != null) {
+                      widget.jobNotifier.undoSwipe(
+                        _lastSwipedJobId!,
+                        widget.currentUserId,
+                      );
+                    }
+                    setState(() {
+                      _canUndo = false;
+                      _lastSwipedJobId = null;
+                    });
+                  }
+                : null,
+          ),
+        ],
+      ),
     );
   }
 

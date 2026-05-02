@@ -59,7 +59,9 @@ class _MyAppState extends State<MyApp> {
           debugShowCheckedModeBanner: false,
           title: 'ProCo',
           theme: ThemeData(
-            scaffoldBackgroundColor: kLight,
+            // CHANGE THIS LINE:
+            scaffoldBackgroundColor: kBackgroundColor,
+
             iconTheme: const IconThemeData(color: kDark),
             primarySwatch: Colors.grey,
           ),

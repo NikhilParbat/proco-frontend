@@ -21,6 +21,11 @@ const kLightPurple = Color(0xff6352c5);
 const kDarkPurple = Color(0xff6352c5);
 const kTealLight = Color(0xFF0BBFCA);
 const kTeal = Color(0xFF08979F);
+const kThemeColor = Color.fromARGB(255, 49, 245, 108);
+const kBackgroundColor = Color(0xFFF4F6FA);
+const kCross = Color.fromARGB(234, 14, 15, 15);
+const kBookmark = Color.fromARGB(234, 14, 15, 15);
+const krevert = Color.fromARGB(234, 14, 15, 15);
 
 double height = 825.h;
 double width = 375.w;

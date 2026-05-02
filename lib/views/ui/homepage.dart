@@ -1,10 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/filter_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
+import 'package:proco/services/helpers/notification_helper.dart';
+import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/filters/filter_page.dart';
 import 'package:proco/views/ui/jobs/job_card_swiper.dart';
 import 'package:proco/views/ui/notification/notification_page.dart';
@@ -23,6 +27,16 @@ class _HomePageState extends State<HomePage> {
   // static const Color _navy = Color(0xFF040326);
   static const Color _bg = Color(0xFFF4F6FA);
 
+  bool _hasNewNotification = NotificationHelper.notifications.isNotEmpty;
+
+  void _onNotificationUpdate() {
+    if (mounted) {
+      setState(() {
+        _hasNewNotification = NotificationHelper.notifications.isNotEmpty;
+      });
+    }
+  }
+
   // ✅ Memoize filter check
   bool _isFilterActive(GetFilterRes f) {
     return f.selectedOptions.isNotEmpty ||
@@ -36,6 +50,44 @@ class _HomePageState extends State<HomePage> {
         f.selectedLocationOption.isNotEmpty ||
         f.sortByTime ||
         f.postedWithin.isNotEmpty;
+  }
+
+  // ✅ Helper for clean, consistent Action Buttons with dots
+  Widget _buildAppBarAction({
+    required IconData icon,
+    required double size,
+    required VoidCallback onTap,
+    required bool showDot,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40.w,
+        height: 40.h,
+        color: Colors.transparent,
+        alignment: Alignment.center,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            Icon(icon, size: size, color: Colors.black),
+            if (showDot)
+              Positioned(
+                top: 2,
+                right: 2,
+                child: Container(
+                  width: 8.w,
+                  height: 8.w,
+                  decoration: const BoxDecoration(
+                    color: kThemeColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _refreshAfterFilter() async {
@@ -56,6 +108,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    NotificationHelper.addListener(_onNotificationUpdate);
 
     // Step 1: Load jobs AFTER UI renders
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -70,107 +123,41 @@ class _HomePageState extends State<HomePage> {
         );
       });
     });
+  }
 
-    // // Step 2: Delay notifications (heavy)
-    // Future.delayed(const Duration(seconds: 2), () {
-    //   if (!mounted) return;
-
-    //   Future.delayed(const Duration(seconds: 2), () async {
-    //     if (!mounted) return;
-
-    //     final prefs = await SharedPreferences.getInstance();
-    //     final token = prefs.getString('token') ?? '';
-
-    //     if (widget.userId.isNotEmpty && token.isNotEmpty) {
-    //       NotificationHelper.initialize(widget.userId, token);
-    //     }
-    //   });
-    // });
+  @override
+  void dispose() {
+    NotificationHelper.removeListener(_onNotificationUpdate);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
-      drawer: _buildDrawer(context),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        toolbarHeight: 40.h,
-        leadingWidth: 100.w,
-        leading: Builder(
-          builder: (ctx) => GestureDetector(
-            onTap: () => Scaffold.of(ctx).openDrawer(),
-            child: Padding(
-              padding: EdgeInsets.only(left: 12.w),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: SvgPicture.asset(
-                  'assets/Lagcon.svg',
-                  width: 80.w,
-                  height: 26.h,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-        ),
+      drawer: const LagoonDrawer(),
+      appBar: LagoonAppBar(
         actions: [
-          // Filter Button
-          GestureDetector(
+          _buildAppBarAction(
+            icon: CupertinoIcons.slider_horizontal_3,
+            size: 27.w,
             onTap: _refreshAfterFilter,
-            child: Container(
-              width: 40.w,
-              height: 40.h,
-              color: Colors.transparent,
-              alignment: Alignment.center,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Icon(
-                    Icons.tune_rounded,
-                    size: 24.w,
-                    color: Colors.black,
-                  ),
-                  if (context.watch<FilterNotifier>().activeFilter != null &&
-                      _isFilterActive(
-                        context.watch<FilterNotifier>().activeFilter!,
-                      ))
-                    Positioned(
-                      top: -2,
-                      right: -2,
-                      child: Container(
-                        width: 8.w,
-                        height: 8.w,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFf55631),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            showDot:
+                context.watch<FilterNotifier>().activeFilter != null &&
+                _isFilterActive(context.watch<FilterNotifier>().activeFilter!),
           ),
-          SizedBox(width: 4.w),
-          // Notification Button
-          GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationPage()),
-            ),
-            child: Container(
-              width: 40.w,
-              height: 40.h,
-              color: Colors.transparent,
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.notifications_outlined,
-                size: 24.w,
-                color: Colors.black,
-              ),
-            ),
+          SizedBox(width: 2.w),
+          _buildAppBarAction(
+            icon: CupertinoIcons.bell,
+            size: 24.w,
+            onTap: () {
+              setState(() => _hasNewNotification = false);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
+              );
+            },
+            showDot: _hasNewNotification,
           ),
           SizedBox(width: 16.w),
         ],
@@ -189,101 +176,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    const Color navy = Color(0xFF040326);
-    const Color teal = Color(0xFF08979F);
-
-    return Drawer(
-      backgroundColor: navy,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(13.w, 18.h, 13.w, 14.h),
-              child: SvgPicture.asset(
-                'assets/Lagcon.svg',
-                width: 100.w,
-                height: 26.h,
-                fit: BoxFit.contain,
-              ),
-            ),
-            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
-            SizedBox(height: 9.h),
-            _drawerItem(
-              context,
-              icon: Icons.home_rounded,
-              label: 'Home',
-              teal: teal,
-              onTap: () => Navigator.pop(context),
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.bookmark_rounded,
-              label: 'Bookmarks',
-              teal: teal,
-              onTap: () => Navigator.pop(context),
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.notifications_rounded,
-              label: 'Notifications',
-              teal: teal,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationPage()),
-                );
-              },
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.settings_rounded,
-              label: 'Settings',
-              teal: teal,
-              onTap: () => Navigator.pop(context),
-            ),
-            const Spacer(),
-            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
-            _drawerItem(
-              context,
-              icon: Icons.logout_rounded,
-              label: 'Log out',
-              teal: const Color(0xFFf55631),
-              onTap: () => Navigator.pop(context),
-            ),
-            SizedBox(height: 14.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _drawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color teal,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: teal, size: 22),
-      title: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Poppins',
-        ),
-      ),
-      onTap: onTap,
-    );
-  }
 }
 
-// ✅ NEW: Isolated filter button to prevent unnecessary rebuilds
+// ✅ UPDATED: Filter button now uses standard Flutter Icon to match AppBar
 class _FilterButton extends StatelessWidget {
   final VoidCallback onPressed;
   final bool Function(GetFilterRes) isFilterActive;
@@ -298,17 +193,13 @@ class _FilterButton extends StatelessWidget {
             filterNotifier.activeFilter != null &&
             isFilterActive(filterNotifier.activeFilter!);
         return Stack(
+          alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
             IconButton(
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
-              icon: SvgPicture.asset(
-                'assets/filters.svg',
-                width: 26.w,
-                height: 26.h,
-                fit: BoxFit.contain,
-              ),
+              icon: Icon(Icons.tune, size: 24.w, color: Colors.black),
               onPressed: onPressed,
             ),
             if (hasFilter)

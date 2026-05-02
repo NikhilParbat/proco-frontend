@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/image_provider.dart';
-import 'package:proco/views/common/app_bar.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
+import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/auth/edit_tab.dart';
 import 'package:proco/views/ui/auth/profile_state.dart';
 import 'package:proco/views/ui/auth/view_tab.dart';
@@ -51,16 +51,8 @@ class _ProfilePageState extends State<ProfilePage>
       child: Builder(
         builder: (context) => Scaffold(
           backgroundColor: _bg,
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(0.065.sh),
-            child: CustomAppBar(
-              text: 'Profile',
-              child: Padding(
-                padding: EdgeInsets.only(left: 0.010.sh),
-                child: const DrawerWidget(),
-              ),
-            ),
-          ),
+          drawer: const LagoonDrawer(),
+          appBar: const LagoonAppBar(),
           body: Consumer<ProfileEditState>(
             builder: (context, state, _) {
               if (state.isLoading) {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:intl/intl.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,20 +60,8 @@ class _NotificationPageState extends State<NotificationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF040326),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF040326),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF08959D)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: Color(0xFF08959D),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      drawer: const LagoonDrawer(),
+      appBar: const LagoonAppBar(),
       body: _notifications.isEmpty
           ? const Center(
               child: Column(
