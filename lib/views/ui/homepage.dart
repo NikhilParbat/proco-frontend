@@ -90,51 +90,89 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final sw = MediaQuery.of(context).size.width;
-    final sh = MediaQuery.of(context).size.height;
-    double fw(double v) => sw * v / 678.0;
-    double fh(double v) => sh * v / 1440.0;
-
     return Scaffold(
       backgroundColor: _bg,
+      drawer: _buildDrawer(context),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        // Logo canvas X=82, phone frame canvas X=44 → left=38; logo W=205
-        leadingWidth: fw(38 + 205),
-        leading: Padding(
-          padding: EdgeInsets.only(left: fw(38)),
-          child: GestureDetector(
-            onTap: _refreshAfterFilter,
-            child: SvgPicture.asset(
-              'assets/Lagcon.svg',
-              width: fw(205),
-              height: fh(61),
-              fit: BoxFit.contain,
+        toolbarHeight: 40.h,
+        leadingWidth: 100.w,
+        leading: Builder(
+          builder: (ctx) => GestureDetector(
+            onTap: () => Scaffold.of(ctx).openDrawer(),
+            child: Padding(
+              padding: EdgeInsets.only(left: 12.w),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SvgPicture.asset(
+                  'assets/Lagcon.svg',
+                  width: 80.w,
+                  height: 26.h,
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
           ),
         ),
         actions: [
-          // ✅ Isolated filter button widget
-          _FilterButton(
-            onPressed: _refreshAfterFilter,
-            isFilterActive: _isFilterActive,
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 6.w),
-            child: IconButton(
-              icon: SvgPicture.asset(
-                'assets/noti.svg',
-                width: 24,
-                height: 28,
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
+          // Filter Button
+          GestureDetector(
+            onTap: _refreshAfterFilter,
+            child: Container(
+              width: 40.w,
+              height: 40.h,
+              color: Colors.transparent,
+              alignment: Alignment.center,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    Icons.tune_rounded,
+                    size: 24.w,
+                    color: Colors.black,
+                  ),
+                  if (context.watch<FilterNotifier>().activeFilter != null &&
+                      _isFilterActive(
+                        context.watch<FilterNotifier>().activeFilter!,
+                      ))
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        width: 8.w,
+                        height: 8.w,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFf55631),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
+          SizedBox(width: 4.w),
+          // Notification Button
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationPage()),
+            ),
+            child: Container(
+              width: 40.w,
+              height: 40.h,
+              color: Colors.transparent,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.notifications_outlined,
+                size: 24.w,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          SizedBox(width: 16.w),
         ],
       ),
       body: Column(
@@ -150,6 +188,99 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Widget _buildDrawer(BuildContext context) {
+    const Color navy = Color(0xFF040326);
+    const Color teal = Color(0xFF08979F);
+
+    return Drawer(
+      backgroundColor: navy,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(13.w, 18.h, 13.w, 14.h),
+              child: SvgPicture.asset(
+                'assets/Lagcon.svg',
+                width: 100.w,
+                height: 26.h,
+                fit: BoxFit.contain,
+              ),
+            ),
+            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+            SizedBox(height: 9.h),
+            _drawerItem(
+              context,
+              icon: Icons.home_rounded,
+              label: 'Home',
+              teal: teal,
+              onTap: () => Navigator.pop(context),
+            ),
+            _drawerItem(
+              context,
+              icon: Icons.bookmark_rounded,
+              label: 'Bookmarks',
+              teal: teal,
+              onTap: () => Navigator.pop(context),
+            ),
+            _drawerItem(
+              context,
+              icon: Icons.notifications_rounded,
+              label: 'Notifications',
+              teal: teal,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationPage()),
+                );
+              },
+            ),
+            _drawerItem(
+              context,
+              icon: Icons.settings_rounded,
+              label: 'Settings',
+              teal: teal,
+              onTap: () => Navigator.pop(context),
+            ),
+            const Spacer(),
+            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+            _drawerItem(
+              context,
+              icon: Icons.logout_rounded,
+              label: 'Log out',
+              teal: const Color(0xFFf55631),
+              onTap: () => Navigator.pop(context),
+            ),
+            SizedBox(height: 14.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color teal,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: teal, size: 22),
+      title: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'Poppins',
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
 }
 
 // ✅ NEW: Isolated filter button to prevent unnecessary rebuilds
@@ -161,41 +292,41 @@ class _FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(right: 0.01.sh),
-      child: Consumer<FilterNotifier>(
-        builder: (context, filterNotifier, _) {
-          final hasFilter =
-              filterNotifier.activeFilter != null &&
-              isFilterActive(filterNotifier.activeFilter!);
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              IconButton(
-                icon: SvgPicture.asset(
-                  'assets/filters.svg',
-                  width: 28,
-                  height: 26,
-                ),
-                onPressed: onPressed,
+    return Consumer<FilterNotifier>(
+      builder: (context, filterNotifier, _) {
+        final hasFilter =
+            filterNotifier.activeFilter != null &&
+            isFilterActive(filterNotifier.activeFilter!);
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
+              icon: SvgPicture.asset(
+                'assets/filters.svg',
+                width: 26.w,
+                height: 26.h,
+                fit: BoxFit.contain,
               ),
-              if (hasFilter)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFf55631),
-                      shape: BoxShape.circle,
-                    ),
+              onPressed: onPressed,
+            ),
+            if (hasFilter)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFf55631),
+                    shape: BoxShape.circle,
                   ),
                 ),
-            ],
-          );
-        },
-      ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -229,7 +360,7 @@ class _FilterChipsBar extends StatelessWidget {
         ];
 
         return Container(
-          color: const Color(0xFF040326),
+          color: Colors.black,
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           child: SingleChildScrollView(
@@ -361,7 +492,7 @@ class _EmptyState extends StatelessWidget {
             'No jobs available',
             style: TextStyle(
               fontSize: 18.sp,
-              color: const Color(0xFF040326),
+              color: Colors.black,
               fontWeight: FontWeight.w600,
               fontFamily: 'Poppins',
             ),

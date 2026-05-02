@@ -185,23 +185,26 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                   }
                 }
 
-                // Side margin reduced by 1.5 Figma units each side (34→32.5)
-                // Shifted 6dp upward via Transform to better match Figma
+                // Card ends at Figma Y=1222 (1222/1440 of screen height).
+                // Bottom padding leaves fh(218) below the card so the
+                // button group can straddle the card's bottom border.
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: sw * 2 / 678),
-                  child: Transform.translate(
-                    offset: const Offset(0, -6),
-                    child: _buildCard(job, liveDirection),
+                  padding: EdgeInsets.only(
+                    left: sw * 2 / 678,
+                    right: sw * 2 / 678,
+                    bottom: fh(218),
                   ),
+                  child: _buildCard(job, liveDirection),
                 );
               },
             ),
           ),
 
-          // ── Button Group SVG (canvas: X=92, frame canvas X=44 → left=48) ────
+          // ── Button Group SVG — center at card bottom edge (fh(218) from screen bottom)
+          // button center = fh(218), height = fh(133) → bottom = fh(218 - 66.5) = fh(151.5)
           Positioned(
             left: fw(48),
-            bottom: fh(35),
+            bottom: fh(151.5),
             width: fw(582),
             height: fh(133),
             child: _buildButtonGroup(fw, fh),

@@ -23,5 +23,6 @@
         "Snackbars",
         "Swipeable",
         "Unmatch"
-    ]
+    ],
+    "cmake.sourceDirectory": "D:/Downloads/proco-frontend/linux"
 }

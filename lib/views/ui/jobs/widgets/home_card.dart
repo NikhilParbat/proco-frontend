@@ -11,6 +11,7 @@ class HomeCardLayout extends StatelessWidget {
   final String domain;
   final String location;
   final String imageUrl;
+  final VoidCallback? onMenuTap;
 
   const HomeCardLayout({
     super.key,
@@ -18,6 +19,7 @@ class HomeCardLayout extends StatelessWidget {
     this.domain = 'Web Development',
     this.location = 'Remote – Austin, TX',
     this.imageUrl = '',
+    this.onMenuTap,
   });
 
   @override
@@ -105,48 +107,42 @@ class HomeCardLayout extends StatelessWidget {
             ),
           ),
 
-          // ── Top navbar  logo at canvas X=82, Y=42 ──────────────────────
+          // ── Lagoon logo / hamburger  Figma X=82, Y=42 → frame X=38 (82−44) ──
           Positioned(
-            left: fw(82),
+            left: fw(38),
             top: fh(42),
-            child: SizedBox(
-              width: fw(584),
-              height: fh(61),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    child: SvgPicture.asset(
-                      'assets/Lagcon.svg',
-                      width: fw(205),
-                      height: fh(61),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Positioned(
-                    left: fw(473),
-                    top: fh(16),
-                    child: SvgPicture.asset(
-                      'assets/filters.svg',
-                      width: fw(35),
-                      height: fh(32),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Positioned(
-                    left: fw(548),
-                    top: fh(12),
-                    child: SvgPicture.asset(
-                      'assets/noti.svg',
-                      width: fw(36),
-                      height: fh(39),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ],
+            child: GestureDetector(
+              onTap: onMenuTap,
+              child: SvgPicture.asset(
+                'assets/Lagcon.svg',
+                width: fw(205),
+                height: fh(61),
+                fit: BoxFit.contain,
               ),
+            ),
+          ),
+
+          // ── Filter icon  Figma X=555, Y=58 → frame X=511 (555−44) ─────────
+          Positioned(
+            left: fw(511),
+            top: fh(58),
+            child: SvgPicture.asset(
+              'assets/filters.svg',
+              width: fw(35),
+              height: fh(32),
+              fit: BoxFit.contain,
+            ),
+          ),
+
+          // ── Notification icon  Figma X=630, Y=54 → frame X=586 (630−44) ───
+          Positioned(
+            left: fw(586),
+            top: fh(54),
+            child: SvgPicture.asset(
+              'assets/noti.svg',
+              width: fw(36),
+              height: fh(39),
+              fit: BoxFit.contain,
             ),
           ),
 
@@ -176,10 +172,10 @@ class HomeCardLayout extends StatelessWidget {
             ),
           ),
 
-          // ── Button Group  canvas X=92, Y=1272 ──────────────────────────
+          // ── Button Group  half inside / half below card bottom (card bottom = fh(1222), button height = fh(133))
           Positioned(
             left: fw(92),
-            top: fh(1272),
+            top: fh(1155.5),
             child: SvgPicture.asset(
               'assets/Button Group.svg',
               width: fw(582),

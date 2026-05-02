@@ -14,6 +14,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 class JobsHelper {
   static https.Client client = https.Client();
 
+  // Returns the error message from a non-200 response without crashing on HTML.
+  static String _errorMessage(https.Response response, String fallback) {
+    try {
+      final ct = response.headers['content-type'] ?? '';
+      if (ct.contains('application/json')) {
+        final body = jsonDecode(response.body);
+        if (body is Map) return (body['message'] as String?) ?? fallback;
+      }
+    } catch (_) {}
+    return '$fallback (status ${response.statusCode})';
+  }
+
   static Future<Map<String, String>> _authHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -46,10 +58,9 @@ class JobsHelper {
           data: jobsResponseFromJson(response.body),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to get filtered jobs',
+        message: _errorMessage(response, 'Failed to get filtered jobs'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getFilteredJobs error: $e');
@@ -88,10 +99,9 @@ class JobsHelper {
           data: jobsResponseFromJson(response.body),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to get filtered jobs (page $page)',
+        message: _errorMessage(response, 'Failed to get filtered jobs (page $page)'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getFilteredJobsPaged error: $e');
@@ -120,10 +130,9 @@ class JobsHelper {
           data: jobsResponseFromJson(response.body),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to get jobs',
+        message: _errorMessage(response, 'Failed to get jobs'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getJobs error: $e');
@@ -155,10 +164,9 @@ class JobsHelper {
           data: jobsResponseFromJson(response.body),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to get jobs (page $page)',
+        message: _errorMessage(response, 'Failed to get jobs (page $page)'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getJobsPaged error: $e');
@@ -187,10 +195,9 @@ class JobsHelper {
           data: getJobResFromJson(response.body),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to get job',
+        message: _errorMessage(response, 'Failed to get job'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getJob error: $e');
@@ -244,10 +251,9 @@ class JobsHelper {
           data: jobs,
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to load user jobs',
+        message: _errorMessage(response, 'Failed to load user jobs'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getUserJobs error: $e');
@@ -280,10 +286,9 @@ class JobsHelper {
           data: list.first,
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to get recent job',
+        message: _errorMessage(response, 'Failed to get recent job'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getRecent error: $e');
@@ -314,10 +319,9 @@ class JobsHelper {
           data: jobsResponseFromJson(response.body),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Search failed',
+        message: _errorMessage(response, 'Search failed'),
       );
     } catch (e) {
       debugPrint('JobsHelper.searchJobs error: $e');
@@ -386,10 +390,9 @@ class JobsHelper {
           data: JobsResponse.fromJson(data as Map<String, dynamic>),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to create job',
+        message: _errorMessage(response, 'Failed to create job'),
       );
     } catch (e) {
       debugPrint('JobsHelper.createJob error: $e');
@@ -454,10 +457,9 @@ class JobsHelper {
         return ApiResponse(success: true, message: 'Job updated successfully');
       }
 
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to update job',
+        message: _errorMessage(response, 'Failed to update job'),
       );
     } catch (e) {
       debugPrint('JobsHelper.updateJob error: $e');
@@ -481,10 +483,9 @@ class JobsHelper {
       if (response.statusCode == 200 || response.statusCode == 204) {
         return ApiResponse(success: true, message: 'Job deleted successfully');
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to delete job',
+        message: _errorMessage(response, 'Failed to delete job'),
       );
     } catch (e) {
       debugPrint('JobsHelper.deleteJob error: $e');
@@ -527,10 +528,9 @@ class JobsHelper {
               .toList(),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to load swiped users',
+        message: _errorMessage(response, 'Failed to load swiped users'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getSwipededUsersId error: $e');
@@ -619,10 +619,9 @@ class JobsHelper {
               .toList(),
         );
       }
-      final body = jsonDecode(response.body);
       return ApiResponse(
         success: false,
-        message: body['message'] ?? 'Failed to load matched users',
+        message: _errorMessage(response, 'Failed to load matched users'),
       );
     } catch (e) {
       debugPrint('JobsHelper.getMatchedUsersId error: $e');
