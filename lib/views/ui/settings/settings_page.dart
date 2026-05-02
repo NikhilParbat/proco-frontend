@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:proco/views/common/exports.dart'; // Import your constants
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/device_mgt/devices_info.dart';
@@ -11,12 +12,11 @@ import 'package:proco/views/ui/settings/notifications_page.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  static const Color _navy = Color(0xFF040326);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _navy,
+      // UPDATED: Using your uniform background color
+      backgroundColor: kBackgroundColor,
       drawer: const LagoonDrawer(),
       appBar: const LagoonAppBar(),
       body: SafeArea(
@@ -75,7 +75,8 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
 
-  static const Color _card = Color(0xFF0D1B2A);
+  // UPDATED: Colors adjusted for the light background theme
+  static const Color _navy = Color(0xFF040326);
   static const Color _teal = Color(0xFF08979F);
 
   const _SettingsTile({
@@ -92,8 +93,16 @@ class _SettingsTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
         decoration: BoxDecoration(
-          color: _card,
+          // UPDATED: Using White for the tile to pop against kBackgroundColor
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -101,7 +110,7 @@ class _SettingsTile extends StatelessWidget {
               width: 44.w,
               height: 44.w,
               decoration: BoxDecoration(
-                color: _teal.withValues(alpha: 0.12),
+                color: _teal.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(icon, color: _teal, size: 22),
@@ -116,7 +125,7 @@ class _SettingsTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: _navy, // UPDATED: Dark text for light background
                       fontFamily: 'Poppins',
                     ),
                   ),
@@ -125,7 +134,7 @@ class _SettingsTile extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 11.sp,
-                      color: Colors.white38,
+                      color: Colors.black45, // UPDATED: Muted dark text
                       fontFamily: 'Poppins',
                     ),
                   ),
@@ -134,7 +143,7 @@ class _SettingsTile extends StatelessWidget {
             ),
             const Icon(
               Icons.chevron_right_rounded,
-              color: Colors.white24,
+              color: Colors.black26, // UPDATED: Subtle dark arrow
               size: 22,
             ),
           ],

@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/views/common/drawer/drawer_screen.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/login.dart';
-import 'package:proco/views/ui/auth/profile_screen.dart';
+import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:proco/views/ui/bookmarks/bookmarks.dart';
 import 'package:proco/views/ui/chat/chat_list.dart';
 import 'package:proco/views/ui/homepage.dart';

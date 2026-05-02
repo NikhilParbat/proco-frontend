@@ -24,7 +24,6 @@ class _JobPageState extends State<JobPage> {
   static const Color _teal = Color(0xFF08979F);
   static const Color _tealLt = Color(0xFF0BBFCA);
   static const Color _orange = Color(0xFFf55631);
-  static const Color _bg = Color(0xFFF4F6FA); // light body bg
   static const Color _white = Colors.white; // ✅ renamed from _card
 
   @override
@@ -40,10 +39,11 @@ class _JobPageState extends State<JobPage> {
     return Consumer<JobsNotifier>(
       builder: (context, jobsNotifier, child) {
         return Scaffold(
-          backgroundColor: _bg,
+          backgroundColor: kBackgroundColor,
           body: Builder(
             builder: (context) {
-              if (jobsNotifier.isLoadingCurrentJob || jobsNotifier.currentJob == null) {
+              if (jobsNotifier.isLoadingCurrentJob ||
+                  jobsNotifier.currentJob == null) {
                 return const Center(
                   child: CircularProgressIndicator(color: _teal),
                 );
@@ -51,47 +51,47 @@ class _JobPageState extends State<JobPage> {
 
               final job = jobsNotifier.currentJob!;
               return Stack(
-                  children: [
-                    // ── Scrollable body ───────────────────────────────────
-                    CustomScrollView(
-                      slivers: [
-                        // ── Hero header (dark navy) ───────────────────────
-                        SliverToBoxAdapter(child: _buildHeader(context, job)),
+                children: [
+                  // ── Scrollable body ───────────────────────────────────
+                  CustomScrollView(
+                    slivers: [
+                      // ── Hero header (dark navy) ───────────────────────
+                      SliverToBoxAdapter(child: _buildHeader(context, job)),
 
-                        // ── Pill badges row ───────────────────────────────
-                        SliverToBoxAdapter(
-                          child: Transform.translate(
-                            offset: const Offset(0, -20),
-                            child: _buildBadgeRow(job),
-                          ),
+                      // ── Pill badges row ───────────────────────────────
+                      SliverToBoxAdapter(
+                        child: Transform.translate(
+                          offset: const Offset(0, -20),
+                          child: _buildBadgeRow(job),
                         ),
+                      ),
 
-                        // ── Body cards ────────────────────────────────────
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 120.h),
-                          sliver: SliverList(
-                            delegate: SliverChildListDelegate([
-                              _buildDescriptionCard(job),
-                              SizedBox(height: 16.h),
-                              _buildLocationCard(job),
-                              SizedBox(height: 16.h),
-                              _buildRequirementsCard(job),
-                              SizedBox(height: 16.h),
-                            ]),
-                          ),
+                      // ── Body cards ────────────────────────────────────
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 120.h),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            _buildDescriptionCard(job),
+                            SizedBox(height: 16.h),
+                            _buildLocationCard(job),
+                            SizedBox(height: 16.h),
+                            _buildRequirementsCard(job),
+                            SizedBox(height: 16.h),
+                          ]),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
 
-                    // ── Floating Apply button ─────────────────────────────
-                    Positioned(
-                      bottom: 24.h,
-                      left: 20.w,
-                      right: 20.w,
-                      child: _buildApplyButton(job),
-                    ),
-                  ],
-                );
+                  // ── Floating Apply button ─────────────────────────────
+                  Positioned(
+                    bottom: 24.h,
+                    left: 20.w,
+                    right: 20.w,
+                    child: _buildApplyButton(job),
+                  ),
+                ],
+              );
             },
           ),
         );

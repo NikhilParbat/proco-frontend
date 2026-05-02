@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:proco/views/ui/bookmarks/bookmarks.dart';
 import 'package:proco/views/ui/jobs/jobs_list.dart';
 import 'package:proco/views/ui/notification/notification_page.dart';
+import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:proco/views/ui/settings/settings_page.dart';
 
 class LagoonDrawer extends StatelessWidget {
@@ -12,15 +13,11 @@ class LagoonDrawer extends StatelessWidget {
   static const Color _navy = Color(0xFF040326);
   static const Color _teal = Color(0xFF08979F);
 
-  // Close drawer → pop to root → optionally push a new page.
   void _navigate(BuildContext context, {Widget? page}) {
-    Navigator.pop(context); // close drawer
-    Navigator.popUntil(context, (route) => route.isFirst); // back to home
+    Navigator.pop(context);
+    Navigator.popUntil(context, (route) => route.isFirst);
     if (page != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => page),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (_) => page));
     }
   }
 
@@ -41,7 +38,7 @@ class LagoonDrawer extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
             ),
-            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+            Divider(color: Colors.white.withOpacity(0.1), height: 1),
             SizedBox(height: 9.h),
             _item(
               context,
@@ -69,12 +66,19 @@ class LagoonDrawer extends StatelessWidget {
             ),
             _item(
               context,
+              icon: Icons.person_rounded,
+              label: 'Profile',
+              // 2. REMOVE 'const' HERE
+              onTap: () => _navigate(context, page: const ProfilePage()),
+            ),
+            _item(
+              context,
               icon: Icons.settings_rounded,
               label: 'Settings',
               onTap: () => _navigate(context, page: const SettingsPage()),
             ),
             const Spacer(),
-            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+            Divider(color: Colors.white.withOpacity(0.1), height: 1),
             _item(
               context,
               icon: Icons.logout_rounded,

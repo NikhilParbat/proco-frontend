@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/controllers/exports.dart';
+import 'package:proco/views/common/exports.dart'; // Ensure kBackgroundColor is imported here
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/bookmarks/bookmark_card_swiper.dart';
@@ -28,15 +29,14 @@ class _BookMarkPageState extends State<BookMarkPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _navy,
+      // UPDATED: Now uses your uniform background variable
+      backgroundColor: kBackgroundColor,
       drawer: const LagoonDrawer(),
       appBar: const LagoonAppBar(),
       body: Consumer<BookMarkNotifier>(
         builder: (context, bookMarkNotifier, child) {
           if (bookMarkNotifier.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: _teal),
-            );
+            return const Center(child: CircularProgressIndicator(color: _teal));
           }
 
           if (bookMarkNotifier.bookmarks.isEmpty) {
@@ -69,7 +69,8 @@ class _BookMarkPageState extends State<BookMarkPage> {
               fontFamily: 'Poppins',
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              // UPDATED: Changed to _navy so it is visible on the light background
+              color: _navy,
             ),
           ),
           SizedBox(height: 6.h),
@@ -78,7 +79,8 @@ class _BookMarkPageState extends State<BookMarkPage> {
             style: TextStyle(
               fontFamily: 'Poppins',
               fontSize: 13.sp,
-              color: Colors.white54,
+              // UPDATED: Changed to a semi-transparent _navy for readability
+              color: _navy.withOpacity(0.6),
             ),
           ),
         ],

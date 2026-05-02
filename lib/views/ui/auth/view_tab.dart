@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/constants/app_constants.dart';
-import 'package:proco/views/ui/auth/profile_state.dart';
+import 'package:proco/views/ui/profile/profile_state.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -68,7 +68,11 @@ class ViewTab extends StatelessWidget {
               SizedBox(height: 10.h),
             ],
             if (state.showDob && state.dob.isNotEmpty) ...[
-              _infoCard(Icons.cake_outlined, 'Date of Birth', _formatDob(state.dob)),
+              _infoCard(
+                Icons.cake_outlined,
+                'Date of Birth',
+                _formatDob(state.dob),
+              ),
               SizedBox(height: 10.h),
             ],
             if (state.userType.isNotEmpty) ...[
@@ -169,13 +173,24 @@ class ViewTab extends StatelessWidget {
   // ── DOB formatter ("YYYY-MM-DD" → "DD Month YYYY") ────────────────────────
   String _formatDob(String raw) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     final parts = raw.split('-');
     if (parts.length == 3) {
       final monthIndex = int.tryParse(parts[1]);
-      final monthName = (monthIndex != null && monthIndex >= 1 && monthIndex <= 12)
+      final monthName =
+          (monthIndex != null && monthIndex >= 1 && monthIndex <= 12)
           ? months[monthIndex - 1]
           : parts[1];
       return '${parts[2]} $monthName ${parts[0]}';
@@ -191,7 +206,7 @@ class ViewTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _teal.withValues(alpha:0.25)),
+        border: Border.all(color: _teal.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
@@ -235,7 +250,7 @@ class ViewTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _teal.withValues(alpha:0.25)),
+        border: Border.all(color: _teal.withValues(alpha: 0.25)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -263,9 +278,9 @@ class ViewTab extends StatelessWidget {
               return Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                 decoration: BoxDecoration(
-                  color: _teal.withValues(alpha:0.15),
+                  color: _teal.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _teal.withValues(alpha:0.4)),
+                  border: Border.all(color: _teal.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   skill,
@@ -292,7 +307,7 @@ class ViewTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _teal.withValues(alpha:0.25)),
+        border: Border.all(color: _teal.withValues(alpha: 0.25)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -332,7 +347,8 @@ class ViewTab extends StatelessWidget {
 
   Future<void> _launchUrl(BuildContext context, String rawUrl) async {
     // Ensure the URL has a scheme so Uri.parse can handle it
-    final normalized = rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
+    final normalized =
+        rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
         ? rawUrl
         : 'https://$rawUrl';
     final uri = Uri.tryParse(normalized);
@@ -341,9 +357,9 @@ class ViewTab extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open $rawUrl')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open $rawUrl')));
       }
     }
   }
@@ -365,7 +381,10 @@ class ViewTab extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(color: Colors.white38, fontSize: 10),
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 10,
+                      ),
                     ),
                     Text(
                       url,
@@ -381,7 +400,11 @@ class ViewTab extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.open_in_new_rounded, color: _teal.withValues(alpha: 0.5), size: 13),
+              Icon(
+                Icons.open_in_new_rounded,
+                color: _teal.withValues(alpha: 0.5),
+                size: 13,
+              ),
             ],
           ),
         ),
@@ -400,7 +423,7 @@ class ViewTab extends StatelessWidget {
             Icon(
               Icons.visibility_off_outlined,
               size: 46,
-              color: _teal.withValues(alpha:0.35),
+              color: _teal.withValues(alpha: 0.35),
             ),
             SizedBox(height: 12.h),
             Text(
