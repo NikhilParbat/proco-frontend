@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/views/common/phone_field.dart';
+import 'package:proco/views/common/phone_field.dart';
 import 'package:proco/views/ui/onboarding/widgets/ob_scaffold.dart';
 import 'package:provider/provider.dart';
 
@@ -15,10 +16,12 @@ class ObPhonePage extends StatefulWidget {
 
 class _ObPhonePageState extends State<ObPhonePage> {
   String _phone = '';
+  String _phone = '';
 
   @override
   void initState() {
     super.initState();
+    _phone = context.read<OnboardingFlowProvider>().phone;
     _phone = context.read<OnboardingFlowProvider>().phone;
   }
 
@@ -33,8 +36,13 @@ class _ObPhonePageState extends State<ObPhonePage> {
         darkMode: true,
         initialValue: _phone,
         onChanged: (v) => setState(() => _phone = v),
+      body: PhoneInputField(
+        darkMode: true,
+        initialValue: _phone,
+        onChanged: (v) => setState(() => _phone = v),
       ),
       onNext: () {
+        final phone = _phone.trim();
         final phone = _phone.trim();
         if (phone.isEmpty) {
           Get.snackbar(
