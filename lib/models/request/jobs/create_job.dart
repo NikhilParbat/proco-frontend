@@ -17,6 +17,9 @@ class CreateJobsRequest {
     this.period = '',
     this.hiring = true,
     this.contract = '',
+    this.experienceLevel = '',
+    this.fieldDegree = '',
+    this.languagePreference = '',
     this.requirements = const [],
     this.imageUrl = '',
     this.city = '',
@@ -34,6 +37,9 @@ class CreateJobsRequest {
   final String period;
   final bool hiring;
   final String contract;
+  final String experienceLevel;
+  final String fieldDegree;
+  final String languagePreference;
   final List<String> requirements;
   final String imageUrl;
   final double latitude;
@@ -43,22 +49,25 @@ class CreateJobsRequest {
   final String country;
 
   Map<String, dynamic> toJson() => {
-        'agentId': agentId,
-        'domain': domain,
-        'opportunityType': opportunityType,
-        'title': title,
-        'company': company,
-        'description': description,
-        'salary': salary,
-        'period': period,
-        'hiring': hiring,
-        'contract': contract,
-        'requirements': requirements.map((x) => x).toList(),
-        'imageUrl': imageUrl,
-        'latitude': latitude,
-        'longitude': longitude,
-        'city': city,
-        'state': state,
-        'country': country,
-      };
+    'agentId': agentId,
+    'domain': domain,
+    'opportunityType': opportunityType,
+    'title': title,
+    'company': company,
+    'description': description,
+    'salary': salary,
+    'period': period,
+    'hiring': hiring,
+    'contract': contract,
+    'experienceLevel': experienceLevel,
+    'fieldDegree': fieldDegree,
+    'languagePreference': languagePreference,
+    'requirements': requirements.map((x) => x).toList(),
+    'imageUrl': imageUrl,
+    'latitude': latitude,
+    'longitude': longitude,
+    'city': city,
+    'state': state,
+    'country': country,
+  };
 }

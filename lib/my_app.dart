@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:proco/views/ui/mainscreen.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _splashRemoved = false;
+  bool _showAppSplash = true;
 
   @override
   void initState() {
@@ -36,6 +38,11 @@ class _MyAppState extends State<MyApp> {
       if (!_splashRemoved && mounted) {
         FlutterNativeSplash.remove();
         _splashRemoved = true;
+      }
+    });
+    Future.delayed(const Duration(milliseconds: 1300), () {
+      if (mounted) {
+        setState(() => _showAppSplash = false);
       }
     });
   }
@@ -65,9 +72,21 @@ class _MyAppState extends State<MyApp> {
             iconTheme: const IconThemeData(color: kDark),
             primarySwatch: Colors.grey,
           ),
-          home: _home,
+          home: _showAppSplash ? const _BrandSplashScreen() : _home,
         );
       },
+    );
+  }
+}
+
+class _BrandSplashScreen extends StatelessWidget {
+  const _BrandSplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFD85757),
+      body: Center(child: SvgPicture.asset('assets/WLagcon.svg', width: 190.w)),
     );
   }
 }

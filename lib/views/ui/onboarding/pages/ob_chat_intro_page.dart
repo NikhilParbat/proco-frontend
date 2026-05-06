@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
+import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 
@@ -259,6 +260,14 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   String _skillQuery = '';
   bool _showCustomSkill = false;
 
+  // Step 3: Location
+  final _locationSearchCtrl = TextEditingController();
+  final List<Map<String, dynamic>> _locationResults = [];
+  bool _isSearchingLocation = false;
+  bool _isFetchingCurrentLocation = false;
+  String? _selectedLocationLabel;
+  bool _preferTypingLocation = false;
+
   static const List<String> _botQuestions = [
     "Welcome to Lagoon! 👋 Let's get the basics down.\nWhat's your Name, Gender, and Date of Birth?",
     "Great. Now, tell me about your studies.\nWhat's your Degree / Branch, College, and when do you Graduate?",
@@ -283,6 +292,16 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         });
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final provider = context.read<OnboardingFlowProvider>();
+      if (provider.displayAddress.isNotEmpty) {
+        setState(() {
+          _selectedLocationLabel = provider.displayAddress;
+          _locationSearchCtrl.text = provider.displayAddress;
+        });
+      }
+    });
   }
 
   @override
@@ -292,6 +311,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     _collegeCtrl.dispose();
     _skillSearchCtrl.dispose();
     _customSkillCtrl.dispose();
+    _locationSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -435,9 +455,93 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   void _finishLocationStep({required bool enabled}) {
     _advance(
-      userSummary: enabled ? 'Location access enabled' : 'Not now',
+      userSummary: enabled
+          ? (_selectedLocationLabel?.trim().isNotEmpty == true
+                ? _selectedLocationLabel!
+                : 'Location added')
+          : 'Skipped location for now',
       skipped: !enabled,
     );
+  }
+
+  Future<void> _onLocationSearchChanged(String query) async {
+    if (query.trim().length < 3) {
+      if (mounted) {
+        setState(() {
+          _locationResults.clear();
+          _isSearchingLocation = false;
+        });
+      }
+      return;
+    }
+
+    setState(() => _isSearchingLocation = true);
+    final results = await LocationService.getPlacePredictions(query.trim());
+    if (!mounted) return;
+    setState(() {
+      _locationResults
+        ..clear()
+        ..addAll(results);
+      _isSearchingLocation = false;
+    });
+  }
+
+  Future<void> _selectLocationResult(Map<String, dynamic> item) async {
+    final provider = context.read<OnboardingFlowProvider>();
+    final lat = item['lat'] as double;
+    final lon = item['lon'] as double;
+    final display = (item['display_name'] as String?) ?? '';
+
+    final address = await LocationService.getAddressFromLatLng(lat, lon);
+    if (!mounted) return;
+
+    provider.setLocation(
+      lat,
+      lon,
+      displayAddress: display,
+      city: address.city,
+      state: address.state,
+      country: address.country,
+    );
+    setState(() {
+      _selectedLocationLabel = display;
+      _locationSearchCtrl.text = display;
+      _locationResults.clear();
+    });
+  }
+
+  Future<void> _useCurrentLocation() async {
+    final provider = context.read<OnboardingFlowProvider>();
+    setState(() => _isFetchingCurrentLocation = true);
+    try {
+      final result = await LocationService.getCurrentLocation();
+      final address = await LocationService.getAddressFromLatLng(
+        result.latitude,
+        result.longitude,
+      );
+      if (!mounted) return;
+
+      final display = result.displayAddress ?? '';
+      provider.setLocation(
+        result.latitude,
+        result.longitude,
+        displayAddress: display,
+        city: address.city,
+        state: address.state,
+        country: address.country,
+      );
+      setState(() {
+        _selectedLocationLabel = display.isNotEmpty
+            ? display
+            : '${address.city}, ${address.state}';
+      });
+    } catch (e) {
+      _snack('Location Error', e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingCurrentLocation = false);
+      }
+    }
   }
 
   void _addCustomSkill() {
@@ -774,71 +878,174 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   // ── Step 3: Location ───────────────────────────────────────────────────────
 
   Widget _buildStep3() {
+    final hasSelectedLocation =
+        context.watch<OnboardingFlowProvider>().hasLocation &&
+        ((_selectedLocationLabel?.isNotEmpty ?? false) ||
+            _locationSearchCtrl.text.trim().isNotEmpty);
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 4.h),
-        Container(
-          width: 74.w,
-          height: 74.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey.shade100,
-          ),
-          child: Icon(
-            Icons.location_on,
-            size: 34.sp,
-            color: Colors.grey.shade400,
+        Text(
+          'Choose how you want to share location',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        SizedBox(height: 28.h),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+        SizedBox(height: 10.h),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: [
+            _ChoiceChipButton(
+              label: 'Use current location',
+              icon: Icons.my_location_rounded,
+              selected: !_preferTypingLocation,
+              onTap: () => setState(() => _preferTypingLocation = false),
+            ),
+            _ChoiceChipButton(
+              label: 'Type location',
+              icon: Icons.edit_location_alt_outlined,
+              selected: _preferTypingLocation,
+              onTap: () => setState(() => _preferTypingLocation = true),
+            ),
+          ],
+        ),
+        SizedBox(height: 10.h),
+        if (!_preferTypingLocation)
+          SizedBox(
+            width: double.infinity,
+            height: 46.h,
+            child: ElevatedButton.icon(
+              onPressed: _isFetchingCurrentLocation
+                  ? null
+                  : _useCurrentLocation,
+              icon: _isFetchingCurrentLocation
+                  ? SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.my_location_rounded, size: 18),
+              label: Text(
+                _isFetchingCurrentLocation
+                    ? 'Fetching location...'
+                    : 'Fetch Current Location',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ],
-          ),
-          child: Column(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kThemeColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+          )
+        else
+          Column(
             children: [
-              Text(
-                'Add your location later from profile settings.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  height: 1.25,
-                ),
+              _InputField(
+                controller: _locationSearchCtrl,
+                hint: 'Search city / area',
+                icon: Icons.search,
+                onChanged: _onLocationSearchChanged,
               ),
-              SizedBox(height: 10.h),
-              Text(
-                'We will skip location for now and take you to your home feed.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 12.sp,
-                  height: 1.35,
+              if (_isSearchingLocation) ...[
+                SizedBox(height: 8.h),
+                const LinearProgressIndicator(minHeight: 2, color: kThemeColor),
+              ],
+              if (_locationResults.isNotEmpty) ...[
+                SizedBox(height: 8.h),
+                Container(
+                  width: double.infinity,
+                  constraints: BoxConstraints(maxHeight: 170.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _locationResults.length,
+                    separatorBuilder: (_, _) =>
+                        Divider(height: 1, color: Colors.grey.shade200),
+                    itemBuilder: (context, index) {
+                      final item = _locationResults[index];
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(
+                          Icons.location_on_outlined,
+                          color: Colors.grey.shade600,
+                          size: 18.sp,
+                        ),
+                        title: Text(
+                          item['display_name'] ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        onTap: () => _selectLocationResult(item),
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
-        ),
-        SizedBox(height: 20.h),
+        if ((_selectedLocationLabel?.isNotEmpty ?? false)) ...[
+          SizedBox(height: 10.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: kThemeColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: kThemeColor.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle, color: kThemeColor, size: 16),
+                SizedBox(width: 6.w),
+                Expanded(
+                  child: Text(
+                    _selectedLocationLabel!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        SizedBox(height: 16.h),
         SizedBox(
           width: double.infinity,
           height: 48.h,
           child: ElevatedButton(
-            onPressed: () => _finishLocationStep(enabled: false),
+            onPressed: hasSelectedLocation
+                ? () => _finishLocationStep(enabled: true)
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: kThemeColor,
+              disabledBackgroundColor: kThemeColor.withValues(alpha: 0.35),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -855,15 +1062,17 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
             ),
           ),
         ),
-        SizedBox(height: 14.h),
-        TextButton(
-          onPressed: () => _finishLocationStep(enabled: false),
-          child: Text(
-            'Skip',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
+        SizedBox(height: 8.h),
+        Center(
+          child: TextButton(
+            onPressed: () => _finishLocationStep(enabled: false),
+            child: Text(
+              'Skip for now',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -1136,11 +1345,13 @@ class _InputField extends StatelessWidget {
     required this.controller,
     required this.hint,
     required this.icon,
+    this.onChanged,
   });
 
   final TextEditingController controller;
   final String hint;
   final IconData icon;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1158,6 +1369,7 @@ class _InputField extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              onChanged: onChanged,
               style: TextStyle(fontSize: 14.sp, color: Colors.black87),
               decoration: InputDecoration(
                 hintText: hint,

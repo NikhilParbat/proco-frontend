@@ -24,6 +24,9 @@ class GetJobRes {
   final String salary;
   final String period;
   final String contract;
+  final String experienceLevel;
+  final String fieldDegree;
+  final String languagePreference;
   final List<String> requirements;
   final String imageUrl;
   final String agentId;
@@ -46,6 +49,9 @@ class GetJobRes {
     required this.salary,
     required this.period,
     required this.contract,
+    this.experienceLevel = '',
+    this.fieldDegree = '',
+    this.languagePreference = '',
     required this.requirements,
     required this.imageUrl,
     required this.agentId,
@@ -75,11 +81,17 @@ class GetJobRes {
       salary: json['salary'] ?? '',
       period: json['period'] ?? '',
       contract: json['contract'] ?? '',
+      experienceLevel:
+          json['experienceLevel'] ?? json['experience_level'] ?? '',
+      fieldDegree: json['fieldDegree'] ?? json['field_degree'] ?? '',
+      languagePreference:
+          json['languagePreference'] ?? json['language_preference'] ?? '',
       requirements: _parseRequirements(json['requirements']),
       imageUrl: json['imageUrl'] ?? json['image_url'] ?? '',
       agentId: json['agentId'] ?? json['agent_id'] ?? '',
       domain: json['domain'] ?? '',
-      opportunityType: json['opportunityType'] ?? json['opportunity_type'] ?? '',
+      opportunityType:
+          json['opportunityType'] ?? json['opportunity_type'] ?? '',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       createdAt: json['createdAt'] != null
@@ -94,34 +106,41 @@ class GetJobRes {
   static List<String> _parseRequirements(dynamic raw) {
     if (raw == null) return [];
     if (raw is List) {
-      return raw.map((e) {
-        if (e is Map) return (e['requirement'] ?? e['text'] ?? '').toString();
-        return e.toString();
-      }).where((s) => s.isNotEmpty).toList();
+      return raw
+          .map((e) {
+            if (e is Map)
+              return (e['requirement'] ?? e['text'] ?? '').toString();
+            return e.toString();
+          })
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
     return [];
   }
 
   Map<String, dynamic> toJson() => {
-        'id': jobId,
-        'title': title,
-        'city': city,
-        'state': state,
-        'country': country,
-        'company': company,
-        'hiring': hiring,
-        'description': description,
-        'salary': salary,
-        'period': period,
-        'contract': contract,
-        'requirements': requirements,
-        'imageUrl': imageUrl,
-        'agentId': agentId,
-        'domain': domain,
-        'opportunityType': opportunityType,
-        'latitude': latitude,
-        'longitude': longitude,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': jobId,
+    'title': title,
+    'city': city,
+    'state': state,
+    'country': country,
+    'company': company,
+    'hiring': hiring,
+    'description': description,
+    'salary': salary,
+    'period': period,
+    'contract': contract,
+    'experienceLevel': experienceLevel,
+    'fieldDegree': fieldDegree,
+    'languagePreference': languagePreference,
+    'requirements': requirements,
+    'imageUrl': imageUrl,
+    'agentId': agentId,
+    'domain': domain,
+    'opportunityType': opportunityType,
+    'latitude': latitude,
+    'longitude': longitude,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }

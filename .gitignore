@@ -47,3 +47,4 @@ app.*.map.json
 
 CLAUDE.md
 .claudeignore
+android/app/build.gradle.kts

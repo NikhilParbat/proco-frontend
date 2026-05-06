@@ -205,9 +205,11 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Google Sign-In Button - Pill Shape, Using kSubTextStyle[cite: 1]
                       GestureDetector(
-                        onTap: () async {
-                          await loginNotifier.googleSignIn();
-                        },
+                        onTap: loginNotifier.isLoading
+                            ? null
+                            : () async {
+                                await loginNotifier.googleSignIn();
+                              },
                         child: Container(
                           width: double.infinity,
                           height: 55.h,

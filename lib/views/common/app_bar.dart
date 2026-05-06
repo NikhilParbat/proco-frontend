@@ -8,11 +8,13 @@ class CustomAppBar extends StatelessWidget {
     required this.child,
     super.key,
     this.text,
+    this.titleStyle,
     this.actions,
     this.drawer,
   });
 
   final String? text;
+  final TextStyle? titleStyle;
   final Widget child;
   final List<Widget>? actions;
   final bool? drawer;
@@ -30,7 +32,9 @@ class CustomAppBar extends StatelessWidget {
       centerTitle: true,
       title: ReusableText(
         text: text ?? '',
-        style: appstyle(16, const Color(0xFF08959D), FontWeight.w600),
+        style:
+            titleStyle ??
+            appstyle(16, const Color(0xFF08959D), FontWeight.w600),
       ),
     );
   }

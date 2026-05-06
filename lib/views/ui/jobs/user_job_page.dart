@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/app_bar.dart';
@@ -75,7 +76,7 @@ class _JobListingPageState extends State<JobListingPage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(0.065.sh),
         child: CustomAppBar(
-          text: 'My Job Listings',
+          text: 'My Queries',
           actions: [
             Padding(
               padding: EdgeInsets.only(right: 8.w),
@@ -102,12 +103,12 @@ class _JobListingPageState extends State<JobListingPage> {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        'Add Job',
+                        'Add Query',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
+                          fontFamily: kFontDMSans,
                         ),
                       ),
                     ],
@@ -150,11 +151,11 @@ class _JobListingPageState extends State<JobListingPage> {
                       children: [
                         // Job count badge
                         Text(
-                          '${filteredJobs.length} job${filteredJobs.length == 1 ? '' : 's'}',
+                          '${filteredJobs.length} quer${filteredJobs.length == 1 ? 'y' : 'ies'}',
                           style: TextStyle(
                             fontSize: 13.sp,
                             color: Colors.grey,
-                            fontFamily: 'Poppins',
+                            fontFamily: kFontDMSans,
                           ),
                         ),
                         const Spacer(),
@@ -200,7 +201,7 @@ class _JobListingPageState extends State<JobListingPage> {
                                     style: TextStyle(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
+                                      fontFamily: kFontDMSans,
                                       color: isSelected
                                           ? Colors.white
                                           : Colors.grey.shade600,
@@ -255,9 +256,9 @@ class _JobListingPageState extends State<JobListingPage> {
                                 ).then((_) => loadJobs()),
                                 onDelete: () {
                                   Get.defaultDialog(
-                                    title: "Delete Opportunity",
+                                    title: "Delete Query",
                                     middleText:
-                                        "Are you sure you want to delete this listing?",
+                                        "Are you sure you want to delete this query?",
                                     textConfirm: "Delete",
                                     confirmTextColor: Colors.white,
                                     buttonColor: Colors.red,
@@ -277,7 +278,7 @@ class _JobListingPageState extends State<JobListingPage> {
 
                                       Get.snackbar(
                                         "Deleted",
-                                        "Opportunity removed successfully",
+                                        "Query removed successfully",
                                         backgroundColor: Colors.red,
                                         colorText: Colors.white,
                                       );
@@ -309,21 +310,21 @@ class _JobListingPageState extends State<JobListingPage> {
           ),
           SizedBox(height: 16.h),
           Text(
-            'No listings yet',
+            'No queries yet',
             style: TextStyle(
               fontSize: 18.sp,
               color: _navy,
               fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
+              fontFamily: kFontDMSans,
             ),
           ),
           SizedBox(height: 6.h),
           Text(
-            'Tap "Add Job" to post your first listing',
+            'Tap "Add Query" to create your first query',
             style: TextStyle(
               fontSize: 13.sp,
               color: Colors.grey,
-              fontFamily: 'Poppins',
+              fontFamily: kFontDMSans,
             ),
           ),
         ],
@@ -334,11 +335,11 @@ class _JobListingPageState extends State<JobListingPage> {
   Widget _buildEmptyFilter() {
     return Center(
       child: Text(
-        'No jobs match this filter',
+        'No queries match this filter',
         style: TextStyle(
           fontSize: 14.sp,
           color: Colors.grey,
-          fontFamily: 'Poppins',
+          fontFamily: kFontDMSans,
         ),
       ),
     );
@@ -440,7 +441,7 @@ class JobCard extends StatelessWidget {
                           fontSize: 9.sp,
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
-                          fontFamily: 'Poppins',
+                          fontFamily: kFontDMSans,
                         ),
                       ),
                     ),
@@ -473,7 +474,7 @@ class JobCard extends StatelessWidget {
                               fontSize: 9.sp,
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontFamily: 'Poppins',
+                              fontFamily: kFontDMSans,
                             ),
                           ),
                         ],
@@ -499,7 +500,7 @@ class JobCard extends StatelessWidget {
                       fontSize: 13.sp,
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
+                      fontFamily: kFontDMSans,
                       height: 1.2,
                     ),
                   ),
@@ -516,7 +517,7 @@ class JobCard extends StatelessWidget {
                               ? Colors.green.shade400
                               : Colors.red.shade400,
                           fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
+                          fontFamily: kFontDMSans,
                         ),
                       ),
                       Row(

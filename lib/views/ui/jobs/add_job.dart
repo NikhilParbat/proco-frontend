@@ -292,7 +292,13 @@ class _AddJobPageState extends State<AddJobPage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(50.h),
         child: CustomAppBar(
-          text: _isEditMode ? 'Edit opportunity' : 'List opportunity',
+          text: _isEditMode ? 'Edit Query' : 'Create Query',
+          titleStyle: TextStyle(
+            fontFamily: kFontMontserrat,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF08959D),
+          ),
           child: Padding(
             padding: EdgeInsets.all(10.0.h),
             child: IconButton(
@@ -309,12 +315,12 @@ class _AddJobPageState extends State<AddJobPage> {
             children: [
               // ── Page header ───────────────────────────────────────────────
               Text(
-                'Opportunity Details',
+                'Query Details',
                 style: appstyle(28, _white, FontWeight.w700),
               ),
               SizedBox(height: 4.h),
               Text(
-                'Fill in the details to post a new listing',
+                'Fill in the details to create your query',
                 style: appstyle(13, Colors.white54, FontWeight.w400),
               ),
               SizedBox(height: 24.h),
@@ -324,7 +330,7 @@ class _AddJobPageState extends State<AddJobPage> {
               SizedBox(height: 12.h),
               _field(
                 _titleController,
-                'Opportunity Title *',
+                'Query Title *',
                 Icons.work_outline_rounded,
                 false,
                 maxLength: 50,
@@ -594,13 +600,13 @@ class _AddJobPageState extends State<AddJobPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Opportunity Status',
+                            'Query Status',
                             style: appstyle(14, _white, FontWeight.w600),
                           ),
                           Text(
                             _isHiring
-                                ? 'Actively accepting applicants'
-                                : 'Position is closed',
+                                ? 'Actively accepting responses'
+                                : 'Query is closed',
                             style: appstyle(
                               11,
                               Colors.white54,
@@ -711,8 +717,13 @@ class _AddJobPageState extends State<AddJobPage> {
                   ),
                   child: Center(
                     child: Text(
-                      _isEditMode ? 'Update Opportunity' : 'List Opportunity',
-                      style: appstyle(16, Colors.white, FontWeight.w700),
+                      _isEditMode ? 'Update Query' : 'Create Query',
+                      style: TextStyle(
+                        fontFamily: kFontDMSans,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -751,6 +762,7 @@ class _AddJobPageState extends State<AddJobPage> {
               Text(
                 'Add Photo',
                 style: TextStyle(
+                  fontFamily: kFontDMSans,
                   color: _white,
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -801,11 +813,15 @@ class _AddJobPageState extends State<AddJobPage> {
           children: [
             Icon(icon, color: _tealLt, size: 22),
             SizedBox(width: 14.w),
-            Text(label,
-                style: TextStyle(
-                    color: _white,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                color: _white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),

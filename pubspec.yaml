@@ -92,11 +92,11 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/images/logo.png"
 
 flutter_native_splash:
-  color: "#040326"
+  color: "#D85757"
   image: assets/images/logo.png
   android_12:
     image: assets/images/logo.png
-    icon_background_color: "#040326"
+    icon_background_color: "#D85757"
   fullscreen: true
 
 # For information on the generic Dart part of this file, see the

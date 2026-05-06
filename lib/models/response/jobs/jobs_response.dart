@@ -32,6 +32,9 @@ class JobsResponse {
   final String salary;
   final String period;
   final String contract;
+  final String experienceLevel;
+  final String fieldDegree;
+  final String languagePreference;
   final List<String> requirements;
   final String imageUrl;
   final String agentId;
@@ -55,6 +58,9 @@ class JobsResponse {
     required this.salary,
     required this.period,
     required this.contract,
+    this.experienceLevel = '',
+    this.fieldDegree = '',
+    this.languagePreference = '',
     required this.requirements,
     required this.imageUrl,
     required this.agentId,
@@ -86,6 +92,11 @@ class JobsResponse {
       salary: json['salary'] ?? '',
       period: json['period'] ?? '',
       contract: json['contract'] ?? '',
+      experienceLevel:
+          json['experienceLevel'] ?? json['experience_level'] ?? '',
+      fieldDegree: json['fieldDegree'] ?? json['field_degree'] ?? '',
+      languagePreference:
+          json['languagePreference'] ?? json['language_preference'] ?? '',
       requirements: _parseRequirements(json['requirements']),
       imageUrl: json['imageUrl'] ?? json['image_url'] ?? '',
       agentId: json['agentId'] ?? json['agent_id'] ?? '',
@@ -153,6 +164,9 @@ class JobsResponse {
     'salary': salary,
     'period': period,
     'contract': contract,
+    'experienceLevel': experienceLevel,
+    'fieldDegree': fieldDegree,
+    'languagePreference': languagePreference,
     'requirements': requirements,
     'imageUrl': imageUrl,
     'agentId': agentId,

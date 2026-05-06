@@ -91,11 +91,15 @@ List<String> skills = [
 ];
 
 List<String> profile = [];
+// --- Font Families ---
+const String kFontMontserrat = 'Montserrat';
+const String kFontDMSans = 'DMSans';
+
 // --- Typography Styles ---
 
 // Heading Font: Montserrat
 final kHeadingStyle = TextStyle(
-  fontFamily: 'Montserrat',
+  fontFamily: kFontMontserrat,
   fontSize: 25.sp,
   fontWeight: FontWeight.bold,
   color: kDark,
@@ -103,7 +107,7 @@ final kHeadingStyle = TextStyle(
 
 // Sub-Heading/Sub-text: DM Sans
 final kSubTextStyle = TextStyle(
-  fontFamily: 'DMSans',
+  fontFamily: kFontDMSans,
   fontSize: 16.sp,
   fontWeight: FontWeight.w500,
   color: const Color.fromARGB(255, 20, 20, 20),
@@ -111,7 +115,7 @@ final kSubTextStyle = TextStyle(
 
 // Small Sub-text/Body: DM Sans
 final kSmallTextStyle = TextStyle(
-  fontFamily: 'DMSans',
+  fontFamily: kFontDMSans,
   fontSize: 14.sp,
   fontWeight: FontWeight.normal,
   color: kDarkGrey,

@@ -12,9 +12,16 @@ class AuthService {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Trigger the Google Sign-In flow
-      final GoogleSignInAccount? googleUser =
-          await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
+      // Try silent sign-in first; if it fails or returns null, show the picker.
+      // Each call is independent so a PlatformException in signInSilently
+      // doesn't suppress signIn().
+      GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await _googleSignIn.signInSilently();
+      } catch (_) {
+        // Silent sign-in unavailable — fall through to interactive sign-in.
+      }
+      googleUser ??= await _googleSignIn.signIn();
 
       if (googleUser == null) return null;
 

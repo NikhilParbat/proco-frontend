@@ -101,7 +101,10 @@ class JobsHelper {
       }
       return ApiResponse(
         success: false,
-        message: _errorMessage(response, 'Failed to get filtered jobs (page $page)'),
+        message: _errorMessage(
+          response,
+          'Failed to get filtered jobs (page $page)',
+        ),
       );
     } catch (e) {
       debugPrint('JobsHelper.getFilteredJobsPaged error: $e');
@@ -354,6 +357,9 @@ class JobsHelper {
       request.fields['period'] = model.period;
       request.fields['hiring'] = model.hiring.toString();
       request.fields['contract'] = model.contract;
+      request.fields['experienceLevel'] = model.experienceLevel;
+      request.fields['fieldDegree'] = model.fieldDegree;
+      request.fields['languagePreference'] = model.languagePreference;
       request.fields['domain'] = model.domain;
       request.fields['opportunityType'] = model.opportunityType;
       request.fields['city'] = model.city;
@@ -427,6 +433,9 @@ class JobsHelper {
       request.fields['period'] = model.period;
       request.fields['hiring'] = model.hiring.toString();
       request.fields['contract'] = model.contract;
+      request.fields['experienceLevel'] = model.experienceLevel;
+      request.fields['fieldDegree'] = model.fieldDegree;
+      request.fields['languagePreference'] = model.languagePreference;
       request.fields['domain'] = model.domain;
       request.fields['opportunityType'] = model.opportunityType;
       request.fields['city'] = model.city;
