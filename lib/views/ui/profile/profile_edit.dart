@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/phone_field.dart';
 import 'package:provider/provider.dart';
 
 import 'profile_state.dart';
@@ -61,7 +62,7 @@ class _EditForm extends StatelessWidget {
         // ── Basic Info ────────────────────────────────────────────────────────
         _SectionTitle(title: 'Basic Info'),
         _Field(label: 'Full Name', init: state.username, onChanged: (v) => state.username = v),
-        _Field(label: 'Phone Number', init: state.phone, onChanged: (v) => state.phone = v, keyboard: TextInputType.phone),
+        PhoneInputField(initialValue: state.phone, onChanged: (v) => state.phone = v),
         _Field(label: 'Gender', init: state.gender, onChanged: (v) => state.gender = v),
         _Field(label: 'Date of Birth', init: state.dob, onChanged: (v) => state.dob = v, hint: 'YYYY-MM-DD'),
 

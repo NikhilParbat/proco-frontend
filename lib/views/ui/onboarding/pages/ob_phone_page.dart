@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
+import 'package:proco/views/common/phone_field.dart';
 import 'package:proco/views/ui/onboarding/widgets/ob_scaffold.dart';
 import 'package:provider/provider.dart';
 
@@ -14,20 +14,12 @@ class ObPhonePage extends StatefulWidget {
 }
 
 class _ObPhonePageState extends State<ObPhonePage> {
-  late final TextEditingController _controller;
+  String _phone = '';
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(
-      text: context.read<OnboardingFlowProvider>().phone,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    _phone = context.read<OnboardingFlowProvider>().phone;
   }
 
   @override
@@ -37,29 +29,13 @@ class _ObPhonePageState extends State<ObPhonePage> {
     return ObScaffold(
       title: "What's your\nphone number?",
       subtitle: "Used to help people connect with you.",
-      body: TextField(
-        controller: _controller,
-        autofocus: true,
-        keyboardType: TextInputType.phone,
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-\s()]'))],
-        maxLength: 15,
-        style: const TextStyle(color: Colors.white, fontSize: 22),
-        cursorColor: kTeal,
-        decoration: const InputDecoration(
-          hintText: '+91 00000 00000',
-          hintStyle: TextStyle(color: Colors.white38, fontSize: 22),
-          counterText: '',
-          prefixIcon: Icon(Icons.phone_outlined, color: Colors.white38),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white24),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: kTeal, width: 2),
-          ),
-        ),
+      body: PhoneInputField(
+        darkMode: true,
+        initialValue: _phone,
+        onChanged: (v) => setState(() => _phone = v),
       ),
       onNext: () {
-        final phone = _controller.text.trim();
+        final phone = _phone.trim();
         if (phone.isEmpty) {
           Get.snackbar(
             'Phone required',
@@ -69,7 +45,6 @@ class _ObPhonePageState extends State<ObPhonePage> {
           );
           return;
         }
-        // Strip non-digits for length check
         final digits = phone.replaceAll(RegExp(r'\D'), '');
         if (digits.length < 7) {
           Get.snackbar(
