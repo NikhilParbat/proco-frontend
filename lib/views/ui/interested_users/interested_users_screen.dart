@@ -5,7 +5,7 @@ import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'user_swipe_page.dart';
+import 'applicant_detail_page.dart';
 import 'widgets/parallax_user_card.dart';
 
 class InterestedUsersScreen extends StatefulWidget {
@@ -57,7 +57,11 @@ class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => UserSwipePage(user: user, jobId: _jobId),
+        builder: (_) => ApplicantDetailPage(
+          user: user,
+          jobId: _jobId,
+          totalApplicants: _users.length,
+        ),
       ),
     );
   }
@@ -160,7 +164,7 @@ class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
         SizedBox(height: 12.h),
         Center(
           child: Text(
-            'Tap a card to view · swipe right to match',
+            'Tap a card to view applicant details',
             style: TextStyle(
               fontSize: 12.sp,
               color: Colors.grey,
