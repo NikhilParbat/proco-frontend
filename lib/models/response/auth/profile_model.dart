@@ -24,9 +24,10 @@ class ProfileRes {
   final bool? isFirstTimeUser;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-  final List<String> skills; // NEW
-  final List<String> interests; // NEW
-  final List<String> hobbies; // NEW
+  final List<String> skills;
+  final List<String> interests;
+  final List<String> hobbies;
+  final int queriesCreated;
 
   ProfileRes({
     required this.id,
@@ -54,9 +55,10 @@ class ProfileRes {
     this.isFirstTimeUser,
     this.createdAt,
     this.updatedAt,
-    this.skills = const [], // NEW
-    this.interests = const [], // NEW
-    this.hobbies = const [], // NEW
+    this.skills = const [],
+    this.interests = const [],
+    this.hobbies = const [],
+    this.queriesCreated = 0,
   });
 
   factory ProfileRes.fromJson(Map<String, dynamic> json) {
@@ -98,6 +100,7 @@ class ProfileRes {
       hobbies: json['hobbies'] != null
           ? List<String>.from(json['hobbies'])
           : [],
+      queriesCreated: (json['queriesCreated'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -128,9 +131,10 @@ class ProfileRes {
       'isFirstTimeUser': isFirstTimeUser,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
-      'skills': skills, // NEW
-      'interests': interests, // NEW
-      'hobbies': hobbies, // NEW
+      'skills': skills,
+      'interests': interests,
+      'hobbies': hobbies,
+      'queriesCreated': queriesCreated,
     };
   }
 }

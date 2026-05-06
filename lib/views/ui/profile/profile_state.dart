@@ -21,6 +21,7 @@ class ProfileEditState extends ChangeNotifier {
   String linkedInUrl = '', gitHubUrl = '', twitterUrl = '', portfolioUrl = '';
   double latitude = 0.0, longitude = 0.0;
   List<String> skills = [], interests = [], hobbies = [];
+  int queriesCreated = 0;
 
   // Visibility Flags
   bool showEmail = true,
@@ -73,6 +74,7 @@ class ProfileEditState extends ChangeNotifier {
         skills = List.from(d.skills);
         interests = List.from(d.interests);
         hobbies = List.from(d.hobbies);
+        queriesCreated = d.queriesCreated;
       }
     } catch (e) {
       error = e.toString();

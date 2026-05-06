@@ -14,13 +14,23 @@ class NotificationItem {
   final String body;
   final DateTime time;
   final Map<String, dynamic> data;
+  final bool isRead;
 
   NotificationItem({
     required this.title,
     required this.body,
     required this.time,
     this.data = const {},
+    this.isRead = false,
   });
+
+  NotificationItem copyWith({bool? isRead}) => NotificationItem(
+        title: title,
+        body: body,
+        time: time,
+        data: data,
+        isRead: isRead ?? this.isRead,
+      );
 }
 
 class NotificationHelper {
@@ -35,6 +45,12 @@ class NotificationHelper {
 
   static List<NotificationItem> get notifications =>
       List.unmodifiable(_notifications);
+
+  static void markAsRead(int index) {
+    if (index < 0 || index >= _notifications.length) return;
+    _notifications[index] = _notifications[index].copyWith(isRead: true);
+    _notifyListeners();
+  }
 
   static void addListener(VoidCallback listener) => _listeners.add(listener);
   static void removeListener(VoidCallback listener) =>
