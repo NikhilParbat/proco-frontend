@@ -5,7 +5,6 @@ import 'package:proco/controllers/login_provider.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/signup_new.dart';
 import 'package:provider/provider.dart';
