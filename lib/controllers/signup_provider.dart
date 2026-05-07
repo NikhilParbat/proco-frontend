@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
+import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/helpers/device_helper.dart';
@@ -189,6 +190,11 @@ class SignUpNotifier extends ChangeNotifier {
       await _firebaseUser!.sendEmailVerification();
       debugPrint('Verification email sent to ${_firebaseUser!.email}');
 
+      // Persist pending verification so the app can restore step 3 if killed
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pendingVerificationEmail', _firebaseUser!.email!);
+      await prefs.setString('pendingVerificationUsername', signupModel.username);
+
       isLoading = false;
       changeStep(
         3,
@@ -216,12 +222,12 @@ class SignUpNotifier extends ChangeNotifier {
   /// Resend verification email (user taps "Resend" on step 3).
   Future<void> resendVerificationEmail() async {
     try {
-      await _firebaseUser?.sendEmailVerification();
+      // Fall back to currentUser when _firebaseUser is null (app was restarted)
+      final user = _firebaseUser ?? FirebaseAuth.instance.currentUser;
+      await user?.sendEmailVerification();
       Get.snackbar(
         'Email Sent',
         'Verification email resent. Check your inbox.',
-        backgroundColor: kLightBlue,
-        colorText: Colors.white,
       );
     } catch (_) {
       Get.snackbar(
@@ -297,32 +303,60 @@ class SignUpNotifier extends ChangeNotifier {
     }
   }
 
-  /// Called once verification is confirmed: registers user in backend → onboarding.
+  /// Called once verification is confirmed: registers user in backend → gets
+  /// a session token via login → navigates to onboarding.
   Future<void> _completeEmailSignup(User user) async {
     isLoading = true;
 
     try {
-      final idToken = await user.getIdToken();
-      if (idToken == null) {
+      // Restart edge-case: app was killed before verification so password is
+      // gone. We can't register without it — send user back to the signup form.
+      if (signupModel.password.isEmpty) {
         isLoading = false;
         Get.snackbar(
-          'Error',
-          'Could not retrieve auth token.',
+          'Email Verified!',
+          'Please re-enter your details to finish creating your account.',
+          backgroundColor: kLightBlue,
+          colorText: Colors.white,
+        );
+        changeStep(0);
+        return;
+      }
+
+      // Step 1 — register in backend (POST /api/register).
+      final signupResponse = await AuthHelper.signup(signupModel);
+
+      // A 409 "already exists" is fine — the account may have been created in
+      // a previous attempt that failed before reaching login.
+      final registrationOk =
+          signupResponse.success ||
+          signupResponse.message.toLowerCase().contains('exist') ||
+          signupResponse.message.toLowerCase().contains('already');
+
+      if (!registrationOk) {
+        isLoading = false;
+        Get.snackbar(
+          'Sign Up Failed',
+          signupResponse.message,
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
         return;
       }
 
-      final response = await AuthHelper.emailSignup(
-        idToken: idToken,
-        email: user.email ?? signupModel.email,
-        username: signupModel.username,
+      // Step 2 — login to obtain a session token (POST /api/login).
+      final loginResponse = await AuthHelper.login(
+        LoginRequestModel(
+          email: signupModel.email,
+          password: signupModel.password,
+        ),
       );
 
-      if (response.success) {
+      if (loginResponse.success) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('entrypoint', true);
+        await prefs.remove('pendingVerificationEmail');
+        await prefs.remove('pendingVerificationUsername');
 
         await _saveDeviceSession();
 
@@ -337,17 +371,21 @@ class SignUpNotifier extends ChangeNotifier {
 
         await Future.delayed(const Duration(milliseconds: 800));
 
-        Get.offAll(
-          () => OnboardingFlow(initialName: signupModel.username),
-          transition: Transition.fade,
-          duration: const Duration(milliseconds: 600),
-        );
+        final loginUser = loginResponse.data!;
+        if (loginUser.isFirstTimeUser) {
+          Get.offAll(
+            () => OnboardingFlow(initialName: signupModel.username),
+            transition: Transition.fade,
+            duration: const Duration(milliseconds: 600),
+          );
+        } else {
+          Get.offAll(() => const MainScreen(), transition: Transition.fade);
+        }
       } else {
         isLoading = false;
-
         Get.snackbar(
           'Sign Up Failed',
-          response.message,
+          loginResponse.message,
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );

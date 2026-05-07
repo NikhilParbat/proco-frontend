@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
@@ -27,6 +28,9 @@ class _AppInitializerState extends State<AppInitializer> {
   bool isLoggedIn = false;
   bool onboardingComplete = false;
   int onboardingPage = 0;
+  bool isPendingVerification = false;
+  String pendingEmail = '';
+  String pendingUsername = '';
 
   // ✅ Cache SharedPreferences instance
   late SharedPreferences _prefs;
@@ -46,18 +50,55 @@ class _AppInitializerState extends State<AppInitializer> {
     onboardingComplete = _prefs.getBool('onboardingComplete') ?? false;
     onboardingPage = _prefs.getInt('onboardingPage') ?? 0;
 
+    // If not logged in, check if a verification was in progress before the app
+    // was killed (e.g. user switched to email app to click the link).
+    bool firebaseLoaded = false;
+    if (!isLoggedIn) {
+      final savedEmail = _prefs.getString('pendingVerificationEmail') ?? '';
+      if (savedEmail.isNotEmpty) {
+        // Must await Firebase to read auth state
+        await Future.wait([
+          dotenv.load(fileName: ".env").catchError((e) {
+            debugPrint('Failed to load .env: $e');
+          }),
+          FirebaseService.initializeAsync(),
+        ]);
+        firebaseLoaded = true;
+
+        try {
+          final fbUser = FirebaseAuth.instance.currentUser;
+          if (fbUser != null &&
+              fbUser.email == savedEmail &&
+              !fbUser.emailVerified) {
+            isPendingVerification = true;
+            pendingEmail = savedEmail;
+            pendingUsername =
+                _prefs.getString('pendingVerificationUsername') ?? '';
+          } else {
+            // Stale state — clear it
+            await _prefs.remove('pendingVerificationEmail');
+            await _prefs.remove('pendingVerificationUsername');
+          }
+        } catch (e) {
+          debugPrint('AppInitializer: error checking Firebase user: $e');
+        }
+      }
+    }
+
     // Render UI ASAP
     if (mounted) {
       setState(() => isLoading = false);
     }
 
-    // ✅ Load everything else in background
-    Future.wait([
-      dotenv.load(fileName: ".env").catchError((e) {
-        debugPrint('Failed to load .env: $e');
-      }),
-      FirebaseService.initializeAsync(), // ✅ Non-blocking Firebase
-    ]);
+    // ✅ Load everything else in background (if not already loaded above)
+    if (!firebaseLoaded) {
+      Future.wait([
+        dotenv.load(fileName: ".env").catchError((e) {
+          debugPrint('Failed to load .env: $e');
+        }),
+        FirebaseService.initializeAsync(), // ✅ Non-blocking Firebase
+      ]);
+    }
   }
 
   @override
@@ -112,6 +153,9 @@ class _AppInitializerState extends State<AppInitializer> {
         onboardingComplete: onboardingComplete,
         onboardingPage: onboardingPage,
         prefs: _prefs,
+        isPendingVerification: isPendingVerification,
+        pendingEmail: pendingEmail,
+        pendingUsername: pendingUsername,
       ),
     );
   }

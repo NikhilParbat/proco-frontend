@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:proco/views/ui/auth/signup_new.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:proco/views/ui/onboarding/onboarding_screen.dart';
@@ -14,6 +15,9 @@ class MyApp extends StatefulWidget {
   final bool onboardingComplete;
   final int onboardingPage;
   final SharedPreferences prefs;
+  final bool isPendingVerification;
+  final String pendingEmail;
+  final String pendingUsername;
 
   const MyApp({
     super.key,
@@ -21,6 +25,9 @@ class MyApp extends StatefulWidget {
     required this.onboardingComplete,
     required this.onboardingPage,
     required this.prefs,
+    this.isPendingVerification = false,
+    this.pendingEmail = '',
+    this.pendingUsername = '',
   });
 
   @override
@@ -48,7 +55,16 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget get _home {
-    if (!widget.isLoggedIn) return const OnBoardingScreen();
+    if (!widget.isLoggedIn) {
+      if (widget.isPendingVerification) {
+        return SignUpScreen(
+          initialStep: 3,
+          initialEmail: widget.pendingEmail,
+          initialUsername: widget.pendingUsername,
+        );
+      }
+      return const OnBoardingScreen();
+    }
     if (!widget.onboardingComplete) {
       return OnboardingFlow(initialPage: widget.onboardingPage);
     }

@@ -13,6 +13,7 @@ class CustomTextFieldInput extends StatelessWidget {
     this.maxLength,
     this.inputFormatters,
     this.hintStyle,
+    this.textStyle,
   });
 
   final TextEditingController controller;
@@ -24,6 +25,7 @@ class CustomTextFieldInput extends StatelessWidget {
   final int? maxLength;
   final List<TextInputFormatter>? inputFormatters;
   final TextStyle? hintStyle;
+  final TextStyle? textStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +55,7 @@ class CustomTextFieldInput extends StatelessWidget {
       ),
       controller: controller,
       cursorHeight: 25,
-      style: const TextStyle(color: Colors.white70, fontSize: 16),
+      style: textStyle ?? const TextStyle(color: Colors.white70, fontSize: 16),
       validator: validator,
     );
   }
