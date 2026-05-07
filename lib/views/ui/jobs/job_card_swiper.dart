@@ -233,14 +233,14 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20.r),
                 border: Border.all(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  width: 1.5,
+                  color: Colors.black.withValues(alpha: 0.10),
+                  width: 1,
                 ),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x3F000000),
-                    blurRadius: 4,
-                    offset: Offset(0, 4),
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -248,12 +248,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(height: cfy(39)),
-
-                  // Image area
-                  Container(
+                  // ── Image – full-width, flush to card top ──────────────
+                  SizedBox(
                     height: cfy(498),
-                    margin: EdgeInsets.only(left: cfx(16), right: cfx(13)),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -261,7 +258,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                           imageUrl: job.imageUrl,
                           fit: BoxFit.cover,
                           placeholder: (ctx, _) => Container(
-                            color: kThemeColor.withValues(alpha: 0.08),
+                            color: kThemeColor.withValues(alpha: 0.06),
                             child: const Center(
                               child: SizedBox(
                                 width: 24,
@@ -273,7 +270,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                             ),
                           ),
                           errorWidget: (ctx, _, _) => Container(
-                            color: kThemeColor.withValues(alpha: 0.08),
+                            color: kThemeColor.withValues(alpha: 0.06),
                             child: const Icon(
                               Icons.business_rounded,
                               color: kThemeColor,
@@ -282,32 +279,45 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                           ),
                           memCacheWidth: _imageCacheWidth,
                         ),
+                        // Opportunity-type badge – icon + text
                         if (job.opportunityType.isNotEmpty)
                           Positioned(
-                            left: 12.w,
+                            left: 14.w,
                             top: 14.h,
                             child: Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 10.w,
-                                vertical: 4.h,
+                                vertical: 5.h,
                               ),
                               decoration: BoxDecoration(
                                 color: kThemeColor,
-                                borderRadius: BorderRadius.circular(6.r),
+                                borderRadius: BorderRadius.circular(8.r),
                               ),
-                              child: Text(
-                                job.opportunityType.toUpperCase(),
-                                style: GoogleFonts.montserrat(
-                                  color: Colors.white,
-                                  fontSize: 9.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.business_center,
+                                    color: Colors.white,
+                                    size: 12.w,
+                                  ),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    job.opportunityType.toUpperCase(),
+                                    style: GoogleFonts.montserrat(
+                                      color: Colors.white,
+                                      fontSize: 9.sp,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+                        // Creator box – top right
                         Positioned(
-                          right: 8.w,
-                          top: 8.h,
+                          right: 10.w,
+                          top: 10.h,
                           child: SvgPicture.asset(
                             'assets/userbox.svg',
                             width: 82.w,
@@ -319,136 +329,148 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                     ),
                   ),
 
-                  // Content section
+                  // ── Content ────────────────────────────────────────────
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        cfx(16),
-                        cfy(12),
-                        cfx(16),
-                        cfy(108),
+                        cfx(20),
+                        cfy(14),
+                        cfx(20),
+                        cfy(100),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Domain chip
-                          if (job.domain.isNotEmpty) ...[
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 10.w,
-                                vertical: 4.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: kThemeColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6.r),
-                                border: Border.all(
-                                  color: kThemeColor.withValues(alpha: 0.6),
-                                ),
-                              ),
-                              child: Text(
-                                job.domain,
-                                style: GoogleFonts.montserrat(
-                                  color: kThemeColor,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                          ],
                           // Title
                           Text(
                             job.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.montserrat(
-                              fontSize: 18.sp,
+                              fontSize: 26.sp,
                               color: const Color(0xFF0B0D13),
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
+                              fontWeight: FontWeight.w800,
+                              height: 1.15,
                             ),
                           ),
-                          SizedBox(height: 6.h),
-                          // Location
+                          SizedBox(height: 10.h),
+
+                          // Opportunity Location
                           if (job.location.isNotEmpty) ...[
                             Row(
                               children: [
-                                SvgPicture.asset(
-                                  'assets/location.svg',
-                                  width: 10.w,
-                                  height: 14.h,
+                                Icon(
+                                  Icons.public_outlined,
+                                  size: 14.w,
+                                  color: const Color(0xFF999999),
                                 ),
-                                SizedBox(width: 4.w),
+                                SizedBox(width: 6.w),
                                 Expanded(
-                                  child: Text(
-                                    'Opportunity Location: ${job.location}',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.dmSans(
-                                      fontSize: 11.sp,
-                                      color: const Color(0xFF666666),
-                                      fontWeight: FontWeight.w400,
+                                  child: Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: 'Opportunity Location: ',
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 11.sp,
+                                            color: const Color(0xFF999999),
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: job.location,
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 11.sp,
+                                            color: const Color(0xFF1A1A2E),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 3.h),
+                            SizedBox(height: 10.h),
                           ],
-                          // Domain text below location
-                          if (job.domain.isNotEmpty) ...[
-                            Text(
-                              'Domain: ${job.domain}',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 11.sp,
-                                color: const Color(0xFF666666),
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                          ],
-                          // Description
+
+                          // Description + Read more
                           if (job.description.isNotEmpty) ...[
                             Text(
                               job.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              maxLines: isExpanded(job.id) ? null : 3,
+                              overflow: isExpanded(job.id)
+                                  ? TextOverflow.visible
+                                  : TextOverflow.ellipsis,
                               style: GoogleFonts.dmSans(
                                 fontSize: 11.sp,
-                                color: const Color(0xFF555555),
-                                height: 1.45,
+                                color: const Color(0xFF444444),
+                                height: 1.5,
                               ),
                             ),
-                            SizedBox(height: 8.h),
+                            if (!isExpanded(job.id))
+                              GestureDetector(
+                                onTap: () => toggleExpanded(job.id),
+                                child: Text(
+                                  '... Read more',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 11.sp,
+                                    color: kThemeColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            SizedBox(height: 12.h),
                           ],
+
                           // Requirements
                           if (job.requirements.isNotEmpty) ...[
-                            Text(
-                              'Requirements',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 12.sp,
-                                color: kThemeColor,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 26.w,
+                                  height: 26.w,
+                                  decoration: const BoxDecoration(
+                                    color: kThemeColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 14.w,
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  'Requirements',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13.sp,
+                                    color: kThemeColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 4.h),
-                            ...job.requirements.take(2).map(
+                            SizedBox(height: 6.h),
+                            ...job.requirements.take(3).map(
                               (req) => Padding(
-                                padding: EdgeInsets.only(bottom: 3.h),
+                                padding: EdgeInsets.only(bottom: 4.h),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Padding(
-                                      padding: EdgeInsets.only(top: 5.h),
+                                      padding: EdgeInsets.only(top: 4.h),
                                       child: Container(
-                                        width: 4,
-                                        height: 4,
+                                        width: 5,
+                                        height: 5,
                                         decoration: const BoxDecoration(
-                                          color: kThemeColor,
+                                          color: Color(0xFF555555),
                                           shape: BoxShape.circle,
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 6.w),
+                                    SizedBox(width: 8.w),
                                     Expanded(
                                       child: Text(
                                         req,
@@ -456,7 +478,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.dmSans(
                                           fontSize: 11.sp,
-                                          color: const Color(0xFF555555),
+                                          color: const Color(0xFF444444),
                                         ),
                                       ),
                                     ),
@@ -464,36 +486,62 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 8.h),
+                            SizedBox(height: 10.h),
                           ],
-                          // Skills chips
-                          if (job.skills.isNotEmpty)
+
+                          // Skills
+                          if (job.skills.isNotEmpty) ...[
+                            Row(
+                              children: [
+                                Container(
+                                  width: 26.w,
+                                  height: 26.w,
+                                  decoration: const BoxDecoration(
+                                    color: kThemeColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.code,
+                                    color: Colors.white,
+                                    size: 14.w,
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  'Skills',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13.sp,
+                                    color: kThemeColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
                             Wrap(
-                              spacing: 6.w,
-                              runSpacing: 4.h,
+                              spacing: 8.w,
+                              runSpacing: 6.h,
                               children: job.skills
-                                  .take(5)
+                                  .take(6)
                                   .map(
                                     (skill) => Container(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: 8.w,
-                                        vertical: 3.h,
+                                        horizontal: 12.w,
+                                        vertical: 5.h,
                                       ),
                                       decoration: BoxDecoration(
                                         border: Border.all(
-                                          color: kThemeColor,
+                                          color: const Color(0xFFCCCCCC),
                                         ),
                                         borderRadius:
-                                            BorderRadius.circular(4.r),
-                                        color: kThemeColor.withValues(
-                                          alpha: 0.07,
-                                        ),
+                                            BorderRadius.circular(20.r),
+                                        color: Colors.white,
                                       ),
                                       child: Text(
                                         skill,
                                         style: GoogleFonts.dmSans(
-                                          fontSize: 10.sp,
-                                          color: kThemeColor,
+                                          fontSize: 11.sp,
+                                          color: const Color(0xFF333333),
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -501,6 +549,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                                   )
                                   .toList(),
                             ),
+                          ],
                         ],
                       ),
                     ),
@@ -599,9 +648,10 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
 
     Widget buildBtn({
       required IconData icon,
+      required Color bgColor,
+      required Color iconColor,
       required double diameter,
       required VoidCallback? onTap,
-      bool isDisabled = false,
     }) {
       return GestureDetector(
         onTap: onTap,
@@ -609,7 +659,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
           width: diameter,
           height: diameter,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: bgColor,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -619,13 +669,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            color: isDisabled
-                ? kThemeColor.withValues(alpha: 0.3)
-                : kThemeColor,
-            size: diameter * 0.42,
-          ),
+          child: Icon(icon, color: iconColor, size: diameter * 0.42),
         ),
       );
     }
@@ -639,23 +683,32 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
         children: [
           buildBtn(
             icon: CupertinoIcons.heart_fill,
+            bgColor: kThemeColor,
+            iconColor: Colors.white,
             diameter: heartDiameter,
             onTap: () => _controller.swipe(CardSwiperDirection.right),
           ),
           buildBtn(
             icon: CupertinoIcons.xmark,
+            bgColor: kCross,
+            iconColor: Colors.white,
             diameter: smallDiameter,
             onTap: () => _controller.swipe(CardSwiperDirection.left),
           ),
           buildBtn(
             icon: CupertinoIcons.bookmark,
+            bgColor: const Color(0xFF1A2535),
+            iconColor: Colors.white,
             diameter: smallDiameter,
             onTap: () => _controller.swipe(CardSwiperDirection.top),
           ),
           buildBtn(
             icon: Icons.reply,
+            bgColor: const Color(0xFFEBEBEB),
+            iconColor: _canUndo
+                ? const Color(0xFF555555)
+                : const Color(0xFFBBBBBB),
             diameter: smallDiameter,
-            isDisabled: !_canUndo,
             onTap: _canUndo
                 ? () {
                     _controller.undo();
