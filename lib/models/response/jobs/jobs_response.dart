@@ -45,6 +45,7 @@ class JobsResponse {
   final double latitude;
   final double longitude;
   final List<String> matchedUsers;
+  final List<String> skills;
 
   JobsResponse({
     required this.id,
@@ -71,6 +72,7 @@ class JobsResponse {
     this.latitude = 0.0,
     this.longitude = 0.0,
     this.matchedUsers = const [],
+    this.skills = const [],
   });
 
   String get location {
@@ -114,6 +116,7 @@ class JobsResponse {
       matchedUsers: json['matchedUsers'] != null
           ? List<String>.from(json['matchedUsers'].map((x) => x.toString()))
           : [],
+      skills: json['skills'] != null ? List<String>.from(json['skills']) : [],
     );
   }
 
@@ -177,5 +180,6 @@ class JobsResponse {
     'latitude': latitude,
     'longitude': longitude,
     'matchedUsers': matchedUsers,
+    'skills': skills,
   };
 }
