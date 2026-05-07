@@ -21,6 +21,7 @@ class CreateJobsRequest {
     this.fieldDegree = '',
     this.languagePreference = '',
     this.requirements = const [],
+    this.skills = const [],
     this.imageUrl = '',
     this.city = '',
     this.state = '',
@@ -41,6 +42,7 @@ class CreateJobsRequest {
   final String fieldDegree;
   final String languagePreference;
   final List<String> requirements;
+  final List<String> skills;
   final String imageUrl;
   final double latitude;
   final double longitude;
@@ -63,6 +65,7 @@ class CreateJobsRequest {
     'fieldDegree': fieldDegree,
     'languagePreference': languagePreference,
     'requirements': requirements.map((x) => x).toList(),
+    'skills': skills,
     'imageUrl': imageUrl,
     'latitude': latitude,
     'longitude': longitude,

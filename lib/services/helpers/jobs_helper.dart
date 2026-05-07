@@ -368,6 +368,7 @@ class JobsHelper {
       request.fields['latitude'] = model.latitude.toString();
       request.fields['longitude'] = model.longitude.toString();
       request.fields['requirements'] = jsonEncode(model.requirements);
+      request.fields['skills'] = jsonEncode(model.skills);
 
       if (imageFile != null) {
         request.files.add(
@@ -444,6 +445,7 @@ class JobsHelper {
       request.fields['latitude'] = model.latitude.toString();
       request.fields['longitude'] = model.longitude.toString();
       request.fields['requirements'] = jsonEncode(model.requirements);
+      request.fields['skills'] = jsonEncode(model.skills);
 
       // ─── Image (key fix) ───
       if (imageFile != null) {
