@@ -10,6 +10,7 @@ import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class JobCardSwiper extends StatefulWidget {
   final List<JobsResponse> jobs;
@@ -191,11 +192,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                 // Bottom padding leaves fh(218) below the card so the
                 // button group can straddle the card's bottom border.
                 return Padding(
-                  padding: EdgeInsets.only(
-                    left: sw * 2 / 678,
-                    right: sw * 2 / 678,
-                    bottom: fh(218),
-                  ),
+                  padding: EdgeInsets.only(left: 0, right: 0, bottom: fh(50)),
                   child: _buildCard(job, liveDirection),
                 );
               },
@@ -206,7 +203,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
           // button center = fh(218), height = fh(133) → bottom = fh(218 - 66.5) = fh(151.5)
           Positioned(
             left: fw(48),
-            bottom: fh(151.5),
+            bottom: fh(40),
             width: fw(582),
             height: fh(133),
             child: _buildButtonGroup(fw, fh),
@@ -453,39 +450,42 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                               ],
                             ),
                             SizedBox(height: 6.h),
-                            ...job.requirements.take(3).map(
-                              (req) => Padding(
-                                padding: EdgeInsets.only(bottom: 4.h),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 4.h),
-                                      child: Container(
-                                        width: 5,
-                                        height: 5,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF555555),
-                                          shape: BoxShape.circle,
+                            ...job.requirements
+                                .take(3)
+                                .map(
+                                  (req) => Padding(
+                                    padding: EdgeInsets.only(bottom: 4.h),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 4.h),
+                                          child: Container(
+                                            width: 5,
+                                            height: 5,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF555555),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Expanded(
-                                      child: Text(
-                                        req,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.dmSans(
-                                          fontSize: 11.sp,
-                                          color: const Color(0xFF444444),
+                                        SizedBox(width: 8.w),
+                                        Expanded(
+                                          child: Text(
+                                            req,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.dmSans(
+                                              fontSize: 11.sp,
+                                              color: const Color(0xFF444444),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ),
                             SizedBox(height: 10.h),
                           ],
 
@@ -533,8 +533,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                                         border: Border.all(
                                           color: const Color(0xFFCCCCCC),
                                         ),
-                                        borderRadius:
-                                            BorderRadius.circular(20.r),
+                                        borderRadius: BorderRadius.circular(
+                                          20.r,
+                                        ),
                                         color: Colors.white,
                                       ),
                                       child: Text(
@@ -644,18 +645,18 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     final totalW = fw(582);
     final totalH = fh(133);
     final heartDiameter = totalH;
-    final smallDiameter = totalH * 0.76;
+    final smallDiameter = totalH * 0.85;
 
     Widget buildBtn({
-      required IconData icon,
+      required Widget icon,
       required Color bgColor,
-      required Color iconColor,
       required double diameter,
       required VoidCallback? onTap,
     }) {
       return GestureDetector(
         onTap: onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           width: diameter,
           height: diameter,
           decoration: BoxDecoration(
@@ -663,13 +664,18 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.45),
+                blurRadius: 2,
+                offset: const Offset(0, -1),
               ),
             ],
           ),
-          child: Icon(icon, color: iconColor, size: diameter * 0.42),
+          child: Center(child: icon),
         ),
       );
     }
@@ -681,49 +687,66 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          /// REVERT
           buildBtn(
-            icon: CupertinoIcons.heart_fill,
-            bgColor: kThemeColor,
-            iconColor: Colors.white,
-            diameter: heartDiameter,
-            onTap: () => _controller.swipe(CardSwiperDirection.right),
-          ),
-          buildBtn(
-            icon: CupertinoIcons.xmark,
-            bgColor: kCross,
-            iconColor: Colors.white,
-            diameter: smallDiameter,
-            onTap: () => _controller.swipe(CardSwiperDirection.left),
-          ),
-          buildBtn(
-            icon: CupertinoIcons.bookmark,
-            bgColor: const Color(0xFF1A2535),
-            iconColor: Colors.white,
-            diameter: smallDiameter,
-            onTap: () => _controller.swipe(CardSwiperDirection.top),
-          ),
-          buildBtn(
-            icon: Icons.reply,
-            bgColor: const Color(0xFFEBEBEB),
-            iconColor: _canUndo
-                ? const Color(0xFF555555)
-                : const Color(0xFFBBBBBB),
+            icon: Icon(
+              Icons.reply_rounded,
+              color: _canUndo
+                  ? const Color(0xFF666666)
+                  : const Color(0xFFBBBBBB),
+              size: 24.sp,
+            ),
+            bgColor: const Color(0xFFF2F2F2),
             diameter: smallDiameter,
             onTap: _canUndo
                 ? () {
                     _controller.undo();
+
                     if (_lastSwipedJobId != null) {
                       widget.jobNotifier.undoSwipe(
                         _lastSwipedJobId!,
                         widget.currentUserId,
                       );
                     }
+
                     setState(() {
                       _canUndo = false;
                       _lastSwipedJobId = null;
                     });
                   }
                 : null,
+          ),
+
+          /// CANCEL
+          buildBtn(
+            icon: Icon(CupertinoIcons.xmark, color: Colors.black, size: 32.sp),
+            bgColor: Colors.white,
+            diameter: heartDiameter,
+            onTap: () => _controller.swipe(CardSwiperDirection.left),
+          ),
+
+          /// HEART
+          buildBtn(
+            icon: PhosphorIcon(
+              PhosphorIcons.heartStraight(),
+              color: const Color(0xFFE6B8A2),
+              size: 34.sp,
+            ),
+            bgColor: Colors.white,
+            diameter: heartDiameter,
+            onTap: () => _controller.swipe(CardSwiperDirection.right),
+          ),
+
+          /// BOOKMARK
+          buildBtn(
+            icon: Icon(
+              CupertinoIcons.bookmark,
+              color: Colors.white,
+              size: 24.sp,
+            ),
+            bgColor: const Color(0xFF1E293B),
+            diameter: smallDiameter,
+            onTap: () => _controller.swipe(CardSwiperDirection.top),
           ),
         ],
       ),
