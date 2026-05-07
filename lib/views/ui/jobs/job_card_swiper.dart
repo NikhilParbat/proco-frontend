@@ -351,6 +351,56 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                             ),
                           ),
                           SizedBox(height: 10.h),
+                          if (job.company.isNotEmpty ||
+                              job.domain.isNotEmpty) ...[
+                            Row(
+                              children: [
+                                if (job.company.isNotEmpty)
+                                  Flexible(
+                                    child: Text(
+                                      job.company,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11.sp,
+                                        color: const Color(0xFF666666),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+
+                                if (job.company.isNotEmpty &&
+                                    job.domain.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                    ),
+                                    child: Container(
+                                      width: 4.w,
+                                      height: 4.w,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFBBBBBB),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+
+                                if (job.domain.isNotEmpty)
+                                  Flexible(
+                                    child: Text(
+                                      job.domain,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11.sp,
+                                        color: kThemeColor,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+
+                            SizedBox(height: 8.h),
+                          ],
 
                           // Opportunity Location
                           if (job.location.isNotEmpty) ...[
@@ -367,10 +417,10 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                                     TextSpan(
                                       children: [
                                         TextSpan(
-                                          text: 'Opportunity Location: ',
+                                          text: 'Location: ',
                                           style: GoogleFonts.dmSans(
                                             fontSize: 11.sp,
-                                            color: const Color(0xFF999999),
+                                            color: kThemeColor,
                                             fontWeight: FontWeight.w400,
                                           ),
                                         ),
@@ -392,11 +442,32 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                             SizedBox(height: 10.h),
                           ],
 
+                          if (job.experienceLevel.isNotEmpty ||
+                              job.contract.isNotEmpty ||
+                              job.salary.isNotEmpty) ...[
+                            Wrap(
+                              spacing: 6.w,
+                              runSpacing: 6.h,
+                              children: [
+                                if (job.experienceLevel.isNotEmpty)
+                                  _buildInfoChip(job.experienceLevel),
+
+                                if (job.contract.isNotEmpty)
+                                  _buildInfoChip(job.contract),
+
+                                if (job.salary.isNotEmpty)
+                                  _buildInfoChip(job.salary),
+                              ],
+                            ),
+
+                            SizedBox(height: 10.h),
+                          ],
+
                           // Description + Read more
                           if (job.description.isNotEmpty) ...[
                             Text(
                               job.description,
-                              maxLines: isExpanded(job.id) ? null : 3,
+                              maxLines: isExpanded(job.id) ? null : 2,
                               overflow: isExpanded(job.id)
                                   ? TextOverflow.visible
                                   : TextOverflow.ellipsis,
@@ -451,7 +522,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                             ),
                             SizedBox(height: 6.h),
                             ...job.requirements
-                                .take(3)
+                                .take(4)
                                 .map(
                                   (req) => Padding(
                                     padding: EdgeInsets.only(bottom: 4.h),
@@ -632,6 +703,25 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(String text) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F6F6),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: const Color(0xFFE5E5E5)),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.dmSans(
+          fontSize: 10.sp,
+          color: const Color(0xFF555555),
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

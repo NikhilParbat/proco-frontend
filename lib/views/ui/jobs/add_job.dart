@@ -22,7 +22,7 @@ class AddJobPage extends StatefulWidget {
 
 class _AddJobPageState extends State<AddJobPage> {
   // ─── Design tokens ────────────────────────────────────────────────────────
-static const Color _border = Color(0xFFE0E0E0);
+  static const Color _border = Color(0xFFE0E0E0);
   static const Color _textDark = Color(0xFF1A1A2E);
   static const Color _textGrey = Color(0xFF999999);
   static const Color _sectionColor = Color(0xFF888888);
@@ -144,8 +144,9 @@ static const Color _border = Color(0xFFE0E0E0);
         _jobLng,
       );
       if (mounted) {
-        setState(() =>
-            _locationController.text = '${address.city}, ${address.state}');
+        setState(
+          () => _locationController.text = '${address.city}, ${address.state}',
+        );
       }
     } catch (_) {
       if (mounted) {
@@ -250,34 +251,94 @@ static const Color _border = Color(0xFFE0E0E0);
   Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: kBackgroundColor,
+
+      bottomNavigationBar: Consumer2<JobsNotifier, ImageNotifier>(
+        builder: (context, jobsNotifier, imageNotifier, _) {
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+              child: GestureDetector(
+                onTap: () => _submit(jobsNotifier, imageNotifier),
+                child: Container(
+                  height: 58.h,
+                  decoration: BoxDecoration(
+                    color: kDarkBlue,
+                    borderRadius: BorderRadius.circular(18.r),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isEditMode
+                            ? 'Update Opportunity'
+                            : 'Create Opportunity',
+                        style: TextStyle(
+                          fontFamily: kFontDMSans,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16.sp,
+                        ),
+                      ),
+
+                      SizedBox(width: 12.w),
+
+                      Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 22.sp,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: kBackgroundColor,
         elevation: 0,
         centerTitle: true,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.close, color: _textDark, size: 22),
+        scrolledUnderElevation: 0,
+
+        leading: Padding(
+          padding: EdgeInsets.only(left: 10.w),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: kDark,
+              size: 20.sp,
+            ),
+          ),
         ),
+
         title: Text(
-          _isEditMode ? 'Edit Query' : 'Create Query',
-          style: const TextStyle(
+          _isEditMode ? 'Edit Opportunity' : 'Post Opportunity',
+          style: TextStyle(
             fontFamily: kFontDMSans,
-            fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: _textDark,
+            fontSize: 20.sp,
+            color: kDark,
           ),
         ),
       ),
+
       body: Consumer2<JobsNotifier, ImageNotifier>(
         builder: (context, jobsNotifier, imageNotifier, _) {
           return ListView(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+            padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 120.h),
             children: [
               // ── BASIC INFO ────────────────────────────────────────────────
               _sectionLabel('BASIC INFO'),
               SizedBox(height: 10.h),
-              _field(_titleController, hint: 'Query title *',
-                  inputFormatters: [noEmojiFormatter], maxLength: 50),
+              _field(
+                _titleController,
+                hint: 'Opportunity title',
+                inputFormatters: [noEmojiFormatter],
+                maxLength: 50,
+              ),
               SizedBox(height: 10.h),
               _field(_companyController, hint: 'Company name (optional)'),
               SizedBox(height: 24.h),
@@ -302,10 +363,7 @@ static const Color _border = Color(0xFFE0E0E0);
               _domainChips(),
               if (selectedDomain == 'Other') ...[
                 SizedBox(height: 8.h),
-                _field(
-                  _customDomainController,
-                  hint: 'Type your domain...',
-                ),
+                _field(_customDomainController, hint: 'Type your domain...'),
               ],
               SizedBox(height: 14.h),
               Text('Opportunity Type', style: _labelStyle()),
@@ -326,9 +384,7 @@ static const Color _border = Color(0xFFE0E0E0);
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  Expanded(
-                    child: _field(_periodController, hint: 'Period'),
-                  ),
+                  Expanded(child: _field(_periodController, hint: 'Period')),
                 ],
               ),
               SizedBox(height: 10.h),
@@ -374,6 +430,13 @@ static const Color _border = Color(0xFFE0E0E0);
                             border: Border.all(
                               color: Colors.red.withValues(alpha: 0.2),
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: const Icon(
                             Icons.close,
@@ -429,15 +492,18 @@ static const Color _border = Color(0xFFE0E0E0);
               GestureDetector(
                 onTap: () => _showImageSourceSheet(imageNotifier),
                 child: Container(
-                  height: 140.h,
+                  height: 185.h,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _border),
+                    color: const Color(0xFFF8F8FA),
+                    borderRadius: BorderRadius.circular(18.r),
+                    border: Border.all(
+                      color: const Color(0xFFD6D9E0),
+                      width: 1.2,
+                    ),
                   ),
                   child: imageNotifier.selectedImage != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(18.r),
                           child: Image.file(
                             imageNotifier.selectedImage!,
                             fit: BoxFit.cover,
@@ -447,46 +513,37 @@ static const Color _border = Color(0xFFE0E0E0);
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.add_photo_alternate_outlined,
-                              color: _textGrey,
-                              size: 32,
+                            Container(
+                              width: 54.w,
+                              height: 54.w,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.camera_alt_rounded,
+                                color: kDarkGrey,
+                                size: 24.sp,
+                              ),
                             ),
-                            SizedBox(height: 6.h),
+
+                            SizedBox(height: 14.h),
+
                             Text(
-                              'Tap to add image',
+                              'Upload Cover Image',
                               style: TextStyle(
                                 fontFamily: kFontDMSans,
-                                fontSize: 13.sp,
-                                color: _textGrey,
+                                fontSize: 15.sp,
+                                color: kDarkGrey,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                 ),
               ),
-              if (imageNotifier.selectedImage != null) ...[
-                SizedBox(height: 6.h),
-                GestureDetector(
-                  onTap: () => imageNotifier.clearImage(),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.close, color: Colors.redAccent, size: 14),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'Remove image',
-                        style: TextStyle(
-                          fontFamily: kFontDMSans,
-                          fontSize: 12.sp,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              SizedBox(height: 32.h),
+
+              SizedBox(height: 22.h),
 
               // ── Submit ────────────────────────────────────────────────────
               GestureDetector(
@@ -495,8 +552,20 @@ static const Color _border = Color(0xFFE0E0E0);
                   width: double.infinity,
                   height: 56.h,
                   decoration: BoxDecoration(
-                    color: kThemeColor,
-                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      colors: [
+                        kThemeColor,
+                        kThemeColor.withValues(alpha: 0.85),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(18.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kThemeColor.withValues(alpha: 0.30),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
@@ -521,24 +590,27 @@ static const Color _border = Color(0xFFE0E0E0);
 
   // ─── Section label ────────────────────────────────────────────────────────
   Widget _sectionLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontFamily: kFontDMSans,
-        fontSize: 11.sp,
-        fontWeight: FontWeight.w700,
-        color: _sectionColor,
-        letterSpacing: 1.2,
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontFamily: kFontDMSans,
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w700,
+          color: kDarkGrey,
+          letterSpacing: 1,
+        ),
       ),
     );
   }
 
   TextStyle _labelStyle() => TextStyle(
-        fontFamily: kFontDMSans,
-        fontSize: 14.sp,
-        fontWeight: FontWeight.w500,
-        color: _textDark,
-      );
+    fontFamily: kFontDMSans,
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w500,
+    color: _textDark,
+  );
 
   // ─── Text field ───────────────────────────────────────────────────────────
   Widget _field(
@@ -557,33 +629,37 @@ static const Color _border = Color(0xFFE0E0E0);
       maxLines: maxLines,
       maxLength: maxLength,
       inputFormatters: inputFormatters,
+
       style: TextStyle(
         fontFamily: kFontDMSans,
-        fontSize: 14.sp,
-        color: _textDark,
+        fontSize: 16.sp,
+        color: kDark,
+        fontWeight: FontWeight.w500,
       ),
+
       decoration: InputDecoration(
+        counterText: '',
         hintText: hint,
+
         hintStyle: TextStyle(
           fontFamily: kFontDMSans,
-          fontSize: 14.sp,
-          color: _textGrey,
+          fontSize: 16.sp,
+          color: const Color(0xFF9EA4B0),
         ),
+
         filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border),
-        ),
+        fillColor: Colors.transparent,
+
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 18.h),
+
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border),
+          borderRadius: BorderRadius.circular(16.r),
+          borderSide: BorderSide(color: const Color(0xFFD2D6DE), width: 1),
         ),
+
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kThemeColor, width: 1.5),
+          borderRadius: BorderRadius.circular(16.r),
+          borderSide: BorderSide(color: kThemeColor, width: 1.4),
         ),
       ),
     );
@@ -596,9 +672,8 @@ static const Color _border = Color(0xFFE0E0E0);
         final LatLng? result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => LocationPickerScreen(
-              initialPosition: LatLng(_jobLat, _jobLng),
-            ),
+            builder: (_) =>
+                LocationPickerScreen(initialPosition: LatLng(_jobLat, _jobLng)),
           ),
         );
         if (result != null) {
@@ -610,8 +685,7 @@ static const Color _border = Color(0xFFE0E0E0);
             _jobLat = result.latitude;
             _jobLng = result.longitude;
             _locationPicked = true;
-            _locationController.text =
-                '${address.city}, ${address.state}';
+            _locationController.text = '${address.city}, ${address.state}';
           });
         }
       },
@@ -620,9 +694,7 @@ static const Color _border = Color(0xFFE0E0E0);
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _locationPicked ? kThemeColor : _border,
-          ),
+          border: Border.all(color: _locationPicked ? kThemeColor : _border),
         ),
         child: Row(
           children: [
@@ -644,8 +716,7 @@ static const Color _border = Color(0xFFE0E0E0);
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right,
-                color: Color(0xFFCCCCCC), size: 18),
+            const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC), size: 18),
           ],
         ),
       ),
@@ -653,8 +724,7 @@ static const Color _border = Color(0xFFE0E0E0);
   }
 
   // ─── Toggle row ───────────────────────────────────────────────────────────
-  Widget _toggleRow(
-      String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _toggleRow(String label, bool value, ValueChanged<bool> onChanged) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
       decoration: BoxDecoration(
@@ -698,15 +768,27 @@ static const Color _border = Color(0xFFE0E0E0);
         return GestureDetector(
           onTap: () => setState(() => selectedDomain = d),
           child: Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
+              color: selected
+                  ? kThemeColor.withValues(alpha: 0.10)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(24.r),
               border: Border.all(
-                color: selected ? kThemeColor : const Color(0xFFDDDDDD),
-                width: selected ? 1.5 : 1.0,
+                color: selected
+                    ? kThemeColor
+                    : Colors.black.withValues(alpha: 0.06),
+                width: selected ? 1.4 : 1,
               ),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: kThemeColor.withValues(alpha: 0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [],
             ),
             child: Text(
               d,
@@ -714,8 +796,7 @@ static const Color _border = Color(0xFFE0E0E0);
                 fontFamily: kFontDMSans,
                 fontSize: 13.sp,
                 color: selected ? kThemeColor : const Color(0xFF444444),
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
@@ -727,31 +808,38 @@ static const Color _border = Color(0xFFE0E0E0);
   // ─── Opportunity type chips ───────────────────────────────────────────────
   Widget _opportunityTypeChips() {
     return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
+      spacing: 10.w,
+      runSpacing: 10.h,
       children: kOpportunityTypes.map((type) {
         final selected = selectedOpportunityType == type;
+
         return GestureDetector(
-          onTap: () => setState(() => selectedOpportunityType = type),
+          onTap: () {
+            setState(() {
+              selectedOpportunityType = type;
+            });
+          },
+
           child: Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
+
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
+              color: selected ? kDarkBlue : const Color(0xFFF1F2F5),
+
+              borderRadius: BorderRadius.circular(30.r),
+
               border: Border.all(
-                color: selected ? kThemeColor : const Color(0xFFDDDDDD),
-                width: selected ? 1.5 : 1.0,
+                color: selected ? kDarkBlue : const Color(0xFFD8DCE3),
               ),
             ),
+
             child: Text(
               type,
               style: TextStyle(
                 fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                color: selected ? kThemeColor : const Color(0xFF444444),
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : kDark,
               ),
             ),
           ),
@@ -765,9 +853,9 @@ static const Color _border = Color(0xFFE0E0E0);
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFD2D6DE)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -779,10 +867,13 @@ static const Color _border = Color(0xFFE0E0E0);
               children: _skills.asMap().entries.map((e) {
                 return Container(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 10.w, vertical: 5.h),
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
-                    color: kDarkBlue,
-                    borderRadius: BorderRadius.circular(20.r),
+                    color: const Color(0xFFF1F2F5),
+                    borderRadius: BorderRadius.circular(24.r),
+                    border: Border.all(color: const Color(0xFFD5D9E0)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -791,16 +882,19 @@ static const Color _border = Color(0xFFE0E0E0);
                         e.value,
                         style: TextStyle(
                           fontFamily: kFontDMSans,
-                          fontSize: 12.sp,
-                          color: Colors.white,
+                          fontSize: 13.sp,
+                          color: kDark,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       SizedBox(width: 6.w),
                       GestureDetector(
                         onTap: () => _removeSkill(e.key),
-                        child: const Icon(Icons.close,
-                            color: Colors.white70, size: 14),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white70,
+                          size: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -840,7 +934,9 @@ static const Color _border = Color(0xFFE0E0E0);
                 onTap: () => _addSkill(_skillInputController.text),
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 12.w, vertical: 5.h),
+                    horizontal: 12.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: kThemeColor,
                     borderRadius: BorderRadius.circular(6.r),
