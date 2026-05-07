@@ -77,6 +77,17 @@ class FilterNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Fetches the saved filter for [userId] from the backend and updates
+  /// [activeFilter] + the local SharedPreferences cache.
+  /// Call this on app start / after login so the chip bar is always in sync.
+  Future<void> loadFilterForUser(String userId) async {
+    if (userId.isEmpty) return;
+    final response = await FilterHelper.getFilter(userId);
+    if (response.success && response.data != null) {
+      setActiveFilter(response.data!);
+    }
+  }
+
   Future<void> getFilters() async {
     _isLoading = true;
     notifyListeners();

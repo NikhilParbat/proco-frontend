@@ -1,3 +1,5 @@
+import 'package:proco/models/request/auth/professional_items.dart';
+
 class ProfileRes {
   final String id;
   final String username;
@@ -28,6 +30,9 @@ class ProfileRes {
   final List<String> interests;
   final List<String> hobbies;
   final int queriesCreated;
+  final List<ExperienceItem> experiences;
+  final List<ProjectItem> projects;
+  final List<AchievementItem> achievements;
 
   ProfileRes({
     required this.id,
@@ -59,6 +64,9 @@ class ProfileRes {
     this.interests = const [],
     this.hobbies = const [],
     this.queriesCreated = 0,
+    this.experiences = const [],
+    this.projects = const [],
+    this.achievements = const [],
   });
 
   factory ProfileRes.fromJson(Map<String, dynamic> json) {
@@ -92,7 +100,6 @@ class ProfileRes {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
-      // NEW: Parse arrays
       skills: json['skills'] != null ? List<String>.from(json['skills']) : [],
       interests: json['interests'] != null
           ? List<String>.from(json['interests'])
@@ -101,6 +108,18 @@ class ProfileRes {
           ? List<String>.from(json['hobbies'])
           : [],
       queriesCreated: (json['queriesCreated'] as num?)?.toInt() ?? 0,
+      experiences: (json['experiences'] as List<dynamic>?)
+              ?.map((e) => ExperienceItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      projects: (json['projects'] as List<dynamic>?)
+              ?.map((p) => ProjectItem.fromJson(p as Map<String, dynamic>))
+              .toList() ??
+          [],
+      achievements: (json['achievements'] as List<dynamic>?)
+              ?.map((a) => AchievementItem.fromJson(a as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -135,6 +154,9 @@ class ProfileRes {
       'interests': interests,
       'hobbies': hobbies,
       'queriesCreated': queriesCreated,
+      'experiences': experiences.map((e) => e.toJson()).toList(),
+      'projects': projects.map((p) => p.toJson()).toList(),
+      'achievements': achievements.map((a) => a.toJson()).toList(),
     };
   }
 }

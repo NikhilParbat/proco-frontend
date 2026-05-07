@@ -17,32 +17,19 @@ class FilterPage extends StatefulWidget {
 }
 
 class _FilterPageState extends State<FilterPage> {
-  static const Color _card = Color(0xFF08979F);
-  static const Color _accent = Color(0xFF0BBFCA);
-  static const Color _white = Colors.white;
+  static const Color _theme = kThemeColor;
+  static const Color _dark = Color(0xFF1A1A1A);
+  static const Color _grey = Color(0xFF9E9E9E);
+  static const Color _border = Color(0xFFE0E0E0);
 
-  // ─── Data ─────────────────────────────────────────────────────────────────
+  // ─── Data ──────────────────────────────────────────────────────────────────
   final List<String> options = List.from(kDomains);
 
-  // ── Opportunity type toggles (matches backend flat fields) ─────────────────
   bool _internship = false;
   bool _research = false;
   bool _freelance = false;
   bool _competition = false;
   bool _collaborate = false;
-
-  final List<String> states = [
-    "California",
-    "Texas",
-    "Florida",
-    "New York",
-    "Illinois",
-    "Pennsylvania",
-    "Ohio",
-    "Georgia",
-    "North Carolina",
-    "Michigan",
-  ];
 
   List<TextEditingController> customControllers = List.generate(
     10,
@@ -61,7 +48,21 @@ class _FilterPageState extends State<FilterPage> {
   String selectedCity = '';
   String selectedState = '';
   String selectedCountry = '';
+  double _radiusKm = 25;
   bool _isLoading = true;
+
+  final List<String> states = [
+    "California",
+    "Texas",
+    "Florida",
+    "New York",
+    "Illinois",
+    "Pennsylvania",
+    "Ohio",
+    "Georgia",
+    "North Carolina",
+    "Michigan",
+  ];
 
   @override
   void initState() {
@@ -78,6 +79,28 @@ class _FilterPageState extends State<FilterPage> {
     _countryController.dispose();
     _skillInputController.dispose();
     super.dispose();
+  }
+
+  void _resetAll() {
+    setState(() {
+      selectedOptions.clear();
+      _internship = false;
+      _research = false;
+      _freelance = false;
+      _competition = false;
+      _collaborate = false;
+      selectedLocationOption = '';
+      selectedCity = '';
+      selectedState = '';
+      selectedCountry = '';
+      _cityController.clear();
+      _countryController.clear();
+      selectedSkills.clear();
+      sortByTime = false;
+      postedWithin = '';
+      _radiusKm = 25;
+      showCustomInput = false;
+    });
   }
 
   void _applyFilterToState(GetFilterRes existing) {
@@ -117,19 +140,22 @@ class _FilterPageState extends State<FilterPage> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
 
+    // Load from local cache immediately so the page renders fast
     final activeJson = prefs.getString('activeFilter');
     if (activeJson != null) {
       try {
         final active = getFilterResFromJson(activeJson);
-        setState(() => _applyFilterToState(active));
+        setState(() {
+          _applyFilterToState(active);
+          _isLoading = false;
+        });
         if (filterNotifier.activeFilter == null) {
           filterNotifier.setActiveFilter(active);
         }
-        setState(() => _isLoading = false);
-        return;
       } catch (_) {}
     }
 
+    // Always refresh from backend to stay in sync across sessions
     final userId = prefs.getString('userId') ?? '';
     if (userId.isNotEmpty) {
       final response = await FilterHelper.getFilter(userId);
@@ -149,77 +175,88 @@ class _FilterPageState extends State<FilterPage> {
     return Scaffold(
       backgroundColor: kBackgroundColor,
       appBar: AppBar(
-        backgroundColor: kBackgroundColor,
+        backgroundColor: Colors.white,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: _white,
-            size: 20,
-          ),
+          child: const Icon(Icons.close, color: _dark, size: 22),
         ),
-        title: const Text(
+        centerTitle: true,
+        title: Text(
           'Filters',
           style: TextStyle(
-            color: _white,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
+            fontFamily: kFontDMSans,
+            color: _dark,
+            fontWeight: FontWeight.w700,
+            fontSize: 17.sp,
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: _resetAll,
+            child: Text(
+              'Reset All',
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                color: _theme,
+                fontWeight: FontWeight.w500,
+                fontSize: 13.sp,
+              ),
+            ),
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: const Color(0xFFEEEEEE)),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _accent))
+          ? Center(child: CircularProgressIndicator(color: _theme))
           : SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Domain ──────────────────────────────────────────────
-                  _sectionLabel('Domain'),
-                  SizedBox(height: 12.h),
+                  // ── CORE FILTERS ──────────────────────────────────────────
+                  _sectionLabel('Core Filters'),
+                  SizedBox(height: 14.h),
+                  _fieldLabel('Domain'),
+                  SizedBox(height: 8.h),
                   _domainChips(),
                   if (showCustomInput) ...[
                     SizedBox(height: 10.h),
                     _customDomainInput(),
                   ],
+                  SizedBox(height: 20.h),
+                  _fieldLabel('Location'),
+                  SizedBox(height: 8.h),
+                  _locationSection(),
                   SizedBox(height: 24.h),
 
-                  // ── Opportunity Type ────────────────────────────────────
+                  // ── OPPORTUNITY TYPE ──────────────────────────────────────
                   _sectionLabel('Opportunity Type'),
-                  SizedBox(height: 12.h),
-                  _opportunityToggles(),
+                  SizedBox(height: 14.h),
+                  _opportunityChips(),
                   SizedBox(height: 24.h),
 
-                  // ── Skills / Technologies ───────────────────────────────
-                  _sectionLabel('Skills / Technologies'),
-                  SizedBox(height: 12.h),
-                  _skillsInput(),
-                  if (selectedSkills.isNotEmpty) ...[
-                    SizedBox(height: 10.h),
-                    _skillsChips(),
-                  ],
-                  SizedBox(height: 24.h),
-
-                  // ── Location ────────────────────────────────────────────
-                  _sectionLabel('Location'),
-                  SizedBox(height: 12.h),
-                  _locationToggles(),
-                  SizedBox(height: 12.h),
-                  if (selectedLocationOption == 'City') _cityField(),
-                  if (selectedLocationOption == 'State') _stateDropdown(),
-                  if (selectedLocationOption == 'Country') _countryField(),
-                  SizedBox(height: 24.h),
-
-                  // ── Sort by Latest ──────────────────────────────────────
-                  _sectionLabel('Sort & Recency'),
-                  SizedBox(height: 12.h),
-                  _sortByLatestToggle(),
-                  SizedBox(height: 16.h),
+                  // ── UPLOAD TIME ───────────────────────────────────────────
+                  _sectionLabel('Upload Time'),
+                  SizedBox(height: 14.h),
                   _postedWithinChips(),
+                  SizedBox(height: 24.h),
+
+                  // ── TECHNICAL & REWARDS ───────────────────────────────────
+                  _sectionLabel('Technical & Rewards'),
+                  SizedBox(height: 14.h),
+                  _fieldLabel('Skills'),
+                  SizedBox(height: 8.h),
+                  _skillsSection(),
+                  SizedBox(height: 20.h),
+                  _sortByLatestRow(),
                   SizedBox(height: 32.h),
 
-                  // ── Submit ──────────────────────────────────────────────
+                  // ── Apply ─────────────────────────────────────────────────
                   _applyButton(),
                   SizedBox(height: 30.h),
                 ],
@@ -228,23 +265,90 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // ─── Section label (same as UpdateProfilePage) ────────────────────────────
+  // ─── Section / field labels ───────────────────────────────────────────────
   Widget _sectionLabel(String text) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          text.toUpperCase(),
-          style: const TextStyle(
-            color: _accent,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.2,
-          ),
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontFamily: kFontDMSans,
+        color: _grey,
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.0,
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontFamily: kFontDMSans,
+        color: _dark,
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+
+  // ─── Shared chip widget ───────────────────────────────────────────────────
+  Widget _chip(String label, bool isSelected) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: isSelected ? _theme : Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: isSelected ? _theme : _border,
+          width: 1.5,
         ),
-        SizedBox(height: 4.h),
-        Container(height: 1, color: _card.withValues(alpha: 0.5)),
-      ],
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: kFontDMSans,
+          color: isSelected ? Colors.white : _dark,
+          fontSize: 13.sp,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+    );
+  }
+
+  // ─── Styled text field ────────────────────────────────────────────────────
+  Widget _styledTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+  }) {
+    return TextField(
+      controller: controller,
+      style: TextStyle(color: _dark, fontSize: 14.sp),
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
+        prefixIcon: Icon(icon, color: _grey, size: 20),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _theme, width: 1.5),
+        ),
+      ),
     );
   }
 
@@ -254,9 +358,9 @@ class _FilterPageState extends State<FilterPage> {
       width: double.infinity,
       padding: EdgeInsets.all(14.h),
       decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
+        border: Border.all(color: _border),
       ),
       child: Wrap(
         spacing: 8,
@@ -265,71 +369,18 @@ class _FilterPageState extends State<FilterPage> {
           ...options.map((option) {
             final isSelected = selectedOptions.contains(option);
             return GestureDetector(
-              onTap: () {
-                setState(() {
-                  isSelected
-                      ? selectedOptions.remove(option)
-                      : selectedOptions.add(option);
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-                decoration: BoxDecoration(
-                  color: isSelected ? _card : _card.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? _accent : _card.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isSelected) ...[
-                      const Icon(Icons.check_rounded, size: 13, color: _white),
-                      SizedBox(width: 4.w),
-                    ],
-                    Text(
-                      option,
-                      style: TextStyle(
-                        color: isSelected ? _white : Colors.white70,
-                        fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              onTap: () => setState(() {
+                isSelected
+                    ? selectedOptions.remove(option)
+                    : selectedOptions.add(option);
+              }),
+              child: _chip(option, isSelected),
             );
           }),
-          // CUSTOM bubble
+          // "Other" chip — toggles the custom-input row
           GestureDetector(
-            onTap: () => setState(() => showCustomInput = true),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-              decoration: BoxDecoration(
-                color: _accent.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _accent.withValues(alpha: 0.6)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.add_rounded, size: 14, color: _accent),
-                  SizedBox(width: 4.w),
-                  const Text(
-                    'CUSTOM',
-                    style: TextStyle(
-                      color: _accent,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            onTap: () => setState(() => showCustomInput = !showCustomInput),
+            child: _chip('Other', showCustomInput),
           ),
         ],
       ),
@@ -340,365 +391,239 @@ class _FilterPageState extends State<FilterPage> {
     return Row(
       children: [
         Expanded(
-          child: TextFormField(
+          child: _styledTextField(
             controller: customControllers[0],
-            style: const TextStyle(color: _white, fontSize: 15),
-            decoration: InputDecoration(
-              labelText: 'Enter custom domain',
-              labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
-              prefixIcon: const Icon(
-                Icons.edit_outlined,
-                color: _accent,
-                size: 20,
-              ),
-              filled: true,
-              fillColor: _card.withValues(alpha: 0.25),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 14.h,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _accent, width: 1.5),
-              ),
-            ),
+            hint: 'Type your domain and press ✓',
+            icon: Icons.edit_outlined,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _submitCustomDomain(),
           ),
         ),
         SizedBox(width: 10.w),
         GestureDetector(
-          onTap: () {
-            final text = customControllers[0].text.trim();
-            if (text.isNotEmpty) {
-              setState(() {
-                options.add(text);
-                selectedOptions.add(text);
-                showCustomInput = false;
-                customControllers[0].clear();
-              });
-            }
-          },
+          onTap: _submitCustomDomain,
           child: Container(
             height: 52.h,
             width: 52.h,
             decoration: BoxDecoration(
-              color: _card,
+              color: customControllers[0].text.trim().isNotEmpty
+                  ? _theme
+                  : _border,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.check_rounded, color: _white, size: 22),
+            child: const Icon(Icons.check_rounded, color: Colors.white, size: 22),
           ),
         ),
       ],
     );
   }
 
-  // ─── Opportunity type toggles ─────────────────────────────────────────────
-  Widget _opportunityToggles() {
+  void _submitCustomDomain() {
+    final text = customControllers[0].text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      if (!options.contains(text)) options.add(text);
+      if (!selectedOptions.contains(text)) selectedOptions.add(text);
+      customControllers[0].clear();
+      showCustomInput = false;
+    });
+  }
+
+  // ─── Opportunity type chips ────────────────────────────────────────────────
+  Widget _opportunityChips() {
     final entries = [
-      (
-        'Internship',
-        kOpportunityIcons['Internship'] ?? Icons.work_outline_rounded,
-        _internship,
-        (bool v) => setState(() => _internship = v),
-      ),
-      (
-        'Research',
-        kOpportunityIcons['Research'] ?? Icons.science_outlined,
-        _research,
-        (bool v) => setState(() => _research = v),
-      ),
-      (
-        'Freelance',
-        kOpportunityIcons['Freelance'] ?? Icons.laptop_outlined,
-        _freelance,
-        (bool v) => setState(() => _freelance = v),
-      ),
-      (
-        'Competition',
-        kOpportunityIcons['Competition'] ?? Icons.emoji_events_outlined,
-        _competition,
-        (bool v) => setState(() => _competition = v),
-      ),
-      (
-        'Collaborate',
-        kOpportunityIcons['Collaborate'] ?? Icons.group_outlined,
-        _collaborate,
-        (bool v) => setState(() => _collaborate = v),
-      ),
+      ('Competition', _competition, (bool v) => setState(() => _competition = v)),
+      ('Collaboration', _collaborate, (bool v) => setState(() => _collaborate = v)),
+      ('Research', _research, (bool v) => setState(() => _research = v)),
+      ('Freelance', _freelance, (bool v) => setState(() => _freelance = v)),
+      ('Internship', _internship, (bool v) => setState(() => _internship = v)),
     ];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: entries.asMap().entries.map((e) {
-          final idx = e.key;
-          final (label, icon, isSelected, onChanged) = e.value;
-          final isLast = idx == entries.length - 1;
-          return Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: entries.map((e) {
+        final (label, isSelected, setter) = e;
+        return GestureDetector(
+          onTap: () => setter(!isSelected),
+          child: _chip(label, isSelected),
+        );
+      }).toList(),
+    );
+  }
+
+  // ─── Location section ─────────────────────────────────────────────────────
+  Widget _locationSection() {
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _border),
+          ),
+          child: Row(
+            children: ['City', 'State', 'Country'].map((opt) {
+              final isActive = selectedLocationOption == opt;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(
+                    () => selectedLocationOption = isActive ? '' : opt,
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    padding: EdgeInsets.symmetric(vertical: 13.h),
+                    decoration: BoxDecoration(
+                      color: isActive ? _theme : Colors.transparent,
+                      borderRadius: BorderRadius.horizontal(
+                        left: opt == 'City'
+                            ? const Radius.circular(11)
+                            : Radius.zero,
+                        right: opt == 'Country'
+                            ? const Radius.circular(11)
+                            : Radius.zero,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          icon,
-                          color: isSelected ? _accent : Colors.white38,
-                          size: 18,
+                          opt == 'City'
+                              ? Icons.location_city_outlined
+                              : opt == 'State'
+                              ? Icons.map_outlined
+                              : Icons.flag_outlined,
+                          size: 15,
+                          color: isActive ? Colors.white : _grey,
                         ),
-                        SizedBox(width: 10.w),
+                        SizedBox(width: 5.w),
                         Text(
-                          label,
+                          opt,
                           style: TextStyle(
-                            color: isSelected ? _white : Colors.white60,
-                            fontSize: 15,
-                            fontWeight: isSelected
-                                ? FontWeight.w500
+                            fontFamily: kFontDMSans,
+                            color: isActive ? Colors.white : _grey,
+                            fontSize: 13.sp,
+                            fontWeight: isActive
+                                ? FontWeight.w600
                                 : FontWeight.normal,
                           ),
                         ),
                       ],
                     ),
-                    Switch(
-                      value: isSelected,
-                      activeThumbColor: _accent,
-                      activeTrackColor: _card.withValues(alpha: 0.6),
-                      inactiveThumbColor: Colors.white38,
-                      inactiveTrackColor: Colors.white12,
-                      onChanged: onChanged,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              if (!isLast)
-                Divider(
-                  height: 1,
-                  color: _card.withValues(alpha: 0.3),
-                  indent: 16,
-                  endIndent: 16,
-                ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  // ─── Skills input ─────────────────────────────────────────────────────────
-  Widget _skillsInput() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: _skillInputController,
-            style: const TextStyle(color: _white, fontSize: 15),
-            decoration: InputDecoration(
-              labelText: 'Add a skill or technology',
-              hintText: 'e.g. React, Python…',
-              labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
-              hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
-              prefixIcon: const Icon(
-                Icons.psychology_outlined,
-                color: _accent,
-                size: 20,
-              ),
-              filled: true,
-              fillColor: _card.withValues(alpha: 0.25),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 16.h,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _accent, width: 1.5),
-              ),
-            ),
+              );
+            }).toList(),
           ),
         ),
-        SizedBox(width: 10.w),
-        GestureDetector(
-          onTap: () {
-            final val = _skillInputController.text.trim();
-            if (val.isNotEmpty && !selectedSkills.contains(val)) {
-              setState(() {
-                selectedSkills.add(val);
-                _skillInputController.clear();
-              });
-            }
-          },
-          child: Container(
-            height: 54.h,
-            width: 54.h,
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.add_rounded, color: _white, size: 24),
+        if (selectedLocationOption == 'City') ...[
+          SizedBox(height: 10.h),
+          _styledTextField(
+            controller: _cityController,
+            hint: 'Enter city name',
+            icon: Icons.location_on_outlined,
+            onChanged: (v) => setState(() => selectedCity = v),
           ),
-        ),
+          SizedBox(height: 10.h),
+          _kmSlider(),
+        ],
+        if (selectedLocationOption == 'State') ...[
+          SizedBox(height: 10.h),
+          _stateDropdown(),
+        ],
+        if (selectedLocationOption == 'Country') ...[
+          SizedBox(height: 10.h),
+          _styledTextField(
+            controller: _countryController,
+            hint: 'Enter country name',
+            icon: Icons.flag_outlined,
+            onChanged: (v) => setState(() => selectedCountry = v),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _skillsChips() {
+  Widget _kmSlider() {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.h),
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 8.h),
       decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
       ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: selectedSkills.map((skill) {
-          return Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: _card,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  skill,
-                  style: const TextStyle(
-                    color: _white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Radius',
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  color: _dark,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
                 ),
-                SizedBox(width: 6.w),
-                GestureDetector(
-                  onTap: () => setState(() => selectedSkills.remove(skill)),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 14,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  // ─── Location ─────────────────────────────────────────────────────────────
-  Widget _locationToggles() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: ['City', 'State', 'Country'].map((option) {
-          final isActive = selectedLocationOption == option;
-          final isLast = option == 'Country';
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(
-                () => selectedLocationOption = isActive ? '' : option,
               ),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 13.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: isActive ? _card : Colors.transparent,
-                  borderRadius: BorderRadius.horizontal(
-                    left: option == 'City'
-                        ? const Radius.circular(14)
-                        : Radius.zero,
-                    right: isLast ? const Radius.circular(14) : Radius.zero,
+                  color: _theme.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_radiusKm.round()} km',
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    color: _theme,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      option == 'City'
-                          ? Icons.location_city_outlined
-                          : option == 'State'
-                          ? Icons.map_outlined
-                          : Icons.flag_outlined,
-                      size: 16,
-                      color: isActive ? _white : Colors.white38,
-                    ),
-                    SizedBox(width: 5.w),
-                    Text(
-                      option,
-                      style: TextStyle(
-                        color: isActive ? _white : Colors.white38,
-                        fontSize: 13,
-                        fontWeight: isActive
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: _theme,
+              inactiveTrackColor: _border,
+              thumbColor: _theme,
+              overlayColor: _theme.withValues(alpha: 0.12),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+              trackHeight: 3,
+            ),
+            child: Slider(
+              value: _radiusKm,
+              min: 1,
+              max: 200,
+              divisions: 40,
+              onChanged: (v) => setState(() => _radiusKm = v),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '1 km',
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  color: _grey,
+                  fontSize: 11.sp,
                 ),
               ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _cityField() {
-    return TextFormField(
-      controller: _cityController,
-      style: const TextStyle(color: _white, fontSize: 15),
-      onChanged: (v) => setState(() => selectedCity = v),
-      decoration: InputDecoration(
-        labelText: 'City name',
-        hintText: 'e.g. San Francisco',
-        labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
-        hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
-        prefixIcon: const Icon(
-          Icons.location_on_outlined,
-          color: _accent,
-          size: 20,
-        ),
-        filled: true,
-        fillColor: _card.withValues(alpha: 0.25),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _accent, width: 1.5),
-        ),
+              Text(
+                '200 km',
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  color: _grey,
+                  fontSize: 11.sp,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -706,39 +631,35 @@ class _FilterPageState extends State<FilterPage> {
   Widget _stateDropdown() {
     return DropdownButtonFormField<String>(
       initialValue: selectedState.isEmpty ? null : selectedState,
-      dropdownColor: const Color(0xFF0A0540),
-      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _accent),
-      style: const TextStyle(color: _white, fontSize: 15),
-      borderRadius: BorderRadius.circular(14),
+      dropdownColor: Colors.white,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
+      style: TextStyle(color: _dark, fontSize: 14.sp),
+      borderRadius: BorderRadius.circular(12),
       decoration: InputDecoration(
-        labelText: 'State',
-        labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
-        prefixIcon: const Icon(Icons.map_outlined, color: _accent, size: 20),
+        hintText: 'Choose a state',
+        hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
+        prefixIcon: Icon(Icons.map_outlined, color: _grey, size: 20),
         filled: true,
-        fillColor: _card.withValues(alpha: 0.25),
-        contentPadding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
+        fillColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _accent, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _theme, width: 1.5),
         ),
-      ),
-      hint: const Text(
-        'Choose a state',
-        style: TextStyle(color: Colors.white38),
       ),
       items: states
           .map(
             (s) => DropdownMenuItem(
               value: s,
-              child: Text(s, style: const TextStyle(color: _white)),
+              child: Text(s, style: TextStyle(color: _dark, fontSize: 14.sp)),
             ),
           )
           .toList(),
@@ -746,139 +667,149 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  Widget _countryField() {
-    return TextFormField(
-      controller: _countryController,
-      style: const TextStyle(color: _white, fontSize: 15),
-      onChanged: (v) => setState(() => selectedCountry = v),
-      decoration: InputDecoration(
-        labelText: 'Country name',
-        hintText: 'e.g. United States',
-        labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
-        hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
-        prefixIcon: const Icon(Icons.flag_outlined, color: _accent, size: 20),
-        filled: true,
-        fillColor: _card.withValues(alpha: 0.25),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: _card.withValues(alpha: 0.4)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _accent, width: 1.5),
-        ),
-      ),
-    );
-  }
-
-  // ─── Sort & Recency ───────────────────────────────────────────────────────
-  Widget _sortByLatestToggle() {
+  // ─── Skills ───────────────────────────────────────────────────────────────
+  Widget _skillsSection() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      width: double.infinity,
+      padding: EdgeInsets.all(14.h),
       decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.15),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _card.withValues(alpha: 0.3)),
+        border: Border.all(color: _border),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (selectedSkills.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: selectedSkills.map((skill) {
+                return Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: _theme,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        skill,
+                        style: TextStyle(
+                          fontFamily: kFontDMSans,
+                          color: Colors.white,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(width: 6.w),
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => selectedSkills.remove(skill)),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          size: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            SizedBox(height: 10.h),
+          ],
           Row(
             children: [
-              Icon(
-                Icons.access_time_rounded,
-                color: sortByTime ? _accent : Colors.white38,
-                size: 18,
+              Expanded(
+                child: TextField(
+                  controller: _skillInputController,
+                  style: TextStyle(color: _dark, fontSize: 14.sp),
+                  decoration: InputDecoration(
+                    hintText: 'Add another skill...',
+                    hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onSubmitted: _addSkill,
+                ),
               ),
-              SizedBox(width: 10.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Sort by Latest',
-                    style: TextStyle(
-                      color: sortByTime ? _white : Colors.white60,
-                      fontSize: 15,
-                      fontWeight: sortByTime
-                          ? FontWeight.w500
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  Text(
-                    'Show newest jobs first',
-                    style: TextStyle(color: Colors.white38, fontSize: 12.sp),
-                  ),
-                ],
+              GestureDetector(
+                onTap: () => _addSkill(_skillInputController.text),
+                child: Icon(Icons.add_circle_outline, color: _theme, size: 22),
               ),
             ],
-          ),
-          Switch(
-            value: sortByTime,
-            activeThumbColor: _accent,
-            activeTrackColor: _card.withValues(alpha: 0.6),
-            inactiveThumbColor: Colors.white38,
-            inactiveTrackColor: Colors.white12,
-            onChanged: (val) => setState(() => sortByTime = val),
           ),
         ],
       ),
     );
   }
 
+  void _addSkill(String val) {
+    val = val.trim();
+    if (val.isNotEmpty && !selectedSkills.contains(val)) {
+      setState(() {
+        selectedSkills.add(val);
+        _skillInputController.clear();
+      });
+    }
+  }
+
+  // ─── Posted within chips ──────────────────────────────────────────────────
   Widget _postedWithinChips() {
-    const entries = [('24h', '24 Hours'), ('7d', '7 Days'), ('30d', '30 Days')];
-    return Row(
+    const entries = [
+      ('7d', 'Past Week'),
+      ('15d', '15 Days'),
+      ('30d', '1 Month'),
+      ('90d', '3 Months'),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: entries.map((entry) {
         final isSelected = postedWithin == entry.$1;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () =>
-                setState(() => postedWithin = isSelected ? '' : entry.$1),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              margin: EdgeInsets.only(right: entry.$1 == '30d' ? 0 : 8.w),
-              padding: EdgeInsets.symmetric(vertical: 12.h),
-              decoration: BoxDecoration(
-                color: isSelected ? _card : _card.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected ? _accent : _card.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    entry.$1 == '24h'
-                        ? Icons.flash_on_rounded
-                        : entry.$1 == '7d'
-                        ? Icons.calendar_today_outlined
-                        : Icons.calendar_month_outlined,
-                    color: isSelected ? _white : Colors.white38,
-                    size: 18,
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    entry.$2,
-                    style: TextStyle(
-                      color: isSelected ? _white : Colors.white38,
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
+        return GestureDetector(
+          onTap: () =>
+              setState(() => postedWithin = isSelected ? '' : entry.$1),
+          child: _chip(entry.$2, isSelected),
         );
       }).toList(),
+    );
+  }
+
+  // ─── Sort by Latest ───────────────────────────────────────────────────────
+  Widget _sortByLatestRow() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Sort by Latest',
+            style: TextStyle(
+              fontFamily: kFontDMSans,
+              color: _dark,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Switch(
+            value: sortByTime,
+            activeThumbColor: _theme,
+            inactiveThumbColor: _grey,
+            inactiveTrackColor: _border,
+            onChanged: (val) => setState(() => sortByTime = val),
+          ),
+        ],
+      ),
     );
   }
 
@@ -925,8 +856,6 @@ class _FilterPageState extends State<FilterPage> {
         if (!context.mounted) return;
         if (!success) return;
 
-        // Use the server response if available so the id is correct;
-        // fall back to local state if the response had no data.
         final savedFilter =
             filterNotifier.filter ??
             GetFilterRes(
@@ -956,22 +885,16 @@ class _FilterPageState extends State<FilterPage> {
         width: double.infinity,
         height: 54.h,
         decoration: BoxDecoration(
-          color: _card,
+          color: _theme,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: _card.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'Apply Filters',
             style: TextStyle(
-              color: _white,
-              fontSize: 16,
+              fontFamily: kFontDMSans,
+              color: Colors.white,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w600,
             ),
           ),

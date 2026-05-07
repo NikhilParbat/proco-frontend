@@ -71,7 +71,6 @@ class UserHelper {
         request.fields['longitude'] = model.longitude.toString();
       }
 
-      // ✅ NEW: Send interests, hobbies, skills as JSON arrays
       if (model.skills.isNotEmpty) {
         request.fields['skills'] = jsonEncode(model.skills);
       }
@@ -81,6 +80,12 @@ class UserHelper {
       if (model.hobbies.isNotEmpty) {
         request.fields['hobbies'] = jsonEncode(model.hobbies);
       }
+      request.fields['experiences'] =
+          jsonEncode(model.experiences.map((e) => e.toJson()).toList());
+      request.fields['projects'] =
+          jsonEncode(model.projects.map((p) => p.toJson()).toList());
+      request.fields['achievements'] =
+          jsonEncode(model.achievements.map((a) => a.toJson()).toList());
 
       // ✅ Image
       if (image != null) {

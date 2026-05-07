@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:proco/models/request/auth/professional_items.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,9 @@ class ProfileEditState extends ChangeNotifier {
   String linkedInUrl = '', gitHubUrl = '', twitterUrl = '', portfolioUrl = '';
   double latitude = 0.0, longitude = 0.0;
   List<String> skills = [], interests = [], hobbies = [];
+  List<ExperienceItem> experiences = [];
+  List<ProjectItem> projects = [];
+  List<AchievementItem> achievements = [];
   int queriesCreated = 0;
 
   // Visibility Flags
@@ -75,6 +79,9 @@ class ProfileEditState extends ChangeNotifier {
         interests = List.from(d.interests);
         hobbies = List.from(d.hobbies);
         queriesCreated = d.queriesCreated;
+        experiences = List.from(d.experiences);
+        projects = List.from(d.projects);
+        achievements = List.from(d.achievements);
       }
     } catch (e) {
       error = e.toString();
@@ -106,6 +113,9 @@ class ProfileEditState extends ChangeNotifier {
       gitHubUrl: gitHubUrl,
       twitterUrl: twitterUrl,
       portfolioUrl: portfolioUrl,
+      experiences: experiences,
+      projects: projects,
+      achievements: achievements,
     );
     final res = await UserHelper.updateProfile(req, image);
     isSaving = false;

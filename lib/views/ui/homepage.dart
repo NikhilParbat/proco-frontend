@@ -110,7 +110,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     NotificationHelper.addListener(_onNotificationUpdate);
 
-    // Step 1: Load jobs AFTER UI renders
+    // Load jobs and sync filter from backend after UI renders
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 500), () {
         if (!mounted) return;
@@ -121,6 +121,9 @@ class _HomePageState extends State<HomePage> {
           widget.userId,
           bookmarkedIds: bookmarkedIds,
         );
+
+        // Sync saved filter from backend so chip bar is accurate after login
+        context.read<FilterNotifier>().loadFilterForUser(widget.userId);
       });
     });
   }

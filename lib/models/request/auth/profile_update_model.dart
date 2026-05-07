@@ -1,3 +1,5 @@
+import 'package:proco/models/request/auth/professional_items.dart';
+
 class ProfileUpdateReq {
   final String username;
   final String city;
@@ -16,8 +18,11 @@ class ProfileUpdateReq {
   final double latitude;
   final double longitude;
   final List<String> skills;
-  final List<String> interests; // NEW
-  final List<String> hobbies; // NEW
+  final List<String> interests;
+  final List<String> hobbies;
+  final List<ExperienceItem> experiences;
+  final List<ProjectItem> projects;
+  final List<AchievementItem> achievements;
 
   ProfileUpdateReq({
     required this.username,
@@ -37,8 +42,11 @@ class ProfileUpdateReq {
     this.latitude = 0,
     this.longitude = 0,
     this.skills = const [],
-    this.interests = const [], // NEW
-    this.hobbies = const [], // NEW
+    this.interests = const [],
+    this.hobbies = const [],
+    this.experiences = const [],
+    this.projects = const [],
+    this.achievements = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -60,8 +68,11 @@ class ProfileUpdateReq {
       'latitude': latitude,
       'longitude': longitude,
       'skills': skills,
-      'interests': interests, // NEW
-      'hobbies': hobbies, // NEW
+      'interests': interests,
+      'hobbies': hobbies,
+      'experiences': experiences.map((e) => e.toJson()).toList(),
+      'projects': projects.map((p) => p.toJson()).toList(),
+      'achievements': achievements.map((a) => a.toJson()).toList(),
     };
   }
 
@@ -83,8 +94,11 @@ class ProfileUpdateReq {
     double? latitude,
     double? longitude,
     List<String>? skills,
-    List<String>? interests, // NEW
-    List<String>? hobbies, // NEW
+    List<String>? interests,
+    List<String>? hobbies,
+    List<ExperienceItem>? experiences,
+    List<ProjectItem>? projects,
+    List<AchievementItem>? achievements,
   }) {
     return ProfileUpdateReq(
       username: username ?? this.username,
@@ -104,8 +118,11 @@ class ProfileUpdateReq {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       skills: skills ?? this.skills,
-      interests: interests ?? this.interests, // NEW
-      hobbies: hobbies ?? this.hobbies, // NEW
+      interests: interests ?? this.interests,
+      hobbies: hobbies ?? this.hobbies,
+      experiences: experiences ?? this.experiences,
+      projects: projects ?? this.projects,
+      achievements: achievements ?? this.achievements,
     );
   }
 }
