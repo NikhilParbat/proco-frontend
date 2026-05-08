@@ -57,28 +57,28 @@ class _HomePageState extends State<HomePage> {
     required IconData icon,
     required double size,
     required VoidCallback onTap,
-    required bool showDot,
+    bool showDot = false,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 40.w,
-        height: 40.h,
-        color: Colors.transparent,
-        alignment: Alignment.center,
+      child: SizedBox(
+        width: 34.w,
+        height: 34.w,
         child: Stack(
-          alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
-            Icon(icon, size: size, color: Colors.black),
+            Center(
+              child: Icon(icon, size: size, color: Colors.white),
+            ),
+
             if (showDot)
               Positioned(
-                top: 2,
-                right: 2,
+                right: 2.w,
+                top: 4.h,
                 child: Container(
                   width: 8.w,
                   height: 8.w,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: kThemeColor,
                     shape: BoxShape.circle,
                   ),
@@ -143,18 +143,19 @@ class _HomePageState extends State<HomePage> {
         actions: [
           _buildAppBarAction(
             icon: CupertinoIcons.slider_horizontal_3,
-            size: 27.w,
+            size: 24.w,
             onTap: _refreshAfterFilter,
             showDot:
                 context.watch<FilterNotifier>().activeFilter != null &&
                 _isFilterActive(context.watch<FilterNotifier>().activeFilter!),
           ),
-          SizedBox(width: 2.w),
+
           _buildAppBarAction(
             icon: CupertinoIcons.bell,
-            size: 24.w,
+            size: 22.w,
             onTap: () {
               setState(() => _hasNewNotification = false);
+
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const NotificationPage()),
@@ -178,7 +179,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
 }
 
 // ✅ UPDATED: Filter button now uses standard Flutter Icon to match AppBar

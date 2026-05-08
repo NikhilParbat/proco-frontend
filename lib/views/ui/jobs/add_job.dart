@@ -239,11 +239,13 @@ class _AddJobPageState extends State<AddJobPage> {
         context,
         imageFile: imageNotifier.selectedImage,
       );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Opportunity updated successfully')),
         );
-        Navigator.pop(context);
+
+        Navigator.pop(context, true);
       }
     } else {
       await notifier.createJob(
@@ -251,6 +253,14 @@ class _AddJobPageState extends State<AddJobPage> {
         context,
         imageFile: imageNotifier.selectedImage,
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Opportunity created successfully')),
+        );
+
+        Navigator.pop(context, true);
+      }
     }
   }
 

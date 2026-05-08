@@ -878,7 +878,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
           SizedBox(height: 6.h),
 
           Text(
-            'Come back later for more opportunities.\nNew listings are added regularly.',
+            'Come back later for more opportunities.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.sp,
