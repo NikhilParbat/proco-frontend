@@ -6,7 +6,6 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:proco/views/ui/auth/signup_new.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
-import 'package:proco/views/ui/onboarding/onboarding_screen.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,19 +55,17 @@ class _MyAppState extends State<MyApp> {
 
   Widget get _home {
     if (!widget.isLoggedIn) {
-      if (widget.isPendingVerification) {
-        return SignUpScreen(
-          initialStep: 3,
-          initialEmail: widget.pendingEmail,
-          initialUsername: widget.pendingUsername,
-        );
-      }
-      return const OnBoardingScreen();
+      // Redirecting to SignUpScreen instead of OnBoardingScreen
+      return SignUpScreen(
+        initialStep: widget.isPendingVerification ? 3 : 0,
+        initialEmail: widget.pendingEmail,
+        initialUsername: widget.pendingUsername,
+      );
     }
     if (!widget.onboardingComplete) {
       return OnboardingFlow(initialPage: widget.onboardingPage);
     }
-    return MainScreen(prefs: widget.prefs); // ✅ Pass prefs
+    return MainScreen(prefs: widget.prefs);
   }
 
   @override
@@ -82,9 +79,7 @@ class _MyAppState extends State<MyApp> {
           debugShowCheckedModeBanner: false,
           title: 'ProCo',
           theme: ThemeData(
-            // CHANGE THIS LINE:
             scaffoldBackgroundColor: kBackgroundColor,
-
             iconTheme: const IconThemeData(color: kDark),
             primarySwatch: Colors.grey,
           ),
