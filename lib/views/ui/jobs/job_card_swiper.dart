@@ -846,44 +846,48 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   // ─── No more cards state ──────────────────────────────────────────────────
   Widget _buildFinishedState() {
     return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 90.w,
-              height: 90.w,
-              decoration: BoxDecoration(
-                color: _teal.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.coffee_rounded, size: 44.w, color: _teal),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 90.w,
+            height: 90.w,
+            decoration: BoxDecoration(
+              color: kThemeColor.withOpacity(0.10),
+              shape: BoxShape.circle,
             ),
-            SizedBox(height: 24.h),
-            Text(
-              'You\'re all caught up!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22.sp,
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Poppins',
-              ),
+            child: Icon(
+              Icons.check_circle_outline_rounded,
+              size: 42.w,
+              color: kThemeColor,
             ),
-            SizedBox(height: 10.h),
-            Text(
-              'Come back later for more opportunities.\nNew listings are added regularly.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.white54,
-                fontFamily: 'Poppins',
-                height: 1.5,
-              ),
+          ),
+
+          SizedBox(height: 18.h),
+
+          Text(
+            'You’re all caught up',
+            style: TextStyle(
+              fontSize: 18.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontFamily: kFontDMSans,
             ),
-          ],
-        ),
+          ),
+
+          SizedBox(height: 6.h),
+
+          Text(
+            'Come back later for more opportunities.\nNew listings are added regularly.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.grey,
+              fontFamily: kFontDMSans,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

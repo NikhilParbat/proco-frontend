@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:proco/constants/app_constants.dart';
+import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String kPrefNotifMatches = 'pref_notif_matches';
@@ -13,9 +16,6 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  static const Color _navy = Color(0xFF040326);
-  static const Color _teal = Color(0xFF08979F);
-
   bool _notifMatches = true;
   bool _notifChat = true;
   bool _loading = true;
@@ -28,6 +28,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
+
     if (mounted) {
       setState(() {
         _notifMatches = prefs.getBool(kPrefNotifMatches) ?? true;
@@ -40,54 +41,118 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<void> _setMatchNotif(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kPrefNotifMatches, value);
-    if (mounted) setState(() => _notifMatches = value);
+
+    if (mounted) {
+      setState(() => _notifMatches = value);
+    }
   }
 
   Future<void> _setChatNotif(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kPrefNotifChat, value);
-    if (mounted) setState(() => _notifChat = value);
+
+    if (mounted) {
+      setState(() => _notifChat = value);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _navy,
-      appBar: AppBar(
-        backgroundColor: _navy,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Notifications',
-          style: TextStyle(
-            fontSize: 17.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            fontFamily: 'Poppins',
-          ),
-        ),
-      ),
+      backgroundColor: kBackgroundColor,
+      appBar: const LagoonAppBar(),
+
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _teal))
+          ? const Center(child: CircularProgressIndicator(color: kThemeColor))
           : SafeArea(
               child: ListView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
                 children: [
+                  SizedBox(height: 16.h),
+
+                  // ── Back Button ─────────────────────
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 8.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.chevron_left,
+                              size: 18.sp,
+                              color: Colors.black87,
+                            ),
+
+                            SizedBox(width: 2.w),
+
+                            Text(
+                              'Back',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20.h),
+
+                  // ── Title ───────────────────────────
+                  Text(
+                    'Notifications',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+
+                  SizedBox(height: 6.h),
+
+                  Text(
+                    'Manage your Lagoon notification preferences.',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13.sp,
+                      color: Colors.black45,
+                      height: 1.45,
+                    ),
+                  ),
+
+                  SizedBox(height: 28.h),
+
+                  // ── Match Notifications ────────────
                   _NotifTile(
-                    icon: Icons.favorite_rounded,
+                    icon: Icons.favorite_border_rounded,
                     label: 'Match Notifications',
                     subtitle: 'Get notified when you are matched',
                     value: _notifMatches,
                     onChanged: _setMatchNotif,
                   ),
-                  SizedBox(height: 16.h),
+
+                  SizedBox(height: 14.h),
+
+                  // ── Chat Notifications ─────────────
                   _NotifTile(
                     icon: Icons.chat_bubble_outline_rounded,
                     label: 'Chat Notifications',
@@ -95,6 +160,35 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     value: _notifChat,
                     onChanged: _setChatNotif,
                   ),
+
+                  SizedBox(height: 24.h),
+
+                  // ── Footer Info ────────────────────
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 14.sp,
+                        color: Colors.black38,
+                      ),
+
+                      SizedBox(width: 6.w),
+
+                      Expanded(
+                        child: Text(
+                          'You can update these preferences anytime from settings.',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12.sp,
+                            color: Colors.black38,
+                            height: 1.45,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 24.h),
                 ],
               ),
             ),
@@ -109,9 +203,6 @@ class _NotifTile extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  static const Color _card = Color(0xFF0D1B2A);
-  static const Color _teal = Color(0xFF08979F);
-
   const _NotifTile({
     required this.icon,
     required this.label,
@@ -123,52 +214,76 @@ class _NotifTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(16.r),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: kThemeColor.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
+
       child: Row(
         children: [
+          // ── Icon ────────────────────────────────
           Container(
-            width: 44.w,
-            height: 44.w,
+            width: 46.w,
+            height: 46.w,
             decoration: BoxDecoration(
-              color: _teal.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12.r),
+              color: kThemeColor.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(14.r),
             ),
-            child: Icon(icon, color: _teal, size: 22),
+            child: Icon(icon, size: 22.sp, color: kThemeColor),
           ),
+
           SizedBox(width: 14.w),
+
+          // ── Text ────────────────────────────────
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
                   ),
                 ),
+
                 SizedBox(height: 3.h),
+
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: Colors.white38,
-                    fontFamily: 'Poppins',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 11.5.sp,
+                    color: Colors.black45,
+                    height: 1.45,
                   ),
                 ),
               ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: _teal,
+
+          SizedBox(width: 10.w),
+
+          // ── Switch ──────────────────────────────
+          Transform.scale(
+            scale: 0.9,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: kThemeColor,
+              activeTrackColor: kThemeColor.withOpacity(0.35),
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: Colors.black12,
+            ),
           ),
         ],
       ),

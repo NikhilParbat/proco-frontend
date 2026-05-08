@@ -57,30 +57,42 @@ class _BookMarkPageState extends State<BookMarkPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.bookmark_outline_rounded,
-            size: 64,
-            color: _teal.withValues(alpha: 0.25),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'No saved jobs',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              // UPDATED: Changed to _navy so it is visible on the light background
-              color: _navy,
+          Container(
+            width: 90.w,
+            height: 90.w,
+            decoration: BoxDecoration(
+              color: kThemeColor.withOpacity(0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.bookmark_outline_rounded,
+              size: 42.w,
+              color: kThemeColor,
             ),
           ),
-          SizedBox(height: 6.h),
+
+          SizedBox(height: 18.h),
+
           Text(
-            'Swipe up on a job card to save it',
+            'No saved opportunities',
             style: TextStyle(
-              fontFamily: 'Poppins',
+              fontFamily: kFontDMSans,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+
+          SizedBox(height: 6.h),
+
+          Text(
+            'Swipe up on an opportunity card to save it',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: kFontDMSans,
               fontSize: 13.sp,
-              // UPDATED: Changed to a semi-transparent _navy for readability
-              color: _navy.withOpacity(0.6),
+              color: Colors.grey,
+              height: 1.5,
             ),
           ),
         ],

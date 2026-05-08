@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-import 'package:proco/views/common/exports.dart'; // Import your constants
+import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/device_mgt/devices_info.dart';
@@ -16,7 +16,6 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // UPDATED: Using your uniform background color
       backgroundColor: kBackgroundColor,
       drawer: const LagoonDrawer(),
       appBar: const LagoonAppBar(),
@@ -33,9 +32,11 @@ class SettingsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const DeviceManagement()),
               ),
             ),
-            SizedBox(height: 16.h),
+
+            SizedBox(height: 14.h),
+
             _SettingsTile(
-              icon: Icons.notifications_outlined,
+              icon: Icons.notifications_none_rounded,
               label: 'Notifications',
               subtitle: 'Manage match and chat notification preferences',
               onTap: () => Navigator.push(
@@ -43,7 +44,9 @@ class SettingsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const NotificationsPage()),
               ),
             ),
-            SizedBox(height: 16.h),
+
+            SizedBox(height: 14.h),
+
             _SettingsTile(
               icon: Icons.help_outline_rounded,
               label: 'Help & Support',
@@ -53,7 +56,9 @@ class SettingsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const HelpSupportPage()),
               ),
             ),
-            SizedBox(height: 16.h),
+
+            SizedBox(height: 14.h),
+
             _SettingsTile(
               icon: Icons.visibility_outlined,
               label: 'Profile View',
@@ -63,9 +68,11 @@ class SettingsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const ProfileViewPage()),
               ),
             ),
-            SizedBox(height: 16.h),
+
+            SizedBox(height: 14.h),
+
             _SettingsTile(
-              icon: Icons.person_rounded,
+              icon: Icons.person_outline_rounded,
               label: 'Account',
               subtitle: 'Manage your account settings',
               onTap: () => Navigator.push(
@@ -86,10 +93,6 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
 
-  // UPDATED: Colors adjusted for the light background theme
-  static const Color _navy = Color(0xFF040326);
-  static const Color _teal = Color(0xFF08979F);
-
   const _SettingsTile({
     required this.icon,
     required this.label,
@@ -99,65 +102,78 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          // UPDATED: Using White for the tile to pop against kBackgroundColor
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44.w,
-              height: 44.w,
-              decoration: BoxDecoration(
-                color: _teal.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12.r),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20.r),
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: kThemeColor.withOpacity(0.06)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.035),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-              child: Icon(icon, color: _teal, size: 22),
-            ),
-            SizedBox(width: 14.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: _navy, // UPDATED: Dark text for light background
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                  SizedBox(height: 3.h),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.black45, // UPDATED: Muted dark text
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ],
+            ],
+          ),
+          child: Row(
+            children: [
+              // ── Icon ─────────────────────────────
+              Container(
+                width: 46.w,
+                height: 46.w,
+                decoration: BoxDecoration(
+                  color: kThemeColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+                child: Icon(icon, color: kThemeColor, size: 22.sp),
               ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Colors.black26, // UPDATED: Subtle dark arrow
-              size: 22,
-            ),
-          ],
+
+              SizedBox(width: 14.w),
+
+              // ── Text ─────────────────────────────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF111827),
+                        fontFamily: kFontDMSans,
+                      ),
+                    ),
+
+                    SizedBox(height: 4.h),
+
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11.5.sp,
+                        color: Colors.grey.shade600,
+                        fontFamily: kFontDMSans,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Arrow ────────────────────────────
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.black26,
+                size: 15.sp,
+              ),
+            ],
+          ),
         ),
       ),
     );

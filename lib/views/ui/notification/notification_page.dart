@@ -126,7 +126,9 @@ class _NotificationPageState extends State<NotificationPage> {
               child: Row(
                 children: List.generate(_tabLabels.length, (i) {
                   return Padding(
-                    padding: EdgeInsets.only(right: i < _tabLabels.length - 1 ? 8.w : 0),
+                    padding: EdgeInsets.only(
+                      right: i < _tabLabels.length - 1 ? 8.w : 0,
+                    ),
                     child: _TabChip(
                       label: _tabLabels[i],
                       selected: _selectedTab == i,
@@ -145,17 +147,42 @@ class _NotificationPageState extends State<NotificationPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.notifications_none_rounded,
-                            size: 56.sp,
-                            color: Colors.black26,
+                          Container(
+                            width: 90.w,
+                            height: 90.w,
+                            decoration: BoxDecoration(
+                              color: kThemeColor.withOpacity(0.10),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.notifications_none_rounded,
+                              size: 42.w,
+                              color: kThemeColor,
+                            ),
                           ),
-                          SizedBox(height: 12.h),
+
+                          SizedBox(height: 18.h),
+
                           Text(
                             'No notifications yet',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 15.sp,
-                              color: Colors.black38,
+                            style: TextStyle(
+                              fontFamily: kFontDMSans,
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+
+                          SizedBox(height: 6.h),
+
+                          Text(
+                            'You’ll see updates and activity here',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: kFontDMSans,
+                              fontSize: 13.sp,
+                              color: Colors.grey,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -167,6 +194,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       separatorBuilder: (context, i) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
                         final n = filtered[index];
+
                         return GestureDetector(
                           onTap: () => _markRead(n),
                           child: _NotifCard(
@@ -247,7 +275,9 @@ class _NotifCard extends StatelessWidget {
     if (type == 'match') return Icons.favorite_rounded;
     if (type == 'chat') return Icons.chat_bubble_rounded;
     final t = title.toLowerCase();
-    if (t.contains('application') || t.contains('update') || t.contains('job')) {
+    if (t.contains('application') ||
+        t.contains('update') ||
+        t.contains('job')) {
       return Icons.business_center_rounded;
     }
     if (t.contains('profile') || t.contains('view')) {
@@ -263,9 +293,7 @@ class _NotifCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        border: isUnread
-            ? Border.all(color: kThemeColor, width: 1.5)
-            : null,
+        border: isUnread ? Border.all(color: kThemeColor, width: 1.5) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isUnread ? 0.07 : 0.04),

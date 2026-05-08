@@ -31,6 +31,54 @@ class _JobListPageState extends State<JobListPage> {
     {'value': 'closed', 'label': 'Closed'},
   ];
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 90.w,
+            height: 90.w,
+            decoration: BoxDecoration(
+              color: kThemeColor.withOpacity(0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.work_outline_rounded,
+              size: 42.w,
+              color: kThemeColor,
+            ),
+          ),
+
+          SizedBox(height: 18.h),
+
+          Text(
+            'No opportunities yet',
+            style: TextStyle(
+              fontSize: 18.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontFamily: kFontDMSans,
+            ),
+          ),
+
+          SizedBox(height: 6.h),
+
+          Text(
+            'Tap the + button to create your first opportunity',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.grey,
+              fontFamily: kFontDMSans,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,7 +143,7 @@ class _JobListPageState extends State<JobListPage> {
           }
 
           if (jobsNotifier.userJobs.isEmpty) {
-            return const SearchLoading(text: 'No Opportunities to display');
+            return _buildEmptyState();
           }
 
           jobs = jobsNotifier.userJobs;
