@@ -782,11 +782,11 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             icon: Icon(
               Icons.reply_rounded,
               color: _canUndo
-                  ? const Color(0xFF666666)
+                  ? const Color(0xFF1E293B)
                   : const Color(0xFFBBBBBB),
               size: 24.sp,
             ),
-            bgColor: const Color(0xFFF2F2F2),
+            bgColor: Colors.white,
             diameter: smallDiameter,
             onTap: _canUndo
                 ? () {
@@ -831,10 +831,10 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
           buildBtn(
             icon: Icon(
               CupertinoIcons.bookmark,
-              color: Colors.white,
+              color: const Color(0xFF1E293B),
               size: 24.sp,
             ),
-            bgColor: const Color(0xFF1E293B),
+            bgColor: Colors.white,
             diameter: smallDiameter,
             onTap: () => _controller.swipe(CardSwiperDirection.top),
           ),
