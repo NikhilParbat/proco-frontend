@@ -44,8 +44,8 @@ class _AddJobPageState extends State<AddJobPage> {
   double _jobLng = 0.0;
   bool _locationPicked = false;
   bool _isHiring = true;
-  String? selectedDomain;
-  String? selectedOpportunityType;
+  List<String> selectedDomains = [];
+  List<String> selectedOpportunityTypes = [];
   List<String> _skills = [];
 
   bool get _isEditMode => widget.job != null;
@@ -81,15 +81,25 @@ class _AddJobPageState extends State<AddJobPage> {
 
       _skills = List.from(j.skills);
 
-      if (kDomains.contains(j.domain)) {
-        selectedDomain = j.domain;
-      } else if (j.domain.isNotEmpty) {
-        selectedDomain = 'Other';
-        _customDomainController.text = j.domain;
+      if (j.domain.isNotEmpty) {
+        final splitDomains = j.domain.split(',').map((e) => e.trim()).toList();
+
+        for (final d in splitDomains) {
+          if (kDomains.contains(d)) {
+            selectedDomains.add(d);
+          }
+        }
+
+        final customDomains = splitDomains.where((d) => !kDomains.contains(d));
+
+        if (customDomains.isNotEmpty) {
+          selectedDomains.add('Other');
+          _customDomainController.text = customDomains.join(', ');
+        }
       }
 
       if (kOpportunityTypes.contains(j.opportunityType)) {
-        selectedOpportunityType = j.opportunityType;
+        selectedOpportunityTypes = [j.opportunityType];
       }
     } else {
       _reqControllers.add(TextEditingController());
@@ -160,7 +170,7 @@ class _AddJobPageState extends State<AddJobPage> {
     JobsNotifier notifier,
     ImageNotifier imageNotifier,
   ) async {
-    if (selectedDomain == null || selectedOpportunityType == null) {
+    if (selectedDomains.isEmpty || selectedOpportunityTypes.isEmpty) {
       _snack('Please select a domain and opportunity type.');
       return;
     }
@@ -169,9 +179,17 @@ class _AddJobPageState extends State<AddJobPage> {
       return;
     }
 
-    final effectiveDomain = selectedDomain == 'Other'
-        ? _customDomainController.text.trim()
-        : selectedDomain!;
+    final domains = [...selectedDomains];
+
+    if (domains.contains('Other')) {
+      domains.remove('Other');
+
+      if (_customDomainController.text.trim().isNotEmpty) {
+        domains.add(_customDomainController.text.trim());
+      }
+    }
+
+    final effectiveDomain = domains.join(', ');
 
     if (effectiveDomain.isEmpty) {
       _snack('Please enter a custom domain.');
@@ -194,7 +212,7 @@ class _AddJobPageState extends State<AddJobPage> {
     final jobData = CreateJobsRequest(
       agentId: userId,
       domain: effectiveDomain,
-      opportunityType: selectedOpportunityType!,
+      opportunityType: selectedOpportunityTypes.join(', '),
       title: _titleController.text.trim(),
       city: _locationController.text.trim().isNotEmpty
           ? _locationController.text.trim()
@@ -262,8 +280,15 @@ class _AddJobPageState extends State<AddJobPage> {
                 child: Container(
                   height: 58.h,
                   decoration: BoxDecoration(
-                    color: kDarkBlue,
+                    color: kThemeColor,
                     borderRadius: BorderRadius.circular(18.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kThemeColor.withValues(alpha: 0.28),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -281,12 +306,6 @@ class _AddJobPageState extends State<AddJobPage> {
                       ),
 
                       SizedBox(width: 12.w),
-
-                      Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 22.sp,
-                      ),
                     ],
                   ),
                 ),
@@ -361,7 +380,7 @@ class _AddJobPageState extends State<AddJobPage> {
               Text('Domain', style: _labelStyle()),
               SizedBox(height: 8.h),
               _domainChips(),
-              if (selectedDomain == 'Other') ...[
+              if (selectedDomains.contains('Other')) ...[
                 SizedBox(height: 8.h),
                 _field(_customDomainController, hint: 'Type your domain...'),
               ],
@@ -542,45 +561,7 @@ class _AddJobPageState extends State<AddJobPage> {
                         ),
                 ),
               ),
-
               SizedBox(height: 22.h),
-
-              // ── Submit ────────────────────────────────────────────────────
-              GestureDetector(
-                onTap: () => _submit(jobsNotifier, imageNotifier),
-                child: Container(
-                  width: double.infinity,
-                  height: 56.h,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        kThemeColor,
-                        kThemeColor.withValues(alpha: 0.85),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(18.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: kThemeColor.withValues(alpha: 0.30),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      _isEditMode ? 'Update Query' : 'Create Query',
-                      style: TextStyle(
-                        fontFamily: kFontDMSans,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 30.h),
             ],
           );
         },
@@ -760,26 +741,43 @@ class _AddJobPageState extends State<AddJobPage> {
   // ─── Domain chips (kDomains + Other) ─────────────────────────────────────
   Widget _domainChips() {
     final domains = [...kDomains, 'Other'];
+
     return Wrap(
       spacing: 8.w,
       runSpacing: 8.h,
       children: domains.map((d) {
-        final selected = selectedDomain == d;
+        final selected = selectedDomains.contains(d);
+
         return GestureDetector(
-          onTap: () => setState(() => selectedDomain = d),
-          child: Container(
+          onTap: () {
+            setState(() {
+              if (selected) {
+                selectedDomains.remove(d);
+              } else {
+                selectedDomains.add(d);
+              }
+            });
+          },
+
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+
             decoration: BoxDecoration(
               color: selected
                   ? kThemeColor.withValues(alpha: 0.10)
                   : Colors.white,
+
               borderRadius: BorderRadius.circular(24.r),
+
               border: Border.all(
                 color: selected
                     ? kThemeColor
                     : Colors.black.withValues(alpha: 0.06),
                 width: selected ? 1.4 : 1,
               ),
+
               boxShadow: selected
                   ? [
                       BoxShadow(
@@ -790,6 +788,7 @@ class _AddJobPageState extends State<AddJobPage> {
                     ]
                   : [],
             ),
+
             child: Text(
               d,
               style: TextStyle(
@@ -808,38 +807,58 @@ class _AddJobPageState extends State<AddJobPage> {
   // ─── Opportunity type chips ───────────────────────────────────────────────
   Widget _opportunityTypeChips() {
     return Wrap(
-      spacing: 10.w,
-      runSpacing: 10.h,
+      spacing: 8.w,
+      runSpacing: 8.h,
       children: kOpportunityTypes.map((type) {
-        final selected = selectedOpportunityType == type;
+        final selected = selectedOpportunityTypes.contains(type);
 
         return GestureDetector(
           onTap: () {
             setState(() {
-              selectedOpportunityType = type;
+              if (selected) {
+                selectedOpportunityTypes.remove(type);
+              } else {
+                selectedOpportunityTypes.add(type);
+              }
             });
           },
 
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
 
             decoration: BoxDecoration(
-              color: selected ? kDarkBlue : const Color(0xFFF1F2F5),
+              color: selected
+                  ? kThemeColor.withValues(alpha: 0.10)
+                  : Colors.white,
 
-              borderRadius: BorderRadius.circular(30.r),
+              borderRadius: BorderRadius.circular(24.r),
 
               border: Border.all(
-                color: selected ? kDarkBlue : const Color(0xFFD8DCE3),
+                color: selected
+                    ? kThemeColor
+                    : Colors.black.withValues(alpha: 0.06),
+                width: selected ? 1.4 : 1,
               ),
+
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: kThemeColor.withValues(alpha: 0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [],
             ),
 
             child: Text(
               type,
               style: TextStyle(
                 fontFamily: kFontDMSans,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : kDark,
+                fontSize: 13.sp,
+                color: selected ? kThemeColor : const Color(0xFF444444),
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
