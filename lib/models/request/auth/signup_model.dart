@@ -11,6 +11,7 @@ class SignupRequestModel {
     required this.username,
     required this.email,
     required this.password,
+    this.firebaseUid,
     this.phone,
     this.profile,
     this.skills = const [],
@@ -33,6 +34,7 @@ class SignupRequestModel {
   String username;
   String email;
   String password;
+  String? firebaseUid;
 
   final String? phone;
   final String? profile;
@@ -86,6 +88,7 @@ class SignupRequestModel {
     "username": username,
     "email": email,
     "password": password,
+    if (firebaseUid != null) "firebaseUid": firebaseUid,
     "phone": phone,
     "profile": profile,
     "skills": skills,

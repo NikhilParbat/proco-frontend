@@ -5,6 +5,7 @@ import 'package:proco/controllers/filter_provider.dart';
 import 'package:proco/models/request/filters/create_filter.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/helpers/filter_helper.dart';
+import 'package:proco/services/helpers/user_helper.dart';
 
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,8 +36,6 @@ class _FilterPageState extends State<FilterPage> {
     10,
     (index) => TextEditingController(),
   );
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _countryController = TextEditingController();
   final TextEditingController _skillInputController = TextEditingController();
 
   final List<String> selectedOptions = [];
@@ -49,7 +48,21 @@ class _FilterPageState extends State<FilterPage> {
   String selectedState = '';
   String selectedCountry = '';
   double _radiusKm = 25;
+  String _profileLocationLabel = 'Your profile location';
   bool _isLoading = true;
+
+  final List<String> cities = [
+    "New York",
+    "Los Angeles",
+    "Chicago",
+    "Houston",
+    "Phoenix",
+    "San Francisco",
+    "Boston",
+    "Seattle",
+    "Austin",
+    "Miami",
+  ];
 
   final List<String> states = [
     "California",
@@ -64,6 +77,19 @@ class _FilterPageState extends State<FilterPage> {
     "Michigan",
   ];
 
+  final List<String> countries = [
+    "United States",
+    "Canada",
+    "United Kingdom",
+    "India",
+    "Australia",
+    "Germany",
+    "France",
+    "Singapore",
+    "UAE",
+    "Japan",
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -75,8 +101,6 @@ class _FilterPageState extends State<FilterPage> {
     for (final c in customControllers) {
       c.dispose();
     }
-    _cityController.dispose();
-    _countryController.dispose();
     _skillInputController.dispose();
     super.dispose();
   }
@@ -93,8 +117,6 @@ class _FilterPageState extends State<FilterPage> {
       selectedCity = '';
       selectedState = '';
       selectedCountry = '';
-      _cityController.clear();
-      _countryController.clear();
       selectedSkills.clear();
       sortByTime = false;
       postedWithin = '';
@@ -125,8 +147,7 @@ class _FilterPageState extends State<FilterPage> {
     selectedCity = existing.selectedCity;
     selectedState = existing.selectedState;
     selectedCountry = existing.selectedCountry;
-    _cityController.text = existing.selectedCity;
-    _countryController.text = existing.selectedCountry;
+    _radiusKm = (existing.distanceKm > 0 ? existing.distanceKm : 25).toDouble();
 
     selectedSkills.clear();
     selectedSkills.addAll(existing.skills);
@@ -155,6 +176,8 @@ class _FilterPageState extends State<FilterPage> {
       } catch (_) {}
     }
 
+    await _loadProfileLocation();
+
     // Always refresh from backend to stay in sync across sessions
     final userId = prefs.getString('userId') ?? '';
     if (userId.isNotEmpty) {
@@ -167,6 +190,24 @@ class _FilterPageState extends State<FilterPage> {
     }
 
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadProfileLocation() async {
+    final response = await UserHelper.getProfile();
+    if (!mounted || !response.success || response.data == null) return;
+
+    final profile = response.data!;
+    final parts = [
+      profile.city?.trim() ?? '',
+      profile.state?.trim() ?? '',
+      profile.country?.trim() ?? '',
+    ].where((e) => e.isNotEmpty).toList();
+
+    if (parts.isNotEmpty) {
+      setState(() {
+        _profileLocationLabel = parts.join(', ');
+      });
+    }
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -518,14 +559,7 @@ class _FilterPageState extends State<FilterPage> {
         ),
         if (selectedLocationOption == 'City') ...[
           SizedBox(height: 10.h),
-          _styledTextField(
-            controller: _cityController,
-            hint: 'Enter city name',
-            icon: Icons.location_on_outlined,
-            onChanged: (v) => setState(() => selectedCity = v),
-          ),
-          SizedBox(height: 10.h),
-          _kmSlider(),
+          _cityDropdown(),
         ],
         if (selectedLocationOption == 'State') ...[
           SizedBox(height: 10.h),
@@ -533,13 +567,10 @@ class _FilterPageState extends State<FilterPage> {
         ],
         if (selectedLocationOption == 'Country') ...[
           SizedBox(height: 10.h),
-          _styledTextField(
-            controller: _countryController,
-            hint: 'Enter country name',
-            icon: Icons.flag_outlined,
-            onChanged: (v) => setState(() => selectedCountry = v),
-          ),
+          _countryDropdown(),
         ],
+        SizedBox(height: 10.h),
+        _kmSlider(),
       ],
     );
   }
@@ -559,7 +590,7 @@ class _FilterPageState extends State<FilterPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Radius',
+                'Distance (Your location)',
                 style: TextStyle(
                   fontFamily: kFontDMSans,
                   color: _dark,
@@ -584,6 +615,15 @@ class _FilterPageState extends State<FilterPage> {
                 ),
               ),
             ],
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            _profileLocationLabel,
+            style: TextStyle(
+              fontFamily: kFontDMSans,
+              color: _grey,
+              fontSize: 11.sp,
+            ),
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
@@ -664,6 +704,84 @@ class _FilterPageState extends State<FilterPage> {
           )
           .toList(),
       onChanged: (v) => setState(() => selectedState = v!),
+    );
+  }
+
+  Widget _cityDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: selectedCity.isEmpty ? null : selectedCity,
+      dropdownColor: Colors.white,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
+      style: TextStyle(color: _dark, fontSize: 14.sp),
+      borderRadius: BorderRadius.circular(12),
+      decoration: InputDecoration(
+        hintText: 'Choose a city',
+        hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
+        prefixIcon: Icon(Icons.location_city_outlined, color: _grey, size: 20),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _theme, width: 1.5),
+        ),
+      ),
+      items: cities
+          .map(
+            (c) => DropdownMenuItem(
+              value: c,
+              child: Text(c, style: TextStyle(color: _dark, fontSize: 14.sp)),
+            ),
+          )
+          .toList(),
+      onChanged: (v) => setState(() => selectedCity = v ?? ''),
+    );
+  }
+
+  Widget _countryDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: selectedCountry.isEmpty ? null : selectedCountry,
+      dropdownColor: Colors.white,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
+      style: TextStyle(color: _dark, fontSize: 14.sp),
+      borderRadius: BorderRadius.circular(12),
+      decoration: InputDecoration(
+        hintText: 'Choose a country',
+        hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
+        prefixIcon: Icon(Icons.flag_outlined, color: _grey, size: 20),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _theme, width: 1.5),
+        ),
+      ),
+      items: countries
+          .map(
+            (c) => DropdownMenuItem(
+              value: c,
+              child: Text(c, style: TextStyle(color: _dark, fontSize: 14.sp)),
+            ),
+          )
+          .toList(),
+      onChanged: (v) => setState(() => selectedCountry = v ?? ''),
     );
   }
 
@@ -832,6 +950,7 @@ class _FilterPageState extends State<FilterPage> {
           selectedCity: selectedCity,
           selectedState: selectedState,
           selectedCountry: selectedCountry,
+          distanceKm: _radiusKm.round(),
           customOptions: customInput,
           skills: List.from(selectedSkills),
           sortByTime: sortByTime,
@@ -865,6 +984,7 @@ class _FilterPageState extends State<FilterPage> {
               selectedCity: selectedCity,
               selectedState: selectedState,
               selectedCountry: selectedCountry,
+              distanceKm: _radiusKm.round(),
               customOptions: customInput,
               skills: List.from(selectedSkills),
               sortByTime: sortByTime,

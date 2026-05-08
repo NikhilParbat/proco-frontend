@@ -18,6 +18,7 @@ class GetFilterRes {
     required this.selectedCity,
     required this.selectedState,
     required this.selectedCountry,
+    required this.distanceKm,
     required this.customOptions,
     required this.skills,
     required this.sortByTime,
@@ -38,6 +39,7 @@ class GetFilterRes {
         selectedCity: json['selectedCity'] ?? '',
         selectedState: json['selectedState'] ?? '',
         selectedCountry: json['selectedCountry'] ?? '',
+        distanceKm: (json['distanceKm'] as num?)?.toInt() ?? 0,
         customOptions: json['customOptions'] != null
             ? List<String>.from(json['customOptions'])
             : [],
@@ -59,6 +61,7 @@ class GetFilterRes {
   final String selectedCity;
   final String selectedState;
   final String selectedCountry;
+  final int distanceKm;
   final List<String> customOptions;
   final List<String> skills;
   final bool sortByTime;
@@ -76,6 +79,7 @@ class GetFilterRes {
         'selectedCity': selectedCity,
         'selectedState': selectedState,
         'selectedCountry': selectedCountry,
+        'distanceKm': distanceKm,
         'customOptions': List<dynamic>.from(customOptions),
         'skills': List<dynamic>.from(skills),
         'sortByTime': sortByTime,

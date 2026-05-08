@@ -49,6 +49,7 @@ class FilterNotifier extends ChangeNotifier {
         selectedCity: '',
         selectedState: '',
         selectedCountry: '',
+        distanceKm: 0,
         customOptions: [],
         skills: [],
         sortByTime: false,
