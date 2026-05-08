@@ -43,12 +43,16 @@ class ProfileEditState extends ChangeNotifier {
   bool isSaving = false;
   String? error;
 
-  ProfileEditState() {
+  // When set, the state loads another user's profile (read-only).
+  final String? _viewUserId;
+  bool get isReadOnly => _viewUserId != null;
+
+  ProfileEditState({String? viewUserId}) : _viewUserId = viewUserId {
     _init();
   }
 
   Future<void> _init() async {
-    await _loadVisibility();
+    if (!isReadOnly) await _loadVisibility();
     await loadProfile();
   }
 
@@ -56,32 +60,60 @@ class ProfileEditState extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      final res = await UserHelper.getProfile();
-      if (res.success && res.data != null) {
-        final d = res.data!;
-        username = d.username;
-        email = d.email;
-        phone = d.phone ?? '';
-        gender = d.gender ?? '';
-        city = d.city ?? '';
-        state = d.state ?? '';
-        country = d.country ?? '';
-        college = d.college ?? '';
-        branch = d.branch ?? '';
-        profileImageUrl = d.profile ?? '';
-        dob = d.dob ?? '';
-        userType = d.userType ?? '';
-        linkedInUrl = d.linkedInUrl ?? '';
-        gitHubUrl = d.gitHubUrl ?? '';
-        twitterUrl = d.twitterUrl ?? '';
-        portfolioUrl = d.portfolioUrl ?? '';
-        skills = List.from(d.skills);
-        interests = List.from(d.interests);
-        hobbies = List.from(d.hobbies);
-        queriesCreated = d.queriesCreated;
-        experiences = List.from(d.experiences);
-        projects = List.from(d.projects);
-        achievements = List.from(d.achievements);
+      if (isReadOnly) {
+        // Viewing another user's profile — use fetchUserById
+        final res = await UserHelper.fetchUserById(_viewUserId!);
+        if (res.success && res.data != null) {
+          final d = res.data!;
+          username = d.username;
+          email = d.email;
+          phone = d.phone ?? '';
+          gender = d.gender ?? '';
+          city = d.city ?? '';
+          state = d.state ?? '';
+          country = d.country ?? '';
+          college = d.college ?? '';
+          branch = d.branch ?? '';
+          profileImageUrl = d.profile ?? '';
+          dob = d.dob ?? '';
+          userType = d.userType ?? '';
+          linkedInUrl = d.linkedInUrl ?? '';
+          gitHubUrl = d.gitHubUrl ?? '';
+          twitterUrl = d.twitterUrl ?? '';
+          portfolioUrl = d.portfolioUrl ?? '';
+          skills = List.from(d.skills);
+          interests = List.from(d.interests);
+          hobbies = List.from(d.hobbies);
+          // experiences/projects/achievements not returned by this endpoint
+        }
+      } else {
+        final res = await UserHelper.getProfile();
+        if (res.success && res.data != null) {
+          final d = res.data!;
+          username = d.username;
+          email = d.email;
+          phone = d.phone ?? '';
+          gender = d.gender ?? '';
+          city = d.city ?? '';
+          state = d.state ?? '';
+          country = d.country ?? '';
+          college = d.college ?? '';
+          branch = d.branch ?? '';
+          profileImageUrl = d.profile ?? '';
+          dob = d.dob ?? '';
+          userType = d.userType ?? '';
+          linkedInUrl = d.linkedInUrl ?? '';
+          gitHubUrl = d.gitHubUrl ?? '';
+          twitterUrl = d.twitterUrl ?? '';
+          portfolioUrl = d.portfolioUrl ?? '';
+          skills = List.from(d.skills);
+          interests = List.from(d.interests);
+          hobbies = List.from(d.hobbies);
+          queriesCreated = d.queriesCreated;
+          experiences = List.from(d.experiences);
+          projects = List.from(d.projects);
+          achievements = List.from(d.achievements);
+        }
       }
     } catch (e) {
       error = e.toString();

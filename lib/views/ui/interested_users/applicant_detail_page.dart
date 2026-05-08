@@ -18,7 +18,7 @@ import 'package:proco/views/ui/jobs/match_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'user_detail_page.dart';
+import 'package:proco/views/ui/profile/profile_screen.dart';
 
 class ApplicantDetailPage extends StatefulWidget {
   final SwipedRes user;
@@ -522,10 +522,8 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => UserDetailPage(
-                  user: widget.user,
-                  jobId: widget.jobId,
-                  onMatch: _onMatch,
+                builder: (_) => ProfilePage(
+                  viewUserId: widget.user.id,
                 ),
               ),
             ),
