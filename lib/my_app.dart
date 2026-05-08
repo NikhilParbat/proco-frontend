@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:proco/views/ui/auth/login.dart'; // Ensure this path matches your filename
 import 'package:proco/views/ui/auth/signup_new.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
@@ -34,37 +35,37 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _splashRemoved = false;
   bool _showAppSplash = true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_splashRemoved && mounted) {
-        FlutterNativeSplash.remove();
-        _splashRemoved = true;
-      }
-    });
-    Future.delayed(const Duration(milliseconds: 1300), () {
-      if (mounted) {
-        setState(() => _showAppSplash = false);
-      }
-    });
+    _handleStartup();
+  }
+
+  void _handleStartup() async {
+    // Remove Native Splash immediately so the app can draw
+    FlutterNativeSplash.remove();
+
+    // Keep custom splash for a moment for a smooth transition
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (mounted) {
+      setState(() => _showAppSplash = false);
+    }
   }
 
   Widget get _home {
+    // 1. If not logged in, go directly to Login
     if (!widget.isLoggedIn) {
-      // Redirecting to SignUpScreen instead of OnBoardingScreen
-      return SignUpScreen(
-        initialStep: widget.isPendingVerification ? 3 : 0,
-        initialEmail: widget.pendingEmail,
-        initialUsername: widget.pendingUsername,
-      );
+      return const LoginPage(drawer: false);
     }
+
+    // 2. If logged in but profile onboarding is incomplete
     if (!widget.onboardingComplete) {
       return OnboardingFlow(initialPage: widget.onboardingPage);
     }
+
+    // 3. Fully logged in and onboarded
     return MainScreen(prefs: widget.prefs);
   }
 
@@ -97,7 +98,14 @@ class _BrandSplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFD85757),
-      body: Center(child: SvgPicture.asset('assets/WLagcon.svg', width: 190.w)),
+      body: Center(
+        child: SvgPicture.asset(
+          'assets/WLagcon.svg',
+          width: 190.w,
+          placeholderBuilder: (context) =>
+              const CircularProgressIndicator(color: Colors.white),
+        ),
+      ),
     );
   }
 }
