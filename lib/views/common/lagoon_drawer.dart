@@ -117,13 +117,6 @@ class LagoonDrawer extends StatelessWidget {
 
               _item(
                 context,
-                icon: Icons.notifications_none_rounded,
-                label: 'Notifications',
-                onTap: () => _navigate(context, page: const NotificationPage()),
-              ),
-
-              _item(
-                context,
                 icon: Icons.person_outline_rounded,
                 label: 'Profile',
                 onTap: () => _navigate(context, page: const ProfilePage()),

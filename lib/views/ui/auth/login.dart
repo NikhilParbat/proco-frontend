@@ -20,6 +20,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
+  bool _isLoginLoading = false;
+  bool _isGoogleLoading = false;
 
   @override
   void dispose() {
@@ -34,7 +36,13 @@ class _LoginPageState extends State<LoginPage> {
         email: email.text,
         password: password.text,
       );
+      setState(() => _isLoginLoading = true);
+
       await loginNotifier.userLogin(model);
+
+      if (mounted) {
+        setState(() => _isLoginLoading = false);
+      }
     }
   }
 
@@ -69,10 +77,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       Text(
                         'Login',
-                        style: kHeadingStyle.copyWith(
-                          fontSize: 30.sp,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: kHeadingStyle.copyWith(fontSize: 30.sp),
                       ),
 
                       SizedBox(height: 0.05.sh),
@@ -150,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Login Button - kThemeColor, Pill Shape[cite: 1]
                       GestureDetector(
-                        onTap: loginNotifier.isLoading
+                        onTap: (_isLoginLoading || _isGoogleLoading)
                             ? null
                             : () => _handleLogin(loginNotifier),
                         child: Container(
@@ -161,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(100.r),
                           ),
                           alignment: Alignment.center,
-                          child: loginNotifier.isLoading
+                          child: _isLoginLoading
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
@@ -183,6 +188,66 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(height: 25.h),
 
                       // Signup Link - Centered, Using kSubTextStyle[cite: 1]
+
+                      // Google Sign-In Button - Pill Shape, Using kSubTextStyle[cite: 1]
+                      GestureDetector(
+                        onTap: (_isLoginLoading || _isGoogleLoading)
+                            ? null
+                            : () async {
+                                setState(() => _isGoogleLoading = true);
+
+                                await loginNotifier.googleSignIn();
+
+                                if (mounted) {
+                                  setState(() => _isGoogleLoading = false);
+                                }
+                              },
+                        child: Container(
+                          width: double.infinity,
+                          height: 55.h,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC4C4C4),
+                            borderRadius: BorderRadius.circular(100.r),
+                          ),
+                          child: _isGoogleLoading
+                              ? Center(
+                                  child: SizedBox(
+                                    width: 22.w,
+                                    height: 22.w,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/google_icon.png',
+                                      height: 24.h,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Icon(
+                                              Icons.login,
+                                              size: 24.h,
+                                              color: Colors.black,
+                                            );
+                                          },
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Text(
+                                      'Login using Google',
+                                      style: kSubTextStyle.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+
+                      SizedBox(height: 0.02.sh),
                       Center(
                         child: GestureDetector(
                           onTap: () {
@@ -199,6 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                                 "Signup",
                                 style: kSubTextStyle.copyWith(
                                   fontWeight: FontWeight.bold,
+                                  color: kThemeColor,
                                 ),
                               ),
                             ],
@@ -207,48 +273,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
 
                       SizedBox(height: 0.04.sh),
-
-                      // Google Sign-In Button - Pill Shape, Using kSubTextStyle[cite: 1]
-                      GestureDetector(
-                        onTap: loginNotifier.isLoading
-                            ? null
-                            : () async {
-                                await loginNotifier.googleSignIn();
-                              },
-                        child: Container(
-                          width: double.infinity,
-                          height: 55.h,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFC4C4C4),
-                            borderRadius: BorderRadius.circular(100.r),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/google_icon.png',
-                                height: 24.h,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(
-                                    Icons.login,
-                                    size: 24.h,
-                                    color: Colors.black,
-                                  );
-                                },
-                              ),
-                              SizedBox(width: 12.w),
-                              Text(
-                                'Login using Google',
-                                style: kSubTextStyle.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: 0.02.sh),
                     ],
                   ),
                 ),
