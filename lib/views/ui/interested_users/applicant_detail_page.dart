@@ -1,7 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/chat/create_chat.dart';
@@ -32,19 +36,48 @@ class ApplicantDetailPage extends StatefulWidget {
   State<ApplicantDetailPage> createState() => _ApplicantDetailPageState();
 }
 
-class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
+class _ApplicantDetailPageState extends State<ApplicantDetailPage>
+    with SingleTickerProviderStateMixin {
   static const Color _navy = Color(0xFF040326);
   static const Color _teal = Color(0xFF08979F);
   static const Color _reject = Color(0xFFE8505B);
   static const Color _bg = Color(0xFFF7F7F7);
+  static const Color _accept = Color(0xFF2DB67D);
+
+  // Parallax scroll tracking
+  late final ScrollController _scrollController;
+
+  // Swipe-right animation played when the match (heart) button is tapped
+  late final AnimationController _swipeCtrl;
+  late final Animation<Offset> _swipeAnim;
 
   bool _isLoadingProfile = true;
   UserResponse? _profile;
 
+  static const double _headerHeight = 320;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+
+    _swipeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _swipeAnim = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(1.6, 0),
+    ).animate(CurvedAnimation(parent: _swipeCtrl, curve: Curves.easeInBack));
+
     _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _swipeCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProfile() async {
@@ -71,6 +104,8 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
       return null;
     }
   }
+
+  // ── Match action (unchanged logic) ────────────────────────────────────────
 
   Future<void> _onMatch() async {
     Provider.of<JobsNotifier>(context, listen: false)
@@ -102,12 +137,15 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
                 ));
           },
           onBackToList: () {
+            // Close dialog → pop this page → lands back on parallax screen
             Navigator.of(dialogContext).pop();
             Navigator.of(context).pop();
           },
         ),
       );
     } else {
+      // On error, reverse the swipe animation so the card snaps back
+      if (mounted) _swipeCtrl.reverse();
       Get.snackbar(
         'Error',
         response.message,
@@ -120,11 +158,21 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
     }
   }
 
+  // Plays swipe-right animation then triggers the match logic
+  Future<void> _handleMatch() async {
+    _swipeCtrl.reset();
+    await _swipeCtrl.forward();
+    await _onMatch();
+    // Reset so the card is visible again if the user returns via chat back-nav
+    if (mounted) _swipeCtrl.reset();
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final u = _profile;
     final age = _calcAge(u?.dob);
-    final gender = u?.gender ?? '';
     final college = u?.college ?? '';
     final branch = u?.branch ?? '';
     final skills =
@@ -132,123 +180,405 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
 
     return Scaffold(
       backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: _bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: _navy, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Applicants',
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: _navy,
-              ),
-            ),
-            Text(
-              '${widget.totalApplicants} Applicant${widget.totalApplicants == 1 ? '' : 's'}',
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w400,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 32.h),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
-                blurRadius: 24,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImageSection(),
-              _buildInfoSection(
-                u: u,
-                age: age,
-                gender: gender,
-                college: college,
-                branch: branch,
-                skills: skills,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageSection() {
-    return ClipRRect(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      child: Stack(
+      body: Stack(
         children: [
-          SizedBox(
-            height: 270.h,
-            width: double.infinity,
-            child: widget.user.profile.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: widget.user.profile,
-                    fit: BoxFit.cover,
-                    placeholder: (_, _) => Container(color: _teal.withValues(alpha: 0.06)),
-                    errorWidget: (_, _, _) => _profilePlaceholder(),
-                  )
-                : _profilePlaceholder(),
-          ),
-          Positioned(
-            bottom: 12.h,
-            right: 12.w,
-            child: Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.10),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                'ACTIVE NOW',
-                style: TextStyle(
-                  fontFamily: kFontDMSans,
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w700,
-                  color: _navy,
-                  letterSpacing: 0.5,
-                ),
-              ),
+          // ── Parallax scroll (slides right on match) ──────────────────────
+          SlideTransition(
+            position: _swipeAnim,
+            child: AnimatedBuilder(
+              animation: _scrollController,
+              builder: (context, _) {
+                final scrollOffset = _scrollController.hasClients
+                    ? _scrollController.offset
+                    : 0.0;
+                final parallaxFraction =
+                    (scrollOffset / _headerHeight).clamp(0.0, 1.0);
+                final imageAlignment =
+                    Alignment(0, -parallaxFraction * 0.6);
+
+                // Gaussian depth shadow — mirrors ParallaxUserCard
+                final gauss = math.exp(
+                  -(math.pow((parallaxFraction - 0.5), 2) / 0.08),
+                );
+                final headerElevation = gauss * 8.0;
+
+                return CustomScrollView(
+                  controller: _scrollController,
+                  // Extra bottom padding so content isn't hidden behind action bar
+                  slivers: [
+                    SliverAppBar(
+                      expandedHeight: _headerHeight.h,
+                      pinned: true,
+                      backgroundColor: _bg,
+                      elevation: headerElevation,
+                      shadowColor: Colors.black26,
+                      leading: IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: _navy,
+                          size: 20,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      title: AnimatedOpacity(
+                        opacity: parallaxFraction > 0.6 ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: Text(
+                          widget.user.username,
+                          style: TextStyle(
+                            fontFamily: kFontDMSans,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                            color: _navy,
+                          ),
+                        ),
+                      ),
+                      flexibleSpace: FlexibleSpaceBar(
+                        collapseMode: CollapseMode.none,
+                        background: _buildParallaxImage(imageAlignment),
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: _bg,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(28.r),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                              20.w, 24.h, 20.w, 120.h),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Name + applicants count
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      widget.user.username,
+                                      style: TextStyle(
+                                        fontFamily: kFontDMSans,
+                                        fontSize: 24.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: _navy,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10.w, vertical: 5.h),
+                                    decoration: BoxDecoration(
+                                      color: _teal.withValues(alpha: 0.10),
+                                      borderRadius:
+                                          BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${widget.totalApplicants} applicant${widget.totalApplicants == 1 ? '' : 's'}',
+                                      style: TextStyle(
+                                        fontFamily: kFontDMSans,
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: _teal,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Location
+                              if (widget.user.location.isNotEmpty) ...[
+                                SizedBox(height: 8.h),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on_rounded,
+                                        color: kOrange, size: 14),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      widget.user.location,
+                                      style: TextStyle(
+                                        fontFamily: kFontDMSans,
+                                        fontSize: 13.sp,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+
+                              SizedBox(height: 20.h),
+
+                              // Bio
+                              if (_isLoadingProfile)
+                                _bioShimmer()
+                              else if (college.isNotEmpty ||
+                                  age != null) ...[
+                                _sectionLabel('BIO'),
+                                SizedBox(height: 10.h),
+                                Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(14.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius:
+                                        BorderRadius.circular(16.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black
+                                            .withValues(alpha: 0.05),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (college.isNotEmpty)
+                                        _bioRow(
+                                            Icons.school_rounded, college),
+                                      if (branch.isNotEmpty) ...[
+                                        SizedBox(height: 8.h),
+                                        _bioRow(Icons.account_tree_rounded,
+                                            branch),
+                                      ],
+                                      if (age != null) ...[
+                                        SizedBox(height: 8.h),
+                                        _bioRow(Icons.cake_rounded,
+                                            '$age years old'),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 20.h),
+                              ],
+
+                              // Skills
+                              if (skills.isNotEmpty) ...[
+                                _sectionLabel('SKILLS'),
+                                SizedBox(height: 10.h),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: skills
+                                      .take(6)
+                                      .map(_skillChip)
+                                      .toList(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
+          ),
+
+          // ── Action bar: ❌  |  View Profile  |  ❤️ ─────────────────────
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildActionBar(context),
           ),
         ],
       ),
     );
   }
+
+  // ── Parallax header image ──────────────────────────────────────────────────
+
+  Widget _buildParallaxImage(Alignment alignment) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.user.profile.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: widget.user.profile,
+                fit: BoxFit.cover,
+                // Focal point shifts with scroll — same as ParallaxUserCard
+                alignment: alignment,
+                placeholder: (_, __) =>
+                    Container(color: _teal.withValues(alpha: 0.06)),
+                errorWidget: (_, __, ___) => _profilePlaceholder(),
+              )
+            : _profilePlaceholder(),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  _navy.withValues(alpha: 0.55),
+                ],
+                stops: const [0.55, 1.0],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 14.h,
+          right: 14.w,
+          child: Container(
+            padding:
+                EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              'ACTIVE NOW',
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w700,
+                color: _navy,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Action bar ─────────────────────────────────────────────────────────────
+
+  Widget _buildActionBar(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final btnSize = 64.w;
+    final smallSize = 54.w;
+
+    Widget circleBtn({
+      required Widget icon,
+      required VoidCallback onTap,
+      required double size,
+      Color bg = Colors.white,
+    }) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: bg,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.45),
+                blurRadius: 2,
+                offset: const Offset(0, -1),
+              ),
+            ],
+          ),
+          child: Center(child: icon),
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 16.h + bottomPad),
+      decoration: BoxDecoration(
+        color: _bg,
+        border:
+            Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.07))),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // ❌ Not interested — directly back to parallax screen
+          circleBtn(
+            size: smallSize,
+            icon: Icon(CupertinoIcons.xmark,
+                color: Colors.black87, size: 26.sp),
+            onTap: () => Navigator.pop(context),
+          ),
+
+          // View Profile — centre
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => UserDetailPage(
+                  user: widget.user,
+                  jobId: widget.jobId,
+                  onMatch: _onMatch,
+                ),
+              ),
+            ),
+            child: Container(
+              padding:
+                  EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: _navy,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: _navy.withValues(alpha: 0.30),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person_rounded,
+                      color: Colors.white, size: 16.sp),
+                  SizedBox(width: 6.w),
+                  Text(
+                    'View Profile',
+                    style: TextStyle(
+                      fontFamily: kFontDMSans,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ❤️ Match — swipe-right animation → MatchDialog
+          circleBtn(
+            size: btnSize,
+            icon: PhosphorIcon(
+              PhosphorIcons.heartStraight(),
+              color: const Color(0xFFE6B8A2),
+              size: 30.sp,
+            ),
+            onTap: _handleMatch,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _profilePlaceholder() => Container(
         color: _teal.withValues(alpha: 0.08),
@@ -257,198 +587,21 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
         ),
       );
 
-  Widget _buildInfoSection({
-    required UserResponse? u,
-    required int? age,
-    required String gender,
-    required String college,
-    required String branch,
-    required List<String> skills,
-  }) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _sectionLabel(String text) => Text(
+        text,
+        style: TextStyle(
+          fontFamily: kFontDMSans,
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey,
+          letterSpacing: 1.0,
+        ),
+      );
+
+  Widget _bioRow(IconData icon, String text) => Row(
         children: [
-          // Name
-          Text(
-            widget.user.username,
-            style: TextStyle(
-              fontFamily: kFontDMSans,
-              fontSize: 22.sp,
-              fontWeight: FontWeight.w700,
-              color: _navy,
-              height: 1.1,
-            ),
-          ),
-
-          SizedBox(height: 16.h),
-
-          // Location
-          if (widget.user.location.isNotEmpty)
-            _infoRow(Icons.location_on_rounded, kOrange,
-                widget.user.location),
-
-          // Gender
-          if (gender.isNotEmpty) ...[
-            SizedBox(height: 10.h),
-            _infoRow(Icons.location_on_rounded, kOrange, gender),
-          ],
-
-          // Age
-          if (age != null) ...[
-            SizedBox(height: 10.h),
-            _infoRow(Icons.location_on_rounded, kOrange, '$age'),
-          ],
-
-          SizedBox(height: 22.h),
-
-          // TOP SKILLS
-          if (skills.isNotEmpty) ...[
-            Text(
-              'TOP SKILLS',
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-                letterSpacing: 1.0,
-              ),
-            ),
-            SizedBox(height: 10.h),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: skills
-                  .take(6)
-                  .map((skill) => Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 7.h),
-                        decoration: BoxDecoration(
-                          color: _navy,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          skill.toUpperCase(),
-                          style: TextStyle(
-                            fontFamily: kFontDMSans,
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ))
-                  .toList(),
-            ),
-            SizedBox(height: 22.h),
-          ],
-
-          // EDUCATION
-          if (_isLoadingProfile)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: CircularProgressIndicator(
-                    color: Color(0xFF08979F), strokeWidth: 2),
-              ),
-            )
-          else if (college.isNotEmpty) ...[
-            Text(
-              'EDUCATION',
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-                letterSpacing: 1.0,
-              ),
-            ),
-            SizedBox(height: 10.h),
-            Row(
-              children: [
-                const Icon(Icons.school_rounded, color: _teal, size: 16),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    college,
-                    style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
-                      color: _navy,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (branch.isNotEmpty) ...[
-              SizedBox(height: 6.h),
-              Row(
-                children: [
-                  const Icon(Icons.account_tree_rounded,
-                      color: _teal, size: 16),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      branch,
-                      style: TextStyle(
-                        fontFamily: kFontDMSans,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            SizedBox(height: 24.h),
-          ] else
-            SizedBox(height: 4.h),
-
-          // View Profile button
-          SizedBox(
-            width: double.infinity,
-            height: 50.h,
-            child: ElevatedButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => UserDetailPage(
-                    user: widget.user,
-                    jobId: widget.jobId,
-                    onMatch: _onMatch,
-                  ),
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _navy,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'View Profile',
-                style: TextStyle(
-                  fontFamily: kFontDMSans,
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, Color iconColor, String text) => Row(
-        children: [
-          Icon(icon, color: iconColor, size: 15),
-          SizedBox(width: 6.w),
+          Icon(icon, color: _teal, size: 16),
+          SizedBox(width: 8.w),
           Expanded(
             child: Text(
               text,
@@ -456,10 +609,49 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
                 fontFamily: kFontDMSans,
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
+                color: _navy,
               ),
             ),
           ),
+        ],
+      );
+
+  Widget _skillChip(String skill) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+        decoration: BoxDecoration(
+          color: _navy,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          skill.toUpperCase(),
+          style: TextStyle(
+            fontFamily: kFontDMSans,
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
+
+  Widget _bioShimmer() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionLabel('BIO'),
+          SizedBox(height: 10.h),
+          Container(
+            width: double.infinity,
+            height: 80.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                  color: Color(0xFF08979F), strokeWidth: 2),
+            ),
+          ),
+          SizedBox(height: 20.h),
         ],
       );
 }
