@@ -4,7 +4,7 @@ class Config {
   // ─── Environment toggle ───────────────────────────────────────────────────
   // Set _isProd = false when running on an emulator (local Node server).
   // Set _isProd = true  when building an APK / release build (Render.com).
-  static const bool _isProd = false;
+  static const bool _isProd = true;
 
   // ─── API hosts (no scheme, no trailing slash) ─────────────────────────────
 

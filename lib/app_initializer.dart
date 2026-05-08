@@ -42,63 +42,80 @@ class _AppInitializerState extends State<AppInitializer> {
   }
 
   Future<void> _initApp() async {
+    // Let Flutter render first frame first
+    await Future.delayed(const Duration(milliseconds: 50));
+
     // Get SharedPreferences once and cache it
     _prefs = await SharedPreferences.getInstance();
 
     final token = _prefs.getString('token');
+
     isLoggedIn = token != null && token.isNotEmpty;
+
     onboardingComplete = _prefs.getBool('onboardingComplete') ?? false;
+
     onboardingPage = _prefs.getInt('onboardingPage') ?? 0;
 
-    // If not logged in, check if a verification was in progress before the app
-    // was killed (e.g. user switched to email app to click the link).
-    bool firebaseLoaded = false;
-    if (!isLoggedIn) {
-      final savedEmail = _prefs.getString('pendingVerificationEmail') ?? '';
-      if (savedEmail.isNotEmpty) {
-        // Must await Firebase to read auth state
-        await Future.wait([
-          dotenv.load(fileName: ".env").catchError((e) {
-            debugPrint('Failed to load .env: $e');
-          }),
-          FirebaseService.initializeAsync(),
-        ]);
-        firebaseLoaded = true;
-
-        try {
-          final fbUser = FirebaseAuth.instance.currentUser;
-          if (fbUser != null &&
-              fbUser.email == savedEmail &&
-              !fbUser.emailVerified) {
-            isPendingVerification = true;
-            pendingEmail = savedEmail;
-            pendingUsername =
-                _prefs.getString('pendingVerificationUsername') ?? '';
-          } else {
-            // Stale state — clear it
-            await _prefs.remove('pendingVerificationEmail');
-            await _prefs.remove('pendingVerificationUsername');
-          }
-        } catch (e) {
-          debugPrint('AppInitializer: error checking Firebase user: $e');
-        }
-      }
-    }
-
-    // Render UI ASAP
+    // ✅ Render UI immediately
     if (mounted) {
       setState(() => isLoading = false);
     }
 
-    // ✅ Load everything else in background (if not already loaded above)
-    if (!firebaseLoaded) {
-      Future.wait([
-        dotenv.load(fileName: ".env").catchError((e) {
-          debugPrint('Failed to load .env: $e');
-        }),
-        FirebaseService.initializeAsync(), // ✅ Non-blocking Firebase
-      ]);
-    }
+    // Run heavy initialization AFTER first render
+    Future.microtask(() async {
+      bool firebaseLoaded = false;
+
+      // If not logged in, check pending verification
+      if (!isLoggedIn) {
+        final savedEmail = _prefs.getString('pendingVerificationEmail') ?? '';
+
+        if (savedEmail.isNotEmpty) {
+          try {
+            await Future.wait([
+              dotenv.load(fileName: ".env").catchError((e) {
+                debugPrint('Failed to load .env: $e');
+              }),
+
+              FirebaseService.initializeAsync(),
+            ]);
+
+            firebaseLoaded = true;
+
+            final fbUser = FirebaseAuth.instance.currentUser;
+
+            if (fbUser != null &&
+                fbUser.email == savedEmail &&
+                !fbUser.emailVerified) {
+              if (!mounted) return;
+
+              setState(() {
+                isPendingVerification = true;
+                pendingEmail = savedEmail;
+                pendingUsername =
+                    _prefs.getString('pendingVerificationUsername') ?? '';
+              });
+            } else {
+              await _prefs.remove('pendingVerificationEmail');
+
+              await _prefs.remove('pendingVerificationUsername');
+            }
+          } catch (e) {
+            debugPrint('AppInitializer: error checking Firebase user: $e');
+          }
+        }
+      }
+
+      // Background initialization if not already loaded
+      if (!firebaseLoaded) {
+        Future.wait([
+          dotenv.load(fileName: ".env").catchError((e) {
+            debugPrint('Failed to load .env: $e');
+          }),
+
+          FirebaseService.initializeAsync(),
+        ]);
+      }
+    });
   }
 
   @override
