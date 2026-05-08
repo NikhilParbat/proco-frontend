@@ -81,12 +81,11 @@ class ProfileUpdateReq {
 }
 
 // ── Item Classes matching your DB Schema ────────────────────────────────────
-
 class ExperienceItem {
   final String company;
   final String position;
   final String description;
-  final String dateRange; // Matches 'date_range' in Drizzle
+  final String dateRange;
 
   ExperienceItem({
     required this.company,
@@ -95,20 +94,29 @@ class ExperienceItem {
     this.dateRange = '',
   });
 
+  factory ExperienceItem.fromJson(Map<String, dynamic> json) {
+    return ExperienceItem(
+      company: json['company'] ?? '',
+      position: json['position'] ?? '',
+      description: json['description'] ?? '',
+      dateRange: json['dateRange'] ?? '',
+    );
+  }
+
   Map<String, dynamic> toJson() => {
-        'company': company,
-        'position': position,
-        'description': description,
-        'dateRange': dateRange,
-      };
+    'company': company,
+    'position': position,
+    'description': description,
+    'dateRange': dateRange,
+  };
 }
 
 class ProjectItem {
   final String name;
   final String domain;
   final String description;
-  final List<String> technologies; // Encoded as JSON string in DB
-  final String sourceUrl; // Matches 'source_url' in Drizzle
+  final List<String> technologies;
+  final String sourceUrl;
 
   ProjectItem({
     required this.name,
@@ -118,13 +126,25 @@ class ProjectItem {
     this.sourceUrl = '',
   });
 
+  factory ProjectItem.fromJson(Map<String, dynamic> json) {
+    return ProjectItem(
+      name: json['name'] ?? '',
+      domain: json['domain'] ?? '',
+      description: json['description'] ?? '',
+      technologies: json['technologies'] is String
+          ? List<String>.from(jsonDecode(json['technologies']))
+          : List<String>.from(json['technologies'] ?? []),
+      sourceUrl: json['sourceUrl'] ?? '',
+    );
+  }
+
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'domain': domain,
-        'description': description,
-        'technologies': jsonEncode(technologies), // Backend expects stringified array
-        'sourceUrl': sourceUrl,
-      };
+    'name': name,
+    'domain': domain,
+    'description': description,
+    'technologies': technologies,
+    'sourceUrl': sourceUrl,
+  };
 }
 
 class AchievementItem {
@@ -138,9 +158,17 @@ class AchievementItem {
     this.icon = 'star',
   });
 
+  factory AchievementItem.fromJson(Map<String, dynamic> json) {
+    return AchievementItem(
+      title: json['title'] ?? '',
+      subtitle: json['subtitle'] ?? '',
+      icon: json['icon'] ?? 'star',
+    );
+  }
+
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'subtitle': subtitle,
-        'icon': icon,
-      };
+    'title': title,
+    'subtitle': subtitle,
+    'icon': icon,
+  };
 }

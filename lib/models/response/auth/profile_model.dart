@@ -1,8 +1,9 @@
-import 'package:proco/models/request/auth/professional_items.dart';
+import 'package:proco/models/request/auth/profile_update_model.dart';
 
 class ProfileRes {
   final String id;
   final String username;
+  final String? bio;
   final String email;
   final String? phone;
   final bool? isAdmin;
@@ -37,6 +38,7 @@ class ProfileRes {
   ProfileRes({
     required this.id,
     required this.username,
+    this.bio,
     required this.email,
     this.phone,
     this.isAdmin,
@@ -73,6 +75,7 @@ class ProfileRes {
     return ProfileRes(
       id: json['id'] ?? '',
       username: json['username'] ?? '',
+      bio: json['bio'],
       email: json['email'] ?? '',
       phone: json['phone'],
       isAdmin: json['isAdmin'],
@@ -108,15 +111,18 @@ class ProfileRes {
           ? List<String>.from(json['hobbies'])
           : [],
       queriesCreated: (json['queriesCreated'] as num?)?.toInt() ?? 0,
-      experiences: (json['experiences'] as List<dynamic>?)
+      experiences:
+          (json['experiences'] as List<dynamic>?)
               ?.map((e) => ExperienceItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      projects: (json['projects'] as List<dynamic>?)
+      projects:
+          (json['projects'] as List<dynamic>?)
               ?.map((p) => ProjectItem.fromJson(p as Map<String, dynamic>))
               .toList() ??
           [],
-      achievements: (json['achievements'] as List<dynamic>?)
+      achievements:
+          (json['achievements'] as List<dynamic>?)
               ?.map((a) => AchievementItem.fromJson(a as Map<String, dynamic>))
               .toList() ??
           [],
@@ -127,6 +133,7 @@ class ProfileRes {
     return {
       'id': id,
       'username': username,
+      'bio': bio,
       'email': email,
       'phone': phone,
       'isAdmin': isAdmin,
