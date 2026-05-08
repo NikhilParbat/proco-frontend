@@ -376,28 +376,42 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.work_off_rounded,
-            size: 64,
-            color: const Color(0xFF08979F).withValues(alpha: 0.4),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'No jobs available',
-            style: TextStyle(
-              fontSize: 18.sp,
-              color: Colors.black,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
+          Container(
+            width: 90.w,
+            height: 90.w,
+            decoration: BoxDecoration(
+              color: kThemeColor.withOpacity(0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.work_outline_rounded,
+              size: 42.w,
+              color: kThemeColor,
             ),
           ),
+
+          SizedBox(height: 18.h),
+
+          Text(
+            'No opportunities available',
+            style: TextStyle(
+              fontSize: 18.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontFamily: kFontDMSans,
+            ),
+          ),
+
           SizedBox(height: 6.h),
+
           Text(
             'Check back later for new opportunities',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.sp,
               color: Colors.grey,
-              fontFamily: 'Poppins',
+              fontFamily: kFontDMSans,
+              height: 1.5,
             ),
           ),
         ],

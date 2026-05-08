@@ -114,28 +114,48 @@ class BookMarkNotifier extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final response = await BookMarkHelper.getBookmarks();
+    try {
+      final response = await BookMarkHelper.getBookmarks();
 
-    _isLoading = false;
+      if (response.success && response.data != null) {
+        bookmarks = response.data!;
 
-    if (response.success && response.data != null) {
-      bookmarks = response.data!;
+        // ✅ Sync local cache with active bookmarks
+        final activeIds = bookmarks
+            .map((b) => b.job.id)
+            .where((id) => id.isNotEmpty)
+            .toSet()
+            .toList();
 
-      // Sync local ID cache so SharedPreferences reflects only live bookmarks
-      final activeIds = bookmarks.map((b) => b.job.id).where((id) => id.isNotEmpty).toList();
-      final prefs = await SharedPreferences.getInstance();
-      _jobs = activeIds;
-      await prefs.setStringList('jobId', _jobs);
-    } else {
+        final prefs = await SharedPreferences.getInstance();
+
+        _jobs = activeIds;
+
+        await prefs.setStringList('jobId', _jobs);
+      } else {
+        bookmarks = [];
+
+        Get.snackbar(
+          'Failed to Load Bookmarks',
+          response.message,
+          colorText: kLight,
+          backgroundColor: Colors.red,
+          icon: const Icon(Icons.error_outline),
+        );
+      }
+    } catch (e) {
+      bookmarks = [];
+
       Get.snackbar(
-        'Failed to Load Bookmarks',
-        response.message,
+        'Error',
+        e.toString(),
         colorText: kLight,
         backgroundColor: Colors.red,
         icon: const Icon(Icons.error_outline),
       );
     }
 
+    _isLoading = false;
     notifyListeners();
   }
 }

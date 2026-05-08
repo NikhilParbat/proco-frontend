@@ -255,9 +255,9 @@ class _AddJobPageState extends State<AddJobPage> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Opportunity created successfully')),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(content: Text('Opportunity created successfully')),
+        // );
 
         Navigator.pop(context, true);
       }

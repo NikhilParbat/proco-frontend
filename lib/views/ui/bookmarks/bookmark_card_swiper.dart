@@ -24,12 +24,12 @@ class BookmarkCardSwiper extends StatefulWidget {
 }
 
 class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
-  static const Color _navy   = Color(0xFF040326);
-  static const Color _teal   = Color(0xFF08979F);
+  static const Color _navy = Color(0xFF040326);
+  static const Color _teal = Color(0xFF08979F);
   static const Color _tealLt = Color(0xFF0BBFCA);
   static const Color _orange = Color(0xFFf55631);
-  static const Color _red    = Color(0xFFD23838);
-  static const Color _green  = Color(0xFF089F20);
+  static const Color _red = Color(0xFFD23838);
+  static const Color _green = Color(0xFF089F20);
 
   late final CardSwiperController _controller;
   late List<AllBookmark> _bookmarks;
@@ -46,7 +46,8 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
 
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) setState(() => _currentUserId = prefs.getString('userId') ?? '');
+    if (mounted)
+      setState(() => _currentUserId = prefs.getString('userId') ?? '');
   }
 
   @override
@@ -65,171 +66,239 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isFinished || _bookmarks.isEmpty) return _buildFinishedState();
+    if (_isFinished || _bookmarks.isEmpty) {
+      return _buildFinishedState();
+    }
 
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      children: [
-        CardSwiper(
-          key: ValueKey(_bookmarks.length),
-          controller: _controller,
-          scale: 0.5,
-          cardsCount: _bookmarks.length,
-          numberOfCardsDisplayed: _bookmarks.length.clamp(1, 2),
-          allowedSwipeDirection: const AllowedSwipeDirection.only(
-            left: true,
-            right: true,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 26.h),
+
+      child: Column(
+        children: [
+          Expanded(
+            child: CardSwiper(
+              key: ValueKey(_bookmarks.length),
+
+              controller: _controller,
+
+              cardsCount: _bookmarks.length,
+
+              scale: 0.92,
+
+              numberOfCardsDisplayed: _bookmarks.length.clamp(1, 2),
+
+              backCardOffset: const Offset(0, 18),
+
+              padding: EdgeInsets.zero,
+
+              allowedSwipeDirection: const AllowedSwipeDirection.only(
+                left: true,
+                right: true,
+              ),
+
+              isLoop: false,
+
+              onEnd: () => setState(() => _isFinished = true),
+
+              onSwipe: (previousIndex, currentIndex, direction) {
+                final bookmark = _bookmarks[previousIndex];
+
+                if (direction == CardSwiperDirection.left) {
+                  widget.bookmarkNotifier.deleteBookMark(bookmark.job.id);
+                } else if (direction == CardSwiperDirection.right) {
+                  if (_currentUserId.isNotEmpty) {
+                    context.read<JobsNotifier>().addMatchedUsers(
+                      bookmark.job.id,
+                      _currentUserId,
+                    );
+                  }
+
+                  Get.snackbar(
+                    'Matched!',
+                    'You matched with ${bookmark.job.company.isNotEmpty ? bookmark.job.company : bookmark.job.title}',
+                    colorText: kLight,
+                    backgroundColor: const Color(0xFF089F20),
+                    icon: const Icon(
+                      Icons.favorite_rounded,
+                      color: Colors.white,
+                    ),
+                    duration: const Duration(seconds: 2),
+                  );
+                }
+
+                return true;
+              },
+
+              cardBuilder: (context, index, pctX, pctY) {
+                final bookmark = _bookmarks[index];
+
+                CardSwiperDirection? liveDirection;
+
+                const threshold = 0.15;
+
+                if (index == 0) {
+                  if (pctX > threshold) {
+                    liveDirection = CardSwiperDirection.right;
+                  } else if (pctX < -threshold) {
+                    liveDirection = CardSwiperDirection.left;
+                  }
+                }
+
+                return _buildCard(bookmark, liveDirection);
+              },
+            ),
           ),
-          isLoop: false,
-          onEnd: () => setState(() => _isFinished = true),
-          onSwipe: (previousIndex, currentIndex, direction) {
-            final bookmark = _bookmarks[previousIndex];
-            if (direction == CardSwiperDirection.left) {
-              widget.bookmarkNotifier.deleteBookMark(bookmark.job.id);
-            } else if (direction == CardSwiperDirection.right) {
-              if (_currentUserId.isNotEmpty) {
-                context
-                    .read<JobsNotifier>()
-                    .addMatchedUsers(bookmark.job.id, _currentUserId);
-              }
-              Get.snackbar(
-                'Matched!',
-                'You matched with ${bookmark.job.company.isNotEmpty ? bookmark.job.company : bookmark.job.title}',
-                colorText: kLight,
-                backgroundColor: const Color(0xFF089F20),
-                icon: const Icon(Icons.favorite_rounded, color: Colors.white),
-                duration: const Duration(seconds: 2),
-              );
-            }
-            return true;
-          },
-          cardBuilder: (context, index, pctX, pctY) {
-            final bookmark = _bookmarks[index];
-            CardSwiperDirection? liveDirection;
-            const threshold = 0.15;
-            if (index == 0) {
-              if (pctX > threshold) {
-                liveDirection = CardSwiperDirection.right;
-              } else if (pctX < -threshold) {
-                liveDirection = CardSwiperDirection.left;
-              }
-            }
-            return _buildCard(bookmark, liveDirection);
-          },
-        ),
-        Positioned(bottom: 48.h, child: _buildFabRow()),
-      ],
+
+          SizedBox(height: 18.h),
+
+          _buildFabRow(),
+        ],
+      ),
     );
   }
 
   // ─── Card ─────────────────────────────────────────────────────────────────
   Widget _buildCard(AllBookmark bookmark, CardSwiperDirection? liveDirection) {
     final j = bookmark.job;
+
     return Stack(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: _navy,
-            borderRadius: BorderRadius.circular(28.r),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30.r),
             boxShadow: [
               BoxShadow(
-                color: _navy.withValues(alpha: 0.4),
-                blurRadius: 28,
-                offset: const Offset(0, 12),
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           clipBehavior: Clip.antiAlias,
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Top image (44%) ──────────────────────────────────────────
+              // ── IMAGE ─────────────────────────────
               Expanded(
-                flex: 44,
+                flex: 46,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     Image.network(
                       j.imageUrl,
                       fit: BoxFit.cover,
+
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: _teal.withValues(alpha: 0.12),
-                        child: const Icon(Icons.business_rounded, color: _teal, size: 64),
+                        color: kThemeColor.withOpacity(0.08),
+                        child: Icon(
+                          Icons.work_outline_rounded,
+                          color: kThemeColor,
+                          size: 56.sp,
+                        ),
                       ),
                     ),
+
                     Positioned.fill(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [Colors.transparent, _navy.withValues(alpha: 0.85)],
-                            stops: const [0.5, 1.0],
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.55),
+                            ],
+                            stops: const [0.55, 1],
                           ),
                         ),
                       ),
                     ),
-                    if (j.hiring)
-                      Positioned(
-                        top: 14.h,
-                        right: 14.w,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                          decoration: BoxDecoration(
-                            color: _green,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Actively Hiring',
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ),
-                      ),
-                    // Saved badge
+
+                    // ── Saved Badge ─────────────────
                     Positioned(
-                      top: 14.h,
-                      left: 14.w,
+                      top: 16.h,
+                      left: 16.w,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                        decoration: BoxDecoration(
-                          color: _teal,
-                          borderRadius: BorderRadius.circular(20),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 7.h,
                         ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24.r),
+                        ),
+
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.bookmark_rounded, color: Colors.white, size: 11),
-                            SizedBox(width: 4.w),
+                            Icon(
+                              Icons.bookmark_rounded,
+                              size: 13.sp,
+                              color: kThemeColor,
+                            ),
+
+                            SizedBox(width: 5.w),
+
                             Text(
                               'Saved',
                               style: TextStyle(
-                                fontSize: 10.sp,
-                                color: Colors.white,
+                                fontFamily: kFontDMSans,
+                                fontSize: 11.sp,
                                 fontWeight: FontWeight.w700,
-                                fontFamily: 'Poppins',
+                                color: kThemeColor,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
+
+                    // ── Hiring Badge ────────────────
+                    if (j.hiring)
+                      Positioned(
+                        top: 16.h,
+                        right: 16.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 7.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(24.r),
+                          ),
+
+                          child: Text(
+                            'Hiring',
+                            style: TextStyle(
+                              fontFamily: kFontDMSans,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // ── Company ─────────────────────
                     Positioned(
-                      bottom: 12.h,
-                      left: 16.w,
-                      right: 16.w,
+                      left: 18.w,
+                      right: 18.w,
+                      bottom: 18.h,
+
                       child: Text(
                         j.company.isNotEmpty ? j.company : 'Unknown Company',
+
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+
                         style: TextStyle(
+                          fontFamily: kFontDMSans,
                           fontSize: 13.sp,
-                          color: _tealLt,
                           fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                          letterSpacing: 0.5,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -237,69 +306,132 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
                 ),
               ),
 
-              // ── Bottom info (56%) ────────────────────────────────────────
+              // ── Bottom info ────────────────────────────────────────
               Expanded(
                 flex: 56,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(18.w, 4.h, 18.w, 108.h),
+                  padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 36.h),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ── Title ─────────────────────────────
                       Text(
                         j.title,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+
                         style: TextStyle(
-                          fontSize: 18.sp,
-                          color: Colors.white,
+                          fontFamily: kFontMontserrat,
+                          fontSize: 20.sp,
                           fontWeight: FontWeight.w700,
-                          fontFamily: 'Poppins',
+                          color: Colors.black87,
                           height: 1.2,
                         ),
                       ),
-                      SizedBox(height: 8.h),
+
+                      SizedBox(height: 12.h),
+
+                      // ── Location ──────────────────────────
                       Row(
                         children: [
-                          const Icon(Icons.location_on_rounded, color: _orange, size: 13),
-                          SizedBox(width: 3.w),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16.sp,
+                            color: kThemeColor,
+                          ),
+
+                          SizedBox(width: 5.w),
+
                           Expanded(
                             child: Text(
                               j.location,
                               overflow: TextOverflow.ellipsis,
+
                               style: TextStyle(
-                                fontSize: 11.sp,
-                                color: Colors.white70,
-                                fontFamily: 'Poppins',
+                                fontFamily: kFontDMSans,
+                                fontSize: 13.sp,
+                                color: Colors.grey.shade700,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          if (j.contract.isNotEmpty) ...[
-                            SizedBox(width: 8.w),
-                            _chip(j.contract, Colors.white12),
-                          ],
                         ],
                       ),
-                      if (j.salary.isNotEmpty) ...[
-                        SizedBox(height: 8.h),
+
+                      SizedBox(height: 12.h),
+
+                      // ── Salary ────────────────────────────
+                      if (j.salary.isNotEmpty)
                         Row(
                           children: [
-                            const Icon(Icons.payments_outlined, color: _tealLt, size: 13),
-                            SizedBox(width: 4.w),
-                            Text(
-                              j.period.isNotEmpty
-                                  ? '${j.salary} · ${j.period}'
-                                  : j.salary,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: _tealLt,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins',
+                            Icon(
+                              Icons.payments_outlined,
+                              size: 16.sp,
+                              color: kThemeColor,
+                            ),
+
+                            SizedBox(width: 5.w),
+
+                            Expanded(
+                              child: Text(
+                                j.period.isNotEmpty
+                                    ? '${j.salary} · ${j.period}'
+                                    : j.salary,
+
+                                overflow: TextOverflow.ellipsis,
+
+                                style: TextStyle(
+                                  fontFamily: kFontDMSans,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: kThemeColor,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ],
+
+                      SizedBox(height: 14.h),
+
+                      // ── Contract Type ─────────────────────
+                      if (j.contract.isNotEmpty)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 7.h,
+                          ),
+
+                          decoration: BoxDecoration(
+                            color: kThemeColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+
+                          child: Text(
+                            j.contract,
+
+                            style: TextStyle(
+                              fontFamily: kFontDMSans,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: kThemeColor,
+                            ),
+                          ),
+                        ),
+
+                      const Spacer(),
+
+                      // ── Swipe Hint ────────────────────────
+                      Center(
+                        child: Text(
+                          'Swipe or use the buttons below',
+                          style: TextStyle(
+                            fontFamily: kFontDMSans,
+                            fontSize: 11.sp,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -307,37 +439,9 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
             ],
           ),
         ),
+
+        // ── Swipe Overlay ─────────────────────────
         if (liveDirection != null) _buildSwipeOverlay(liveDirection),
-        // Delete button — always visible on every card
-        Positioned(
-          top: 12.h,
-          right: 12.w,
-          child: GestureDetector(
-            onTap: () {
-              widget.bookmarkNotifier.deleteBookMark(bookmark.job.id);
-              setState(() {
-                _bookmarks.remove(bookmark);
-                if (_bookmarks.isEmpty) _isFinished = true;
-              });
-            },
-            child: Container(
-              width: 30.w,
-              height: 30.w,
-              decoration: BoxDecoration(
-                color: _red,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: _red.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Icon(Icons.close_rounded, color: Colors.white, size: 15.sp),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -347,7 +451,9 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
     final isLeft = direction == CardSwiperDirection.left;
 
     final Color color = isLeft ? _red : _green;
-    final IconData icon = isLeft ? Icons.bookmark_remove_rounded : Icons.favorite_rounded;
+    final IconData icon = isLeft
+        ? Icons.bookmark_remove_rounded
+        : Icons.favorite_rounded;
     final String label = isLeft ? 'REMOVE' : 'MATCH';
     final Alignment alignment = isLeft ? Alignment.topLeft : Alignment.topRight;
     final EdgeInsets padding = isLeft
@@ -397,79 +503,73 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
 
   // ─── FAB row ──────────────────────────────────────────────────────────────
   Widget _buildFabRow() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _fab(
-          icon: Icons.bookmark_remove_rounded,
-          color: _red,
-          label: 'Remove',
-          onTap: () => _controller.swipe(CardSwiperDirection.left),
-          size: 64,
-        ),
-        SizedBox(width: 14.w),
-        _fab(
-          icon: Icons.favorite_rounded,
-          color: _green,
-          label: 'Match',
-          onTap: () => _controller.swipe(CardSwiperDirection.right),
-          size: 64,
-        ),
-      ],
+    return SizedBox(
+      width: 260.w,
+      height: 82.h,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // ── Remove ─────────────────────────────
+          _modernActionButton(
+            icon: Icons.close_rounded,
+            iconColor: Colors.black87,
+            backgroundColor: Colors.white,
+            size: 68,
+            onTap: () => _controller.swipe(CardSwiperDirection.left),
+          ),
+
+          // ── Match ──────────────────────────────
+          _modernActionButton(
+            icon: Icons.favorite_rounded,
+            iconColor: kThemeColor,
+            backgroundColor: Colors.white,
+            size: 72,
+            onTap: () => _controller.swipe(CardSwiperDirection.right),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _fab({
+  Widget _modernActionButton({
     required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback onTap,
+    required Color iconColor,
+    required Color backgroundColor,
     required double size,
+    required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: size.w,
-            height: size.w,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-                BoxShadow(
-                  color: color.withValues(alpha: 0.55),
-                  blurRadius: 16,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 6),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 8,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+
+        width: size.w,
+        height: size.w,
+
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.10),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-            child: Icon(icon, color: Colors.white, size: size * 0.44),
-          ),
-          SizedBox(height: 5.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.sp,
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
+
+            BoxShadow(
+              color: Colors.white.withOpacity(0.45),
+              blurRadius: 2,
+              offset: const Offset(0, -1),
             ),
-          ),
-        ],
+          ],
+        ),
+
+        child: Center(
+          child: Icon(icon, color: iconColor, size: size * 0.42),
+        ),
       ),
     );
   }
@@ -489,7 +589,11 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
                 color: _teal.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.bookmark_border_rounded, size: 44.w, color: _teal),
+              child: Icon(
+                Icons.bookmark_border_rounded,
+                size: 44.w,
+                color: _teal,
+              ),
             ),
             SizedBox(height: 24.h),
             Text(

@@ -28,7 +28,10 @@ class BookMarkHelper {
       final headers = await _authHeaders();
 
       if (!headers.containsKey('token')) {
-        return ApiResponse(success: false, message: 'Not authenticated — please log in again.');
+        return ApiResponse(
+          success: false,
+          message: 'Not authenticated — please log in again.',
+        );
       }
 
       final url = Config.url(Config.bookmarkUrl);
@@ -43,7 +46,10 @@ class BookMarkHelper {
       debugPrint('addBookmarks body:   ${response.body}');
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again.');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again.',
+        );
       }
 
       final decoded = jsonDecode(response.body);
@@ -72,7 +78,10 @@ class BookMarkHelper {
       final headers = await _authHeaders();
 
       if (!headers.containsKey('token')) {
-        return ApiResponse(success: false, message: 'Not authenticated — please log in again.');
+        return ApiResponse(
+          success: false,
+          message: 'Not authenticated — please log in again.',
+        );
       }
 
       final url = Config.url('${Config.bookmarkUrl}/$jobId');
@@ -83,7 +92,10 @@ class BookMarkHelper {
       debugPrint('deleteBookmarks body:   ${response.body}');
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again.');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again.',
+        );
       }
 
       final decoded = jsonDecode(response.body);
@@ -111,7 +123,10 @@ class BookMarkHelper {
       final headers = await _authHeaders();
 
       if (!headers.containsKey('token')) {
-        return ApiResponse(success: false, message: 'Not authenticated — please log in again.');
+        return ApiResponse(
+          success: false,
+          message: 'Not authenticated — please log in again.',
+        );
       }
 
       final url = Config.url(Config.bookmarkUrl);
@@ -122,7 +137,10 @@ class BookMarkHelper {
       debugPrint('getBookmarks body:   ${response.body}');
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again.');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again.',
+        );
       }
 
       final decoded = jsonDecode(response.body);
@@ -130,9 +148,11 @@ class BookMarkHelper {
       if (response.statusCode == 200 && decoded['success'] == true) {
         final List data = decoded['data'] ?? [];
 
-        // Guard against orphaned bookmarks where the job was deleted
+        // ✅ New nested job structure
         final bookmarks = data
-            .where((e) => e is Map && e['jobId'] != null)
+            .where(
+              (e) => e is Map && e['job'] != null && e['job']['id'] != null,
+            )
             .map((e) => AllBookmark.fromJson(e as Map<String, dynamic>))
             .toList();
 
