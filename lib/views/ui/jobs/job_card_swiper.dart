@@ -1,3 +1,4 @@
+import 'dart:math' show pi;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -35,14 +36,10 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   static const Color _red = Color(0xFFD23838);
   static const Color _green = Color(0xFF089F20);
 
-  bool isExpanded(String id) {
-    return _expandedDesc[id] ?? false;
-  }
+  bool isExpanded(String id) => _expandedDesc[id] ?? false;
 
   void toggleExpanded(String id) {
-    setState(() {
-      _expandedDesc[id] = !(_expandedDesc[id] ?? false);
-    });
+    setState(() => _expandedDesc[id] = !(_expandedDesc[id] ?? false));
   }
 
   late final int _imageCacheWidth;
@@ -53,22 +50,14 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     _imageCacheWidth = (MediaQuery.of(context).size.width * 1.2).toInt();
   }
 
-  /// When the fraction of remaining cards drops to or below this value,
-  /// the next page is silently prefetched. 0.25 = 25% remaining.
   static const double _prefetchThreshold = 0.25;
 
   late final CardSwiperController _controller;
-
-  // Local copy so we can append new pages without resetting the swiper
   late List<JobsResponse> _jobs;
   bool _isFinished = false;
-
-  // Tracks which job descriptions are expanded ("Read more" state)
   final Map<String, bool> _expandedDesc = {};
-
-  // One undo at a time — like Hinge. Must swipe before undoing again.
   bool _canUndo = false;
-  String? _lastSwipedJobId; // track last swiped job for backend undo
+  String? _lastSwipedJobId;
 
   @override
   void initState() {
@@ -77,8 +66,6 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     _jobs = widget.jobs;
   }
 
-  /// When the parent pushes more cards (next page loaded), append them
-  /// to the local list. The swiper keeps its current position.
   @override
   void didUpdateWidget(JobCardSwiper oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -110,7 +97,6 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
         fit: StackFit.expand,
         clipBehavior: Clip.none,
         children: [
-          // ── Card swiper (isolated repaint) ────────────────────────────────────
           RepaintBoundary(
             child: CardSwiper(
               controller: _controller,
@@ -124,11 +110,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               ),
               isLoop: false,
               onEnd: () => setState(() => _isFinished = true),
-
               onSwipe: (previousIndex, currentIndex, direction) {
                 final job = _jobs[previousIndex];
 
-                // ── Swipe actions ───────────────────────────────────────────────
                 if (direction == CardSwiperDirection.right) {
                   widget.jobNotifier.addSwipedUsers(
                     job.id,
@@ -148,13 +132,11 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                   );
                 }
 
-                // ── Undo state ─────────────────────────────────────────────────
                 setState(() {
                   _canUndo = true;
                   _lastSwipedJobId = job.id;
                 });
 
-                // ── Prefetch next page (non-blocking) ──────────────────────────
                 final remaining = _jobs.length - previousIndex - 1;
                 final fractionRemaining = remaining / _jobs.length;
 
@@ -171,11 +153,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
 
                 return true;
               },
-
               cardBuilder: (context, index, pctX, pctY) {
                 final job = _jobs[index];
                 CardSwiperDirection? liveDirection;
-
                 const threshold = 0.15;
 
                 if (index == 0) {
@@ -188,19 +168,27 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                   }
                 }
 
-                // Card ends at Figma Y=1222 (1222/1440 of screen height).
-                // Bottom padding leaves fh(218) below the card so the
-                // button group can straddle the card's bottom border.
                 return Padding(
-                  padding: EdgeInsets.only(left: 0, right: 0, bottom: fh(50)),
-                  child: _buildCard(job, liveDirection),
+                  padding: EdgeInsets.only(bottom: fh(50)),
+                  child: Stack(
+                    children: [
+                      _FlippableJobCard(
+                        job: job,
+                        imageCacheWidth: _imageCacheWidth,
+                        isExpanded: isExpanded(job.id),
+                        onToggleExpanded: () => toggleExpanded(job.id),
+                      ),
+                      // Swipe overlay stays on top of the flip, never moves
+                      if (liveDirection != null)
+                        _buildSwipeOverlay(liveDirection),
+                    ],
+                  ),
                 );
               },
             ),
           ),
 
-          // ── Button Group SVG — center at card bottom edge (fh(218) from screen bottom)
-          // button center = fh(218), height = fh(133) → bottom = fh(218 - 66.5) = fh(151.5)
+          // Buttons are fixed — they do NOT participate in the card flip
           Positioned(
             left: fw(48),
             bottom: fh(40),
@@ -213,459 +201,23 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     );
   }
 
-  // ─── Card ─────────────────────────────────────────────────────────────────
-  Widget _buildCard(JobsResponse job, CardSwiperDirection? liveDirection) {
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final cw = constraints.maxWidth;
-        final ch = constraints.maxHeight;
-        double cfx(double v) => cw * v / 609.0;
-        double cfy(double v) => ch * v / 1222.0;
-
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ── Image – full-width, flush to card top ──────────────
-                  SizedBox(
-                    height: cfy(498),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: job.imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (ctx, _) => Container(
-                            color: kThemeColor.withValues(alpha: 0.06),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                          errorWidget: (ctx, _, _) => Container(
-                            color: kThemeColor.withValues(alpha: 0.06),
-                            child: const Icon(
-                              Icons.business_rounded,
-                              color: kThemeColor,
-                              size: 48,
-                            ),
-                          ),
-                          memCacheWidth: _imageCacheWidth,
-                        ),
-                        // Opportunity-type badge – icon + text
-                        if (job.opportunityType.isNotEmpty)
-                          Positioned(
-                            left: 14.w,
-                            top: 14.h,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 10.w,
-                                vertical: 5.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: kThemeColor,
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.business_center,
-                                    color: Colors.white,
-                                    size: 12.w,
-                                  ),
-                                  SizedBox(width: 5.w),
-                                  Text(
-                                    job.opportunityType.toUpperCase(),
-                                    style: GoogleFonts.montserrat(
-                                      color: Colors.white,
-                                      fontSize: 9.sp,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        // Creator box – top right
-                        Positioned(
-                          right: 10.w,
-                          top: 10.h,
-                          child: SvgPicture.asset(
-                            'assets/userbox.svg',
-                            width: 82.w,
-                            height: 50.h,
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ── Content ────────────────────────────────────────────
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        cfx(20),
-                        cfy(14),
-                        cfx(20),
-                        cfy(100),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Title
-                          Text(
-                            job.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 26.sp,
-                              color: const Color(0xFF0B0D13),
-                              fontWeight: FontWeight.w800,
-                              height: 1.15,
-                            ),
-                          ),
-                          SizedBox(height: 10.h),
-                          if (job.company.isNotEmpty ||
-                              job.domain.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                if (job.company.isNotEmpty)
-                                  Flexible(
-                                    child: Text(
-                                      job.company,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.dmSans(
-                                        fontSize: 11.sp,
-                                        color: const Color(0xFF666666),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-
-                                if (job.company.isNotEmpty &&
-                                    job.domain.isNotEmpty)
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 6.w,
-                                    ),
-                                    child: Container(
-                                      width: 4.w,
-                                      height: 4.w,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFBBBBBB),
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                  ),
-
-                                if (job.domain.isNotEmpty)
-                                  Flexible(
-                                    child: Text(
-                                      job.domain,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.dmSans(
-                                        fontSize: 11.sp,
-                                        color: kThemeColor,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-
-                            SizedBox(height: 8.h),
-                          ],
-
-                          // Opportunity Location
-                          if (job.location.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.public_outlined,
-                                  size: 14.w,
-                                  color: const Color(0xFF999999),
-                                ),
-                                SizedBox(width: 6.w),
-                                Expanded(
-                                  child: Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'Location: ',
-                                          style: GoogleFonts.dmSans(
-                                            fontSize: 11.sp,
-                                            color: kThemeColor,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: job.location,
-                                          style: GoogleFonts.dmSans(
-                                            fontSize: 11.sp,
-                                            color: const Color(0xFF1A1A2E),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10.h),
-                          ],
-
-                          if (job.experienceLevel.isNotEmpty ||
-                              job.contract.isNotEmpty ||
-                              job.salary.isNotEmpty) ...[
-                            Wrap(
-                              spacing: 6.w,
-                              runSpacing: 6.h,
-                              children: [
-                                if (job.experienceLevel.isNotEmpty)
-                                  _buildInfoChip(job.experienceLevel),
-
-                                if (job.contract.isNotEmpty)
-                                  _buildInfoChip(job.contract),
-
-                                if (job.salary.isNotEmpty)
-                                  _buildInfoChip(job.salary),
-                              ],
-                            ),
-
-                            SizedBox(height: 10.h),
-                          ],
-
-                          // Description + Read more
-                          if (job.description.isNotEmpty) ...[
-                            Text(
-                              job.description,
-                              maxLines: isExpanded(job.id) ? null : 2,
-                              overflow: isExpanded(job.id)
-                                  ? TextOverflow.visible
-                                  : TextOverflow.ellipsis,
-                              style: GoogleFonts.dmSans(
-                                fontSize: 11.sp,
-                                color: const Color(0xFF444444),
-                                height: 1.5,
-                              ),
-                            ),
-                            if (!isExpanded(job.id))
-                              GestureDetector(
-                                onTap: () => toggleExpanded(job.id),
-                                child: Text(
-                                  '... Read more',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 11.sp,
-                                    color: kThemeColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            SizedBox(height: 12.h),
-                          ],
-
-                          // Requirements
-                          if (job.requirements.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                Container(
-                                  width: 26.w,
-                                  height: 26.w,
-                                  decoration: const BoxDecoration(
-                                    color: kThemeColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 14.w,
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Text(
-                                  'Requirements',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 13.sp,
-                                    color: kThemeColor,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 6.h),
-                            ...job.requirements
-                                .take(4)
-                                .map(
-                                  (req) => Padding(
-                                    padding: EdgeInsets.only(bottom: 4.h),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: EdgeInsets.only(top: 4.h),
-                                          child: Container(
-                                            width: 5,
-                                            height: 5,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFF555555),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 8.w),
-                                        Expanded(
-                                          child: Text(
-                                            req,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.dmSans(
-                                              fontSize: 11.sp,
-                                              color: const Color(0xFF444444),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            SizedBox(height: 10.h),
-                          ],
-
-                          // Skills
-                          if (job.skills.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                Container(
-                                  width: 26.w,
-                                  height: 26.w,
-                                  decoration: const BoxDecoration(
-                                    color: kThemeColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.code,
-                                    color: Colors.white,
-                                    size: 14.w,
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Text(
-                                  'Skills',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 13.sp,
-                                    color: kThemeColor,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8.h),
-                            Wrap(
-                              spacing: 8.w,
-                              runSpacing: 6.h,
-                              children: job.skills
-                                  .take(6)
-                                  .map(
-                                    (skill) => Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 12.w,
-                                        vertical: 5.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: const Color(0xFFCCCCCC),
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          20.r,
-                                        ),
-                                        color: Colors.white,
-                                      ),
-                                      child: Text(
-                                        skill,
-                                        style: GoogleFonts.dmSans(
-                                          fontSize: 11.sp,
-                                          color: const Color(0xFF333333),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (liveDirection != null) _buildSwipeOverlay(liveDirection),
-          ],
-        );
-      },
-    );
-  }
-
   // ─── Swipe overlay ────────────────────────────────────────────────────────
   Widget _buildSwipeOverlay(CardSwiperDirection direction) {
     final isLeft = direction == CardSwiperDirection.left;
     final isRight = direction == CardSwiperDirection.right;
 
-    final Color color = isLeft
-        ? _red
-        : isRight
-        ? _green
-        : _teal;
-    final IconData icon = isLeft
-        ? Icons.close_rounded
-        : isRight
-        ? Icons.star_rounded
-        : Icons.bookmark_rounded;
-    final String label = isLeft
-        ? 'PASS'
-        : isRight
-        ? 'APPLY'
-        : 'SAVE';
-    final Alignment alignment = isLeft
-        ? Alignment.topLeft
-        : isRight
-        ? Alignment.topRight
-        : Alignment.topCenter;
+    final Color color =
+        isLeft ? _red : isRight ? _green : _teal;
+    final IconData icon =
+        isLeft ? Icons.close_rounded : isRight ? Icons.star_rounded : Icons.bookmark_rounded;
+    final String label = isLeft ? 'PASS' : isRight ? 'APPLY' : 'SAVE';
+    final Alignment alignment =
+        isLeft ? Alignment.topLeft : isRight ? Alignment.topRight : Alignment.topCenter;
     final EdgeInsets padding = isLeft
         ? EdgeInsets.only(top: 30.h, left: 22.w)
         : isRight
-        ? EdgeInsets.only(top: 30.h, right: 22.w)
-        : EdgeInsets.only(top: 22.h);
+            ? EdgeInsets.only(top: 30.h, right: 22.w)
+            : EdgeInsets.only(top: 22.h);
 
     return Positioned.fill(
       child: Container(
@@ -708,26 +260,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     );
   }
 
-  Widget _buildInfoChip(String text) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF6F6F6),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: const Color(0xFFE5E5E5)),
-      ),
-      child: Text(
-        text,
-        style: GoogleFonts.dmSans(
-          fontSize: 10.sp,
-          color: const Color(0xFF555555),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  // ─── Button Group ────────────────────────────────────────────────────────
+  // ─── Button Group ─────────────────────────────────────────────────────────
   Widget _buildButtonGroup(
     double Function(double) fw,
     double Function(double) fh,
@@ -777,7 +310,6 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          /// REVERT
           buildBtn(
             icon: Icon(
               Icons.reply_rounded,
@@ -791,14 +323,12 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             onTap: _canUndo
                 ? () {
                     _controller.undo();
-
                     if (_lastSwipedJobId != null) {
                       widget.jobNotifier.undoSwipe(
                         _lastSwipedJobId!,
                         widget.currentUserId,
                       );
                     }
-
                     setState(() {
                       _canUndo = false;
                       _lastSwipedJobId = null;
@@ -806,16 +336,12 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                   }
                 : null,
           ),
-
-          /// CANCEL
           buildBtn(
             icon: Icon(CupertinoIcons.xmark, color: Colors.black, size: 32.sp),
             bgColor: Colors.white,
             diameter: heartDiameter,
             onTap: () => _controller.swipe(CardSwiperDirection.left),
           ),
-
-          /// HEART
           buildBtn(
             icon: PhosphorIcon(
               PhosphorIcons.heartStraight(),
@@ -826,8 +352,6 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             diameter: heartDiameter,
             onTap: () => _controller.swipe(CardSwiperDirection.right),
           ),
-
-          /// BOOKMARK
           buildBtn(
             icon: Icon(
               CupertinoIcons.bookmark,
@@ -843,7 +367,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
     );
   }
 
-  // ─── No more cards state ──────────────────────────────────────────────────
+  // ─── No more cards ────────────────────────────────────────────────────────
   Widget _buildFinishedState() {
     return Center(
       child: Column(
@@ -853,7 +377,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
             width: 90.w,
             height: 90.w,
             decoration: BoxDecoration(
-              color: kThemeColor.withOpacity(0.10),
+              color: kThemeColor.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -862,11 +386,9 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               color: kThemeColor,
             ),
           ),
-
           SizedBox(height: 18.h),
-
           Text(
-            'You’re all caught up',
+            'You\'re all caught up',
             style: TextStyle(
               fontSize: 18.sp,
               color: Colors.black87,
@@ -874,9 +396,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
               fontFamily: kFontDMSans,
             ),
           ),
-
           SizedBox(height: 6.h),
-
           Text(
             'Come back later for more opportunities.',
             textAlign: TextAlign.center,
@@ -891,4 +411,709 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
       ),
     );
   }
+}
+
+// ─── Flippable Job Card ───────────────────────────────────────────────────────
+
+class _FlippableJobCard extends StatefulWidget {
+  final JobsResponse job;
+  final int imageCacheWidth;
+  final bool isExpanded;
+  final VoidCallback onToggleExpanded;
+
+  const _FlippableJobCard({
+    required this.job,
+    required this.imageCacheWidth,
+    required this.isExpanded,
+    required this.onToggleExpanded,
+  });
+
+  @override
+  State<_FlippableJobCard> createState() => _FlippableJobCardState();
+}
+
+class _FlippableJobCardState extends State<_FlippableJobCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+  bool _showingBack = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _onTap() {
+    if (_showingBack) {
+      _ctrl.reverse();
+    } else {
+      _ctrl.forward();
+    }
+    setState(() => _showingBack = !_showingBack);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _onTap,
+      child: AnimatedBuilder(
+        animation: _anim,
+        builder: (context, _) {
+          final angle = _anim.value * pi;
+          final showBack = angle > pi / 2;
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(showBack ? angle - pi : angle),
+            child: showBack ? _buildBack(context) : _buildFront(context),
+          );
+        },
+      ),
+    );
+  }
+
+  // ─── Front face ───────────────────────────────────────────────────────────
+  Widget _buildFront(BuildContext context) {
+    final job = widget.job;
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final cw = constraints.maxWidth;
+        final ch = constraints.maxHeight;
+        double cfx(double v) => cw * v / 609.0;
+        double cfy(double v) => ch * v / 1222.0;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: Colors.black.withValues(alpha: 0.10),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Image
+              SizedBox(
+                height: cfy(498),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: job.imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (ctx, _) => Container(
+                        color: kThemeColor.withValues(alpha: 0.06),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (ctx, url, error) => Container(
+                        color: kThemeColor.withValues(alpha: 0.06),
+                        child: const Icon(
+                          Icons.business_rounded,
+                          color: kThemeColor,
+                          size: 48,
+                        ),
+                      ),
+                      memCacheWidth: widget.imageCacheWidth,
+                    ),
+                    if (job.opportunityType.isNotEmpty)
+                      Positioned(
+                        left: 14.w,
+                        top: 14.h,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 5.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: kThemeColor,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.business_center,
+                                color: Colors.white,
+                                size: 12.w,
+                              ),
+                              SizedBox(width: 5.w),
+                              Text(
+                                job.opportunityType.toUpperCase(),
+                                style: GoogleFonts.montserrat(
+                                  color: Colors.white,
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      right: 10.w,
+                      top: 10.h,
+                      child: SvgPicture.asset(
+                        'assets/userbox.svg',
+                        width: 82.w,
+                        height: 50.h,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    cfx(20),
+                    cfy(14),
+                    cfx(20),
+                    cfy(100),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        job.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 26.sp,
+                          color: const Color(0xFF0B0D13),
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      if (job.company.isNotEmpty || job.domain.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            if (job.company.isNotEmpty)
+                              Flexible(
+                                child: Text(
+                                  job.company,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 11.sp,
+                                    color: const Color(0xFF666666),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            if (job.company.isNotEmpty && job.domain.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                child: Container(
+                                  width: 4.w,
+                                  height: 4.w,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFBBBBBB),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            if (job.domain.isNotEmpty)
+                              Flexible(
+                                child: Text(
+                                  job.domain,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 11.sp,
+                                    color: kThemeColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                      ],
+                      if (job.location.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.public_outlined,
+                              size: 14.w,
+                              color: const Color(0xFF999999),
+                            ),
+                            SizedBox(width: 6.w),
+                            Expanded(
+                              child: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Location: ',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11.sp,
+                                        color: kThemeColor,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: job.location,
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11.sp,
+                                        color: const Color(0xFF1A1A2E),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10.h),
+                      ],
+                      if (job.experienceLevel.isNotEmpty ||
+                          job.contract.isNotEmpty ||
+                          job.salary.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 6.w,
+                          runSpacing: 6.h,
+                          children: [
+                            if (job.experienceLevel.isNotEmpty)
+                              _buildInfoChip(job.experienceLevel),
+                            if (job.contract.isNotEmpty)
+                              _buildInfoChip(job.contract),
+                            if (job.salary.isNotEmpty)
+                              _buildInfoChip(job.salary),
+                          ],
+                        ),
+                        SizedBox(height: 10.h),
+                      ],
+                      if (job.description.isNotEmpty) ...[
+                        Text(
+                          job.description,
+                          maxLines: widget.isExpanded ? null : 2,
+                          overflow: widget.isExpanded
+                              ? TextOverflow.visible
+                              : TextOverflow.ellipsis,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11.sp,
+                            color: const Color(0xFF444444),
+                            height: 1.5,
+                          ),
+                        ),
+                        if (!widget.isExpanded)
+                          GestureDetector(
+                            onTap: widget.onToggleExpanded,
+                            child: Text(
+                              '... Read more',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11.sp,
+                                color: kThemeColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        SizedBox(height: 12.h),
+                      ],
+
+                      // First 3 skills on front face
+                      if (job.skills.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Container(
+                              width: 26.w,
+                              height: 26.w,
+                              decoration: const BoxDecoration(
+                                color: kThemeColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.code,
+                                color: Colors.white,
+                                size: 14.w,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'Skills',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 13.sp,
+                                color: kThemeColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (job.skills.length > 3) ...[
+                              const Spacer(),
+                              Text(
+                                'Tap card to see more',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 9.sp,
+                                  color: const Color(0xFF999999),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        Wrap(
+                          spacing: 8.w,
+                          runSpacing: 6.h,
+                          children: job.skills
+                              .take(3)
+                              .map(
+                                (skill) => Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 5.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFCCCCCC),
+                                    ),
+                                    borderRadius: BorderRadius.circular(20.r),
+                                    color: Colors.white,
+                                  ),
+                                  child: Text(
+                                    skill,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 11.sp,
+                                      color: const Color(0xFF333333),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ─── Back face ────────────────────────────────────────────────────────────
+  Widget _buildBack(BuildContext context) {
+    final job = widget.job;
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final cw = constraints.maxWidth;
+        double cfx(double v) => cw * v / 609.0;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: Colors.black.withValues(alpha: 0.10),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left colour strip with rotated opportunity type
+              Container(
+                width: cfx(44),
+                color: kThemeColor,
+                child: Center(
+                  child: RotatedBox(
+                    quarterTurns: 3,
+                    child: Text(
+                      (job.opportunityType.isNotEmpty
+                              ? job.opportunityType
+                              : job.domain)
+                          .toUpperCase(),
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Main scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    cfx(14),
+                    16.h,
+                    cfx(14),
+                    80.h,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Requirements list
+                      if (job.requirements.isNotEmpty) ...[
+                        Text(
+                          'Requirements',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 13.sp,
+                            color: kThemeColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        ...job.requirements.map(
+                          (req) => Padding(
+                            padding: EdgeInsets.only(bottom: 8.h),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.only(top: 2.h),
+                                  child: Icon(
+                                    Icons.radio_button_unchecked,
+                                    size: 12.w,
+                                    color: kThemeColor,
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    req,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 11.sp,
+                                      color: const Color(0xFF333333),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 10.h),
+                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                        SizedBox(height: 14.h),
+                      ],
+
+                      // Info boxes: Duration, Stipend, Experience, Field/Degree, Language, Additional
+                      _buildInfoBoxGrid(job),
+
+                      // Remaining skills (4th onwards)
+                      if (job.skills.length > 3) ...[
+                        SizedBox(height: 14.h),
+                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                        SizedBox(height: 12.h),
+                        Text(
+                          'More Skills',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 13.sp,
+                            color: kThemeColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Wrap(
+                          spacing: 8.w,
+                          runSpacing: 6.h,
+                          children: job.skills
+                              .skip(3)
+                              .map(
+                                (skill) => Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 5.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFCCCCCC),
+                                    ),
+                                    borderRadius: BorderRadius.circular(20.r),
+                                    color: Colors.white,
+                                  ),
+                                  child: Text(
+                                    skill,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 11.sp,
+                                      color: const Color(0xFF333333),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoBoxGrid(JobsResponse job) {
+    final items = <_InfoItem>[];
+    if (job.period.isNotEmpty) {
+      items.add(_InfoItem(label: 'Duration', value: job.period, icon: Icons.calendar_today_outlined));
+    }
+    if (job.salary.isNotEmpty) {
+      items.add(_InfoItem(label: 'Stipend', value: job.salary, icon: Icons.attach_money_rounded));
+    }
+    if (job.experienceLevel.isNotEmpty) {
+      items.add(_InfoItem(label: 'Experience', value: job.experienceLevel, icon: Icons.work_outline_rounded));
+    }
+    if (job.fieldDegree.isNotEmpty) {
+      items.add(_InfoItem(label: 'Field/Degree', value: job.fieldDegree, icon: Icons.school_outlined));
+    }
+    if (job.languagePreference.isNotEmpty) {
+      items.add(_InfoItem(label: 'Language Preferred', value: job.languagePreference, icon: Icons.language_outlined));
+    }
+    if (job.contract.isNotEmpty) {
+      items.add(_InfoItem(label: 'Additional Info', value: job.contract, icon: Icons.info_outline_rounded));
+    }
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    final rows = <Widget>[];
+    for (int i = 0; i < items.length; i += 2) {
+      final left = items[i];
+      final right = i + 1 < items.length ? items[i + 1] : null;
+      rows.add(
+        Row(
+          children: [
+            Expanded(child: _infoBox(left)),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: right != null ? _infoBox(right) : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      );
+      if (i + 2 < items.length) rows.add(SizedBox(height: 8.h));
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
+  }
+
+  Widget _infoBox(_InfoItem item) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF5F3),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: const Color(0xFFEDE3DF)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28.w,
+            height: 28.w,
+            decoration: BoxDecoration(
+              color: kThemeColor.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Icon(item.icon, size: 14.w, color: kThemeColor),
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 9.sp,
+                    color: const Color(0xFF888888),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  item.value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 11.sp,
+                    color: const Color(0xFF1A1A2E),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(String text) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F6F6),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: const Color(0xFFE5E5E5)),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.dmSans(
+          fontSize: 10.sp,
+          color: const Color(0xFF555555),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoItem {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _InfoItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 }
