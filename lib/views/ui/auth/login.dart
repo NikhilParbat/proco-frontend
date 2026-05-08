@@ -155,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Login Button - kThemeColor, Pill Shape[cite: 1]
                       GestureDetector(
-                        onTap: (_isLoginLoading || _isGoogleLoading)
+                        onTap: _isLoginLoading
                             ? null
                             : () => _handleLogin(loginNotifier),
                         child: Container(
@@ -191,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Google Sign-In Button - Pill Shape, Using kSubTextStyle[cite: 1]
                       GestureDetector(
-                        onTap: (_isLoginLoading || _isGoogleLoading)
+                        onTap: _isGoogleLoading
                             ? null
                             : () async {
                                 setState(() => _isGoogleLoading = true);
