@@ -26,80 +26,55 @@ class UserHelper {
       final token = prefs.getString('token');
 
       if (token == null || token.isEmpty) {
-        return ApiResponse(
-          success: false,
-          message: 'Not authenticated — please log in again.',
-        );
+        return ApiResponse(success: false, message: 'Not authenticated.');
       }
 
       final url = Config.url(Config.profileUrl);
       var request = https.MultipartRequest('PUT', url);
-
       request.headers['token'] = 'Bearer $token';
 
-      // ✅ Only send non-empty fields
-      if (model.username.isNotEmpty) {
-        request.fields['username'] = model.username;
-      }
+      // 1. Basic Identity & Contact
+      if (model.username.isNotEmpty) request.fields['username'] = model.username;
+      if (model.phone.isNotEmpty) request.fields['phone'] = model.phone;
+      if (model.bio.isNotEmpty) request.fields['bio'] = model.bio;
+      if (model.gender != null) request.fields['gender'] = model.gender!;
+      if (model.dob.isNotEmpty) request.fields['dob'] = model.dob;
+      if (model.userType.isNotEmpty) request.fields['userType'] = model.userType;
+
+      // 2. Location & Education
       if (model.city.isNotEmpty) request.fields['city'] = model.city;
       if (model.state.isNotEmpty) request.fields['state'] = model.state;
       if (model.country.isNotEmpty) request.fields['country'] = model.country;
-      if (model.phone.isNotEmpty) request.fields['phone'] = model.phone;
       if (model.college.isNotEmpty) request.fields['college'] = model.college;
       if (model.branch.isNotEmpty) request.fields['branch'] = model.branch;
-      if (model.gender != null) request.fields['gender'] = model.gender!;
-      if (model.dob.isNotEmpty) request.fields['dob'] = model.dob;
-      if (model.userType.isNotEmpty) {
-        request.fields['userType'] = model.userType;
-      }
-      if (model.linkedInUrl.isNotEmpty) {
-        request.fields['linkedInUrl'] = model.linkedInUrl;
-      }
-      if (model.gitHubUrl.isNotEmpty) {
-        request.fields['gitHubUrl'] = model.gitHubUrl;
-      }
-      if (model.twitterUrl.isNotEmpty) {
-        request.fields['twitterUrl'] = model.twitterUrl;
-      }
-      if (model.portfolioUrl.isNotEmpty) {
-        request.fields['portfolioUrl'] = model.portfolioUrl;
-      }
+      if (model.latitude != 0) request.fields['latitude'] = model.latitude.toString();
+      if (model.longitude != 0) request.fields['longitude'] = model.longitude.toString();
 
-      // ✅ Only send location if valid
-      if (model.latitude != 0 && model.longitude != 0) {
-        request.fields['latitude'] = model.latitude.toString();
-        request.fields['longitude'] = model.longitude.toString();
-      }
+      // 3. Socials
+      if (model.linkedInUrl.isNotEmpty) request.fields['linkedInUrl'] = model.linkedInUrl;
+      if (model.gitHubUrl.isNotEmpty) request.fields['gitHubUrl'] = model.gitHubUrl;
+      if (model.twitterUrl.isNotEmpty) request.fields['twitterUrl'] = model.twitterUrl;
+      if (model.portfolioUrl.isNotEmpty) request.fields['portfolioUrl'] = model.portfolioUrl;
 
-      if (model.skills.isNotEmpty) {
-        request.fields['skills'] = jsonEncode(model.skills);
-      }
-      if (model.interests.isNotEmpty) {
-        request.fields['interests'] = jsonEncode(model.interests);
-      }
-      if (model.hobbies.isNotEmpty) {
-        request.fields['hobbies'] = jsonEncode(model.hobbies);
-      }
-      request.fields['experiences'] =
-          jsonEncode(model.experiences.map((e) => e.toJson()).toList());
-      request.fields['projects'] =
-          jsonEncode(model.projects.map((p) => p.toJson()).toList());
-      request.fields['achievements'] =
-          jsonEncode(model.achievements.map((a) => a.toJson()).toList());
+      // 4. Attributes (Skills, Interests, Hobbies)
+      // These map to your normalized tables: profile_skills, interests, hobbies
+      request.fields['skills'] = jsonEncode(model.skills);
+      request.fields['interests'] = jsonEncode(model.interests);
+      request.fields['hobbies'] = jsonEncode(model.hobbies);
 
-      // ✅ Image
+      // 5. Professional Lists
+      // These map to your normalized tables: experiences, projects, achievements
+      request.fields['experiences'] = jsonEncode(model.experiences.map((e) => e.toJson()).toList());
+      request.fields['projects'] = jsonEncode(model.projects.map((p) => p.toJson()).toList());
+      request.fields['achievements'] = jsonEncode(model.achievements.map((a) => a.toJson()).toList());
+
+      // 6. Image Upload
       if (image != null) {
-        request.files.add(
-          await https.MultipartFile.fromPath('profile', image.path),
-        );
+        request.files.add(await https.MultipartFile.fromPath('profile', image.path));
       }
 
       final streamedResponse = await request.send();
       final responseBody = await streamedResponse.stream.bytesToString();
-
-      debugPrint('updateProfile status: ${streamedResponse.statusCode}');
-      debugPrint('updateProfile response: $responseBody');
-
       final decoded = jsonDecode(responseBody);
 
       if (streamedResponse.statusCode == 200) {
@@ -109,13 +84,8 @@ class UserHelper {
           data: UserResponse.fromJson(decoded['data']),
         );
       }
-
-      return ApiResponse(
-        success: false,
-        message: decoded['message'] ?? 'Something went wrong',
-      );
+      return ApiResponse(success: false, message: decoded['message'] ?? 'Update failed');
     } catch (e) {
-      debugPrint('updateProfile error: $e');
       return ApiResponse(success: false, message: e.toString());
     }
   }
@@ -126,68 +96,74 @@ class UserHelper {
     ProfileUpdateReq model,
     File? image,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
 
-    if (token == null || token.isEmpty) {
-      debugPrint('createProfile: token is missing in SharedPreferences');
-      return 'Not authenticated — please log in again.';
-    }
+      if (token == null || token.isEmpty) {
+        return 'Not authenticated — please log in again.';
+      }
 
-    final url = Config.url(Config.createProfileUrl);
-    var request = https.MultipartRequest('PUT', url);
-    request.headers['token'] = 'Bearer $token';
+      final url = Config.url(Config.createProfileUrl);
+      // Using MultipartRequest to handle the profile image
+      var request = https.MultipartRequest('POST', url); 
+      request.headers['token'] = 'Bearer $token';
 
-    if (model.username.isNotEmpty) request.fields['username'] = model.username;
-    request.fields['city'] = model.city;
-    request.fields['state'] = model.state;
-    request.fields['country'] = model.country;
-    request.fields['phone'] = model.phone;
-    request.fields['college'] = model.college;
-    request.fields['branch'] = model.branch;
-    request.fields['gender'] = model.gender ?? '';
-    request.fields['dob'] = model.dob;
-    request.fields['userType'] = model.userType;
-    request.fields['linkedInUrl'] = model.linkedInUrl;
-    request.fields['gitHubUrl'] = model.gitHubUrl;
-    request.fields['twitterUrl'] = model.twitterUrl;
-    request.fields['portfolioUrl'] = model.portfolioUrl;
-    if (model.latitude != 0 && model.longitude != 0) {
+      // 1. Basic Identity
+      request.fields['username'] = model.username;
+      request.fields['phone'] = model.phone;
+      request.fields['gender'] = model.gender ?? '';
+      request.fields['dob'] = model.dob;
+      request.fields['userType'] = model.userType;
+      request.fields['bio'] = model.bio;
+
+      // 2. Location & Education
+      request.fields['city'] = model.city;
+      request.fields['state'] = model.state;
+      request.fields['country'] = model.country;
+      request.fields['college'] = model.college;
+      request.fields['branch'] = model.branch;
       request.fields['latitude'] = model.latitude.toString();
       request.fields['longitude'] = model.longitude.toString();
-    }
 
-    // ✅ NEW: Send interests, hobbies, skills
-    request.fields['skills'] = jsonEncode(model.skills);
-    request.fields['interests'] = jsonEncode(model.interests);
-    request.fields['hobbies'] = jsonEncode(model.hobbies);
+      // 3. Socials
+      request.fields['linkedInUrl'] = model.linkedInUrl;
+      request.fields['gitHubUrl'] = model.gitHubUrl;
+      request.fields['twitterUrl'] = model.twitterUrl;
+      request.fields['portfolioUrl'] = model.portfolioUrl;
 
-    if (image != null) {
-      request.files.add(
-        await https.MultipartFile.fromPath('profile', image.path),
-      );
-    }
+      // 4. Attributes (Skills, Interests, Hobbies)
+      // We stringify these lists so they can be sent as fields
+      request.fields['skills'] = jsonEncode(model.skills);
+      request.fields['interests'] = jsonEncode(model.interests);
+      request.fields['hobbies'] = jsonEncode(model.hobbies);
 
-    final streamedResponse = await request.send();
-    final responseBody = await streamedResponse.stream.bytesToString();
+      // 5. Professional Lists
+      request.fields['experiences'] = jsonEncode(model.experiences.map((e) => e.toJson()).toList());
+      request.fields['projects'] = jsonEncode(model.projects.map((p) => p.toJson()).toList());
+      request.fields['achievements'] = jsonEncode(model.achievements.map((a) => a.toJson()).toList());
 
-    debugPrint('createProfile status: ${streamedResponse.statusCode}');
-    debugPrint('createProfile response: $responseBody');
+      // 6. Image
+      if (image != null) {
+        request.files.add(
+          await https.MultipartFile.fromPath('profile', image.path),
+        );
+      }
 
-    if (streamedResponse.statusCode == 200 ||
-        streamedResponse.statusCode == 201) {
-      return null;
-    }
+      final streamedResponse = await request.send();
+      final responseBody = await streamedResponse.stream.bytesToString();
 
-    try {
-      final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
-      final msg = decoded['message'] as String?;
-      return '[${streamedResponse.statusCode}] ${msg ?? responseBody}';
-    } catch (_) {
-      return '[${streamedResponse.statusCode}] $responseBody';
+      if (streamedResponse.statusCode == 200 || streamedResponse.statusCode == 201) {
+        return null; // Null indicates success
+      }
+
+      final decoded = jsonDecode(responseBody);
+      return decoded['message'] ?? 'Failed to create profile';
+    } catch (e) {
+      debugPrint('createProfile error: $e');
+      return e.toString();
     }
   }
-
   static Future<ApiResponse<ProfileRes>> getProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();
