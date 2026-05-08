@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ExperienceItem {
   final String company;
   final String position;
@@ -12,10 +14,10 @@ class ExperienceItem {
   });
 
   factory ExperienceItem.fromJson(Map<String, dynamic> json) => ExperienceItem(
-        company: json['company'] as String? ?? '',
-        position: json['position'] as String? ?? '',
-        description: json['description'] as String? ?? '',
-        dateRange: json['dateRange'] as String? ?? '',
+        company: json['company']?.toString() ?? '',
+        position: json['position']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        dateRange: json['dateRange']?.toString() ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -41,21 +43,33 @@ class ProjectItem {
     this.sourceUrl = '',
   });
 
-  factory ProjectItem.fromJson(Map<String, dynamic> json) => ProjectItem(
-        name: json['name'] as String? ?? '',
-        domain: json['domain'] as String? ?? '',
-        description: json['description'] as String? ?? '',
-        technologies: json['technologies'] != null
-            ? List<String>.from(json['technologies'] as List)
-            : [],
-        sourceUrl: json['sourceUrl'] as String? ?? '',
-      );
+  factory ProjectItem.fromJson(Map<String, dynamic> json) {
+    // Robust parsing for the technologies field (handles List or JSON String)
+    List<String> techList = [];
+    if (json['technologies'] is List) {
+      techList = List<String>.from(json['technologies']);
+    } else if (json['technologies'] is String && json['technologies'].isNotEmpty) {
+      try {
+        techList = List<String>.from(jsonDecode(json['technologies']));
+      } catch (_) {
+        techList = [];
+      }
+    }
+
+    return ProjectItem(
+      name: json['name']?.toString() ?? '',
+      domain: json['domain']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      technologies: techList,
+      sourceUrl: json['sourceUrl']?.toString() ?? '',
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'name': name,
         'domain': domain,
         'description': description,
-        'technologies': technologies,
+        'technologies': technologies, // Request model will handle stringification if needed
         'sourceUrl': sourceUrl,
       };
 }
@@ -63,16 +77,23 @@ class ProjectItem {
 class AchievementItem {
   final String title;
   final String subtitle;
+  final String icon; // Added to match Drizzle schema
 
-  const AchievementItem({required this.title, this.subtitle = ''});
+  const AchievementItem({
+    required this.title, 
+    this.subtitle = '', 
+    this.icon = 'star',
+  });
 
   factory AchievementItem.fromJson(Map<String, dynamic> json) => AchievementItem(
-        title: json['title'] as String? ?? '',
-        subtitle: json['subtitle'] as String? ?? '',
+        title: json['title']?.toString() ?? '',
+        subtitle: json['subtitle']?.toString() ?? '',
+        icon: json['icon']?.toString() ?? 'star',
       );
 
   Map<String, dynamic> toJson() => {
         'title': title,
         'subtitle': subtitle,
+        'icon': icon,
       };
 }

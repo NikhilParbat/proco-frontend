@@ -1,24 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:proco/models/request/auth/professional_items.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/models/response/user/user_response.dart';
+import 'package:proco/models/response/auth/profile_model.dart';
 
 class ProfileEditState extends ChangeNotifier {
   // Data Fields
-  String username = '',
-      email = '',
-      phone = '',
-      gender = '',
-      city = '',
-      state = '',
-      country = '';
-  String college = '',
-      branch = '',
-      profileImageUrl = '',
-      dob = '',
-      userType = '';
+  String username = '', bio = '', email = '', phone = '', gender = '', city = '', state = '', country = '';
+  String college = '', branch = '', profileImageUrl = '', dob = '', userType = '';
   String linkedInUrl = '', gitHubUrl = '', twitterUrl = '', portfolioUrl = '';
   double latitude = 0.0, longitude = 0.0;
   List<String> skills = [], interests = [], hobbies = [];
@@ -27,7 +18,6 @@ class ProfileEditState extends ChangeNotifier {
   List<AchievementItem> achievements = [];
   int queriesCreated = 0;
 
-  // Visibility Flags
   bool showEmail = true,
       showPhone = true,
       showGender = true,
@@ -39,17 +29,88 @@ class ProfileEditState extends ChangeNotifier {
       showTwitter = true,
       showPortfolio = true;
 
+  // Visibility Flags and Status
   bool isLoading = true;
   bool isSaving = false;
   String? error;
 
-  // When set, the state loads another user's profile (read-only).
   final String? _viewUserId;
   bool get isReadOnly => _viewUserId != null;
 
   ProfileEditState({String? viewUserId}) : _viewUserId = viewUserId {
     _init();
   }
+
+  // ── List Management Helpers ──────────────────────────────────────────────
+  // These are crucial for the UI to add/remove items dynamically
+
+  void addSkill(String skill) {
+    if (skill.isNotEmpty && !skills.contains(skill)) {
+      skills.add(skill);
+      notifyListeners();
+    }
+  }
+
+  void removeSkill(String skill) {
+    skills.remove(skill);
+    notifyListeners();
+  }
+
+  void addInterest(String interest) {
+    if (interest.isNotEmpty && !interests.contains(interest)) {
+      interests.add(interest);
+      notifyListeners();
+    }
+  }
+
+  void removeInterest(String interest) {
+    interests.remove(interest);
+    notifyListeners();
+  }
+
+  void addHobbies(String hobby) {
+    if (hobby.isNotEmpty && !hobbies.contains(hobby)) {
+      hobbies.add(hobby);
+      notifyListeners();
+    }
+  }
+
+  void removeHobby(String hobby) {
+    hobbies.remove(hobby);
+    notifyListeners();
+  }
+
+  void addExperience(ExperienceItem item) {
+    experiences.add(item);
+    notifyListeners();
+  }
+
+  void removeExperience(int index) {
+    experiences.removeAt(index);
+    notifyListeners();
+  }
+
+  void addProject(ProjectItem item) {
+    projects.add(item);
+    notifyListeners();
+  }
+
+  void removeProject(int index) {
+    projects.removeAt(index);
+    notifyListeners();
+  }
+
+  void addAchievement(AchievementItem item) {
+    achievements.add(item);
+    notifyListeners();
+  }
+
+  void removeAchievement(int index) {
+    achievements.removeAt(index);
+    notifyListeners();
+  }
+
+  // ── Core Logic ─────────────────────────────────────────────────────────────
 
   Future<void> _init() async {
     if (!isReadOnly) await _loadVisibility();
@@ -61,72 +122,72 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
     try {
       if (isReadOnly) {
-        // Viewing another user's profile — use fetchUserById
+        // Viewing someone else
         final res = await UserHelper.fetchUserById(_viewUserId!);
         if (res.success && res.data != null) {
-          final d = res.data!;
-          username = d.username;
-          email = d.email;
-          phone = d.phone ?? '';
-          gender = d.gender ?? '';
-          city = d.city ?? '';
-          state = d.state ?? '';
-          country = d.country ?? '';
-          college = d.college ?? '';
-          branch = d.branch ?? '';
-          profileImageUrl = d.profile ?? '';
-          dob = d.dob ?? '';
-          userType = d.userType ?? '';
-          linkedInUrl = d.linkedInUrl ?? '';
-          gitHubUrl = d.gitHubUrl ?? '';
-          twitterUrl = d.twitterUrl ?? '';
-          portfolioUrl = d.portfolioUrl ?? '';
-          skills = List.from(d.skills);
-          interests = List.from(d.interests);
-          hobbies = List.from(d.hobbies);
-          // experiences/projects/achievements not returned by this endpoint
+          final UserResponse d = res.data!; // Explicit type
+          _mapCommonFields(d);
+          // fetchUserById usually doesn't return professional lists, 
+          // but we reset them to be safe
+          experiences = [];
+          projects = [];
+          achievements = [];
         }
       } else {
+        // Viewing self
         final res = await UserHelper.getProfile();
         if (res.success && res.data != null) {
-          final d = res.data!;
-          username = d.username;
-          email = d.email;
-          phone = d.phone ?? '';
-          gender = d.gender ?? '';
-          city = d.city ?? '';
-          state = d.state ?? '';
-          country = d.country ?? '';
-          college = d.college ?? '';
-          branch = d.branch ?? '';
-          profileImageUrl = d.profile ?? '';
-          dob = d.dob ?? '';
-          userType = d.userType ?? '';
-          linkedInUrl = d.linkedInUrl ?? '';
-          gitHubUrl = d.gitHubUrl ?? '';
-          twitterUrl = d.twitterUrl ?? '';
-          portfolioUrl = d.portfolioUrl ?? '';
-          skills = List.from(d.skills);
-          interests = List.from(d.interests);
-          hobbies = List.from(d.hobbies);
+          final ProfileRes d = res.data!; // Explicit type
+          _mapCommonFields(d);
+          
+          // These fields exist on ProfileRes
+          experiences = List<ExperienceItem>.from(d.experiences);
+          projects = List<ProjectItem>.from(d.projects);
+          achievements = List<AchievementItem>.from(d.achievements);
           queriesCreated = d.queriesCreated;
-          experiences = List.from(d.experiences);
-          projects = List.from(d.projects);
-          achievements = List.from(d.achievements);
         }
       }
     } catch (e) {
       error = e.toString();
+      debugPrint("Load Profile Error: $e");
     }
     isLoading = false;
     notifyListeners();
   }
 
+  // Helper to map fields that exist in BOTH UserResponse and ProfileRes
+  void _mapCommonFields(dynamic d) {
+    username = d.username ?? '';
+    bio = d.bio ?? '';
+    email = d.email ?? '';
+    phone = d.phone ?? '';
+    gender = d.gender ?? '';
+    city = d.city ?? '';
+    state = d.state ?? '';
+    country = d.country ?? '';
+    college = d.college ?? '';
+    branch = d.branch ?? '';
+    profileImageUrl = d.profile ?? '';
+    dob = d.dob ?? '';
+    userType = d.userType ?? '';
+    linkedInUrl = d.linkedInUrl ?? '';
+    gitHubUrl = d.gitHubUrl ?? '';
+    twitterUrl = d.twitterUrl ?? '';
+    portfolioUrl = d.portfolioUrl ?? '';
+    latitude = d.latitude ?? 0.0;
+    longitude = d.longitude ?? 0.0;
+    
+    skills = List<String>.from(d.skills ?? []);
+    interests = List<String>.from(d.interests ?? []);
+    hobbies = List<String>.from(d.hobbies ?? []);
+  } 
   Future<bool> saveProfile(File? image) async {
     isSaving = true;
     notifyListeners();
+    
     final req = ProfileUpdateReq(
       username: username,
+      bio: bio,
       city: city,
       state: state,
       country: country,
@@ -149,6 +210,7 @@ class ProfileEditState extends ChangeNotifier {
       projects: projects,
       achievements: achievements,
     );
+    
     final res = await UserHelper.updateProfile(req, image);
     isSaving = false;
     if (res.success) await loadProfile();

@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:proco/models/request/auth/professional_items.dart';
+import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'profile_edit.dart';
 import 'profile_state.dart';
 

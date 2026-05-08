@@ -1,7 +1,8 @@
-import 'package:proco/models/request/auth/professional_items.dart';
+import 'dart:convert';
 
 class ProfileUpdateReq {
   final String username;
+  final String bio;
   final String city;
   final String state;
   final String country;
@@ -26,6 +27,7 @@ class ProfileUpdateReq {
 
   ProfileUpdateReq({
     required this.username,
+    this.bio = '',
     this.city = '',
     this.state = '',
     this.country = '',
@@ -39,8 +41,8 @@ class ProfileUpdateReq {
     this.gitHubUrl = '',
     this.twitterUrl = '',
     this.portfolioUrl = '',
-    this.latitude = 0,
-    this.longitude = 0,
+    this.latitude = 0.0,
+    this.longitude = 0.0,
     this.skills = const [],
     this.interests = const [],
     this.hobbies = const [],
@@ -52,6 +54,7 @@ class ProfileUpdateReq {
   Map<String, dynamic> toJson() {
     return {
       'username': username,
+      'bio': bio,
       'city': city,
       'state': state,
       'country': country,
@@ -75,54 +78,69 @@ class ProfileUpdateReq {
       'achievements': achievements.map((a) => a.toJson()).toList(),
     };
   }
+}
 
-  ProfileUpdateReq copyWith({
-    String? username,
-    String? city,
-    String? state,
-    String? country,
-    String? phone,
-    String? college,
-    String? branch,
-    String? gender,
-    String? dob,
-    String? userType,
-    String? linkedInUrl,
-    String? gitHubUrl,
-    String? twitterUrl,
-    String? portfolioUrl,
-    double? latitude,
-    double? longitude,
-    List<String>? skills,
-    List<String>? interests,
-    List<String>? hobbies,
-    List<ExperienceItem>? experiences,
-    List<ProjectItem>? projects,
-    List<AchievementItem>? achievements,
-  }) {
-    return ProfileUpdateReq(
-      username: username ?? this.username,
-      city: city ?? this.city,
-      state: state ?? this.state,
-      country: country ?? this.country,
-      phone: phone ?? this.phone,
-      college: college ?? this.college,
-      branch: branch ?? this.branch,
-      gender: gender ?? this.gender,
-      dob: dob ?? this.dob,
-      userType: userType ?? this.userType,
-      linkedInUrl: linkedInUrl ?? this.linkedInUrl,
-      gitHubUrl: gitHubUrl ?? this.gitHubUrl,
-      twitterUrl: twitterUrl ?? this.twitterUrl,
-      portfolioUrl: portfolioUrl ?? this.portfolioUrl,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-      skills: skills ?? this.skills,
-      interests: interests ?? this.interests,
-      hobbies: hobbies ?? this.hobbies,
-      experiences: experiences ?? this.experiences,
-      projects: projects ?? this.projects,
-      achievements: achievements ?? this.achievements,
-    );
-  }
+// ── Item Classes matching your DB Schema ────────────────────────────────────
+
+class ExperienceItem {
+  final String company;
+  final String position;
+  final String description;
+  final String dateRange; // Matches 'date_range' in Drizzle
+
+  ExperienceItem({
+    required this.company,
+    required this.position,
+    this.description = '',
+    this.dateRange = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'company': company,
+        'position': position,
+        'description': description,
+        'dateRange': dateRange,
+      };
+}
+
+class ProjectItem {
+  final String name;
+  final String domain;
+  final String description;
+  final List<String> technologies; // Encoded as JSON string in DB
+  final String sourceUrl; // Matches 'source_url' in Drizzle
+
+  ProjectItem({
+    required this.name,
+    this.domain = '',
+    this.description = '',
+    this.technologies = const [],
+    this.sourceUrl = '',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'domain': domain,
+        'description': description,
+        'technologies': jsonEncode(technologies), // Backend expects stringified array
+        'sourceUrl': sourceUrl,
+      };
+}
+
+class AchievementItem {
+  final String title;
+  final String subtitle;
+  final String icon;
+
+  AchievementItem({
+    required this.title,
+    this.subtitle = '',
+    this.icon = 'star',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'subtitle': subtitle,
+        'icon': icon,
+      };
 }
