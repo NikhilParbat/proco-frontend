@@ -11,7 +11,16 @@ import 'package:provider/provider.dart';
 /// Profile details (name, dob, phone, location, institution) are collected
 /// in the post-signup OnboardingFlow.
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+  final int initialStep;
+  final String initialEmail;
+  final String initialUsername;
+
+  const SignUpScreen({
+    super.key,
+    this.initialStep = 0,
+    this.initialEmail = '',
+    this.initialUsername = '',
+  });
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -26,6 +35,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void initState() {
     super.initState();
     _provider = SignUpNotifier();
+    if (widget.initialEmail.isNotEmpty) {
+      _emailController.text = widget.initialEmail;
+      _provider.signupModel.email = widget.initialEmail;
+      _provider.signupModel.username = widget.initialUsername;
+      _provider.activeIndex = widget.initialStep;
+    }
   }
 
   @override
@@ -48,24 +63,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
             resizeToAvoidBottomInset: true,
             backgroundColor: kBackgroundColor,
             appBar: const LagoonAppBar(),
-            body: IndexedStack(
-              index: provider.activeIndex,
-              children: [
-                _choicePage(provider),
-                _emailPage(provider),
-                _passwordPage(provider),
-                _verifyEmailPage(provider),
-              ],
-            ),
+            body: provider.activeIndex == 3
+                ? _verifyEmailPage(provider)
+                : _signupPage(provider),
           );
         },
       ),
     );
   }
 
-  // ── Step 0: Google or Email ──────────────────────────────────────────────────
+  // ── Signup page: email + password + Sign Up + Google ─────────────────────────
 
-  Widget _choicePage(SignUpNotifier provider) {
+  Widget _signupPage(SignUpNotifier provider) {
     return SafeArea(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -84,9 +93,125 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
 
-              SizedBox(height: 0.06.sh),
+              SizedBox(height: 0.05.sh),
 
-              // Continue with Google
+              CustomTextFieldInput(
+                controller: _emailController,
+                hintText: 'Email',
+                keyboardType: TextInputType.emailAddress,
+                hintStyle: kSubTextStyle.copyWith(
+                  color: const Color.fromARGB(255, 20, 20, 20),
+                  fontWeight: FontWeight.w400,
+                ),
+                textStyle: kSubTextStyle.copyWith(
+                  color: const Color.fromARGB(255, 20, 20, 20),
+                ),
+              ),
+
+              SizedBox(height: 16.h),
+
+              CustomTextFieldInput(
+                controller: _passwordController,
+                hintText: 'Password',
+                keyboardType: TextInputType.text,
+                obscureText: provider.obscureText,
+                maxLength: 20,
+                inputFormatters: [noEmojiFormatter],
+                hintStyle: kSubTextStyle.copyWith(
+                  color: const Color.fromARGB(255, 20, 20, 20),
+                  fontWeight: FontWeight.w400,
+                ),
+                textStyle: kSubTextStyle.copyWith(
+                  color: const Color.fromARGB(255, 20, 20, 20),
+                ),
+                suffixIcon: GestureDetector(
+                  onTap: () => provider.obscureText = !provider.obscureText,
+                  child: Icon(
+                    provider.obscureText
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 8.h),
+
+              Text(
+                '8+ chars • uppercase • lowercase • digit • special character',
+                style: kSmallTextStyle.copyWith(fontSize: 11.sp),
+              ),
+
+              SizedBox(height: 0.04.sh),
+
+              // Sign Up button
+              provider.isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: kThemeColor),
+                    )
+                  : GestureDetector(
+                      onTap: () {
+                        final email = _emailController.text.trim();
+                        if (email.isEmpty || !email.contains('@')) {
+                          _snack(
+                            'Invalid Email',
+                            'Please enter a valid email address.',
+                          );
+                          return;
+                        }
+                        if (!provider.passwordValidator(
+                          _passwordController.text,
+                        )) {
+                          _snack(
+                            'Weak Password',
+                            'Need 8+ chars, uppercase, lowercase, digit & special character.',
+                          );
+                          return;
+                        }
+                        provider.signupModel.email = email;
+                        provider.signupModel.username = email.split('@').first;
+                        provider.signupModel.password = _passwordController.text;
+                        provider.submitEmailSignup();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        height: 55.h,
+                        decoration: BoxDecoration(
+                          color: kThemeColor,
+                          borderRadius: BorderRadius.circular(100.r),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Sign Up',
+                          style: kSubTextStyle.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+              SizedBox(height: 20.h),
+
+              // OR divider
+              Row(
+                children: [
+                  Expanded(
+                    child: Divider(color: kDarkGrey.withValues(alpha: 0.4)),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    child: Text('OR', style: kSmallTextStyle),
+                  ),
+                  Expanded(
+                    child: Divider(color: kDarkGrey.withValues(alpha: 0.4)),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 20.h),
+
+              // Sign up with Google
               GestureDetector(
                 onTap: provider.isLoading ? null : () => provider.googleSignUp(),
                 child: Container(
@@ -120,7 +245,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             SizedBox(width: 12.w),
                             Text(
-                              'Continue with Google',
+                              'Sign up with Google',
                               style: kSubTextStyle.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -128,47 +253,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ],
                         ),
-                ),
-              ),
-
-              SizedBox(height: 25.h),
-
-              // OR divider
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(color: kDarkGrey.withValues(alpha: 0.4)),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w),
-                    child: Text('OR', style: kSmallTextStyle),
-                  ),
-                  Expanded(
-                    child: Divider(color: kDarkGrey.withValues(alpha: 0.4)),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 25.h),
-
-              // Continue with Email
-              GestureDetector(
-                onTap: () => provider.changeStep(1),
-                child: Container(
-                  width: double.infinity,
-                  height: 55.h,
-                  decoration: BoxDecoration(
-                    color: kThemeColor,
-                    borderRadius: BorderRadius.circular(100.r),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Continue with Email',
-                    style: kSubTextStyle.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
                 ),
               ),
 
@@ -194,191 +278,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
 
               SizedBox(height: 0.04.sh),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Step 1: Email ────────────────────────────────────────────────────────────
-
-  Widget _emailPage(SignUpNotifier provider) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 25.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 0.02.sh),
-
-              GestureDetector(
-                onTap: () => provider.changeStep(provider.activeIndex - 1),
-                child: Icon(Icons.arrow_back_ios, color: kDark, size: 20.h),
-              ),
-
-              SizedBox(height: 0.03.sh),
-
-              Text(
-                "What's your\nemail?",
-                style: kHeadingStyle.copyWith(
-                  fontSize: 30.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-
-              SizedBox(height: 0.05.sh),
-
-              CustomTextFieldInput(
-                controller: _emailController,
-                hintText: 'Email',
-                keyboardType: TextInputType.emailAddress,
-                hintStyle: kSubTextStyle.copyWith(
-                  color: const Color.fromARGB(255, 20, 20, 20),
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-
-              SizedBox(height: 0.04.sh),
-
-              GestureDetector(
-                onTap: () {
-                  final email = _emailController.text.trim();
-                  if (email.isEmpty || !email.contains('@')) {
-                    _snack(
-                      'Invalid Email',
-                      'Please enter a valid email address.',
-                    );
-                    return;
-                  }
-                  provider.signupModel.email = email;
-                  // Temporary username from email prefix; user sets their real
-                  // name on the first onboarding page.
-                  provider.signupModel.username = email.split('@').first;
-                  provider.changeStep(2);
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 55.h,
-                  decoration: BoxDecoration(
-                    color: kThemeColor,
-                    borderRadius: BorderRadius.circular(100.r),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Next',
-                    style: kSubTextStyle.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Step 2: Password ─────────────────────────────────────────────────────────
-
-  Widget _passwordPage(SignUpNotifier provider) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 25.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 0.02.sh),
-
-              GestureDetector(
-                onTap: () => provider.changeStep(provider.activeIndex - 1),
-                child: Icon(Icons.arrow_back_ios, color: kDark, size: 20.h),
-              ),
-
-              SizedBox(height: 0.03.sh),
-
-              Text(
-                "Create a\nsecure password",
-                style: kHeadingStyle.copyWith(
-                  fontSize: 30.sp,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-
-              SizedBox(height: 0.05.sh),
-
-              CustomTextFieldInput(
-                controller: _passwordController,
-                hintText: 'Password',
-                keyboardType: TextInputType.text,
-                obscureText: provider.obscureText,
-                maxLength: 20,
-                inputFormatters: [noEmojiFormatter],
-                hintStyle: kSubTextStyle.copyWith(
-                  color: const Color.fromARGB(255, 20, 20, 20),
-                  fontWeight: FontWeight.w400,
-                ),
-                suffixIcon: GestureDetector(
-                  onTap: () => provider.obscureText = !provider.obscureText,
-                  child: Icon(
-                    provider.obscureText
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: Colors.black54,
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 8.h),
-
-              Text(
-                '8+ chars • uppercase • lowercase • digit • special character',
-                style: kSmallTextStyle.copyWith(fontSize: 11.sp),
-              ),
-
-              SizedBox(height: 0.04.sh),
-
-              provider.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: kThemeColor),
-                    )
-                  : GestureDetector(
-                      onTap: () {
-                        if (!provider.passwordValidator(
-                          _passwordController.text,
-                        )) {
-                          _snack(
-                            'Weak Password',
-                            'Need 8+ chars, uppercase, lowercase, digit & special character.',
-                          );
-                          return;
-                        }
-                        provider.signupModel.password = _passwordController.text;
-                        provider.submitEmailSignup();
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        height: 55.h,
-                        decoration: BoxDecoration(
-                          color: kThemeColor,
-                          borderRadius: BorderRadius.circular(100.r),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Create Account',
-                          style: kSubTextStyle.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
             ],
           ),
         ),

@@ -86,6 +86,9 @@ class _LoginPageState extends State<LoginPage> {
                           color: const Color.fromARGB(255, 20, 20, 20),
                           fontWeight: FontWeight.w400,
                         ),
+                        textStyle: kSubTextStyle.copyWith(
+                          color: const Color.fromARGB(255, 20, 20, 20),
+                        ),
                         validator: (val) {
                           if (val!.isEmpty || !val.contains('@')) {
                             return 'Please enter a valid email';
@@ -108,6 +111,9 @@ class _LoginPageState extends State<LoginPage> {
                             hintStyle: kSubTextStyle.copyWith(
                               color: const Color.fromARGB(255, 20, 20, 20),
                               fontWeight: FontWeight.w400,
+                            ),
+                            textStyle: kSubTextStyle.copyWith(
+                              color: const Color.fromARGB(255, 20, 20, 20),
                             ),
                             obscureText: isObscured,
                             suffixIcon: GestureDetector(
