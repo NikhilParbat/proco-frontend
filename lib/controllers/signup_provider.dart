@@ -201,10 +201,16 @@ class SignUpNotifier extends ChangeNotifier {
       ); // verification pending screen — user taps button to confirm
     } on FirebaseAuthException catch (e) {
       isLoading = false;
-      final message = _firebaseAuthMessage(e.code);
+      if (e.code == 'email-already-in-use') {
+        // Firebase account exists but the DB record may be missing (e.g. the
+        // app crashed after verification before /api/register completed).
+        // Try to recover by signing in and completing the flow.
+        await _recoverExistingFirebaseAccount();
+        return;
+      }
       Get.snackbar(
         'Sign Up Failed',
-        message,
+        _firebaseAuthMessage(e.code),
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -216,6 +222,69 @@ class SignUpNotifier extends ChangeNotifier {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+    }
+  }
+
+  /// Handles the split-brain case: Firebase account exists but the DB user
+  /// may be missing. Signs into Firebase, then checks verification state.
+  Future<void> _recoverExistingFirebaseAccount() async {
+    isLoading = true;
+    try {
+      final credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: signupModel.email,
+            password: signupModel.password,
+          );
+
+      final user = credential.user;
+      if (user == null) {
+        isLoading = false;
+        Get.snackbar('Error', 'Could not access account.',
+            backgroundColor: Colors.red, colorText: Colors.white);
+        return;
+      }
+
+      await user.reload();
+      await user.getIdToken(true);
+      final refreshed = FirebaseAuth.instance.currentUser;
+
+      if (refreshed?.emailVerified == true) {
+        // Verified but DB record missing — create it now.
+        await _completeEmailSignup(refreshed!);
+      } else {
+        // Not yet verified — restore step 3 and resend the email.
+        _firebaseUser = user;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('pendingVerificationEmail', user.email!);
+        await prefs.setString(
+            'pendingVerificationUsername', signupModel.username);
+        await user.sendEmailVerification();
+        isLoading = false;
+        changeStep(3);
+        Get.snackbar(
+          'Verify Your Email',
+          'A new verification link has been sent. Please check your inbox.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      isLoading = false;
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        Get.snackbar(
+          'Account Already Exists',
+          'An account with this email exists. Please log in instead.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar('Sign Up Failed', _firebaseAuthMessage(e.code),
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      isLoading = false;
+      Get.snackbar('Error', e.toString(),
+          backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
@@ -303,14 +372,13 @@ class SignUpNotifier extends ChangeNotifier {
     }
   }
 
-  /// Called once verification is confirmed: registers user in backend → gets
-  /// a session token via login → navigates to onboarding.
+  /// Called once email verification is confirmed.
+  /// Creates the DB user via /api/register (password stored), then logs in.
   Future<void> _completeEmailSignup(User user) async {
     isLoading = true;
 
     try {
-      // Restart edge-case: app was killed before verification so password is
-      // gone. We can't register without it — send user back to the signup form.
+      // Edge-case: app was killed before verification — password is gone.
       if (signupModel.password.isEmpty) {
         isLoading = false;
         Get.snackbar(
@@ -323,11 +391,12 @@ class SignUpNotifier extends ChangeNotifier {
         return;
       }
 
-      // Step 1 — register in backend (POST /api/register).
+      // Link the Firebase UID so the account can be found by UID later.
+      signupModel.firebaseUid = user.uid;
+
+      // Step 1 — create DB user (POST /api/register).
       final signupResponse = await AuthHelper.signup(signupModel);
 
-      // A 409 "already exists" is fine — the account may have been created in
-      // a previous attempt that failed before reaching login.
       final registrationOk =
           signupResponse.success ||
           signupResponse.message.toLowerCase().contains('exist') ||
@@ -344,7 +413,7 @@ class SignUpNotifier extends ChangeNotifier {
         return;
       }
 
-      // Step 2 — login to obtain a session token (POST /api/login).
+      // Step 2 — log in to get JWT (POST /api/login).
       final loginResponse = await AuthHelper.login(
         LoginRequestModel(
           email: signupModel.email,

@@ -1,91 +1,107 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:proco/app_initializer.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:proco/controllers/bookmark_provider.dart';
+import 'package:proco/controllers/chat_provider.dart';
+import 'package:proco/controllers/filter_provider.dart';
+import 'package:proco/controllers/image_provider.dart';
+import 'package:proco/controllers/jobs_provider.dart';
+import 'package:proco/controllers/login_provider.dart';
+import 'package:proco/controllers/onboarding_provider.dart';
+import 'package:proco/controllers/profile_provider.dart';
+import 'package:proco/controllers/signup_provider.dart';
+import 'package:proco/controllers/zoom_provider.dart';
 import 'package:proco/firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/my_app.dart'; // Make sure this path is correct
 
-/// Background notification handler
-/// MUST be top-level
 @pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  debugPrint('Background message received: ${message.messageId}');
 }
 
-Future<void> main() async {
+void main() async {
+  // 1. Tell Flutter to wait for initialization
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Initialize Firebase
+    // 2. Load env vars before anything touches Config
+    await dotenv.load(fileName: '.env');
+
+    // 3. Initialize Firebase
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Register background handler
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    // 3. Load all your local data BEFORE the app starts
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Run app immediately
-    runApp(const MyApp());
+    // Check if user is logged in (Adjust these keys to match your login logic)
+    bool isLoggedIn = prefs.getString('token') != null;
+    bool onboardingComplete = prefs.getBool('onboardingComplete') ?? false;
+    int onboardingPage = prefs.getInt('onboardingPage') ?? 0;
 
-    // Initialize notifications AFTER UI renders
-    _initializeNotifications();
-  } catch (e, stackTrace) {
-    debugPrint('Startup Error: $e');
-    debugPrintStack(stackTrace: stackTrace);
+    // Check for pending verification (adjust keys if needed)
+    bool isPending = prefs.getBool('isPendingVerification') ?? false;
+    String pEmail = prefs.getString('pendingEmail') ?? '';
+    String pUser = prefs.getString('pendingUsername') ?? '';
 
+    // 4. Start the app with all the data ready
     runApp(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          backgroundColor: Colors.black,
-          body: Center(
-            child: Text(
-              'Failed to start app\n$e',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white),
-            ),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ZoomNotifier()),
+          ChangeNotifierProvider(create: (_) => LoginNotifier()),
+          ChangeNotifierProvider(create: (_) => OnBoardNotifier(), lazy: true),
+          ChangeNotifierProvider(create: (_) => SignUpNotifier(), lazy: true),
+          ChangeNotifierProvider(create: (_) => ImageNotifier(), lazy: true),
+          ChangeNotifierProxyProvider<LoginNotifier, JobsNotifier>(
+            create: (_) => JobsNotifier(),
+            update: (_, login, prev) => prev ?? JobsNotifier(),
+            lazy: true,
           ),
+          ChangeNotifierProxyProvider<LoginNotifier, BookMarkNotifier>(
+            create: (_) => BookMarkNotifier(),
+            update: (_, login, prev) => prev ?? BookMarkNotifier(),
+            lazy: true,
+          ),
+          ChangeNotifierProxyProvider<LoginNotifier, ProfileNotifier>(
+            create: (_) => ProfileNotifier(),
+            update: (_, login, prev) => prev ?? ProfileNotifier(),
+            lazy: true,
+          ),
+          ChangeNotifierProxyProvider<LoginNotifier, ChatNotifier>(
+            create: (_) => ChatNotifier(),
+            update: (_, login, prev) => prev ?? ChatNotifier(),
+            lazy: true,
+          ),
+          ChangeNotifierProxyProvider<LoginNotifier, FilterNotifier>(
+            create: (_) => FilterNotifier(),
+            update: (_, login, prev) => prev ?? FilterNotifier(),
+            lazy: true,
+          ),
+        ],
+        child: MyApp(
+          isLoggedIn: isLoggedIn,
+          onboardingComplete: onboardingComplete,
+          onboardingPage: onboardingPage,
+          prefs: prefs,
+          isPendingVerification: isPending,
+          pendingEmail: pEmail,
+          pendingUsername: pUser,
         ),
       ),
     );
-  }
-}
-
-/// Notification setup separated from startup
-Future<void> _initializeNotifications() async {
-  try {
-    final messaging = FirebaseMessaging.instance;
-
-    // Request permission
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    debugPrint('Notification permission: ${settings.authorizationStatus}');
-
-    // Foreground notifications
-    await messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    // Optional: Get FCM token
-    final token = await messaging.getToken();
-    debugPrint('FCM Token: $token');
   } catch (e) {
-    debugPrint('Notification setup failed: $e');
-  }
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AppInitializer();
+    debugPrint("Fatal Startup Error: $e");
+    // Show a simple error screen if everything fails
+    runApp(
+      MaterialApp(
+        home: Scaffold(body: Center(child: Text("Error starting app: $e"))),
+      ),
+    );
   }
 }

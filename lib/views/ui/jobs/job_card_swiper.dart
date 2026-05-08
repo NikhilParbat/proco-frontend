@@ -33,8 +33,6 @@ class JobCardSwiper extends StatefulWidget {
 
 class _JobCardSwiperState extends State<JobCardSwiper> {
   static const Color _teal = Color(0xFF08979F);
-  static const Color _red = Color(0xFFD23838);
-  static const Color _green = Color(0xFF089F20);
 
   bool isExpanded(String id) => _expandedDesc[id] ?? false;
 
@@ -202,59 +200,25 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   }
 
   // ─── Swipe overlay ────────────────────────────────────────────────────────
-  Widget _buildSwipeOverlay(CardSwiperDirection direction) {
-    final isLeft = direction == CardSwiperDirection.left;
-    final isRight = direction == CardSwiperDirection.right;
-
-    final Color color =
-        isLeft ? _red : isRight ? _green : _teal;
-    final IconData icon =
-        isLeft ? Icons.close_rounded : isRight ? Icons.star_rounded : Icons.bookmark_rounded;
-    final String label = isLeft ? 'PASS' : isRight ? 'APPLY' : 'SAVE';
-    final Alignment alignment =
-        isLeft ? Alignment.topLeft : isRight ? Alignment.topRight : Alignment.topCenter;
-    final EdgeInsets padding = isLeft
-        ? EdgeInsets.only(top: 30.h, left: 22.w)
-        : isRight
-            ? EdgeInsets.only(top: 30.h, right: 22.w)
-            : EdgeInsets.only(top: 22.h);
-
+  Widget _buildSwipeOverlay(CardSwiperDirection _) {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(28.r),
-          border: Border.all(color: color, width: 3),
-        ),
-        child: Align(
-          alignment: alignment,
-          child: Padding(
-            padding: padding,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, color: Colors.white, size: 18),
-                  SizedBox(width: 6.w),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15.sp,
-                      fontFamily: 'Poppins',
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                ],
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.16),
+              blurRadius: 22,
+              spreadRadius: 2,
+              offset: const Offset(0, 8),
             ),
-          ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              spreadRadius: 1,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
       ),
     );
