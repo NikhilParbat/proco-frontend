@@ -13,12 +13,13 @@ import 'profile_edit.dart';
 import 'profile_state.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  final String? viewUserId;
+  const ProfilePage({super.key, this.viewUserId});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ProfileEditState(),
+      create: (_) => ProfileEditState(viewUserId: viewUserId),
       child: DefaultTabController(
         length: 3,
         child: Scaffold(
@@ -163,30 +164,31 @@ class _AboutTab extends StatelessWidget {
             ],
           ),
           SizedBox(height: 28.h),
-          SizedBox(
-            width: double.infinity,
-            height: 52.h,
-            child: ElevatedButton(
-              onPressed: () => Get.to(() => const EditProfilePage()),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kThemeColor,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
+          if (!state.isReadOnly)
+            SizedBox(
+              width: double.infinity,
+              height: 52.h,
+              child: ElevatedButton(
+                onPressed: () => Get.to(() => const EditProfilePage()),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kThemeColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
                 ),
-              ),
-              child: Text(
-                'EDIT PROFILE',
-                style: TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  color: kLight,
-                  letterSpacing: 1.2,
+                child: Text(
+                  'EDIT PROFILE',
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: kLight,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -472,7 +474,7 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
           _ProSectionHeader(
             title: 'EXPERIENCE',
             icon: Icons.work_outline,
-            onAdd: () => _showSheet(_AddExperienceSheet(onAdd: _addExperience)),
+            onAdd: _s.isReadOnly ? null : () => _showSheet(_AddExperienceSheet(onAdd: _addExperience)),
           ),
           SizedBox(height: 18.h),
           if (_s.experiences.isEmpty)
@@ -481,14 +483,14 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
             ..._s.experiences.asMap().entries.map(
                   (e) => _ExperienceRow(
                     data: e.value,
-                    onDelete: () => _removeExperience(e.key),
+                    onDelete: _s.isReadOnly ? null : () => _removeExperience(e.key),
                   ),
                 ),
           SizedBox(height: 28.h),
           _ProSectionHeader(
             title: 'PROJECT SHOWCASE',
             icon: Icons.star_border,
-            onAdd: () => _showSheet(_AddProjectSheet(onAdd: _addProject)),
+            onAdd: _s.isReadOnly ? null : () => _showSheet(_AddProjectSheet(onAdd: _addProject)),
           ),
           SizedBox(height: 18.h),
           if (_s.projects.isEmpty)
@@ -497,15 +499,14 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
             ..._s.projects.asMap().entries.map(
                   (p) => _ProjectCard(
                     data: p.value,
-                    onDelete: () => _removeProject(p.key),
+                    onDelete: _s.isReadOnly ? null : () => _removeProject(p.key),
                   ),
                 ),
           SizedBox(height: 28.h),
           _ProSectionHeader(
             title: 'ACHIEVEMENTS',
             icon: Icons.emoji_events_outlined,
-            onAdd: () =>
-                _showSheet(_AddAchievementSheet(onAdd: _addAchievement)),
+            onAdd: _s.isReadOnly ? null : () => _showSheet(_AddAchievementSheet(onAdd: _addAchievement)),
           ),
           SizedBox(height: 18.h),
           if (_s.achievements.isEmpty)
@@ -514,7 +515,7 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
             ..._s.achievements.asMap().entries.map(
                   (a) => _AchievementRow(
                     data: a.value,
-                    onDelete: () => _removeAchievement(a.key),
+                    onDelete: _s.isReadOnly ? null : () => _removeAchievement(a.key),
                   ),
                 ),
         ],
@@ -577,9 +578,9 @@ class _ProSectionHeader extends StatelessWidget {
 // ── Experience row ─────────────────────────────────────────────────────────
 
 class _ExperienceRow extends StatelessWidget {
-  const _ExperienceRow({required this.data, required this.onDelete});
+  const _ExperienceRow({required this.data, this.onDelete});
   final ExperienceItem data;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -660,11 +661,13 @@ class _ExperienceRow extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 8.w),
-          GestureDetector(
-            onTap: onDelete,
-            child: Icon(Icons.delete_outline, size: 18.sp, color: Colors.redAccent),
-          ),
+          if (onDelete != null) ...[
+            SizedBox(width: 8.w),
+            GestureDetector(
+              onTap: onDelete,
+              child: Icon(Icons.delete_outline, size: 18.sp, color: Colors.redAccent),
+            ),
+          ],
         ],
       ),
     );
@@ -674,9 +677,9 @@ class _ExperienceRow extends StatelessWidget {
 // ── Project card ───────────────────────────────────────────────────────────
 
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.data, required this.onDelete});
+  const _ProjectCard({required this.data, this.onDelete});
   final ProjectItem data;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -715,6 +718,7 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onDelete != null)
               Positioned(
                 top: 10.h,
                 right: 10.w,
@@ -837,9 +841,9 @@ class _TechChip extends StatelessWidget {
 // ── Achievement row ────────────────────────────────────────────────────────
 
 class _AchievementRow extends StatelessWidget {
-  const _AchievementRow({required this.data, required this.onDelete});
+  const _AchievementRow({required this.data, this.onDelete});
   final AchievementItem data;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -879,6 +883,7 @@ class _AchievementRow extends StatelessWidget {
               ],
             ),
           ),
+          if (onDelete != null)
           GestureDetector(
             onTap: onDelete,
             child: Icon(Icons.delete_outline, size: 18.sp, color: Colors.redAccent),
