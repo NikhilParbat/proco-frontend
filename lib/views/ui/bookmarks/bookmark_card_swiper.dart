@@ -100,22 +100,34 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
 
               onEnd: () => setState(() => _isFinished = true),
 
-              onSwipe: (previousIndex, currentIndex, direction) {
+              onSwipe: (previousIndex, currentIndex, direction) async {
                 final bookmark = _bookmarks[previousIndex];
 
-                if (direction == CardSwiperDirection.left) {
-                  widget.bookmarkNotifier.deleteBookMark(bookmark.job.id);
-                } else if (direction == CardSwiperDirection.right) {
+                // ✅ Remove bookmark for BOTH directions
+                await widget.bookmarkNotifier.deleteBookMark(bookmark.job.id);
+
+                // ✅ Remove locally for immediate UI update
+                setState(() {
+                  _bookmarks.removeAt(previousIndex);
+
+                  if (_bookmarks.isEmpty) {
+                    _isFinished = true;
+                  }
+                });
+
+                // ✅ Right swipe action
+                if (direction == CardSwiperDirection.right) {
                   if (_currentUserId.isNotEmpty) {
-                    context.read<JobsNotifier>().addMatchedUsers(
+                    context.read<JobsNotifier>().addSwipedUsers(
                       bookmark.job.id,
                       _currentUserId,
+                      'right',
                     );
                   }
 
                   Get.snackbar(
-                    'Matched!',
-                    'You matched with ${bookmark.job.company.isNotEmpty ? bookmark.job.company : bookmark.job.title}',
+                    'Swiped!',
+                    'You swiped on ${bookmark.job.company.isNotEmpty ? bookmark.job.company : bookmark.job.title}',
                     colorText: kLight,
                     backgroundColor: const Color(0xFF089F20),
                     icon: const Icon(

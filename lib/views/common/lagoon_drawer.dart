@@ -7,6 +7,7 @@ import 'package:proco/views/ui/jobs/jobs_list.dart';
 import 'package:proco/views/ui/notification/notification_page.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:proco/views/ui/settings/settings_page.dart';
+import 'package:proco/views/ui/chat/chat_list.dart';
 
 class LagoonDrawer extends StatelessWidget {
   const LagoonDrawer({super.key});
@@ -98,6 +99,13 @@ class LagoonDrawer extends StatelessWidget {
                 icon: Icons.bookmark_border_rounded,
                 label: 'Bookmarks',
                 onTap: () => _navigate(context, page: const BookMarkPage()),
+              ),
+
+              _item(
+                context,
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Chats',
+                onTap: () => _navigate(context, page: const ChatsList()),
               ),
 
               _item(

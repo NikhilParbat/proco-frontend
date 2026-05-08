@@ -179,9 +179,34 @@ class _BookMarkPageState extends State<BookMarkPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => BookmarkCardSwiper(
-                                bookmarks: [bookmark],
-                                bookmarkNotifier: bookMarkNotifier,
+                              builder: (_) => Scaffold(
+                                backgroundColor: kBackgroundColor,
+
+                                appBar: AppBar(
+                                  backgroundColor: kThemeColor,
+                                  elevation: 0,
+
+                                  iconTheme: const IconThemeData(
+                                    color: Colors.white,
+                                  ),
+
+                                  title: Text(
+                                    bookmark.job.title,
+                                    style: TextStyle(
+                                      fontFamily: kFontMontserrat,
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+
+                                body: SafeArea(
+                                  child: BookmarkCardSwiper(
+                                    bookmarks: [bookmark],
+                                    bookmarkNotifier: bookMarkNotifier,
+                                  ),
+                                ),
                               ),
                             ),
                           );

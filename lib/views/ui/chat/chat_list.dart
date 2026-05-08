@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
-import 'package:proco/views/common/app_bar.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
-import 'package:proco/views/common/exports.dart';
-
+import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
 import 'package:provider/provider.dart';
 
@@ -17,15 +16,12 @@ class ChatsList extends StatefulWidget {
 }
 
 class _ChatsListState extends State<ChatsList> {
-  // ─── Theme ────────────────────────────────────────────────────────────────
-  static const Color _teal = Color(0xFF08979F);
-  static const Color _navy = Color(0xFF040326);
-  static const Color _bg = Colors.white;
-
   @override
   void initState() {
     super.initState();
+
     final chatNotifier = context.read<ChatNotifier>();
+
     chatNotifier.getChats();
     chatNotifier.getPrefs();
   }
@@ -33,21 +29,19 @@ class _ChatsListState extends State<ChatsList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(0.065.sh),
-        child: CustomAppBar(
-          text: 'Chats',
-          child: Padding(
-            padding: EdgeInsets.only(left: 0.010.sh),
-            child: const DrawerWidget(),
-          ),
-        ),
-      ),
+      backgroundColor: kBackgroundColor,
+      drawer: const LagoonDrawer(),
+      appBar: const LagoonAppBar(),
+
       body: Consumer<ChatNotifier>(
         builder: (context, chatNotifier, child) {
           if (chatNotifier.isLoading) {
-            return const Center(child: CircularProgressIndicator(color: _teal));
+            return Center(
+              child: CircularProgressIndicator(
+                color: kThemeColor,
+                strokeWidth: 2.6,
+              ),
+            );
           }
 
           if (chatNotifier.chats.isEmpty) {
@@ -57,142 +51,320 @@ class _ChatsListState extends State<ChatsList> {
           final chats = [...chatNotifier.chats]
             ..sort((a, b) {
               final aPinned = chatNotifier.isPinned(a.id) ? 0 : 1;
+
               final bPinned = chatNotifier.isPinned(b.id) ? 0 : 1;
-              if (aPinned != bPinned) return aPinned.compareTo(bPinned);
+
+              if (aPinned != bPinned) {
+                return aPinned.compareTo(bPinned);
+              }
+
               return b.updatedAt.compareTo(a.updatedAt);
             });
 
-          return ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            itemCount: chats.length,
-            separatorBuilder: (context, index) =>
-                Divider(height: 1, indent: 76.w, color: Colors.grey.shade100),
-            itemBuilder: (context, index) {
-              final chat = chats[index];
-              final other = chat.users.isNotEmpty ? chat.users[0] : null;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
 
-              final String name = other?.username ?? 'Unknown User';
-              final String profile = other?.profile ?? kDefaultImage;
-              final String preview = chat.latestMessage?.isNotEmpty == true
-                  ? chat.latestMessage!
-                  : 'No messages yet';
-              final String time = chatNotifier.msgTime(
-                chat.createdAt.toString(),
-              );
-              final bool isOutgoing = chat.chatName == chatNotifier.userId;
+            children: [
+              // ── Header ─────────────────────
+              Padding(
+                padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 16.h),
 
-              return InkWell(
-                onTap: () => Get.to(
-                  () => ChatPage(
-                    id: chat.id,
-                    title: name,
-                    profile: profile,
-                    user: chat.users.map((u) => u.id).toList(),
-                    isUnmatched: chat.isUnmatched,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    Text(
+                      'Messages',
+
+                      style: TextStyle(
+                        fontFamily: kFontMontserrat,
+
+                        fontSize: 24.sp,
+
+                        fontWeight: FontWeight.w700,
+
+                        color: Colors.black87,
+                      ),
+                    ),
+
+                    SizedBox(height: 4.h),
+
+                    Text(
+                      'Stay connected with your matches and opportunities.',
+
+                      style: TextStyle(
+                        fontFamily: kFontDMSans,
+
+                        fontSize: 13.sp,
+
+                        color: Colors.grey.shade600,
+
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 4.w,
-                    vertical: 10.h,
-                  ),
-                  child: Row(
-                    children: [
-                      // ── Avatar with online dot ───────────────────────
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 26.r,
-                            backgroundColor: _teal.withValues(alpha: 0.12),
-                            backgroundImage: NetworkImage(profile),
-                            onBackgroundImageError: (e, s) {},
+              ),
+
+              // ── Chat List ───────────────────
+              Expanded(
+                child: ListView.separated(
+                  padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 24.h),
+
+                  itemCount: chats.length,
+
+                  separatorBuilder: (context, index) => SizedBox(height: 12.h),
+
+                  itemBuilder: (context, index) {
+                    final chat = chats[index];
+
+                    final other = chat.users.isNotEmpty ? chat.users[0] : null;
+
+                    final String name = other?.username ?? 'Unknown User';
+
+                    final String profile = other?.profile ?? kDefaultImage;
+
+                    final String preview =
+                        chat.latestMessage?.isNotEmpty == true
+                        ? chat.latestMessage!
+                        : 'No messages yet';
+
+                    final String time = chatNotifier.msgTime(
+                      chat.createdAt.toString(),
+                    );
+
+                    final bool isOutgoing =
+                        chat.chatName == chatNotifier.userId;
+
+                    return GestureDetector(
+                      onTap: () => Get.to(
+                        () => ChatPage(
+                          id: chat.id,
+                          title: name,
+                          profile: profile,
+                          user: chat.users.map((u) => u.id).toList(),
+                          isUnmatched: chat.isUnmatched,
+                        ),
+                      ),
+
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 14.h,
+                        ),
+
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+
+                          borderRadius: BorderRadius.circular(24.r),
+
+                          border: Border.all(
+                            color: kThemeColor.withOpacity(0.06),
                           ),
-                          if (chatNotifier.online.contains(other?.id))
-                            Positioned(
-                              right: 1,
-                              bottom: 1,
-                              child: Container(
-                                width: 11,
-                                height: 11,
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
+
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.035),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+
+                        child: Row(
+                          children: [
+                            // ── Avatar ─────────────────────────
+                            Stack(
+                              children: [
+                                Container(
+                                  width: 62.w,
+                                  height: 62.w,
+
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        kThemeColor.withOpacity(0.14),
+                                        kThemeColor.withOpacity(0.06),
+                                      ],
+                                    ),
+                                  ),
+
+                                  padding: EdgeInsets.all(2.2.w),
+
+                                  child: ClipOval(
+                                    child: Image.network(
+                                      profile,
+                                      fit: BoxFit.cover,
+
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
+                                                color: Colors.white,
+
+                                                child: Icon(
+                                                  Icons.person_rounded,
+                                                  color: kThemeColor,
+                                                  size: 28.sp,
+                                                ),
+                                              ),
+                                    ),
                                   ),
                                 ),
+
+                                // ── Online Dot ─────────────────
+                                if (chatNotifier.online.contains(other?.id))
+                                  Positioned(
+                                    right: 3,
+                                    bottom: 3,
+
+                                    child: Container(
+                                      width: 13.w,
+                                      height: 13.w,
+
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF25D366),
+                                        shape: BoxShape.circle,
+
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+
+                            SizedBox(width: 14.w),
+
+                            // ── Main Content ───────────────────
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  // ── Name + Time ──────────────
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          name,
+
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+
+                                          style: TextStyle(
+                                            fontFamily: kFontDMSans,
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+
+                                      SizedBox(width: 8.w),
+
+                                      Text(
+                                        time,
+
+                                        style: TextStyle(
+                                          fontFamily: kFontDMSans,
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  SizedBox(height: 8.h),
+
+                                  // ── Message Preview ──────────
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 20.w,
+                                        alignment: Alignment.centerLeft,
+
+                                        child: Icon(
+                                          isOutgoing
+                                              ? Icons.north_east_rounded
+                                              : Icons.south_west_rounded,
+
+                                          size: 15.sp,
+
+                                          color: isOutgoing
+                                              ? kThemeColor
+                                              : Colors.grey.shade400,
+                                        ),
+                                      ),
+
+                                      Expanded(
+                                        child: Text(
+                                          preview,
+
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+
+                                          style: TextStyle(
+                                            fontFamily: kFontDMSans,
+                                            fontSize: 12.8.sp,
+                                            color: Colors.grey.shade700,
+                                            height: 1.35,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                        ],
-                      ),
-                      SizedBox(width: 14.w),
 
-                      // ── Name + preview ───────────────────────────────
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: appstyle(15, _navy, FontWeight.w600),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 3.h),
-                            Row(
+                            SizedBox(width: 12.w),
+
+                            // ── Right Actions ─────────────────
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+
                               children: [
-                                Icon(
-                                  isOutgoing
-                                      ? Icons.arrow_upward_rounded
-                                      : Icons.arrow_downward_rounded,
-                                  size: 12,
-                                  color: isOutgoing
-                                      ? _teal
-                                      : Colors.grey.shade400,
-                                ),
-                                SizedBox(width: 4.w),
-                                Expanded(
-                                  child: Text(
-                                    preview,
-                                    style: appstyle(
-                                      13,
-                                      Colors.grey.shade500,
-                                      FontWeight.w400,
+                                if (chatNotifier.isPinned(chat.id))
+                                  Container(
+                                    padding: EdgeInsets.all(7.w),
+
+                                    decoration: BoxDecoration(
+                                      color: kThemeColor.withOpacity(0.10),
+
+                                      shape: BoxShape.circle,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+
+                                    child: Icon(
+                                      Icons.push_pin_rounded,
+                                      size: 14.sp,
+                                      color: kThemeColor,
+                                    ),
                                   ),
+
+                                SizedBox(height: 14.h),
+
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 13.sp,
+                                  color: Colors.black26,
                                 ),
                               ],
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(width: 10.w),
-
-                      // ── Pin icon + Timestamp ─────────────────────────
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (chatNotifier.isPinned(chat.id))
-                            Icon(Icons.push_pin, size: 13, color: _teal),
-                          Text(
-                            time,
-                            style: appstyle(
-                              11,
-                              Colors.grey.shade400,
-                              FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
@@ -201,22 +373,61 @@ class _ChatsListState extends State<ChatsList> {
 
   Widget _buildEmpty() {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline_rounded,
-            size: 60,
-            color: _teal.withValues(alpha: 0.25),
-          ),
-          SizedBox(height: 16.h),
-          Text('No chats yet', style: appstyle(18, _navy, FontWeight.w600)),
-          SizedBox(height: 6.h),
-          Text(
-            'Start a conversation by applying to a job',
-            style: appstyle(13, Colors.grey, FontWeight.w400),
-          ),
-        ],
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 30.w),
+
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+
+          children: [
+            Container(
+              width: 92.w,
+              height: 92.w,
+
+              decoration: BoxDecoration(
+                color: kThemeColor.withOpacity(0.10),
+
+                shape: BoxShape.circle,
+              ),
+
+              child: Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 42.w,
+                color: kThemeColor,
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            Text(
+              'No chats yet',
+
+              textAlign: TextAlign.center,
+
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+
+            SizedBox(height: 8.h),
+
+            Text(
+              'Start a conversation by applying to an opportunity.',
+
+              textAlign: TextAlign.center,
+
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 13.sp,
+                color: Colors.grey.shade600,
+                height: 1.55,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
