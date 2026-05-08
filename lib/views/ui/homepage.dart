@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage> {
         f.competition ||
         f.collaborate ||
         f.selectedLocationOption.isNotEmpty ||
+        f.distanceKm > 0 ||
         f.sortByTime ||
         f.postedWithin.isNotEmpty;
   }
@@ -249,6 +250,7 @@ class _FilterChipsBar extends StatelessWidget {
           if (f.competition) 'Competition',
           if (f.collaborate) 'Collaborate',
           if (f.selectedLocationOption.isNotEmpty) f.selectedLocationOption,
+          if (f.distanceKm > 0) 'Distance: ${f.distanceKm} km (Your location)',
           if (f.sortByTime) 'Latest first',
           if (f.postedWithin.isNotEmpty) f.postedWithin,
         ];

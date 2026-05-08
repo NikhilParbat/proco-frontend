@@ -10,6 +10,7 @@ class CreateFilterRequest {
     this.selectedCity,
     this.selectedState,
     this.selectedCountry,
+    this.distanceKm,
     this.customOptions,
     this.skills,
     this.sortByTime,
@@ -27,6 +28,7 @@ class CreateFilterRequest {
   final String? selectedCity;
   final String? selectedState;
   final String? selectedCountry;
+  final int? distanceKm;
   final List<String>? customOptions;
   final List<String>? skills;
   final bool? sortByTime;
@@ -44,6 +46,7 @@ class CreateFilterRequest {
         'selectedCity': selectedCity,
         'selectedState': selectedState,
         'selectedCountry': selectedCountry,
+        'distanceKm': distanceKm,
         'customOptions': customOptions ?? [],
         'skills': skills ?? [],
         'sortByTime': sortByTime,

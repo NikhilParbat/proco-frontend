@@ -34,10 +34,40 @@ class ChatNotifier extends ChangeNotifier {
 
   bool isPinned(String chatId) => _localPinOverride[chatId] ?? false;
 
+  String _chatCacheKey(String uid) => 'chat_cache_$uid';
+
+  Future<void> _loadChatsFromCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString('userId') ?? '';
+    if (uid.isEmpty) return;
+
+    final raw = prefs.getString(_chatCacheKey(uid));
+    if (raw == null || raw.isEmpty) return;
+
+    try {
+      final cached = getChatsFromJson(raw);
+      chats = cached;
+      for (final c in chats) {
+        _localPinOverride[c.id] = c.isPinned;
+      }
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> _saveChatsToCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString('userId') ?? '';
+    if (uid.isEmpty) return;
+    await prefs.setString(_chatCacheKey(uid), getChatsToJson(chats));
+  }
+
   /// ================= LOAD CHATS =================
   Future<void> getChats() async {
     isLoading = true;
     notifyListeners();
+
+    // Show cached chats immediately while network refresh is in flight.
+    await _loadChatsFromCache();
 
     final response = await ChatHelper.getConversations();
 
@@ -48,6 +78,7 @@ class ChatNotifier extends ChangeNotifier {
       for (final c in chats) {
         _localPinOverride[c.id] = c.isPinned;
       }
+      await _saveChatsToCache();
     } else {
       Get.snackbar(
         'Error',
