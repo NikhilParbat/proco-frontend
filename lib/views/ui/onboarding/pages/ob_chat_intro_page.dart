@@ -1,13 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
-import 'package:proco/views/ui/mainscreen.dart';
 
 // ── Colours ────────────────────────────────────────────────────────────────────
 
@@ -476,32 +478,52 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     }
 
     setState(() => _isSearchingLocation = true);
-    final results = await LocationService.getPlacePredictions(query.trim());
-    if (!mounted) return;
-    setState(() {
-      _locationResults
-        ..clear()
-        ..addAll(results);
-      _isSearchingLocation = false;
-    });
+    try {
+      final url =
+          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query.trim())}&format=json&limit=5&addressdetails=1';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'User-Agent': 'proco_app'},
+      );
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _locationResults
+            ..clear()
+            ..addAll(data.map((item) {
+              final addr = item['address'] as Map<String, dynamic>? ?? {};
+              return {
+                'display_name': item['display_name'],
+                'lat': double.parse(item['lat']),
+                'lon': double.parse(item['lon']),
+                'city': addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '',
+                'state': addr['state'] ?? '',
+                'country': addr['country'] ?? '',
+              };
+            }));
+        });
+      }
+    } catch (e) {
+      debugPrint('Location search error: $e');
+    } finally {
+      if (mounted) setState(() => _isSearchingLocation = false);
+    }
   }
 
-  Future<void> _selectLocationResult(Map<String, dynamic> item) async {
+  void _selectLocationResult(Map<String, dynamic> item) {
     final provider = context.read<OnboardingFlowProvider>();
     final lat = item['lat'] as double;
     final lon = item['lon'] as double;
     final display = (item['display_name'] as String?) ?? '';
 
-    final address = await LocationService.getAddressFromLatLng(lat, lon);
-    if (!mounted) return;
-
     provider.setLocation(
       lat,
       lon,
       displayAddress: display,
-      city: address.city,
-      state: address.state,
-      country: address.country,
+      city: (item['city'] as String?) ?? '',
+      state: (item['state'] as String?) ?? '',
+      country: (item['country'] as String?) ?? '',
     );
     setState(() {
       _selectedLocationLabel = display;
@@ -586,9 +608,6 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  void _skipToHome() =>
-      Get.offAll(() => const MainScreen(), transition: Transition.fade);
-
   void _snack(String t, String m) =>
       Get.snackbar(t, m, backgroundColor: kOrange, colorText: kLight);
 
@@ -602,26 +621,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         color: kBackgroundColor,
         child: Column(
           children: [
-            LagoonAppBar(
-              actions: [
-                GestureDetector(
-                  onTap: _skipToHome,
-                  child: Padding(
-                    padding: EdgeInsets.only(right: 16.w),
-                    child: Center(
-                      child: Text(
-                        'Skip All',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            const LagoonAppBar(),
             Expanded(
               child: SafeArea(
                 top: false,
@@ -906,8 +906,8 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
               onTap: () => setState(() => _preferTypingLocation = false),
             ),
             _ChoiceChipButton(
-              label: 'Type location',
-              icon: Icons.edit_location_alt_outlined,
+              label: 'Search location',
+              icon: Icons.search,
               selected: _preferTypingLocation,
               onTap: () => setState(() => _preferTypingLocation = true),
             ),

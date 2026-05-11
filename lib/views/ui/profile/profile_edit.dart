@@ -8,6 +8,8 @@ import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:provider/provider.dart';
 import 'profile_state.dart';
 
+const int _kMaxLinks = 6;
+
 // ── Section keys for scroll-to ────────────────────────────────────────────────
 final _identityKey = GlobalKey();
 final _personalKey = GlobalKey();
@@ -224,6 +226,20 @@ class _EditFormState extends State<_EditForm> {
                 onChanged: (v) => widget.state.dob = v,
                 hint: 'YYYY-MM-DD',
               ),
+              _Field(
+                label: 'Work Style',
+                init: widget.state.workStyle,
+                onChanged: (v) => widget.state.workStyle = v,
+                hint: 'e.g. Remote-first, Hybrid, In-office',
+              ),
+              _Field(
+                label: 'Communication Style',
+                init: widget.state.communicationStyle,
+                onChanged: (v) => widget.state.communicationStyle = v,
+                hint: 'e.g. Asynchronous, Synchronous',
+              ),
+              SizedBox(height: 6.h),
+              _LinksEditor(state: widget.state),
               SizedBox(height: 20.h),
 
               // Education
@@ -238,19 +254,20 @@ class _EditFormState extends State<_EditForm> {
                 init: widget.state.branch,
                 onChanged: (v) => widget.state.branch = v,
               ),
-              // _Field(
-              //   label: 'Class of',
-              //   init: widget.state.classOf,
-              //   onChanged: (v) => widget.state.classOf = v,
-              //   hint: 'e.g. 2025',
-              // ),
-              // _Field(
-              //   label: 'CGPA',
-              //   init: widget.state.cgpa,
-              //   onChanged: (v) => widget.state.cgpa = v,
-              //   hint: 'e.g. 8.5',
-              //   keyboard: const TextInputType.numberWithOptions(decimal: true),
-              // ),
+              _Field(
+                label: 'Class of (Graduation Year)',
+                init: widget.state.classOf,
+                onChanged: (v) => widget.state.classOf = v,
+                hint: 'e.g. 2025',
+                keyboard: TextInputType.number,
+              ),
+              _Field(
+                label: 'CGPA / Academic Rank',
+                init: widget.state.cgpa,
+                onChanged: (v) => widget.state.cgpa = v,
+                hint: 'e.g. 8.5 or 3.9/4.0',
+                keyboard: const TextInputType.numberWithOptions(decimal: true),
+              ),
               SizedBox(height: 20.h),
 
               // Professional
@@ -271,40 +288,36 @@ class _EditFormState extends State<_EditForm> {
                       label: 'Job Title / Position',
                       init: exp.position,
                       onChanged: (val) {
-                        widget.state.experiences[index] = ExperienceItem(
+                        widget.state.updateExperience(index, ExperienceItem(
                           company: exp.company,
                           position: val,
                           description: exp.description,
                           dateRange: exp.dateRange,
-                        );
-                        // Standard ChangeNotifier update
-                        widget.state.notifyListeners();
+                        ));
                       },
                     ),
                     _Field(
                       label: 'Company',
                       init: exp.company,
                       onChanged: (val) {
-                        widget.state.experiences[index] = ExperienceItem(
+                        widget.state.updateExperience(index, ExperienceItem(
                           company: val,
                           position: exp.position,
                           description: exp.description,
                           dateRange: exp.dateRange,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                     ),
                     _Field(
                       label: 'Date Range',
                       init: exp.dateRange,
                       onChanged: (val) {
-                        widget.state.experiences[index] = ExperienceItem(
+                        widget.state.updateExperience(index, ExperienceItem(
                           company: exp.company,
                           position: exp.position,
                           description: exp.description,
                           dateRange: val,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                       hint: 'e.g. Jan 2024 - Present',
                     ),
@@ -364,28 +377,26 @@ class _EditFormState extends State<_EditForm> {
                       label: 'Project Title',
                       init: proj.name,
                       onChanged: (val) {
-                        widget.state.projects[index] = ProjectItem(
+                        widget.state.updateProject(index, ProjectItem(
                           name: val,
                           domain: proj.domain,
                           description: proj.description,
                           technologies: proj.technologies,
                           sourceUrl: proj.sourceUrl,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                     ),
                     _Field(
                       label: 'Domain',
                       init: proj.domain,
                       onChanged: (val) {
-                        widget.state.projects[index] = ProjectItem(
+                        widget.state.updateProject(index, ProjectItem(
                           name: proj.name,
                           domain: val,
                           description: proj.description,
                           technologies: proj.technologies,
                           sourceUrl: proj.sourceUrl,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                       hint: 'e.g. Web Development, AI',
                     ),
@@ -393,14 +404,13 @@ class _EditFormState extends State<_EditForm> {
                       label: 'Description',
                       init: proj.description,
                       onChanged: (val) {
-                        widget.state.projects[index] = ProjectItem(
+                        widget.state.updateProject(index, ProjectItem(
                           name: proj.name,
                           domain: proj.domain,
                           description: val,
                           technologies: proj.technologies,
                           sourceUrl: proj.sourceUrl,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                       maxLines: 3,
                     ),
@@ -408,14 +418,13 @@ class _EditFormState extends State<_EditForm> {
                       label: 'Source URL',
                       init: proj.sourceUrl,
                       onChanged: (val) {
-                        widget.state.projects[index] = ProjectItem(
+                        widget.state.updateProject(index, ProjectItem(
                           name: proj.name,
                           domain: proj.domain,
                           description: proj.description,
                           technologies: proj.technologies,
                           sourceUrl: val,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                       hint: 'GitHub or Live Link',
                     ),
@@ -472,12 +481,11 @@ class _EditFormState extends State<_EditForm> {
                       label: 'Title',
                       init: ach.title,
                       onChanged: (val) {
-                        widget.state.achievements[index] = AchievementItem(
+                        widget.state.updateAchievement(index, AchievementItem(
                           title: val,
                           subtitle: ach.subtitle,
                           icon: ach.icon,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                       hint: 'e.g. Hackathon Winner',
                     ),
@@ -485,12 +493,11 @@ class _EditFormState extends State<_EditForm> {
                       label: 'Subtitle / Description',
                       init: ach.subtitle,
                       onChanged: (val) {
-                        widget.state.achievements[index] = AchievementItem(
+                        widget.state.updateAchievement(index, AchievementItem(
                           title: ach.title,
                           subtitle: val,
                           icon: ach.icon,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                       hint: 'e.g. Secured 1st rank among 50 teams',
                     ),
@@ -498,12 +505,11 @@ class _EditFormState extends State<_EditForm> {
                       label: 'Icon Name',
                       init: ach.icon,
                       onChanged: (val) {
-                        widget.state.achievements[index] = AchievementItem(
+                        widget.state.updateAchievement(index, AchievementItem(
                           title: ach.title,
                           subtitle: ach.subtitle,
                           icon: val,
-                        );
-                        widget.state.notifyListeners();
+                        ));
                       },
                       hint: 'e.g. star, military_tech, trophy',
                     ),
@@ -662,14 +668,10 @@ class _IdentitySection extends StatelessWidget {
               CircleAvatar(
                 radius: 48.r,
                 backgroundColor: kLightGrey,
-                backgroundImage:
-                    (state.profileImageUrl != null &&
-                        state.profileImageUrl!.isNotEmpty)
-                    ? NetworkImage(state.profileImageUrl!)
+                backgroundImage: state.profileImageUrl.isNotEmpty
+                    ? NetworkImage(state.profileImageUrl)
                     : null,
-                child:
-                    (state.profileImageUrl == null ||
-                        state.profileImageUrl!.isEmpty)
+                child: state.profileImageUrl.isEmpty
                     ? Icon(Icons.person, size: 40.r, color: kDarkGrey)
                     : null,
               ),
@@ -703,7 +705,7 @@ class _IdentitySection extends StatelessWidget {
         ),
         _Field(
           label: 'Bio',
-          init: state.bio ?? '',
+          init: state.bio,
           onChanged: (v) => state.bio = v,
           maxLines: 3,
           hint: 'Tell the world about yourself…',
@@ -1065,6 +1067,167 @@ class _Field extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Links Editor ──────────────────────────────────────────────────────────────
+class _LinksEditor extends StatefulWidget {
+  const _LinksEditor({required this.state});
+  final ProfileEditState state;
+
+  @override
+  State<_LinksEditor> createState() => _LinksEditorState();
+}
+
+class _LinksEditorState extends State<_LinksEditor> {
+  final _labelCtrl = TextEditingController();
+  final _urlCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _labelCtrl.dispose();
+    _urlCtrl.dispose();
+    super.dispose();
+  }
+
+  void _add() {
+    final label = _labelCtrl.text.trim();
+    final url = _urlCtrl.text.trim();
+    if (label.isEmpty || url.isEmpty) return;
+    if (widget.state.links.length >= _kMaxLinks) return;
+    setState(() {
+      widget.state.links = [
+        ...widget.state.links,
+        LinkItem(label: label, url: url),
+      ];
+    });
+    _labelCtrl.clear();
+    _urlCtrl.clear();
+  }
+
+  void _remove(int index) {
+    setState(() {
+      widget.state.links = List.from(widget.state.links)..removeAt(index);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final links = widget.state.links;
+    final atMax = links.length >= _kMaxLinks;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Links (${links.length}/$_kMaxLinks)',
+          style: TextStyle(
+            fontFamily: kFontDMSans,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: kDarkGrey,
+            letterSpacing: 0.5,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        ...links.asMap().entries.map((entry) {
+          final i = entry.key;
+          final link = entry.value;
+          return Container(
+            margin: EdgeInsets.only(bottom: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: kLight,
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.link, size: 16.sp, color: kDarkGrey),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        link.label,
+                        style: TextStyle(
+                          fontFamily: kFontDMSans,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: kDark,
+                        ),
+                      ),
+                      Text(
+                        link.url,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: kFontDMSans,
+                          fontSize: 11.sp,
+                          color: kDarkGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _remove(i),
+                  child: Icon(
+                    Icons.delete_outline,
+                    size: 18.sp,
+                    color: Colors.redAccent,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+        if (!atMax) ...[
+          SizedBox(height: 4.h),
+          _Field(
+            label: 'Label',
+            init: '',
+            onChanged: (v) => _labelCtrl.text = v,
+            hint: 'e.g. GitHub, Portfolio, Behance',
+          ),
+          _Field(
+            label: 'URL',
+            init: '',
+            onChanged: (v) => _urlCtrl.text = v,
+            hint: 'https://',
+            keyboard: TextInputType.url,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _add,
+              icon: const Icon(Icons.add, color: kThemeColor, size: 18),
+              label: Text(
+                'ADD LINK',
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: kThemeColor,
+                ),
+              ),
+            ),
+          ),
+        ] else
+          Padding(
+            padding: EdgeInsets.only(top: 4.h, bottom: 8.h),
+            child: Text(
+              'Maximum $_kMaxLinks links reached.',
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 11.sp,
+                color: kDarkGrey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

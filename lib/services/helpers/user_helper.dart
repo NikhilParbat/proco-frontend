@@ -63,10 +63,10 @@ class UserHelper {
       request.fields['hobbies'] = jsonEncode(model.hobbies);
 
       // 5. Professional Lists
-      // These map to your normalized tables: experiences, projects, achievements
       request.fields['experiences'] = jsonEncode(model.experiences.map((e) => e.toJson()).toList());
       request.fields['projects'] = jsonEncode(model.projects.map((p) => p.toJson()).toList());
       request.fields['achievements'] = jsonEncode(model.achievements.map((a) => a.toJson()).toList());
+      request.fields['links'] = jsonEncode(model.links.map((l) => l.toJson()).toList());
 
       // 6. Image Upload
       if (image != null) {

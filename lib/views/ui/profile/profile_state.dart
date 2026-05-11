@@ -11,11 +11,13 @@ class ProfileEditState extends ChangeNotifier {
   String username = '', bio = '', email = '', phone = '', gender = '', city = '', state = '', country = '';
   String college = '', branch = '', profileImageUrl = '', dob = '', userType = '';
   String linkedInUrl = '', gitHubUrl = '', twitterUrl = '', portfolioUrl = '';
+  String classOf = '', cgpa = '', workStyle = '', communicationStyle = '';
   double latitude = 0.0, longitude = 0.0;
   List<String> skills = [], interests = [], hobbies = [];
   List<ExperienceItem> experiences = [];
   List<ProjectItem> projects = [];
   List<AchievementItem> achievements = [];
+  List<LinkItem> links = [];
   int queriesCreated = 0;
 
   bool showEmail = true,
@@ -110,6 +112,21 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateExperience(int index, ExperienceItem item) {
+    experiences[index] = item;
+    notifyListeners();
+  }
+
+  void updateProject(int index, ProjectItem item) {
+    projects[index] = item;
+    notifyListeners();
+  }
+
+  void updateAchievement(int index, AchievementItem item) {
+    achievements[index] = item;
+    notifyListeners();
+  }
+
   // ── Core Logic ─────────────────────────────────────────────────────────────
 
   Future<void> _init() async {
@@ -144,6 +161,7 @@ class ProfileEditState extends ChangeNotifier {
           experiences = List<ExperienceItem>.from(d.experiences);
           projects = List<ProjectItem>.from(d.projects);
           achievements = List<AchievementItem>.from(d.achievements);
+          links = List<LinkItem>.from(d.links);
           queriesCreated = d.queriesCreated;
         }
       }
@@ -174,12 +192,17 @@ class ProfileEditState extends ChangeNotifier {
     gitHubUrl = d.gitHubUrl ?? '';
     twitterUrl = d.twitterUrl ?? '';
     portfolioUrl = d.portfolioUrl ?? '';
+    classOf = d.classOf ?? '';
+    cgpa = d.cgpa ?? '';
+    workStyle = d.workStyle ?? '';
+    communicationStyle = d.communicationStyle ?? '';
     latitude = d.latitude ?? 0.0;
     longitude = d.longitude ?? 0.0;
     
     skills = List<String>.from(d.skills ?? []);
     interests = List<String>.from(d.interests ?? []);
     hobbies = List<String>.from(d.hobbies ?? []);
+    links = (d.links as List?)?.map((l) => l is LinkItem ? l : LinkItem.fromJson(l as Map<String, dynamic>)).toList() ?? [];
   } 
   Future<bool> saveProfile(File? image) async {
     isSaving = true;
@@ -206,9 +229,14 @@ class ProfileEditState extends ChangeNotifier {
       gitHubUrl: gitHubUrl,
       twitterUrl: twitterUrl,
       portfolioUrl: portfolioUrl,
+      classOf: classOf,
+      cgpa: cgpa,
+      workStyle: workStyle,
+      communicationStyle: communicationStyle,
       experiences: experiences,
       projects: projects,
       achievements: achievements,
+      links: links,
     );
     
     final res = await UserHelper.updateProfile(req, image);

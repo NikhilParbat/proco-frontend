@@ -18,12 +18,17 @@ class ProfileUpdateReq {
   final String portfolioUrl;
   final double latitude;
   final double longitude;
+  final String classOf;
+  final String cgpa;
+  final String workStyle;
+  final String communicationStyle;
   final List<String> skills;
   final List<String> interests;
   final List<String> hobbies;
   final List<ExperienceItem> experiences;
   final List<ProjectItem> projects;
   final List<AchievementItem> achievements;
+  final List<LinkItem> links;
 
   ProfileUpdateReq({
     required this.username,
@@ -43,12 +48,17 @@ class ProfileUpdateReq {
     this.portfolioUrl = '',
     this.latitude = 0.0,
     this.longitude = 0.0,
+    this.classOf = '',
+    this.cgpa = '',
+    this.workStyle = '',
+    this.communicationStyle = '',
     this.skills = const [],
     this.interests = const [],
     this.hobbies = const [],
     this.experiences = const [],
     this.projects = const [],
     this.achievements = const [],
+    this.links = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -70,12 +80,17 @@ class ProfileUpdateReq {
       'portfolioUrl': portfolioUrl,
       'latitude': latitude,
       'longitude': longitude,
+      'classOf': classOf,
+      'cgpa': cgpa,
+      'workStyle': workStyle,
+      'communicationStyle': communicationStyle,
       'skills': skills,
       'interests': interests,
       'hobbies': hobbies,
       'experiences': experiences.map((e) => e.toJson()).toList(),
       'projects': projects.map((p) => p.toJson()).toList(),
       'achievements': achievements.map((a) => a.toJson()).toList(),
+      'links': links.map((l) => l.toJson()).toList(),
     };
   }
 }
@@ -171,4 +186,18 @@ class AchievementItem {
     'subtitle': subtitle,
     'icon': icon,
   };
+}
+
+class LinkItem {
+  final String label;
+  final String url;
+
+  LinkItem({required this.label, required this.url});
+
+  factory LinkItem.fromJson(Map<String, dynamic> json) => LinkItem(
+    label: json['label'] ?? '',
+    url: json['url'] ?? '',
+  );
+
+  Map<String, dynamic> toJson() => {'label': label, 'url': url};
 }

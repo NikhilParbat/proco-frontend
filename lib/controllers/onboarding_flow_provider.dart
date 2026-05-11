@@ -127,12 +127,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
 
       final error = await UserHelper.createProfile(req, profilePhoto);
 
-      if (error == null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('onboardingComplete', true);
-        await prefs.remove('onboardingPage');
-        Get.offAll(() => const MainScreen(), transition: Transition.fade);
-      } else {
+      if (error != null) {
         Get.snackbar(
           'Could Not Save Profile',
           error,
@@ -141,6 +136,10 @@ class OnboardingFlowProvider extends ChangeNotifier {
           duration: const Duration(seconds: 6),
         );
       }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboardingComplete', true);
+      await prefs.remove('onboardingPage');
+      Get.offAll(() => const MainScreen(), transition: Transition.fade);
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -148,6 +147,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
         backgroundColor: kOrange,
         colorText: kLight,
       );
+      Get.offAll(() => const MainScreen(), transition: Transition.fade);
     } finally {
       _isLoading = false;
       notifyListeners();

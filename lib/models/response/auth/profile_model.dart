@@ -23,6 +23,10 @@ class ProfileRes {
   final String? twitterUrl;
   final String? portfolioUrl;
   final String? userType;
+  final String? classOf;
+  final String? cgpa;
+  final String? workStyle;
+  final String? communicationStyle;
   final String? provider;
   final bool? isFirstTimeUser;
   final DateTime? createdAt;
@@ -34,6 +38,7 @@ class ProfileRes {
   final List<ExperienceItem> experiences;
   final List<ProjectItem> projects;
   final List<AchievementItem> achievements;
+  final List<LinkItem> links;
 
   ProfileRes({
     required this.id,
@@ -58,6 +63,10 @@ class ProfileRes {
     this.twitterUrl,
     this.portfolioUrl,
     this.userType,
+    this.classOf,
+    this.cgpa,
+    this.workStyle,
+    this.communicationStyle,
     this.provider,
     this.isFirstTimeUser,
     this.createdAt,
@@ -69,6 +78,7 @@ class ProfileRes {
     this.experiences = const [],
     this.projects = const [],
     this.achievements = const [],
+    this.links = const [],
   });
 
   factory ProfileRes.fromJson(Map<String, dynamic> json) {
@@ -95,6 +105,10 @@ class ProfileRes {
       twitterUrl: json['twitterUrl'],
       portfolioUrl: json['portfolioUrl'],
       userType: json['userType'],
+      classOf: json['classOf'],
+      cgpa: json['cgpa'],
+      workStyle: json['workStyle'],
+      communicationStyle: json['communicationStyle'],
       provider: json['provider'],
       isFirstTimeUser: json['isFirstTimeUser'],
       createdAt: json['createdAt'] != null
@@ -126,6 +140,11 @@ class ProfileRes {
               ?.map((a) => AchievementItem.fromJson(a as Map<String, dynamic>))
               .toList() ??
           [],
+      links:
+          (json['links'] as List<dynamic>?)
+              ?.map((l) => LinkItem.fromJson(l as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -153,6 +172,10 @@ class ProfileRes {
       'twitterUrl': twitterUrl,
       'portfolioUrl': portfolioUrl,
       'userType': userType,
+      'classOf': classOf,
+      'cgpa': cgpa,
+      'workStyle': workStyle,
+      'communicationStyle': communicationStyle,
       'provider': provider,
       'isFirstTimeUser': isFirstTimeUser,
       'createdAt': createdAt?.toIso8601String(),
@@ -164,6 +187,7 @@ class ProfileRes {
       'experiences': experiences.map((e) => e.toJson()).toList(),
       'projects': projects.map((p) => p.toJson()).toList(),
       'achievements': achievements.map((a) => a.toJson()).toList(),
+      'links': links.map((l) => l.toJson()).toList(),
     };
   }
 }

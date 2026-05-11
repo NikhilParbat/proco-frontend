@@ -1,3 +1,5 @@
+import 'package:proco/models/request/auth/profile_update_model.dart';
+
 class UserResponse {
   final String id;
   final String username;
@@ -20,13 +22,18 @@ class UserResponse {
   final String? twitterUrl;
   final String? portfolioUrl;
   final String? userType;
+  final String? classOf;
+  final String? cgpa;
+  final String? workStyle;
+  final String? communicationStyle;
   final String? provider;
   final bool? isFirstTimeUser;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-  final List<String> skills; // NEW
-  final List<String> interests; // NEW
-  final List<String> hobbies; // NEW
+  final List<String> skills;
+  final List<String> interests;
+  final List<String> hobbies;
+  final List<LinkItem> links;
 
   UserResponse({
     required this.id,
@@ -50,13 +57,18 @@ class UserResponse {
     this.twitterUrl,
     this.portfolioUrl,
     this.userType,
+    this.classOf,
+    this.cgpa,
+    this.workStyle,
+    this.communicationStyle,
     this.provider,
     this.isFirstTimeUser,
     this.createdAt,
     this.updatedAt,
-    this.skills = const [], // NEW
-    this.interests = const [], // NEW
-    this.hobbies = const [], // NEW
+    this.skills = const [],
+    this.interests = const [],
+    this.hobbies = const [],
+    this.links = const [],
   });
 
   factory UserResponse.fromJson(Map<String, dynamic> json) {
@@ -82,6 +94,10 @@ class UserResponse {
       twitterUrl: json['twitterUrl'],
       portfolioUrl: json['portfolioUrl'],
       userType: json['userType'],
+      classOf: json['classOf'],
+      cgpa: json['cgpa'],
+      workStyle: json['workStyle'],
+      communicationStyle: json['communicationStyle'],
       provider: json['provider'],
       isFirstTimeUser: json['isFirstTimeUser'],
       createdAt: json['createdAt'] != null
@@ -90,14 +106,13 @@ class UserResponse {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
-      // NEW: Parse arrays
       skills: json['skills'] != null ? List<String>.from(json['skills']) : [],
-      interests: json['interests'] != null
-          ? List<String>.from(json['interests'])
-          : [],
-      hobbies: json['hobbies'] != null
-          ? List<String>.from(json['hobbies'])
-          : [],
+      interests: json['interests'] != null ? List<String>.from(json['interests']) : [],
+      hobbies: json['hobbies'] != null ? List<String>.from(json['hobbies']) : [],
+      links: (json['links'] as List<dynamic>?)
+              ?.map((l) => LinkItem.fromJson(l as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -124,13 +139,18 @@ class UserResponse {
       'twitterUrl': twitterUrl,
       'portfolioUrl': portfolioUrl,
       'userType': userType,
+      'classOf': classOf,
+      'cgpa': cgpa,
+      'workStyle': workStyle,
+      'communicationStyle': communicationStyle,
       'provider': provider,
       'isFirstTimeUser': isFirstTimeUser,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
-      'skills': skills, // NEW
-      'interests': interests, // NEW
-      'hobbies': hobbies, // NEW
+      'skills': skills,
+      'interests': interests,
+      'hobbies': hobbies,
+      'links': links.map((l) => l.toJson()).toList(),
     };
   }
 
@@ -156,13 +176,18 @@ class UserResponse {
     String? twitterUrl,
     String? portfolioUrl,
     String? userType,
+    String? classOf,
+    String? cgpa,
+    String? workStyle,
+    String? communicationStyle,
     String? provider,
     bool? isFirstTimeUser,
     DateTime? createdAt,
     DateTime? updatedAt,
-    List<String>? skills, // NEW
-    List<String>? interests, // NEW
-    List<String>? hobbies, // NEW
+    List<String>? skills,
+    List<String>? interests,
+    List<String>? hobbies,
+    List<LinkItem>? links,
   }) {
     return UserResponse(
       id: id ?? this.id,
@@ -186,13 +211,18 @@ class UserResponse {
       twitterUrl: twitterUrl ?? this.twitterUrl,
       portfolioUrl: portfolioUrl ?? this.portfolioUrl,
       userType: userType ?? this.userType,
+      classOf: classOf ?? this.classOf,
+      cgpa: cgpa ?? this.cgpa,
+      workStyle: workStyle ?? this.workStyle,
+      communicationStyle: communicationStyle ?? this.communicationStyle,
       provider: provider ?? this.provider,
       isFirstTimeUser: isFirstTimeUser ?? this.isFirstTimeUser,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      skills: skills ?? this.skills, // NEW
-      interests: interests ?? this.interests, // NEW
-      hobbies: hobbies ?? this.hobbies, // NEW
+      skills: skills ?? this.skills,
+      interests: interests ?? this.interests,
+      hobbies: hobbies ?? this.hobbies,
+      links: links ?? this.links,
     );
   }
 }

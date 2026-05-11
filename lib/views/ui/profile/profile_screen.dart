@@ -18,14 +18,39 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isReadOnly = viewUserId != null;
+
     return ChangeNotifierProvider(
       create: (_) => ProfileEditState(viewUserId: viewUserId),
       child: DefaultTabController(
         length: 3,
         child: Scaffold(
           backgroundColor: kBackgroundColor,
-          drawer: const LagoonDrawer(),
-          appBar: const LagoonAppBar(),
+          drawer: isReadOnly ? null : const LagoonDrawer(),
+          appBar: isReadOnly
+              ? AppBar(
+                  backgroundColor: kThemeColor,
+                  elevation: 0,
+                  toolbarHeight: 50.h,
+                  leading: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  title: Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              : const LagoonAppBar(),
           body: Consumer<ProfileEditState>(
             builder: (context, state, _) {
               if (state.isLoading) {
@@ -335,18 +360,11 @@ class _PersonalTab extends StatelessWidget {
     final age = _calculateAge();
     final hasGender = state.gender.isNotEmpty;
     final hasAge = age > 0;
-    final hasEducation = state.college.isNotEmpty || state.branch.isNotEmpty;
+    final hasEducation = state.college.isNotEmpty || state.branch.isNotEmpty ||
+        state.classOf.isNotEmpty || state.cgpa.isNotEmpty;
+    final hasWorkStyle = state.workStyle.isNotEmpty;
+    final hasCommunicationStyle = state.communicationStyle.isNotEmpty;
     final hasInterests = state.interests.isNotEmpty || state.hobbies.isNotEmpty;
-
-    final links = <({String label, String url})>[];
-    if (state.linkedInUrl.isNotEmpty)
-      links.add((label: 'LINKEDIN', url: state.linkedInUrl));
-    if (state.gitHubUrl.isNotEmpty)
-      links.add((label: 'GITHUB', url: state.gitHubUrl));
-    if (state.twitterUrl.isNotEmpty)
-      links.add((label: 'TWITTER / X', url: state.twitterUrl));
-    if (state.portfolioUrl.isNotEmpty)
-      links.add((label: 'PORTFOLIO', url: state.portfolioUrl));
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 32.h),
@@ -376,6 +394,38 @@ class _PersonalTab extends StatelessWidget {
             SizedBox(height: 12.h),
             _EducationCard(state: state),
           ],
+          if (hasWorkStyle || hasCommunicationStyle) ...[
+            SizedBox(height: 24.h),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasWorkStyle)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _CapLabel('WORK STYLE'),
+                        SizedBox(height: 8.h),
+                        _OutlineChip(label: state.workStyle),
+                      ],
+                    ),
+                  ),
+                if (hasWorkStyle && hasCommunicationStyle)
+                  SizedBox(width: 16.w),
+                if (hasCommunicationStyle)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _CapLabel('COMMUNICATION'),
+                        SizedBox(height: 8.h),
+                        _OutlineChip(label: state.communicationStyle),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ],
           if (hasInterests) ...[
             SizedBox(height: 24.h),
             const _CapLabel('INTERESTS & HOBBIES'),
@@ -389,14 +439,14 @@ class _PersonalTab extends StatelessWidget {
               ],
             ),
           ],
-          if (links.isNotEmpty) ...[
+          if (state.links.isNotEmpty) ...[
             SizedBox(height: 24.h),
             const _CapLabel('EXTERNAL LINKS'),
             SizedBox(height: 12.h),
-            ...links.map(
+            ...state.links.map(
               (l) => Padding(
                 padding: EdgeInsets.only(bottom: 10.h),
-                child: _LinkRow(label: l.label),
+                child: _LinkRow(label: l.label, url: l.url),
               ),
             ),
           ],
@@ -667,13 +717,11 @@ class _ExperienceRow extends StatelessWidget {
                   SizedBox(height: 5.h),
                   Text(
                     data.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: 'DMSans',
                       fontSize: 12.sp,
                       color: kDarkGrey,
-                      height: 1.5,
+                      height: 1.6,
                     ),
                   ),
                 ],
@@ -704,43 +752,106 @@ class _ProjectCard extends StatelessWidget {
   final ProjectItem data;
   final VoidCallback? onDelete;
 
+  String _truncateWords(String text, int maxWords) {
+    final words = text.trim().split(RegExp(r'\s+'));
+    if (words.length <= maxWords) return text;
+    return '${words.take(maxWords).join(' ')}…';
+  }
+
+  Future<void> _launch() async {
+    final uri = Uri.tryParse(data.sourceUrl);
+    if (uri != null && await canLaunchUrl(uri)) {
+      launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  IconData _linkIcon() {
+    final url = data.sourceUrl.toLowerCase();
+    if (url.contains('github')) return Icons.code_rounded;
+    if (url.contains('behance')) return Icons.brush_outlined;
+    if (url.contains('dribbble')) return Icons.sports_basketball_outlined;
+    return Icons.open_in_new;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayedTechs = data.technologies.take(4).toList();
+    final description = _truncateWords(data.description, 100);
+
     return Padding(
-      padding: EdgeInsets.only(bottom: 28.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Dark preview card with domain badge + delete button
-          Stack(
+      padding: EdgeInsets.only(bottom: 20.h),
+      child: GestureDetector(
+        onTap: data.sourceUrl.isNotEmpty ? _launch : null,
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: kThemeColor,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Stack(
             children: [
-              Container(
-                width: double.infinity,
-                height: 150.h,
-                decoration: BoxDecoration(
-                  color: kDarkBlue,
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.w,
-                      vertical: 10.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: kThemeColor,
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Text(
-                      data.domain.isEmpty ? 'Project' : data.domain,
+              Padding(
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Project name
+                    Text(
+                      data.name,
                       style: TextStyle(
                         fontFamily: 'DMSans',
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
                         color: kLight,
                       ),
                     ),
-                  ),
+                    if (description.isNotEmpty) ...[
+                      SizedBox(height: 8.h),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontFamily: 'DMSans',
+                          fontSize: 12.sp,
+                          color: kLight.withValues(alpha: 0.8),
+                          height: 1.55,
+                        ),
+                      ),
+                    ],
+                    if (displayedTechs.isNotEmpty) ...[
+                      SizedBox(height: 14.h),
+                      Wrap(
+                        spacing: 6.w,
+                        runSpacing: 6.h,
+                        children: displayedTechs
+                            .map((t) => _CardTechChip(label: t))
+                            .toList(),
+                      ),
+                    ],
+                    if (data.sourceUrl.isNotEmpty) ...[
+                      SizedBox(height: 16.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(
+                            _linkIcon(),
+                            size: 14.sp,
+                            color: kLight.withValues(alpha: 0.7),
+                          ),
+                          SizedBox(width: 5.w),
+                          Text(
+                            'VIEW PROJECT',
+                            style: TextStyle(
+                              fontFamily: 'DMSans',
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              color: kLight.withValues(alpha: 0.7),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
               if (onDelete != null)
@@ -749,99 +860,23 @@ class _ProjectCard extends StatelessWidget {
                   right: 10.w,
                   child: GestureDetector(
                     onTap: onDelete,
-                    child: Container(
-                      width: 30.w,
-                      height: 30.w,
-                      decoration: BoxDecoration(
-                        color: Colors.black45,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Icon(
-                        Icons.delete_outline,
-                        size: 16.sp,
-                        color: Colors.white70,
-                      ),
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 18.sp,
+                      color: kLight.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
             ],
           ),
-          SizedBox(height: 12.h),
-
-          // Project name
-          Text(
-            data.name,
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: kDark,
-            ),
-          ),
-          SizedBox(height: 6.h),
-
-          // Description (max 2 lines)
-          if (data.description.isNotEmpty) ...[
-            Text(
-              data.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 13.sp,
-                color: kDarkGrey,
-                height: 1.5,
-              ),
-            ),
-            SizedBox(height: 10.h),
-          ],
-
-          // Technology chips
-          if (data.technologies.isNotEmpty) ...[
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 6.h,
-              children: data.technologies
-                  .map((t) => _TechChip(label: t))
-                  .toList(),
-            ),
-            SizedBox(height: 12.h),
-          ],
-
-          // Clickable project link
-          if (data.sourceUrl.isNotEmpty)
-            GestureDetector(
-              onTap: () async {
-                final uri = Uri.tryParse(data.sourceUrl);
-                if (uri != null && await canLaunchUrl(uri)) {
-                  launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
-              },
-              child: Row(
-                children: [
-                  Icon(Icons.open_in_new, size: 14.sp, color: kThemeColor),
-                  SizedBox(width: 6.w),
-                  Text(
-                    'VIEW PROJECT',
-                    style: TextStyle(
-                      fontFamily: 'DMSans',
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      color: kThemeColor,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _TechChip extends StatelessWidget {
-  const _TechChip({required this.label});
+class _CardTechChip extends StatelessWidget {
+  const _CardTechChip({required this.label});
   final String label;
 
   @override
@@ -849,9 +884,9 @@ class _TechChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: kLight,
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4.r),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        border: Border.all(color: kLight.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
@@ -859,13 +894,14 @@ class _TechChip extends StatelessWidget {
           fontFamily: 'DMSans',
           fontSize: 10.sp,
           fontWeight: FontWeight.w600,
-          color: kDarkGrey,
+          color: kLight,
           letterSpacing: 0.3,
         ),
       ),
     );
   }
 }
+
 
 // ── Achievement row ────────────────────────────────────────────────────────
 
@@ -1628,7 +1664,9 @@ class _EducationCard extends StatelessWidget {
               Expanded(
                 child: _EduField(
                   label: 'GRADUATION',
-                  value: '—',
+                  value: state.classOf.isEmpty
+                      ? '—'
+                      : 'Class of ${state.classOf}',
                   valueFontSize: 15.sp,
                 ),
               ),
@@ -1636,7 +1674,7 @@ class _EducationCard extends StatelessWidget {
               Expanded(
                 child: _EduField(
                   label: 'ACADEMIC RANK',
-                  value: '—',
+                  value: state.cgpa.isEmpty ? '—' : '${state.cgpa} CGPA',
                   valueFontSize: 15.sp,
                 ),
               ),
@@ -1740,40 +1778,69 @@ class _OutlineChip extends StatelessWidget {
 // ── External links ─────────────────────────────────────────────────────────
 
 class _LinkRow extends StatelessWidget {
-  const _LinkRow({required this.label});
+  const _LinkRow({required this.label, required this.url});
   final String label;
+  final String url;
+
+  IconData _icon() {
+    final u = url.toLowerCase();
+    if (u.contains('linkedin')) return Icons.work_outline;
+    if (u.contains('github')) return Icons.code_rounded;
+    if (u.contains('twitter') || u.contains('x.com')) return Icons.alternate_email;
+    if (u.contains('instagram')) return Icons.camera_alt_outlined;
+    if (u.contains('youtube')) return Icons.play_circle_outline;
+    if (u.contains('behance')) return Icons.brush_outlined;
+    if (u.contains('dribbble')) return Icons.sports_basketball_outlined;
+    if (u.contains('medium')) return Icons.article_outlined;
+    if (u.contains('figma')) return Icons.design_services_outlined;
+    if (u.contains('notion')) return Icons.sticky_note_2_outlined;
+    return Icons.language_outlined;
+  }
+
+  Future<void> _launch() async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-      decoration: BoxDecoration(
-        color: kLight,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.language_outlined, size: 18.sp, color: kDark),
-          SizedBox(width: 12.w),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'DMSans',
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: kDark,
-              letterSpacing: 0.5,
+    return GestureDetector(
+      onTap: _launch,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: kLight,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 1),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(_icon(), size: 18.sp, color: kDark),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: kDark,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            Icon(Icons.open_in_new, size: 14.sp, color: kDarkGrey),
+          ],
+        ),
       ),
     );
   }
