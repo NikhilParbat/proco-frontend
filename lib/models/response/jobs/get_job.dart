@@ -19,7 +19,7 @@ class GetJobRes {
   final String? state;
   final String country;
   final String company;
-  final bool hiring;
+  final bool isActive;
   final String description;
   final String salary;
   final String period;
@@ -44,7 +44,7 @@ class GetJobRes {
     this.state,
     required this.country,
     required this.company,
-    required this.hiring,
+    required this.isActive,
     required this.description,
     required this.salary,
     required this.period,
@@ -76,7 +76,7 @@ class GetJobRes {
       state: json['state'],
       country: json['country'] ?? '',
       company: json['company'] ?? '',
-      hiring: json['hiring'] ?? false,
+      isActive: json['isActive'] ?? false,
       description: json['description'] ?? '',
       salary: json['salary'] ?? '',
       period: json['period'] ?? '',
@@ -125,7 +125,7 @@ class GetJobRes {
     'state': state,
     'country': country,
     'company': company,
-    'hiring': hiring,
+    'isActive': isActive,
     'description': description,
     'salary': salary,
     'period': period,

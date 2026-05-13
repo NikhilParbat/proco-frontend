@@ -49,7 +49,7 @@ class Job {
     this.domain = '',
     this.opportunityType = '',
     this.imageUrl = '',
-    this.hiring = false,
+    this.isActive = false,
 
     this.skills = const [],
     this.requirements = const [],
@@ -88,7 +88,7 @@ class Job {
 
     imageUrl: json['imageUrl'] ?? '',
 
-    hiring: json['isActive'] ?? json['hiring'] ?? false,
+    isActive: json['isActive'] ?? json['isActive'] ?? false,
 
     skills: (json['skills'] as List?)?.map((e) => e.toString()).toList() ?? [],
 
@@ -129,7 +129,7 @@ class Job {
 
   final String imageUrl;
 
-  final bool hiring;
+  final bool isActive;
 
   final List<String> skills;
 

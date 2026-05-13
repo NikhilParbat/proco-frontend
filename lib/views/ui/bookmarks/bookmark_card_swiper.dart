@@ -268,7 +268,7 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
                     ),
 
                     // ── Hiring Badge ────────────────
-                    if (j.hiring)
+                    if (j.isActive)
                       Positioned(
                         top: 16.h,
                         right: 16.w,

@@ -703,12 +703,9 @@ class _IdentitySection extends StatelessWidget {
           init: state.username,
           onChanged: (v) => state.username = v,
         ),
-        _Field(
-          label: 'Bio',
+        _BioField(
           init: state.bio,
           onChanged: (v) => state.bio = v,
-          maxLines: 3,
-          hint: 'Tell the world about yourself…',
         ),
         _Field(
           label: 'City',
@@ -1066,6 +1063,121 @@ class _Field extends StatelessWidget {
             borderSide: const BorderSide(color: kThemeColor, width: 1.5),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Bio field with 250-word limit ─────────────────────────────────────────────
+class _BioField extends StatefulWidget {
+  const _BioField({required this.init, required this.onChanged});
+  final String init;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_BioField> createState() => _BioFieldState();
+}
+
+class _BioFieldState extends State<_BioField> {
+  late final TextEditingController _ctrl;
+  int _wordCount = 0;
+
+  static const int _maxWords = 250;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.init);
+    _wordCount = _countWords(widget.init);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  int _countWords(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return 0;
+    return trimmed.split(RegExp(r'\s+')).length;
+  }
+
+  void _onChanged(String value) {
+    final count = _countWords(value);
+    if (count > _maxWords) {
+      // Trim to 250 words
+      final words = value.trim().split(RegExp(r'\s+'));
+      final trimmed = words.take(_maxWords).join(' ');
+      _ctrl.value = TextEditingValue(
+        text: trimmed,
+        selection: TextSelection.collapsed(offset: trimmed.length),
+      );
+      setState(() => _wordCount = _maxWords);
+      widget.onChanged(trimmed);
+      return;
+    }
+    setState(() => _wordCount = count);
+    widget.onChanged(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final atLimit = _wordCount >= _maxWords;
+    return Padding(
+      padding: EdgeInsets.only(bottom: 14.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _ctrl,
+            onChanged: _onChanged,
+            maxLines: 5,
+            style: kSubTextStyle.copyWith(color: kDark, fontSize: 14.sp),
+            decoration: InputDecoration(
+              labelText: 'Bio',
+              hintText: 'Tell the world about yourself…',
+              labelStyle: kSmallTextStyle.copyWith(
+                color: kDarkGrey,
+                fontSize: 13.sp,
+              ),
+              hintStyle: kSmallTextStyle.copyWith(
+                color: const Color(0xFFBBBBBB),
+                fontSize: 13.sp,
+              ),
+              filled: true,
+              fillColor: kLight,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+                vertical: 14.h,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: const BorderSide(color: kLightGrey),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: const BorderSide(color: kLightGrey),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: const BorderSide(color: kThemeColor, width: 1.5),
+              ),
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '$_wordCount / $_maxWords words',
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 11.sp,
+                color: atLimit ? Colors.redAccent : kDarkGrey,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

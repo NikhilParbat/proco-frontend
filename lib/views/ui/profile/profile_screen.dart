@@ -226,13 +226,7 @@ class _AboutTab extends StatelessWidget {
     );
   }
 
-  String _composeBio() {
-    final parts = <String>[];
-    if (state.college.isNotEmpty) parts.add(state.college);
-    if (state.branch.isNotEmpty) parts.add(state.branch);
-    if (state.interests.isNotEmpty) parts.addAll(state.interests.take(3));
-    return parts.join(' · ');
-  }
+  String _composeBio() => state.bio;
 }
 
 class _AvatarWithBadge extends StatelessWidget {

@@ -15,7 +15,7 @@ class CreateJobsRequest {
     this.description = '',
     this.salary = '',
     this.period = '',
-    this.hiring = true,
+    this.isActive = true,
     this.contract = '',
     this.experienceLevel = '',
     this.fieldDegree = '',
@@ -36,7 +36,7 @@ class CreateJobsRequest {
   final String description;
   final String salary;
   final String period;
-  final bool hiring;
+  final bool isActive;
   final String contract;
   final String experienceLevel;
   final String fieldDegree;
@@ -59,7 +59,7 @@ class CreateJobsRequest {
     'description': description,
     'salary': salary,
     'period': period,
-    'isActive': hiring,
+    'isActive': isActive,
     'contract': contract,
     'experienceLevel': experienceLevel,
     'fieldDegree': fieldDegree,

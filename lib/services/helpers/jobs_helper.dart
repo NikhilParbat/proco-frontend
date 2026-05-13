@@ -355,7 +355,7 @@ class JobsHelper {
       request.fields['description'] = model.description;
       request.fields['salary'] = model.salary;
       request.fields['period'] = model.period;
-      request.fields['isActive'] = model.hiring.toString();
+      request.fields['isActive'] = model.isActive.toString();
       request.fields['contract'] = model.contract;
       request.fields['experienceLevel'] = model.experienceLevel;
       request.fields['fieldDegree'] = model.fieldDegree;
@@ -432,7 +432,7 @@ class JobsHelper {
       request.fields['description'] = model.description;
       request.fields['salary'] = model.salary;
       request.fields['period'] = model.period;
-      request.fields['isActive'] = model.hiring.toString();
+      request.fields['isActive'] = model.isActive.toString();
       request.fields['contract'] = model.contract;
       request.fields['experienceLevel'] = model.experienceLevel;
       request.fields['fieldDegree'] = model.fieldDegree;

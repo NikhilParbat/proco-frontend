@@ -73,7 +73,7 @@ class BookMarkTileWidget extends StatelessWidget {
                     ),
                   ),
                   // Hiring badge
-                  if (j.hiring)
+                  if (j.isActive)
                     Positioned(
                       top: 8,
                       left: 6,

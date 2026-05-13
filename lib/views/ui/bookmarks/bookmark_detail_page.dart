@@ -207,7 +207,7 @@ class _BookmarkDetailPageState extends State<BookmarkDetailPage> {
                         ),
                       ),
                     ),
-                    if (j.hiring)
+                    if (j.isActive)
                       Positioned(
                         top: 14.h,
                         right: 14.w,

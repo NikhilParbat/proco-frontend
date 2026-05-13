@@ -325,7 +325,7 @@ class _JobPageState extends State<JobPage> {
     );
   }
 
-  // ─── Pill badges: contract · hiring status ────────────────────────────────
+  // ─── Pill badges: contract · active status ────────────────────────────────
   Widget _buildBadgeRow(dynamic job) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -334,12 +334,12 @@ class _JobPageState extends State<JobPage> {
         children: [
           if (job.contract != null && job.contract!.isNotEmpty)
             _badge(Icons.article_outlined, job.contract!),
-          if (job.contract != null && job.contract!.isNotEmpty && job.hiring)
+          if (job.contract != null && job.contract!.isNotEmpty && job.isActive)
             SizedBox(width: 10.w),
-          if (job.hiring)
+          if (job.isActive)
             _badge(
               Icons.check_circle_outline_rounded,
-              'Actively Hiring',
+              'Active',
               highlight: true,
             ),
         ],

@@ -27,7 +27,7 @@ class JobsResponse {
   final String state;
   final String country;
   final String company;
-  final bool hiring;
+  final bool isActive;
   final String description;
   final String salary;
   final String period;
@@ -54,7 +54,7 @@ class JobsResponse {
     required this.state,
     required this.country,
     required this.company,
-    required this.hiring,
+    required this.isActive,
     required this.description,
     required this.salary,
     required this.period,
@@ -89,7 +89,7 @@ class JobsResponse {
       state: json['state'] ?? '',
       country: json['country'] ?? '',
       company: json['company'] ?? '',
-      hiring: json['isActive'] ?? json['hiring'] ?? true,
+      isActive: json['isActive'] ?? json['isActive'] ?? true,
       description: json['description'] ?? '',
       salary: json['salary'] ?? '',
       period: json['period'] ?? '',
@@ -162,7 +162,7 @@ class JobsResponse {
     'state': state,
     'country': country,
     'company': company,
-    'hiring': hiring,
+    'isActive': isActive,
     'description': description,
     'salary': salary,
     'period': period,

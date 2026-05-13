@@ -43,7 +43,7 @@ class _AddJobPageState extends State<AddJobPage> {
   double _jobLat = 0.0;
   double _jobLng = 0.0;
   bool _locationPicked = false;
-  bool _isHiring = true;
+  bool _isActive = true;
   String _currency = '₹';
   String _durationUnit = 'Months';
   List<String> selectedDomains = [];
@@ -84,7 +84,7 @@ class _AddJobPageState extends State<AddJobPage> {
         _durationValueController.text = j.period;
       }
       _contractController.text = j.contract;
-      _isHiring = j.hiring;
+      _isActive = j.isActive;
       _jobLat = j.latitude;
       _jobLng = j.longitude;
       _locationPicked = true;
@@ -144,8 +144,14 @@ class _AddJobPageState extends State<AddJobPage> {
   }
 
   // ─── Requirements ─────────────────────────────────────────────────────────
-  void _addRequirement() =>
-      setState(() => _reqControllers.add(TextEditingController()));
+  void _addRequirement() {
+    if (_reqControllers.isNotEmpty &&
+        _reqControllers.last.text.trim().isEmpty) {
+      _snack('Please fill in the current requirement before adding another.');
+      return;
+    }
+    setState(() => _reqControllers.add(TextEditingController()));
+  }
 
   void _removeRequirement(int index) => setState(() {
     _reqControllers[index].dispose();
@@ -250,7 +256,7 @@ class _AddJobPageState extends State<AddJobPage> {
       period: _durationValueController.text.trim().isEmpty
           ? ''
           : '${_durationValueController.text.trim()} $_durationUnit',
-      hiring: _isHiring,
+      isActive: _isActive,
       contract: _contractController.text.trim(),
       requirements: requirements,
       skills: _skills,
@@ -406,8 +412,8 @@ class _AddJobPageState extends State<AddJobPage> {
               SizedBox(height: 10.h),
               _toggleRow(
                 'Actively Accepting Responses',
-                _isHiring,
-                (v) => setState(() => _isHiring = v),
+                _isActive,
+                (v) => setState(() => _isActive = v),
               ),
               SizedBox(height: 24.h),
 

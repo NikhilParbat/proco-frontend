@@ -6,10 +6,9 @@ import 'package:proco/controllers/chat_provider.dart';
 import 'package:proco/models/request/messaging/send_message.dart';
 import 'package:proco/models/response/messaging/messaging_res.dart';
 import 'package:proco/services/config.dart' as cfg;
-import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/helpers/messaging_helper.dart';
 import 'package:proco/views/common/exports.dart';
-import 'package:proco/views/ui/interested_users/user_detail_page.dart';
+import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
@@ -529,17 +528,7 @@ class _ChatPageState extends State<ChatPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => UserDetailPage(
-          user: SwipedRes(
-            id: userId,
-            username: widget.title,
-            profile: widget.profile,
-            location: '',
-            skills: const [],
-          ),
-          jobId: '',
-          onMatch: () async {},
-        ),
+        builder: (_) => ProfilePage(viewUserId: userId),
       ),
     );
   }

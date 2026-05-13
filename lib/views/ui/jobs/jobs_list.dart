@@ -27,8 +27,8 @@ class _JobListPageState extends State<JobListPage> {
 
   final List<Map<String, String>> filters = [
     {'value': 'all', 'label': 'All'},
-    {'value': 'hiring', 'label': 'Hiring'},
-    {'value': 'closed', 'label': 'Closed'},
+    {'value': 'active', 'label': 'Active'},
+    {'value': 'closed', 'label': 'Inactive'},
   ];
 
   Widget _buildEmptyState() {
@@ -91,10 +91,10 @@ class _JobListPageState extends State<JobListPage> {
   void filterJobs() {
     if (selectedStatus == 'all') {
       filteredJobs = jobs;
-    } else if (selectedStatus == 'hiring') {
-      filteredJobs = jobs.where((job) => job.hiring).toList();
+    } else if (selectedStatus == 'active') {
+      filteredJobs = jobs.where((job) => job.isActive).toList();
     } else {
-      filteredJobs = jobs.where((job) => !job.hiring).toList();
+      filteredJobs = jobs.where((job) => !job.isActive).toList();
     }
   }
 
@@ -324,7 +324,7 @@ class JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isHiring = job.hiring;
+    final isActive = job.isActive;
 
     return GestureDetector(
       onTap: onViewMatches,
@@ -386,11 +386,11 @@ class JobCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: isHiring ? Colors.green : Colors.red,
+                        color: isActive ? Colors.green : Colors.red,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        isHiring ? 'Hiring' : 'Closed',
+                        isActive ? 'Active' : 'Inactive',
                         style: TextStyle(
                           fontSize: 9.sp,
                           color: Colors.white,
@@ -462,10 +462,10 @@ class JobCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        isHiring ? 'Hiring' : 'Closed',
+                        isActive ? 'Active' : 'Inactive',
                         style: TextStyle(
                           fontSize: 11.sp,
-                          color: isHiring
+                          color: isActive
                               ? Colors.green.shade400
                               : Colors.red.shade400,
                           fontWeight: FontWeight.w600,

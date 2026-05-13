@@ -335,7 +335,7 @@ class JobsNotifier extends ChangeNotifier {
 
     _displayJobs = cachedJobs.where((j) {
       return j.agentId != currentUserId &&
-          j.hiring == true &&
+          j.isActive == true &&
           !bookmarkedSet.contains(j.id);
     }).toList();
 
