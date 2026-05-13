@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
-import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proco/views/common/drawer/drawer_screen.dart';
-import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:proco/views/ui/bookmarks/bookmarks.dart';
@@ -16,7 +12,7 @@ import 'package:proco/views/ui/settings/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class MainScreen extends StatefulWidget {
-  final SharedPreferences? prefs; // ✅ Make it optional
+  final SharedPreferences? prefs;
 
   const MainScreen({super.key, this.prefs});
 
@@ -25,8 +21,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final ZoomDrawerController _drawerController = ZoomDrawerController();
-
   String _userId = '';
   bool _isInitialized = false;
   SharedPreferences? _prefs;
@@ -75,21 +69,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Consumer<ZoomNotifier>(
       builder: (context, zoomNotifier, child) {
-        return ZoomDrawer(
-          controller: _drawerController,
-          menuScreen: DrawerScreen(
-            controller: _drawerController,
-            indexSetter: (index) {
-              zoomNotifier.currentIndex = index;
-            },
-          ),
-          mainScreen: _buildCurrentScreen(zoomNotifier.currentIndex),
-          borderRadius: 30,
-          showShadow: true,
-          angle: 0,
-          slideWidth: 250,
-          menuBackgroundColor: kTeal,
-        );
+        return _buildCurrentScreen(zoomNotifier.currentIndex);
       },
     );
   }

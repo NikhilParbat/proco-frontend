@@ -56,16 +56,8 @@ class UserHelper {
       if (model.twitterUrl.isNotEmpty) request.fields['twitterUrl'] = model.twitterUrl;
       if (model.portfolioUrl.isNotEmpty) request.fields['portfolioUrl'] = model.portfolioUrl;
 
-      // 4. Attributes (Skills, Interests, Hobbies)
-      // These map to your normalized tables: profile_skills, interests, hobbies
-      request.fields['skills'] = jsonEncode(model.skills);
-      request.fields['interests'] = jsonEncode(model.interests);
-      request.fields['hobbies'] = jsonEncode(model.hobbies);
-
-      // 5. Professional Lists
-      request.fields['experiences'] = jsonEncode(model.experiences.map((e) => e.toJson()).toList());
-      request.fields['projects'] = jsonEncode(model.projects.map((p) => p.toJson()).toList());
-      request.fields['achievements'] = jsonEncode(model.achievements.map((a) => a.toJson()).toList());
+      // 4 & 5. Attributes + Professional Lists
+      _assignJsonListFields(request, model);
       request.fields['links'] = jsonEncode(model.links.map((l) => l.toJson()).toList());
 
       // 6. Image Upload
@@ -132,16 +124,8 @@ class UserHelper {
       request.fields['twitterUrl'] = model.twitterUrl;
       request.fields['portfolioUrl'] = model.portfolioUrl;
 
-      // 4. Attributes (Skills, Interests, Hobbies)
-      // We stringify these lists so they can be sent as fields
-      request.fields['skills'] = jsonEncode(model.skills);
-      request.fields['interests'] = jsonEncode(model.interests);
-      request.fields['hobbies'] = jsonEncode(model.hobbies);
-
-      // 5. Professional Lists
-      request.fields['experiences'] = jsonEncode(model.experiences.map((e) => e.toJson()).toList());
-      request.fields['projects'] = jsonEncode(model.projects.map((p) => p.toJson()).toList());
-      request.fields['achievements'] = jsonEncode(model.achievements.map((a) => a.toJson()).toList());
+      // 4 & 5. Attributes + Professional Lists
+      _assignJsonListFields(request, model);
 
       // 6. Image
       if (image != null) {
@@ -164,6 +148,15 @@ class UserHelper {
       return e.toString();
     }
   }
+  static void _assignJsonListFields(https.MultipartRequest request, ProfileUpdateReq model) {
+    request.fields['skills'] = jsonEncode(model.skills);
+    request.fields['interests'] = jsonEncode(model.interests);
+    request.fields['hobbies'] = jsonEncode(model.hobbies);
+    request.fields['experiences'] = jsonEncode(model.experiences.map((e) => e.toJson()).toList());
+    request.fields['projects'] = jsonEncode(model.projects.map((p) => p.toJson()).toList());
+    request.fields['achievements'] = jsonEncode(model.achievements.map((a) => a.toJson()).toList());
+  }
+
   static Future<ApiResponse<ProfileRes>> getProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();

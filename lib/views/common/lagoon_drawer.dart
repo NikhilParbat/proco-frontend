@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/ui/bookmarks/bookmarks.dart';
 import 'package:proco/views/ui/jobs/jobs_list.dart';
-import 'package:proco/views/ui/notification/notification_page.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:proco/views/ui/settings/settings_page.dart';
 import 'package:proco/views/ui/chat/chat_list.dart';

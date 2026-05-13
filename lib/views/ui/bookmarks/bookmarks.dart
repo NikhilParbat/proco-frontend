@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
+import 'package:proco/views/common/empty_state_widget.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/bookmarks/bookmark_card_swiper.dart';
@@ -413,63 +414,10 @@ class _BookMarkPageState extends State<BookMarkPage> {
   }
 
   Widget _buildEmpty() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30.w),
-
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-
-          children: [
-            Container(
-              width: 92.w,
-              height: 92.w,
-
-              decoration: BoxDecoration(
-                color: kThemeColor.withOpacity(0.10),
-
-                shape: BoxShape.circle,
-              ),
-
-              child: Icon(
-                Icons.bookmark_outline_rounded,
-                size: 42.w,
-                color: kThemeColor,
-              ),
-            ),
-
-            SizedBox(height: 20.h),
-
-            Text(
-              'No saved opportunities',
-
-              textAlign: TextAlign.center,
-
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-
-            SizedBox(height: 8.h),
-
-            Text(
-              'Swipe up on an opportunity card to save it and access it later here.',
-
-              textAlign: TextAlign.center,
-
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                color: Colors.grey.shade600,
-                height: 1.55,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return const EmptyStateWidget(
+      icon: Icons.bookmark_outline_rounded,
+      title: 'No saved opportunities',
+      subtitle: 'Swipe up on an opportunity card to save it and access it later here.',
     );
   }
 }

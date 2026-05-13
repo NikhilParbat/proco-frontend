@@ -6,6 +6,7 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
+import 'package:proco/views/common/swipe_overlay_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,12 +25,7 @@ class BookmarkCardSwiper extends StatefulWidget {
 }
 
 class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
-  static const Color _navy = Color(0xFF040326);
   static const Color _teal = Color(0xFF08979F);
-  static const Color _tealLt = Color(0xFF0BBFCA);
-  static const Color _orange = Color(0xFFf55631);
-  static const Color _red = Color(0xFFD23838);
-  static const Color _green = Color(0xFF089F20);
 
   late final CardSwiperController _controller;
   late List<AllBookmark> _bookmarks;
@@ -181,7 +177,7 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
             borderRadius: BorderRadius.circular(30.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -203,7 +199,7 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
                       fit: BoxFit.cover,
 
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: kThemeColor.withOpacity(0.08),
+                        color: kThemeColor.withValues(alpha: 0.08),
                         child: Icon(
                           Icons.work_outline_rounded,
                           color: kThemeColor,
@@ -220,7 +216,7 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withOpacity(0.55),
+                              Colors.black.withValues(alpha: 0.55),
                             ],
                             stops: const [0.55, 1],
                           ),
@@ -415,7 +411,7 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
                           ),
 
                           decoration: BoxDecoration(
-                            color: kThemeColor.withOpacity(0.08),
+                            color: kThemeColor.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20.r),
                           ),
 
@@ -453,63 +449,15 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
         ),
 
         // ── Swipe Overlay ─────────────────────────
-        if (liveDirection != null) _buildSwipeOverlay(liveDirection),
-      ],
-    );
-  }
-
-  // ─── Swipe overlay ────────────────────────────────────────────────────────
-  Widget _buildSwipeOverlay(CardSwiperDirection direction) {
-    final isLeft = direction == CardSwiperDirection.left;
-
-    final Color color = isLeft ? _red : _green;
-    final IconData icon = isLeft
-        ? Icons.bookmark_remove_rounded
-        : Icons.favorite_rounded;
-    final String label = isLeft ? 'REMOVE' : 'MATCH';
-    final Alignment alignment = isLeft ? Alignment.topLeft : Alignment.topRight;
-    final EdgeInsets padding = isLeft
-        ? EdgeInsets.only(top: 30.h, left: 22.w)
-        : EdgeInsets.only(top: 30.h, right: 22.w);
-
-    return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(28.r),
-          border: Border.all(color: color, width: 3),
-        ),
-        child: Align(
-          alignment: alignment,
-          child: Padding(
-            padding: padding,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, color: Colors.white, size: 18),
-                  SizedBox(width: 6.w),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15.sp,
-                      fontFamily: 'Poppins',
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        if (liveDirection != null)
+          SwipeOverlayWidget(
+            direction: liveDirection,
+            leftIcon: Icons.bookmark_remove_rounded,
+            leftLabel: 'REMOVE',
+            rightIcon: Icons.favorite_rounded,
+            rightLabel: 'MATCH',
           ),
-        ),
-      ),
+      ],
     );
   }
 
@@ -566,13 +514,13 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
 
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.10),
+              color: Colors.black.withValues(alpha: 0.10),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
 
             BoxShadow(
-              color: Colors.white.withOpacity(0.45),
+              color: Colors.white.withValues(alpha: 0.45),
               blurRadius: 2,
               offset: const Offset(0, -1),
             ),
@@ -635,22 +583,4 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
     );
   }
 
-  Widget _chip(String text, Color bg) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11.sp,
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Poppins',
-        ),
-      ),
-    );
-  }
 }

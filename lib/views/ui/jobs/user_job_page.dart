@@ -4,7 +4,7 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/app_bar.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
+import 'package:proco/views/common/status_filter_chip.dart';
 import 'package:proco/views/ui/jobs/add_job.dart';
 import 'package:proco/views/ui/jobs/matched_users.dart';
 import 'package:provider/provider.dart';
@@ -119,7 +119,7 @@ class _JobListingPageState extends State<JobListingPage> {
           ],
           child: Padding(
             padding: EdgeInsets.only(left: 0.010.sh),
-            child: const DrawerWidget(),
+            child: const SizedBox(),
           ),
         ),
       ),
@@ -162,53 +162,15 @@ class _JobListingPageState extends State<JobListingPage> {
                         // Filter chips
                         Row(
                           children: _filters.map((f) {
-                            final isSelected = selectedStatus == f['value'];
-                            return Padding(
-                              padding: EdgeInsets.only(left: 8.w),
-                              child: GestureDetector(
-                                onTap: () => setState(() {
-                                  selectedStatus = f['value']!;
-                                  filterJobs();
-                                }),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 14.w,
-                                    vertical: 7.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? _teal : Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? _teal
-                                          : Colors.grey.shade300,
-                                    ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: _teal.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ]
-                                        : [],
-                                  ),
-                                  child: Text(
-                                    f['label']!,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: kFontDMSans,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            return StatusFilterChip(
+                              label: f['label']!,
+                              isSelected: selectedStatus == f['value'],
+                              selectedColor: _teal,
+                              showShadow: true,
+                              onTap: () => setState(() {
+                                selectedStatus = f['value']!;
+                                filterJobs();
+                              }),
                             );
                           }).toList(),
                         ),

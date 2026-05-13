@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/auth_service.dart';
+import 'package:proco/services/snackbar_service.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
@@ -159,13 +160,7 @@ class LoginNotifier extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      Get.snackbar(
-        'Login Failed',
-        'An unexpected error occurred',
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.add_alert),
-      );
+      showErrorSnackbar('An unexpected error occurred', title: 'Login Failed');
 
       debugPrint('Login Error: $e');
     }
@@ -183,13 +178,7 @@ class LoginNotifier extends ChangeNotifier {
       if (userCredential == null) {
         _isLoading = false;
         notifyListeners();
-        Get.snackbar(
-          'Login Cancelled',
-          'Please try again',
-          colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert),
-        );
+        showErrorSnackbar('Please try again', title: 'Login Cancelled');
         return;
       }
 
@@ -197,13 +186,7 @@ class LoginNotifier extends ChangeNotifier {
       if (firebaseUser == null) {
         _isLoading = false;
         notifyListeners();
-        Get.snackbar(
-          'Authentication Error',
-          'Could not retrieve user information',
-          colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert),
-        );
+        showErrorSnackbar('Could not retrieve user information', title: 'Authentication Error');
         return;
       }
 
@@ -211,13 +194,7 @@ class LoginNotifier extends ChangeNotifier {
       if (idToken == null) {
         _isLoading = false;
         notifyListeners();
-        Get.snackbar(
-          'Authentication Error',
-          'Could not retrieve authentication token',
-          colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert),
-        );
+        showErrorSnackbar('Could not retrieve authentication token', title: 'Authentication Error');
         return;
       }
 
@@ -289,13 +266,7 @@ class LoginNotifier extends ChangeNotifier {
       notifyListeners();
       debugPrint('Google Sign-In Error: $e');
 
-      Get.snackbar(
-        'Login Failed',
-        'An unexpected error occurred',
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.add_alert),
-      );
+      showErrorSnackbar('An unexpected error occurred', title: 'Login Failed');
     }
   }
   // ─── Device Session Management (backend-backed) ───────────────────────────

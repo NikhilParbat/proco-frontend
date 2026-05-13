@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
+import 'package:proco/views/common/empty_state_widget.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -182,60 +182,10 @@ class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
   );
 
   Widget _buildEmpty() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30.w),
-
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icon Container
-            Container(
-              width: 92.w,
-              height: 92.w,
-
-              decoration: BoxDecoration(
-                color: kThemeColor.withOpacity(0.10),
-                shape: BoxShape.circle,
-              ),
-
-              child: Icon(Icons.groups_rounded, size: 42.w, color: kThemeColor),
-            ),
-
-            SizedBox(height: 20.h),
-
-            // Title
-            Text(
-              'No interested users yet',
-
-              textAlign: TextAlign.center,
-
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-
-            SizedBox(height: 8.h),
-
-            // Subtitle
-            Text(
-              'Once users show interest in this opportunity, they will appear here for you to connect with them.',
-
-              textAlign: TextAlign.center,
-
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                color: Colors.grey.shade600,
-                height: 1.55,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return const EmptyStateWidget(
+      icon: Icons.groups_rounded,
+      title: 'No interested users yet',
+      subtitle: 'Once users show interest in this opportunity, they will appear here for you to connect with them.',
     );
   }
 }

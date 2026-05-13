@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
+import 'package:proco/controllers/loading_mixin.dart';
 import 'package:proco/models/request/filters/create_filter.dart';
 import 'package:proco/models/response/filters/filter_response.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/helpers/filter_helper.dart';
+import 'package:proco/services/snackbar_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class FilterNotifier extends ChangeNotifier {
+class FilterNotifier extends ChangeNotifier with LoadingMixin {
   List<FilterResponse> filterList = [];
   GetFilterRes? filter;
   List<FilterResponse> userFilters = [];
-
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
 
   // ── Active filter (shown as chips on homepage) ──────────────────────────
   GetFilterRes? activeFilter;
@@ -63,13 +62,7 @@ class FilterNotifier extends ChangeNotifier {
     );
 
     if (!response.success) {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
+      showErrorSnackbar(response.message);
     }
 
     activeFilter = null;
@@ -90,26 +83,14 @@ class FilterNotifier extends ChangeNotifier {
   }
 
   Future<void> getFilters() async {
-    _isLoading = true;
-    notifyListeners();
-
-    final response = await FilterHelper.getFilters();
-
-    _isLoading = false;
-
-    if (response.success && response.data != null) {
-      filterList = response.data!;
-    } else {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
-    }
-
-    notifyListeners();
+    await runWithLoading(() async {
+      final response = await FilterHelper.getFilters();
+      if (response.success && response.data != null) {
+        filterList = response.data!;
+      } else {
+        showErrorSnackbar(response.message);
+      }
+    });
   }
 
   Future<void> getFilter(String agentId) async {
@@ -119,13 +100,7 @@ class FilterNotifier extends ChangeNotifier {
       filter = response.data;
       notifyListeners();
     } else {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
+      showErrorSnackbar(response.message);
     }
   }
 
@@ -146,13 +121,7 @@ class FilterNotifier extends ChangeNotifier {
       }
       return true;
     } else {
-      Get.snackbar(
-        'Error Saving Filter',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
+      showErrorSnackbar(response.message, title: 'Error Saving Filter');
       return false;
     }
   }
@@ -161,13 +130,7 @@ class FilterNotifier extends ChangeNotifier {
     final response = await FilterHelper.updateFilter(filterId, filterData);
 
     if (!response.success) {
-      Get.snackbar(
-        'Error Updating Filter',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
+      showErrorSnackbar(response.message, title: 'Error Updating Filter');
     }
   }
 
@@ -175,13 +138,7 @@ class FilterNotifier extends ChangeNotifier {
     final response = await FilterHelper.deleteFilter(filterId);
 
     if (!response.success) {
-      Get.snackbar(
-        'Error Deleting Filter',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
+      showErrorSnackbar(response.message, title: 'Error Deleting Filter');
     }
   }
 }

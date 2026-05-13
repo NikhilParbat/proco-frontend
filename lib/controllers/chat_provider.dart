@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/controllers/loading_mixin.dart';
 import 'package:proco/models/response/chat/get_chat.dart';
 import 'package:proco/services/helpers/chat_helper.dart';
+import 'package:proco/services/snackbar_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ChatNotifier extends ChangeNotifier {
+class ChatNotifier extends ChangeNotifier with LoadingMixin {
   List<GetChats> chats = [];
-  bool isLoading = false;
 
   List<String> _online = [];
   bool _typing = false;
@@ -63,33 +62,22 @@ class ChatNotifier extends ChangeNotifier {
 
   /// ================= LOAD CHATS =================
   Future<void> getChats() async {
-    isLoading = true;
-    notifyListeners();
+    await runWithLoading(() async {
+      // Show cached chats immediately while network refresh is in flight.
+      await _loadChatsFromCache();
 
-    // Show cached chats immediately while network refresh is in flight.
-    await _loadChatsFromCache();
+      final response = await ChatHelper.getConversations();
 
-    final response = await ChatHelper.getConversations();
-
-    isLoading = false;
-
-    if (response.success && response.data != null) {
-      chats = response.data!;
-      for (final c in chats) {
-        _localPinOverride[c.id] = c.isPinned;
+      if (response.success && response.data != null) {
+        chats = response.data!;
+        for (final c in chats) {
+          _localPinOverride[c.id] = c.isPinned;
+        }
+        await _saveChatsToCache();
+      } else {
+        showErrorSnackbar(response.message);
       }
-      await _saveChatsToCache();
-    } else {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
-    }
-
-    notifyListeners();
+    });
   }
 
   /// ================= GET USER ID =================
@@ -122,13 +110,7 @@ class ChatNotifier extends ChangeNotifier {
 
     final response = await ChatHelper.unmatchChat(chatId);
     if (!response.success) {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
+      showErrorSnackbar(response.message);
     }
   }
 
@@ -136,13 +118,7 @@ class ChatNotifier extends ChangeNotifier {
   Future<void> clearChat(String chatId) async {
     final response = await ChatHelper.clearChat(chatId);
     if (!response.success) {
-      Get.snackbar(
-        'Error',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-      );
+      showErrorSnackbar(response.message);
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
+import 'package:proco/views/common/swipe_overlay_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -330,60 +331,15 @@ class _BookmarkDetailPageState extends State<BookmarkDetailPage> {
             ],
           ),
         ),
-        if (liveDirection != null) _buildSwipeOverlay(liveDirection),
-      ],
-    );
-  }
-
-  // ─── Swipe overlay ────────────────────────────────────────────────────────
-  Widget _buildSwipeOverlay(CardSwiperDirection direction) {
-    final isLeft = direction == CardSwiperDirection.left;
-    final Color color = isLeft ? _red : _green;
-    final IconData icon = isLeft ? Icons.close_rounded : Icons.star_rounded;
-    final String label = isLeft ? 'PASS' : 'APPLY';
-    final Alignment alignment = isLeft ? Alignment.topLeft : Alignment.topRight;
-    final EdgeInsets padding = isLeft
-        ? EdgeInsets.only(top: 30.h, left: 22.w)
-        : EdgeInsets.only(top: 30.h, right: 22.w);
-
-    return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(28.r),
-          border: Border.all(color: color, width: 3),
-        ),
-        child: Align(
-          alignment: alignment,
-          child: Padding(
-            padding: padding,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, color: Colors.white, size: 18),
-                  SizedBox(width: 6.w),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15.sp,
-                      fontFamily: 'Poppins',
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        if (liveDirection != null)
+          SwipeOverlayWidget(
+            direction: liveDirection,
+            leftIcon: Icons.close_rounded,
+            leftLabel: 'PASS',
+            rightIcon: Icons.star_rounded,
+            rightLabel: 'APPLY',
           ),
-        ),
-      ),
+      ],
     );
   }
 

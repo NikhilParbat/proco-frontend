@@ -7,6 +7,7 @@ import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/common/loader.dart';
+import 'package:proco/views/common/status_filter_chip.dart';
 import 'package:proco/views/ui/jobs/add_job.dart';
 import 'package:proco/views/ui/jobs/matched_users.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +41,7 @@ class _JobListPageState extends State<JobListPage> {
             width: 90.w,
             height: 90.w,
             decoration: BoxDecoration(
-              color: kThemeColor.withOpacity(0.10),
+              color: kThemeColor.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -49,9 +50,7 @@ class _JobListPageState extends State<JobListPage> {
               color: kThemeColor,
             ),
           ),
-
           SizedBox(height: 18.h),
-
           Text(
             'No opportunities yet',
             style: TextStyle(
@@ -61,9 +60,7 @@ class _JobListPageState extends State<JobListPage> {
               fontFamily: kFontDMSans,
             ),
           ),
-
           SizedBox(height: 6.h),
-
           Text(
             'Tap the + button to create your first opportunity',
             textAlign: TextAlign.center,
@@ -169,45 +166,14 @@ class _JobListPageState extends State<JobListPage> {
 
                     Row(
                       children: filters.map((f) {
-                        final isSelected = selectedStatus == f['value'];
-
-                        return Padding(
-                          padding: EdgeInsets.only(left: 8.w),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedStatus = f['value']!;
-                                filterJobs();
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 14.w,
-                                vertical: 7.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected ? kThemeColor : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? kThemeColor
-                                      : Colors.grey.shade300,
-                                ),
-                              ),
-                              child: Text(
-                                f['label']!,
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: kFontDMSans,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.grey.shade600,
-                                ),
-                              ),
-                            ),
-                          ),
+                        return StatusFilterChip(
+                          label: f['label']!,
+                          isSelected: selectedStatus == f['value'],
+                          selectedColor: kThemeColor,
+                          onTap: () => setState(() {
+                            selectedStatus = f['value']!;
+                            filterJobs();
+                          }),
                         );
                       }).toList(),
                     ),

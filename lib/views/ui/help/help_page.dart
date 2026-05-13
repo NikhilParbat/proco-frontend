@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:proco/views/common/app_bar.dart';
-import 'package:proco/views/common/drawer/drawer_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HelpSupportPage extends StatefulWidget {
@@ -147,7 +146,7 @@ class _HelpSupportPageState extends State<HelpSupportPage>
           text: 'Help & Support',
           child: Padding(
             padding: EdgeInsets.only(left: 0.010.sh),
-            child: const DrawerWidget(),
+            child: const SizedBox(),
           ),
         ),
       ),

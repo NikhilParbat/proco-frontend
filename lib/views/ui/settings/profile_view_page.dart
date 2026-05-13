@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/settings_page_header.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String kPrefProfileViewChat = 'pref_profile_view_chat';
@@ -53,66 +54,10 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
             : ListView(
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
                 children: [
-                  // Back button
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 8.h),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.07),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.chevron_left,
-                                size: 18.sp, color: Colors.black87),
-                            SizedBox(width: 2.w),
-                            Text(
-                              'Back',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  SettingsPageHeader(
+                    title: 'Profile View',
+                    subtitle: 'Control who can view your profile and when.',
                   ),
-
-                  SizedBox(height: 20.h),
-
-                  Text(
-                    'Profile View',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    'Control who can view your profile and when.',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13.sp,
-                      color: Colors.black45,
-                      height: 1.45,
-                    ),
-                  ),
-
-                  SizedBox(height: 28.h),
 
                   // Toggleable
                   _ToggleTile(
@@ -127,24 +72,9 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
 
                   SizedBox(height: 24.h),
 
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.info_outline_rounded,
-                          size: 14.sp, color: Colors.black38),
-                      SizedBox(width: 6.w),
-                      Expanded(
-                        child: Text(
-                          'Changes apply immediately. The other person can only '
-                          'view your profile from chat if you have this enabled.',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 12.sp,
-                            color: Colors.black38,
-                            height: 1.45,
-                          ),
-                        ),
-                      ),
-                    ],
+                  SettingsInfoFooter(
+                    message: 'Changes apply immediately. The other person can only '
+                        'view your profile from chat if you have this enabled.',
                   ),
                 ],
               ),

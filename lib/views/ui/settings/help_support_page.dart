@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/settings_page_header.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HelpSupportPage extends StatelessWidget {
@@ -65,76 +66,10 @@ class HelpSupportPage extends StatelessWidget {
           children: [
             SizedBox(height: 16.h),
 
-            // ── Back Button ─────────────────────
-            Align(
-              alignment: Alignment.centerLeft,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.chevron_left,
-                        size: 18.sp,
-                        color: Colors.black87,
-                      ),
-
-                      SizedBox(width: 2.w),
-
-                      Text(
-                        'Back',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            SettingsPageHeader(
+              title: 'Help & Support',
+              subtitle: 'Find answers to common questions and contact support.',
             ),
-
-            SizedBox(height: 20.h),
-
-            // ── Title ───────────────────────────
-            Text(
-              'Help & Support',
-              style: GoogleFonts.montserrat(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-
-            SizedBox(height: 6.h),
-
-            Text(
-              'Find answers to common questions and contact support.',
-              style: GoogleFonts.dmSans(
-                fontSize: 13.sp,
-                color: Colors.black45,
-                height: 1.45,
-              ),
-            ),
-
-            SizedBox(height: 28.h),
 
             // ── FAQ Label ───────────────────────
             _sectionLabel('FREQUENTLY ASKED QUESTIONS'),

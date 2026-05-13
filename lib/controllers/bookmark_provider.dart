@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
+import 'package:proco/controllers/loading_mixin.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/services/helpers/book_helper.dart';
 import 'package:proco/services/helpers/jobs_helper.dart';
+import 'package:proco/services/snackbar_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class BookMarkNotifier extends ChangeNotifier {
+class BookMarkNotifier extends ChangeNotifier with LoadingMixin {
   // ── Local ID cache (persisted to SharedPreferences for offline checks) ──────
   List<String> _jobs = [];
   List<String> get jobs => _jobs;
 
   // ── Bookmark list (populated from backend) ───────────────────────────────────
   List<AllBookmark> bookmarks = [];
-
-  // ── Loading state ─────────────────────────────────────────────────────────
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
 
   BookMarkNotifier() {
     loadJobs();
@@ -63,13 +61,7 @@ class BookMarkNotifier extends ChangeNotifier {
         icon: const Icon(Icons.bookmark_add),
       );
     } else {
-      Get.snackbar(
-        'Failed to Add Bookmark',
-        response.message,
-        colorText: kLight,
-        backgroundColor: Colors.red,
-        icon: const Icon(Icons.bookmark_add),
-      );
+      showErrorSnackbar(response.message, title: 'Failed to Add Bookmark');
     }
   }
 
@@ -98,64 +90,38 @@ class BookMarkNotifier extends ChangeNotifier {
         icon: const Icon(Icons.bookmark_remove_outlined),
       );
     } else {
-      Get.snackbar(
-        'Failed to Delete Bookmark',
-        response.message,
-        colorText: kLight,
-        backgroundColor: Colors.red,
-        icon: const Icon(Icons.bookmark_remove_outlined),
-      );
+      showErrorSnackbar(response.message, title: 'Failed to Delete Bookmark');
     }
   }
 
   // ─── Get all bookmarks ─────────────────────────────────────────────────────
 
   Future<void> getBookMarks() async {
-    _isLoading = true;
-    notifyListeners();
+    await runWithLoading(() async {
+      try {
+        final response = await BookMarkHelper.getBookmarks();
 
-    try {
-      final response = await BookMarkHelper.getBookmarks();
+        if (response.success && response.data != null) {
+          bookmarks = response.data!;
 
-      if (response.success && response.data != null) {
-        bookmarks = response.data!;
+          // ✅ Sync local cache with active bookmarks
+          final activeIds = bookmarks
+              .map((b) => b.job.id)
+              .where((id) => id.isNotEmpty)
+              .toSet()
+              .toList();
 
-        // ✅ Sync local cache with active bookmarks
-        final activeIds = bookmarks
-            .map((b) => b.job.id)
-            .where((id) => id.isNotEmpty)
-            .toSet()
-            .toList();
-
-        final prefs = await SharedPreferences.getInstance();
-
-        _jobs = activeIds;
-
-        await prefs.setStringList('jobId', _jobs);
-      } else {
+          final prefs = await SharedPreferences.getInstance();
+          _jobs = activeIds;
+          await prefs.setStringList('jobId', _jobs);
+        } else {
+          bookmarks = [];
+          showErrorSnackbar(response.message, title: 'Failed to Load Bookmarks');
+        }
+      } catch (e) {
         bookmarks = [];
-
-        Get.snackbar(
-          'Failed to Load Bookmarks',
-          response.message,
-          colorText: kLight,
-          backgroundColor: Colors.red,
-          icon: const Icon(Icons.error_outline),
-        );
+        showErrorSnackbar(e.toString());
       }
-    } catch (e) {
-      bookmarks = [];
-
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        colorText: kLight,
-        backgroundColor: Colors.red,
-        icon: const Icon(Icons.error_outline),
-      );
-    }
-
-    _isLoading = false;
-    notifyListeners();
+    });
   }
 }

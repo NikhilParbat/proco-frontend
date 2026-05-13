@@ -6,6 +6,7 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/settings_page_header.dart';
 import 'package:provider/provider.dart';
 
 class AccountPage extends StatefulWidget {
@@ -112,76 +113,10 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             SizedBox(height: 16.h),
 
-            // ── Back Button ─────────────────────
-            Align(
-              alignment: Alignment.centerLeft,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.chevron_left,
-                        size: 18.sp,
-                        color: Colors.black87,
-                      ),
-
-                      SizedBox(width: 2.w),
-
-                      Text(
-                        'Back',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            SettingsPageHeader(
+              title: 'Account',
+              subtitle: 'Manage your Lagoon account settings and preferences.',
             ),
-
-            SizedBox(height: 20.h),
-
-            // ── Title ───────────────────────────
-            Text(
-              'Account',
-              style: GoogleFonts.montserrat(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-
-            SizedBox(height: 6.h),
-
-            Text(
-              'Manage your Lagoon account settings and preferences.',
-              style: GoogleFonts.dmSans(
-                fontSize: 13.sp,
-                color: Colors.black45,
-                height: 1.45,
-              ),
-            ),
-
-            SizedBox(height: 28.h),
 
             // ── Danger Zone Label ───────────────
             _sectionLabel('DANGER ZONE'),
@@ -279,28 +214,8 @@ class _AccountPageState extends State<AccountPage> {
             SizedBox(height: 24.h),
 
             // ── Footer Info ────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 14.sp,
-                  color: Colors.black38,
-                ),
-
-                SizedBox(width: 6.w),
-
-                Expanded(
-                  child: Text(
-                    'Deleting your account is permanent and cannot be undone.',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 12.sp,
-                      color: Colors.black38,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-              ],
+            SettingsInfoFooter(
+              message: 'Deleting your account is permanent and cannot be undone.',
             ),
 
             SizedBox(height: 24.h),
