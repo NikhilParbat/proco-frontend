@@ -89,7 +89,7 @@ class JobsResponse {
       state: json['state'] ?? '',
       country: json['country'] ?? '',
       company: json['company'] ?? '',
-      hiring: json['hiring'] ?? false,
+      hiring: json['isActive'] ?? json['hiring'] ?? true,
       description: json['description'] ?? '',
       salary: json['salary'] ?? '',
       period: json['period'] ?? '',

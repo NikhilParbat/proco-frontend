@@ -33,7 +33,7 @@ class _AddJobPageState extends State<AddJobPage> {
   final _companyController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _salaryController = TextEditingController();
-  final _periodController = TextEditingController();
+  final _durationValueController = TextEditingController();
   final _contractController = TextEditingController();
   final _customDomainController = TextEditingController();
   final _skillInputController = TextEditingController();
@@ -44,8 +44,10 @@ class _AddJobPageState extends State<AddJobPage> {
   double _jobLng = 0.0;
   bool _locationPicked = false;
   bool _isHiring = true;
+  String _currency = '₹';
+  String _durationUnit = 'Months';
   List<String> selectedDomains = [];
-  List<String> selectedOpportunityTypes = [];
+  String? _selectedOpportunityType;
   List<String> _skills = [];
 
   bool get _isEditMode => widget.job != null;
@@ -61,8 +63,26 @@ class _AddJobPageState extends State<AddJobPage> {
       _titleController.text = j.title;
       _companyController.text = j.company;
       _descriptionController.text = j.description;
-      _salaryController.text = j.salary;
-      _periodController.text = j.period;
+      // Parse stored salary — strip leading currency symbol if present
+      final rawSalary = j.salary;
+      if (rawSalary.startsWith('\$')) {
+        _currency = '\$';
+        _salaryController.text = rawSalary.substring(1);
+      } else if (rawSalary.startsWith('₹')) {
+        _currency = '₹';
+        _salaryController.text = rawSalary.substring(1);
+      } else {
+        _salaryController.text = rawSalary;
+      }
+
+      // Parse stored period — split "3 Months" → value + unit
+      final parts = j.period.trim().split(RegExp(r'\s+'));
+      if (parts.length >= 2 && ['Days', 'Months', 'Years'].contains(parts[1])) {
+        _durationValueController.text = parts[0];
+        _durationUnit = parts[1];
+      } else {
+        _durationValueController.text = j.period;
+      }
       _contractController.text = j.contract;
       _isHiring = j.hiring;
       _jobLat = j.latitude;
@@ -99,7 +119,7 @@ class _AddJobPageState extends State<AddJobPage> {
       }
 
       if (kOpportunityTypes.contains(j.opportunityType)) {
-        selectedOpportunityTypes = [j.opportunityType];
+        _selectedOpportunityType = j.opportunityType;
       }
     } else {
       _reqControllers.add(TextEditingController());
@@ -113,7 +133,7 @@ class _AddJobPageState extends State<AddJobPage> {
     _companyController.dispose();
     _descriptionController.dispose();
     _salaryController.dispose();
-    _periodController.dispose();
+    _durationValueController.dispose();
     _contractController.dispose();
     _customDomainController.dispose();
     _skillInputController.dispose();
@@ -136,12 +156,15 @@ class _AddJobPageState extends State<AddJobPage> {
   // ─── Skills ───────────────────────────────────────────────────────────────
   void _addSkill(String skill) {
     final s = skill.trim();
-    if (s.isNotEmpty && !_skills.contains(s)) {
-      setState(() {
-        _skills.add(s);
-        _skillInputController.clear();
-      });
+    if (s.isEmpty || _skills.contains(s)) return;
+    if (_skills.length >= 9) {
+      _snack('Maximum 9 skills allowed.');
+      return;
     }
+    setState(() {
+      _skills.add(s);
+      _skillInputController.clear();
+    });
   }
 
   void _removeSkill(int i) => setState(() => _skills.removeAt(i));
@@ -170,7 +193,7 @@ class _AddJobPageState extends State<AddJobPage> {
     JobsNotifier notifier,
     ImageNotifier imageNotifier,
   ) async {
-    if (selectedDomains.isEmpty || selectedOpportunityTypes.isEmpty) {
+    if (selectedDomains.isEmpty || _selectedOpportunityType == null) {
       _snack('Please select a domain and opportunity type.');
       return;
     }
@@ -212,7 +235,7 @@ class _AddJobPageState extends State<AddJobPage> {
     final jobData = CreateJobsRequest(
       agentId: userId,
       domain: effectiveDomain,
-      opportunityType: selectedOpportunityTypes.join(', '),
+      opportunityType: _selectedOpportunityType ?? '',
       title: _titleController.text.trim(),
       city: _locationController.text.trim().isNotEmpty
           ? _locationController.text.trim()
@@ -221,8 +244,12 @@ class _AddJobPageState extends State<AddJobPage> {
       longitude: _jobLng,
       company: _companyController.text.trim(),
       description: _descriptionController.text.trim(),
-      salary: _salaryController.text.trim(),
-      period: _periodController.text.trim(),
+      salary: _salaryController.text.trim().isEmpty
+          ? ''
+          : '$_currency${_salaryController.text.trim()}',
+      period: _durationValueController.text.trim().isEmpty
+          ? ''
+          : '${_durationValueController.text.trim()} $_durationUnit',
       hiring: _isHiring,
       contract: _contractController.text.trim(),
       requirements: requirements,
@@ -397,26 +424,127 @@ class _AddJobPageState extends State<AddJobPage> {
               SizedBox(height: 14.h),
               Text('Opportunity Type', style: _labelStyle()),
               SizedBox(height: 8.h),
-              _opportunityTypeChips(),
+              _opportunityTypeSelector(),
               SizedBox(height: 24.h),
 
               // ── COMPENSATION ──────────────────────────────────────────────
               _sectionLabel('COMPENSATION'),
               SizedBox(height: 10.h),
+
+              // Stipend: [₹/$] + [amount — numbers only]
+              Text('Stipend', style: _labelStyle()),
+              SizedBox(height: 8.h),
               Row(
                 children: [
-                  Expanded(
-                    child: _field(
-                      _salaryController,
-                      hint: 'Salary / Reward',
-                      keyboardType: TextInputType.number,
+                  // Currency selector
+                  Container(
+                    height: 56.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: const Color(0xFFD2D6DE)),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _currency,
+                        items: const [
+                          DropdownMenuItem(value: '₹', child: Text('₹  INR')),
+                          DropdownMenuItem(value: '\$', child: Text('\$  USD')),
+                        ],
+                        style: TextStyle(
+                          fontFamily: kFontDMSans,
+                          fontSize: 15.sp,
+                          color: const Color(0xFF1A1A2E),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(14.r),
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 18.sp,
+                          color: const Color(0xFF9EA4B0),
+                        ),
+                        onChanged: (v) => setState(() => _currency = v!),
+                      ),
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  Expanded(child: _field(_periodController, hint: 'Period')),
+                  // Amount — digits only
+                  Expanded(
+                    child: _field(
+                      _salaryController,
+                      hint: 'Amount',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              SizedBox(height: 10.h),
+
+              SizedBox(height: 14.h),
+
+              // Duration: [number] + [Days / Months / Years]
+              Text('Duration', style: _labelStyle()),
+              SizedBox(height: 8.h),
+              Row(
+                children: [
+                  // Numeric input
+                  SizedBox(
+                    width: 90.w,
+                    child: _field(
+                      _durationValueController,
+                      hint: '0',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  // Unit dropdown
+                  Expanded(
+                    child: Container(
+                      height: 56.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: const Color(0xFFD2D6DE)),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _durationUnit,
+                          isExpanded: true,
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(14.r),
+                          style: TextStyle(
+                            fontFamily: kFontDMSans,
+                            fontSize: 15.sp,
+                            color: const Color(0xFF1A1A2E),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          icon: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 18.sp,
+                            color: const Color(0xFF9EA4B0),
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'Days', child: Text('Days')),
+                            DropdownMenuItem(value: 'Months', child: Text('Months')),
+                            DropdownMenuItem(value: 'Years', child: Text('Years')),
+                          ],
+                          onChanged: (v) => setState(() => _durationUnit = v!),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 14.h),
               _field(_contractController, hint: 'Contract type'),
               SizedBox(height: 24.h),
 
@@ -763,8 +891,10 @@ class _AddJobPageState extends State<AddJobPage> {
             setState(() {
               if (selected) {
                 selectedDomains.remove(d);
-              } else {
+              } else if (selectedDomains.length < 3) {
                 selectedDomains.add(d);
+              } else {
+                _snack('Maximum 3 domains allowed.');
               }
             });
           },
@@ -775,9 +905,7 @@ class _AddJobPageState extends State<AddJobPage> {
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
 
             decoration: BoxDecoration(
-              color: selected
-                  ? kThemeColor.withValues(alpha: 0.10)
-                  : Colors.white,
+              color: selected ? kThemeColor : Colors.white,
 
               borderRadius: BorderRadius.circular(24.r),
 
@@ -791,7 +919,7 @@ class _AddJobPageState extends State<AddJobPage> {
               boxShadow: selected
                   ? [
                       BoxShadow(
-                        color: kThemeColor.withValues(alpha: 0.12),
+                        color: kThemeColor.withValues(alpha: 0.25),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -804,7 +932,7 @@ class _AddJobPageState extends State<AddJobPage> {
               style: TextStyle(
                 fontFamily: kFontDMSans,
                 fontSize: 13.sp,
-                color: selected ? kThemeColor : const Color(0xFF444444),
+                color: selected ? Colors.white : const Color(0xFF444444),
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
@@ -814,62 +942,44 @@ class _AddJobPageState extends State<AddJobPage> {
     );
   }
 
-  // ─── Opportunity type chips ───────────────────────────────────────────────
-  Widget _opportunityTypeChips() {
+  // ─── Opportunity type selector (single-select circular chips) ───────────────
+  Widget _opportunityTypeSelector() {
     return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
+      spacing: 10.w,
+      runSpacing: 10.h,
       children: kOpportunityTypes.map((type) {
-        final selected = selectedOpportunityTypes.contains(type);
-
+        final isSelected = _selectedOpportunityType == type;
         return GestureDetector(
-          onTap: () {
-            setState(() {
-              if (selected) {
-                selectedOpportunityTypes.remove(type);
-              } else {
-                selectedOpportunityTypes.add(type);
-              }
-            });
-          },
-
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-
+          onTap: () => setState(() => _selectedOpportunityType = type),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
             decoration: BoxDecoration(
-              color: selected
-                  ? kThemeColor.withValues(alpha: 0.10)
-                  : Colors.white,
-
-              borderRadius: BorderRadius.circular(24.r),
-
+              color: isSelected ? kThemeColor : Colors.white,
+              borderRadius: BorderRadius.circular(50.r),
               border: Border.all(
-                color: selected
-                    ? kThemeColor
-                    : Colors.black.withValues(alpha: 0.06),
-                width: selected ? 1.4 : 1,
+                color: isSelected ? kThemeColor : const Color(0xFFD2D6DE),
+                width: isSelected ? 1.4 : 1,
               ),
-
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: kThemeColor.withValues(alpha: 0.12),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : [],
             ),
-
-            child: Text(
-              type,
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                color: selected ? kThemeColor : const Color(0xFF444444),
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  kOpportunityIcons[type] ?? Icons.work_outline,
+                  size: 15.sp,
+                  color: isSelected ? Colors.white : const Color(0xFF9EA4B0),
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  type,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : const Color(0xFF1A1A2E),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -937,15 +1047,18 @@ class _AddJobPageState extends State<AddJobPage> {
               Expanded(
                 child: TextField(
                   controller: _skillInputController,
+                  enabled: _skills.length < 9,
                   style: TextStyle(
                     fontFamily: kFontDMSans,
                     fontSize: 14.sp,
                     color: _textDark,
                   ),
                   decoration: InputDecoration(
-                    hintText: _skills.isEmpty
-                        ? 'Add a skill...'
-                        : 'Add another skill...',
+                    hintText: _skills.length >= 9
+                        ? 'Max 9 skills reached'
+                        : _skills.isEmpty
+                            ? 'Add a skill...'
+                            : 'Add another skill...',
                     hintStyle: TextStyle(
                       fontFamily: kFontDMSans,
                       fontSize: 13.sp,
@@ -959,15 +1072,27 @@ class _AddJobPageState extends State<AddJobPage> {
                 ),
               ),
               SizedBox(width: 8.w),
+              Text(
+                '${_skills.length}/9',
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 11.sp,
+                  color: _skills.length >= 9 ? Colors.redAccent : _textGrey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(width: 8.w),
               GestureDetector(
-                onTap: () => _addSkill(_skillInputController.text),
+                onTap: _skills.length < 9
+                    ? () => _addSkill(_skillInputController.text)
+                    : null,
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 12.w,
                     vertical: 5.h,
                   ),
                   decoration: BoxDecoration(
-                    color: kThemeColor,
+                    color: _skills.length < 9 ? kThemeColor : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
@@ -975,7 +1100,7 @@ class _AddJobPageState extends State<AddJobPage> {
                     style: TextStyle(
                       fontFamily: kFontDMSans,
                       fontSize: 12.sp,
-                      color: Colors.white,
+                      color: _skills.length < 9 ? Colors.white : Colors.grey,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

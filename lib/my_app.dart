@@ -35,8 +35,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _showAppSplash = true;
-
   @override
   void initState() {
     super.initState();
@@ -44,28 +42,24 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleStartup() async {
-    // Remove Native Splash immediately so the app can draw
     FlutterNativeSplash.remove();
-
-    // Keep custom splash for a moment for a smooth transition
     await Future.delayed(const Duration(milliseconds: 1500));
     if (mounted) {
-      setState(() => _showAppSplash = false);
+      Get.offAll(
+        () => _home,
+        transition: Transition.fade,
+        duration: const Duration(milliseconds: 300),
+      );
     }
   }
 
   Widget get _home {
-    // 1. If not logged in, go directly to Login
     if (!widget.isLoggedIn) {
       return const LoginPage(drawer: false);
     }
-
-    // 2. If logged in but profile onboarding is incomplete
     if (!widget.onboardingComplete) {
       return OnboardingFlow(initialPage: widget.onboardingPage);
     }
-
-    // 3. Fully logged in and onboarded
     return MainScreen(prefs: widget.prefs);
   }
 
@@ -84,7 +78,7 @@ class _MyAppState extends State<MyApp> {
             iconTheme: const IconThemeData(color: kDark),
             primarySwatch: Colors.grey,
           ),
-          home: _showAppSplash ? const _BrandSplashScreen() : _home,
+          home: const _BrandSplashScreen(),
         );
       },
     );

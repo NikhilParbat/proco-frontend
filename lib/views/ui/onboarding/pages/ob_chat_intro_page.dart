@@ -348,6 +348,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     } else if (_step == 1) {
       provider.institution = _collegeCtrl.text.trim();
       provider.branch = _degree;
+      provider.classOf = _gradYear;
     } else if (_step == 2) {
       provider.skills = List.from(_skills);
     }
@@ -448,22 +449,21 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         }
         _advance(userSummary: _skills.join(', '));
 
+
       case 3:
-        _finishLocationStep(enabled: false);
+        _finishLocationStep();
     }
   }
 
   // ── Location choice ────────────────────────────────────────────────────────
 
-  void _finishLocationStep({required bool enabled}) {
-    _advance(
-      userSummary: enabled
-          ? (_selectedLocationLabel?.trim().isNotEmpty == true
-                ? _selectedLocationLabel!
-                : 'Location added')
-          : 'Skipped location for now',
-      skipped: !enabled,
-    );
+  void _finishLocationStep() {
+    final label = _selectedLocationLabel?.trim() ?? '';
+    if (label.isEmpty) {
+      _snack('Location required', 'Please select your location before continuing.');
+      return;
+    }
+    _advance(userSummary: label);
   }
 
   Future<void> _onLocationSearchChanged(String query) async {
@@ -723,7 +723,32 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
                 opacity: _transitioning ? 0.45 : 1.0,
                 child: _step == 3
                     ? const SizedBox.shrink()
-                    : _buildContinueButton(),
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildContinueButton(),
+                          if (_step == 2) ...[
+                            SizedBox(height: 6.h),
+                            GestureDetector(
+                              onTap: () {
+                                context.read<OnboardingFlowProvider>().skills = [];
+                                _advance(userSummary: 'Skipped');
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 6.h),
+                                child: Text(
+                                  'Skip for now',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
               ),
             ],
           ),
@@ -1040,9 +1065,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
           width: double.infinity,
           height: 48.h,
           child: ElevatedButton(
-            onPressed: hasSelectedLocation
-                ? () => _finishLocationStep(enabled: true)
-                : null,
+            onPressed: hasSelectedLocation ? _finishLocationStep : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: kThemeColor,
               disabledBackgroundColor: kThemeColor.withValues(alpha: 0.35),
@@ -1057,20 +1080,6 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Center(
-          child: TextButton(
-            onPressed: () => _finishLocationStep(enabled: false),
-            child: Text(
-              'Skip for now',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
               ),
             ),

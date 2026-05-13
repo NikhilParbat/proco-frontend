@@ -84,7 +84,7 @@ class _JobListingPageState extends State<JobListingPage> {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const AddJobPage()),
-                ),
+                ).then((_) => loadJobs()),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 14.w,
@@ -372,11 +372,11 @@ class JobCard extends StatelessWidget {
       onTap: onViewMatches,
       child: Container(
         decoration: BoxDecoration(
-          color: _navy,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: _navy.withValues(alpha: 0.3),
+              color: Colors.grey.withValues(alpha: 0.25),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -413,7 +413,7 @@ class JobCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            _navy.withValues(alpha: 0.7),
+                            Colors.white.withValues(alpha: 0.55),
                           ],
                           stops: const [0.5, 1.0],
                         ),
@@ -446,38 +446,31 @@ class JobCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Matched users count badge
+                  // Edit pen button — top right
                   Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _teal.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.people_outline_rounded,
-                            color: Colors.white,
-                            size: 10,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${job.matchedUsers.length}',
-                            style: TextStyle(
-                              fontSize: 9.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: kFontDMSans,
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: onEdit,
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.edit_rounded,
+                          size: 15,
+                          color: _teal,
+                        ),
                       ),
                     ),
                   ),
@@ -498,7 +491,7 @@ class JobCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: Colors.white,
+                      color: _navy,
                       fontWeight: FontWeight.w700,
                       fontFamily: kFontDMSans,
                       height: 1.2,
@@ -514,8 +507,8 @@ class JobCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: isHiring
-                              ? Colors.green.shade400
-                              : Colors.red.shade400,
+                              ? Colors.green.shade600
+                              : Colors.red.shade600,
                           fontWeight: FontWeight.w600,
                           fontFamily: kFontDMSans,
                         ),

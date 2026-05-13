@@ -705,7 +705,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                         SizedBox(height: 12.h),
                       ],
 
-                      // First 3 skills on front face
+                      // First 4 skills on front face
                       if (job.skills.isNotEmpty) ...[
                         Row(
                           children: [
@@ -731,7 +731,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            if (job.skills.length > 3) ...[
+                            if (job.skills.length > 4) ...[
                               const Spacer(),
                               Text(
                                 'Tap card to see more',
@@ -748,7 +748,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                           spacing: 8.w,
                           runSpacing: 6.h,
                           children: job.skills
-                              .take(3)
+                              .take(4)
                               .map(
                                 (skill) => Container(
                                   padding: EdgeInsets.symmetric(
@@ -898,8 +898,8 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                       // Info boxes: Duration, Stipend, Experience, Field/Degree, Language, Additional
                       _buildInfoBoxGrid(job),
 
-                      // Remaining skills (4th onwards)
-                      if (job.skills.length > 3) ...[
+                      // Remaining skills (5th onwards)
+                      if (job.skills.length > 4) ...[
                         SizedBox(height: 14.h),
                         const Divider(height: 1, color: Color(0xFFEEEEEE)),
                         SizedBox(height: 12.h),
@@ -916,7 +916,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                           spacing: 8.w,
                           runSpacing: 6.h,
                           children: job.skills
-                              .skip(3)
+                              .skip(4)
                               .map(
                                 (skill) => Container(
                                   padding: EdgeInsets.symmetric(

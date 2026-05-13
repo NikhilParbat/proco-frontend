@@ -59,7 +59,7 @@ class CreateJobsRequest {
     'description': description,
     'salary': salary,
     'period': period,
-    'hiring': hiring,
+    'isActive': hiring,
     'contract': contract,
     'experienceLevel': experienceLevel,
     'fieldDegree': fieldDegree,

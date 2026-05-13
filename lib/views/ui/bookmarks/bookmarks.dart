@@ -224,7 +224,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
 
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.grey.withOpacity(0.22),
 
                                 blurRadius: 14,
 

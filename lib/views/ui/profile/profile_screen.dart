@@ -364,6 +364,7 @@ class _PersonalTab extends StatelessWidget {
         state.classOf.isNotEmpty || state.cgpa.isNotEmpty;
     final hasWorkStyle = state.workStyle.isNotEmpty;
     final hasCommunicationStyle = state.communicationStyle.isNotEmpty;
+    final hasSkills = state.skills.isNotEmpty;
     final hasInterests = state.interests.isNotEmpty || state.hobbies.isNotEmpty;
 
     return SingleChildScrollView(
@@ -424,6 +425,16 @@ class _PersonalTab extends StatelessWidget {
                     ),
                   ),
               ],
+            ),
+          ],
+          if (hasSkills) ...[
+            SizedBox(height: 24.h),
+            const _CapLabel('SKILLS'),
+            SizedBox(height: 12.h),
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 8.h,
+              children: state.skills.map((s) => _OutlineChip(label: s)).toList(),
             ),
           ],
           if (hasInterests) ...[

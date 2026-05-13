@@ -88,7 +88,7 @@ class Job {
 
     imageUrl: json['imageUrl'] ?? '',
 
-    hiring: json['hiring'] ?? false,
+    hiring: json['isActive'] ?? json['hiring'] ?? false,
 
     skills: (json['skills'] as List?)?.map((e) => e.toString()).toList() ?? [],
 

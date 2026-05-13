@@ -45,6 +45,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
   String displayAddress = '';
   String institution = '';
   String branch = '';
+  String classOf = '';
   List<String> skills = [];
 
   bool get hasLocation => latitude != 0.0 || longitude != 0.0;
@@ -116,6 +117,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
         userType: role,
         college: institution,
         branch: branch,
+        classOf: classOf,
         gender: gender,
         latitude: latitude,
         longitude: longitude,
