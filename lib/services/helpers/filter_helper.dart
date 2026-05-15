@@ -27,7 +27,10 @@ class FilterHelper {
       final response = await client.get(url, headers: headers);
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
 
       if (response.statusCode == 200) {
@@ -38,7 +41,10 @@ class FilterHelper {
         );
       } else {
         final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to get filters');
+        return ApiResponse(
+          success: false,
+          message: body['message'] ?? 'Failed to get filters',
+        );
       }
     } catch (e) {
       debugPrint('FilterHelper.getFilters error: $e');
@@ -53,12 +59,15 @@ class FilterHelper {
       final url = Config.url('${Config.filters}/$agentId');
       final response = await client.get(url, headers: headers);
 
-      debugPrint('getFilter url: $url');
-      debugPrint('getFilter status: ${response.statusCode}');
-      debugPrint('getFilter body: ${response.body}');
+      // debugPrint('getFilter url: $url');
+      // debugPrint('getFilter status: ${response.statusCode}');
+      // debugPrint('getFilter body: ${response.body}');
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
 
       if (response.statusCode == 200) {
@@ -71,7 +80,10 @@ class FilterHelper {
         return ApiResponse(success: false, message: 'No filter found');
       } else {
         final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to get filter');
+        return ApiResponse(
+          success: false,
+          message: body['message'] ?? 'Failed to get filter',
+        );
       }
     } catch (e) {
       debugPrint('FilterHelper.getFilter error: $e');
@@ -80,7 +92,9 @@ class FilterHelper {
   }
 
   // POST /api/filters — create or upsert filter
-  static Future<ApiResponse<GetFilterRes>> createFilter(CreateFilterRequest model) async {
+  static Future<ApiResponse<GetFilterRes>> createFilter(
+    CreateFilterRequest model,
+  ) async {
     try {
       final headers = await _authHeaders();
       final url = Config.url(Config.filters);
@@ -91,7 +105,10 @@ class FilterHelper {
       );
 
       if (response.body.isEmpty) {
-        return ApiResponse(success: false, message: 'Server is starting up, please try again');
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -102,7 +119,10 @@ class FilterHelper {
         );
       } else {
         final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to save filter');
+        return ApiResponse(
+          success: false,
+          message: body['message'] ?? 'Failed to save filter',
+        );
       }
     } catch (e) {
       debugPrint('FilterHelper.createFilter error: $e');
@@ -125,10 +145,16 @@ class FilterHelper {
       );
 
       if (response.statusCode == 200) {
-        return ApiResponse(success: true, message: 'Filter updated successfully');
+        return ApiResponse(
+          success: true,
+          message: 'Filter updated successfully',
+        );
       } else {
         final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to update filter');
+        return ApiResponse(
+          success: false,
+          message: body['message'] ?? 'Failed to update filter',
+        );
       }
     } catch (e) {
       debugPrint('FilterHelper.updateFilter error: $e');
@@ -144,10 +170,16 @@ class FilterHelper {
       final response = await client.delete(url, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        return ApiResponse(success: true, message: 'Filter deleted successfully');
+        return ApiResponse(
+          success: true,
+          message: 'Filter deleted successfully',
+        );
       } else {
         final body = jsonDecode(response.body);
-        return ApiResponse(success: false, message: body['message'] ?? 'Failed to delete filter');
+        return ApiResponse(
+          success: false,
+          message: body['message'] ?? 'Failed to delete filter',
+        );
       }
     } catch (e) {
       debugPrint('FilterHelper.deleteFilter error: $e');

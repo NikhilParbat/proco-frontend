@@ -8,6 +8,7 @@ import 'package:proco/services/config.dart';
 import 'package:proco/views/ui/settings/notifications_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/services/notification_background.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class NotificationItem {
   final String title;
@@ -25,12 +26,12 @@ class NotificationItem {
   });
 
   NotificationItem copyWith({bool? isRead}) => NotificationItem(
-        title: title,
-        body: body,
-        time: time,
-        data: data,
-        isRead: isRead ?? this.isRead,
-      );
+    title: title,
+    body: body,
+    time: time,
+    data: data,
+    isRead: isRead ?? this.isRead,
+  );
 }
 
 class NotificationHelper {
@@ -63,76 +64,115 @@ class NotificationHelper {
   }
 
   static Future<void> initialize(String userId, String authToken) async {
+    // Prevent duplicate initialization
     if (_initialized) return;
 
-    final messaging = FirebaseMessaging.instance;
-
-    // 🔥 Enable Firebase Messaging ONLY when needed
-    await messaging.setAutoInitEnabled(true);
-
-    // 🔥 Setup background handler lazily
-    _setupBackgroundHandler();
-
-    // Request OS permission
-    final settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.denied) return;
-
-    // Get token
-    final token = await messaging.getToken();
-    if (token != null) {
-      await _sendTokenToBackend(token, authToken);
+    // 🔥 Firebase protection
+    if (Firebase.apps.isEmpty) {
+      debugPrint('❌ Firebase not initialized. Skipping notification setup.');
+      return;
     }
 
-    // Token refresh
-    messaging.onTokenRefresh.listen((newToken) {
-      _sendTokenToBackend(newToken, authToken);
-    });
+    try {
+      final messaging = FirebaseMessaging.instance;
 
-    // Foreground messages
-    FirebaseMessaging.onMessage.listen((message) async {
-      final prefs = await SharedPreferences.getInstance();
-      final type = message.data['type'] ?? '';
+      // Enable Firebase Messaging only when needed
+      await messaging.setAutoInitEnabled(true);
 
-      if (type == 'match') {
-        final enabled = prefs.getBool(kPrefNotifMatches) ?? true;
-        if (!enabled) return;
-      } else {
-        final enabled = prefs.getBool(kPrefNotifChat) ?? true;
-        if (!enabled) return;
+      // Background handler
+      _setupBackgroundHandler();
+
+      // Request permission
+      final settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        debugPrint('❌ Notification permission denied');
+        return;
       }
 
-      _addFromRemoteMessage(message);
+      // Get FCM token
+      final token = await messaging.getToken();
 
-      Get.snackbar(
-        message.notification?.title ?? 'New Message',
-        message.notification?.body ?? '',
-        colorText: kLight,
-        backgroundColor: kLightBlue,
-        duration: const Duration(seconds: 4),
-        snackPosition: SnackPosition.TOP,
-        icon: const Icon(Icons.notifications, color: Colors.white),
-      );
-    });
+      if (token != null) {
+        await _sendTokenToBackend(token, authToken);
+      }
 
-    // App opened by tapping a notification (background state)
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      _addFromRemoteMessage(message);
-      _setPendingTab(message);
-    });
+      // Token refresh listener
+      messaging.onTokenRefresh.listen((newToken) async {
+        try {
+          await _sendTokenToBackend(newToken, authToken);
+        } catch (e) {
+          debugPrint('❌ Token refresh backend sync failed: $e');
+        }
+      });
 
-    // App opened by tapping a notification (terminated state)
-    final initial = await messaging.getInitialMessage();
-    if (initial != null) {
-      _addFromRemoteMessage(initial);
-      _setPendingTab(initial);
+      // Foreground notifications
+      FirebaseMessaging.onMessage.listen((message) async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+
+          final type = message.data['type'] ?? '';
+
+          if (type == 'match') {
+            final enabled = prefs.getBool(kPrefNotifMatches) ?? true;
+
+            if (!enabled) return;
+          } else {
+            final enabled = prefs.getBool(kPrefNotifChat) ?? true;
+
+            if (!enabled) return;
+          }
+
+          _addFromRemoteMessage(message);
+
+          Get.snackbar(
+            message.notification?.title ?? 'New Message',
+            message.notification?.body ?? '',
+            colorText: kLight,
+            backgroundColor: kLightBlue,
+            duration: const Duration(seconds: 4),
+            snackPosition: SnackPosition.TOP,
+            icon: const Icon(Icons.notifications, color: Colors.white),
+          );
+        } catch (e) {
+          debugPrint('❌ Foreground notification error: $e');
+        }
+      });
+
+      // Opened from background
+      FirebaseMessaging.onMessageOpenedApp.listen((message) {
+        try {
+          _addFromRemoteMessage(message);
+          _setPendingTab(message);
+        } catch (e) {
+          debugPrint('❌ onMessageOpenedApp error: $e');
+        }
+      });
+
+      // Opened from terminated state
+      final initial = await messaging.getInitialMessage();
+
+      if (initial != null) {
+        try {
+          _addFromRemoteMessage(initial);
+          _setPendingTab(initial);
+        } catch (e) {
+          debugPrint('❌ Initial message handling error: $e');
+        }
+      }
+
+      _initialized = true;
+
+      debugPrint('✅ NotificationHelper initialized successfully');
+    } catch (e, stackTrace) {
+      debugPrint('❌ NotificationHelper initialization failed: $e');
+
+      debugPrint(stackTrace.toString());
     }
-
-    _initialized = true;
   }
 
   static void _setupBackgroundHandler() {

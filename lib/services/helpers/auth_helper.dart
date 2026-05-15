@@ -27,8 +27,6 @@ class AuthHelper {
       body: jsonEncode(model.toJson()),
     );
 
-    debugPrint('Login Response: ${response.body}');
-
     // ✅ Handle empty response (cold start)
     if (response.body.isEmpty) {
       return ApiResponse(

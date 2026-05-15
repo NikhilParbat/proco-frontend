@@ -80,8 +80,6 @@ class JobsResponse {
   }
 
   factory JobsResponse.fromJson(Map<String, dynamic> json) {
-    debugPrint('🔍 RAW JSON KEYS: ${json.keys.toList()}');
-    debugPrint('🔍 RAW REQUIREMENTS: ${json['requirements']}');
     return JobsResponse(
       id: json['id'] ?? json['_id'] ?? '',
       title: json['title'] ?? '',

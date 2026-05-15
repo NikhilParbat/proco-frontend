@@ -12,7 +12,9 @@
     <application
         android:label="proco"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true"
+        android:hardwareAccelerated="true" >
 
         <meta-data
             android:name="firebase_messaging_auto_init_enabled"
@@ -23,6 +25,10 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
+
+        <meta-data
+            android:name="firebase.analytics.collection_enabled"
+            android:value="false" />
         
         <activity
             android:name=".MainActivity"

@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
-import 'package:proco/views/common/exports.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final bool onboardingComplete;
   final int onboardingPage;
   final SharedPreferences prefs;
+
   final bool isPendingVerification;
   final String pendingEmail;
   final String pendingUsername;
@@ -29,37 +28,16 @@ class MyApp extends StatefulWidget {
     this.pendingUsername = '',
   });
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    super.initState();
-    _handleStartup();
-  }
-
-  void _handleStartup() async {
-    FlutterNativeSplash.remove();
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (mounted) {
-      Get.offAll(
-        () => _home,
-        transition: Transition.fade,
-        duration: const Duration(milliseconds: 300),
-      );
-    }
-  }
-
   Widget get _home {
-    if (!widget.isLoggedIn) {
+    if (!isLoggedIn) {
       return const LoginPage(drawer: false);
     }
-    if (!widget.onboardingComplete) {
-      return OnboardingFlow(initialPage: widget.onboardingPage);
+
+    if (!onboardingComplete) {
+      return OnboardingFlow(initialPage: onboardingPage);
     }
-    return MainScreen(prefs: widget.prefs);
+
+    return MainScreen(prefs: prefs);
   }
 
   @override
@@ -68,37 +46,20 @@ class _MyAppState extends State<MyApp> {
       designSize: const Size(375, 825),
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (context, child) {
+      builder: (_, child) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'ProCo',
+          title: 'Lagoon',
           theme: ThemeData(
             scaffoldBackgroundColor: kBackgroundColor,
             iconTheme: const IconThemeData(color: kDark),
             primarySwatch: Colors.grey,
           ),
-          home: const _BrandSplashScreen(),
+
+          // Direct screen rendering
+          home: _home,
         );
       },
-    );
-  }
-}
-
-class _BrandSplashScreen extends StatelessWidget {
-  const _BrandSplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFD85757),
-      body: Center(
-        child: SvgPicture.asset(
-          'assets/WLagcon.svg',
-          width: 190.w,
-          placeholderBuilder: (context) =>
-              const CircularProgressIndicator(color: Colors.white),
-        ),
-      ),
     );
   }
 }

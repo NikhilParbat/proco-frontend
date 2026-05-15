@@ -188,12 +188,14 @@ class SignUpNotifier extends ChangeNotifier {
       }
 
       await _firebaseUser!.sendEmailVerification();
-      debugPrint('Verification email sent to ${_firebaseUser!.email}');
 
       // Persist pending verification so the app can restore step 3 if killed
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('pendingVerificationEmail', _firebaseUser!.email!);
-      await prefs.setString('pendingVerificationUsername', signupModel.username);
+      await prefs.setString(
+        'pendingVerificationUsername',
+        signupModel.username,
+      );
 
       isLoading = false;
       changeStep(
@@ -230,17 +232,20 @@ class SignUpNotifier extends ChangeNotifier {
   Future<void> _recoverExistingFirebaseAccount() async {
     isLoading = true;
     try {
-      final credential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: signupModel.email,
-            password: signupModel.password,
-          );
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: signupModel.email,
+        password: signupModel.password,
+      );
 
       final user = credential.user;
       if (user == null) {
         isLoading = false;
-        Get.snackbar('Error', 'Could not access account.',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Error',
+          'Could not access account.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
         return;
       }
 
@@ -257,7 +262,9 @@ class SignUpNotifier extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('pendingVerificationEmail', user.email!);
         await prefs.setString(
-            'pendingVerificationUsername', signupModel.username);
+          'pendingVerificationUsername',
+          signupModel.username,
+        );
         await user.sendEmailVerification();
         isLoading = false;
         changeStep(3);
@@ -278,13 +285,21 @@ class SignUpNotifier extends ChangeNotifier {
           colorText: Colors.white,
         );
       } else {
-        Get.snackbar('Sign Up Failed', _firebaseAuthMessage(e.code),
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Sign Up Failed',
+          _firebaseAuthMessage(e.code),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       isLoading = false;
-      Get.snackbar('Error', e.toString(),
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -342,11 +357,6 @@ class SignUpNotifier extends ChangeNotifier {
 
       // Step 3: get a completely fresh reference after both refreshes.
       final refreshed = FirebaseAuth.instance.currentUser;
-
-      debugPrint('--- Verification Check ---');
-      debugPrint('uid:           ${refreshed?.uid}');
-      debugPrint('email:         ${refreshed?.email}');
-      debugPrint('emailVerified: ${refreshed?.emailVerified}');
 
       if (refreshed?.emailVerified == true) {
         await _completeEmailSignup(refreshed!);
