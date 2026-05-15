@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:proco/brand_splash_screen.dart';
 import 'package:proco/controllers/bookmark_provider.dart';

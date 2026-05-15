@@ -1,15 +1,15 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Config {
-  // ─── Environment toggle ───────────────────────────────────────────────────
-  // Set _isProd = false when running on an emulator (local Node server).
-  // Set _isProd = true  when building an APK / release build (Render.com).
   static const bool _isProd = true;
 
-  // ─── API hosts (no scheme, no trailing slash) ─────────────────────────────
-
-  static final String _devHost = dotenv.get('LOCAL');
-  static final String _prodHost = dotenv.get('DEPLOYMENT');
+  static final String _devHost = kIsWeb
+      ? const String.fromEnvironment('LOCAL', defaultValue: 'localhost:3000')
+      : dotenv.get('LOCAL');
+  static final String _prodHost = kIsWeb
+      ? const String.fromEnvironment('DEPLOYMENT', defaultValue: '')
+      : dotenv.get('DEPLOYMENT');
   // ─── URI builder ──────────────────────────────────────────────────────────
   // Use this everywhere instead of calling Uri.http / Uri.https directly.
   // It picks the right scheme and host automatically.

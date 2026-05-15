@@ -1,6 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,7 +19,9 @@ class LocationResult {
 }
 
 class LocationService {
-  static String get _apiKey => dotenv.get('LOCATIONIQ_API_KEY');
+  static String get _apiKey => kIsWeb
+      ? const String.fromEnvironment('LOCATIONIQ_API_KEY', defaultValue: '')
+      : dotenv.get('LOCATIONIQ_API_KEY');
 
   /// NEW: Structured address lookup for Profile Update
   /// Converts coordinates into separate City, State, and Country strings.
@@ -91,30 +93,17 @@ class LocationService {
   static Future<LocationResult?> geocodeAddress(String address) async {
     if (address.trim().isEmpty) return null;
     try {
-      final List<Location> locations = await locationFromAddress(address);
-      if (locations.isEmpty) return null;
-
-      final Location loc = locations.first;
-      String? displayAddress;
-      try {
-        final List<Placemark> placemarks = await placemarkFromCoordinates(
-          loc.latitude,
-          loc.longitude,
-        );
-        if (placemarks.isNotEmpty) {
-          final Placemark p = placemarks.first;
-          displayAddress = [
-            p.locality,
-            p.administrativeArea,
-            p.country,
-          ].where((s) => s != null && s.isNotEmpty).join(', ');
-        }
-      } catch (_) {}
-
+      final String url =
+          'https://us1.locationiq.com/v1/search.php?key=$_apiKey&q=${Uri.encodeComponent(address)}&format=json&limit=1';
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) return null;
+      final List data = json.decode(response.body);
+      if (data.isEmpty) return null;
+      final item = data.first;
       return LocationResult(
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        displayAddress: displayAddress ?? address,
+        latitude: double.parse(item['lat'].toString()),
+        longitude: double.parse(item['lon'].toString()),
+        displayAddress: item['display_name']?.toString() ?? address,
       );
     } catch (_) {
       return null;

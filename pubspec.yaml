@@ -59,7 +59,6 @@ dependencies:
   form_field_validator: ^1.1.0
   device_info_plus: ^12.4.0
   geolocator: ^14.0.2 # GPS — safe for imperative Gradle; avoids v13+
-  geocoding: ^4.0.0 # Address ↔ coords (works alongside geolocator ^10)
   flutter_map: ^8.2.2 # OSM tile map — no API key required
   latlong2: ^0.9.1 # LatLng type used by flutter_map
   firebase_auth: ^6.3.0
