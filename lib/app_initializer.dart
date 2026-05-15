@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
@@ -72,9 +73,9 @@ class _AppInitializerState extends State<AppInitializer> {
         if (savedEmail.isNotEmpty) {
           try {
             await Future.wait([
-              dotenv.load(fileName: ".env").catchError((e) {
+              if (!kIsWeb) dotenv.load(fileName: ".env").catchError((e) {
                 debugPrint('Failed to load .env: $e');
-              }),
+              }) else Future.value(),
 
               FirebaseService.initializeAsync(),
             ]);
@@ -108,9 +109,9 @@ class _AppInitializerState extends State<AppInitializer> {
       // Background initialization if not already loaded
       if (!firebaseLoaded) {
         Future.wait([
-          dotenv.load(fileName: ".env").catchError((e) {
+          if (!kIsWeb) dotenv.load(fileName: ".env").catchError((e) {
             debugPrint('Failed to load .env: $e');
-          }),
+          }) else Future.value(),
 
           FirebaseService.initializeAsync(),
         ]);

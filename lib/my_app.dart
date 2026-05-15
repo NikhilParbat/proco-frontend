@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -41,7 +42,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleStartup() async {
-    FlutterNativeSplash.remove();
+    if (!kIsWeb) FlutterNativeSplash.remove();
     await Future.delayed(const Duration(milliseconds: 1500));
     if (mounted) {
       Get.offAll(
