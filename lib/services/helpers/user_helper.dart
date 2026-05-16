@@ -47,6 +47,10 @@ class UserHelper {
       if (model.country.isNotEmpty) request.fields['country'] = model.country;
       if (model.college.isNotEmpty) request.fields['college'] = model.college;
       if (model.branch.isNotEmpty) request.fields['branch'] = model.branch;
+      if (model.classOf.isNotEmpty) request.fields['classOf'] = model.classOf;
+      if (model.cgpa.isNotEmpty) request.fields['cgpa'] = model.cgpa;
+      if (model.workStyle.isNotEmpty) request.fields['workStyle'] = model.workStyle;
+      if (model.communicationStyle.isNotEmpty) request.fields['communicationStyle'] = model.communicationStyle;
       if (model.latitude != 0) request.fields['latitude'] = model.latitude.toString();
       if (model.longitude != 0) request.fields['longitude'] = model.longitude.toString();
 
@@ -98,7 +102,7 @@ class UserHelper {
 
       final url = Config.url(Config.createProfileUrl);
       // Using MultipartRequest to handle the profile image
-      var request = https.MultipartRequest('POST', url); 
+      var request = https.MultipartRequest('PUT', url);
       request.headers['token'] = 'Bearer $token';
 
       // 1. Basic Identity
@@ -115,6 +119,7 @@ class UserHelper {
       request.fields['country'] = model.country;
       request.fields['college'] = model.college;
       request.fields['branch'] = model.branch;
+      request.fields['classOf'] = model.classOf;
       request.fields['latitude'] = model.latitude.toString();
       request.fields['longitude'] = model.longitude.toString();
 

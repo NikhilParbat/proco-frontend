@@ -283,21 +283,10 @@ class _EditFormState extends State<_EditForm> {
                       ? 'New Experience'
                       : exp.company,
                   icon: Icons.work_outline,
+                  initiallyExpanded: exp.company.isEmpty,
                   children: [
                     _Field(
-                      label: 'Job Title / Position',
-                      init: exp.position,
-                      onChanged: (val) {
-                        widget.state.updateExperience(index, ExperienceItem(
-                          company: exp.company,
-                          position: val,
-                          description: exp.description,
-                          dateRange: exp.dateRange,
-                        ));
-                      },
-                    ),
-                    _Field(
-                      label: 'Company',
+                      label: 'Company *',
                       init: exp.company,
                       onChanged: (val) {
                         widget.state.updateExperience(index, ExperienceItem(
@@ -309,8 +298,33 @@ class _EditFormState extends State<_EditForm> {
                       },
                     ),
                     _Field(
-                      label: 'Date Range',
-                      init: exp.dateRange,
+                      label: 'Job Title / Role *',
+                      init: exp.position,
+                      onChanged: (val) {
+                        widget.state.updateExperience(index, ExperienceItem(
+                          company: exp.company,
+                          position: val,
+                          description: exp.description,
+                          dateRange: exp.dateRange,
+                        ));
+                      },
+                    ),
+                    _Field(
+                      label: 'Description',
+                      init: exp.description,
+                      onChanged: (val) {
+                        widget.state.updateExperience(index, ExperienceItem(
+                          company: exp.company,
+                          position: exp.position,
+                          description: val,
+                          dateRange: exp.dateRange,
+                        ));
+                      },
+                      maxLines: 3,
+                      hint: 'Describe your role and impact…',
+                    ),
+                    _DateRangePicker(
+                      value: exp.dateRange,
                       onChanged: (val) {
                         widget.state.updateExperience(index, ExperienceItem(
                           company: exp.company,
@@ -319,21 +333,13 @@ class _EditFormState extends State<_EditForm> {
                           dateRange: val,
                         ));
                       },
-                      hint: 'e.g. Jan 2024 - Present',
                     ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: () => widget.state.removeExperience(index),
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                          size: 18,
-                        ),
-                        label: const Text(
-                          'Remove',
-                          style: TextStyle(color: Colors.red),
-                        ),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                        label: const Text('Remove', style: TextStyle(color: Colors.red)),
                       ),
                     ),
                   ],
@@ -345,13 +351,22 @@ class _EditFormState extends State<_EditForm> {
                 padding: EdgeInsets.symmetric(vertical: 8.h),
                 child: OutlinedButton.icon(
                   onPressed: () {
+                    final exps = widget.state.experiences;
+                    if (exps.isNotEmpty) {
+                      final last = exps.last;
+                      if (last.company.trim().isEmpty || last.position.trim().isEmpty) {
+                        Get.snackbar(
+                          'Fill required fields',
+                          'Complete the current experience (company & role) before adding another.',
+                          backgroundColor: kOrange,
+                          colorText: kLight,
+                          snackPosition: SnackPosition.TOP,
+                        );
+                        return;
+                      }
+                    }
                     widget.state.addExperience(
-                      ExperienceItem(
-                        company: '',
-                        position: '',
-                        description: '',
-                        dateRange: '',
-                      ),
+                      ExperienceItem(company: '', position: '', description: '', dateRange: ''),
                     );
                   },
                   icon: const Icon(Icons.add, size: 18),
@@ -372,9 +387,10 @@ class _EditFormState extends State<_EditForm> {
                 return _ExpandableSection(
                   sectionLabel: proj.name.isEmpty ? 'New Project' : proj.name,
                   icon: Icons.code_outlined,
+                  initiallyExpanded: proj.name.isEmpty,
                   children: [
                     _Field(
-                      label: 'Project Title',
+                      label: 'Project Name *',
                       init: proj.name,
                       onChanged: (val) {
                         widget.state.updateProject(index, ProjectItem(
@@ -385,20 +401,6 @@ class _EditFormState extends State<_EditForm> {
                           sourceUrl: proj.sourceUrl,
                         ));
                       },
-                    ),
-                    _Field(
-                      label: 'Domain',
-                      init: proj.domain,
-                      onChanged: (val) {
-                        widget.state.updateProject(index, ProjectItem(
-                          name: proj.name,
-                          domain: val,
-                          description: proj.description,
-                          technologies: proj.technologies,
-                          sourceUrl: proj.sourceUrl,
-                        ));
-                      },
-                      hint: 'e.g. Web Development, AI',
                     ),
                     _Field(
                       label: 'Description',
@@ -413,9 +415,29 @@ class _EditFormState extends State<_EditForm> {
                         ));
                       },
                       maxLines: 3,
+                      hint: 'What does this project do?',
                     ),
                     _Field(
-                      label: 'Source URL',
+                      label: 'Skills / Technologies',
+                      init: proj.technologies.join(', '),
+                      onChanged: (val) {
+                        final techs = val
+                            .split(',')
+                            .map((t) => t.trim().toUpperCase())
+                            .where((t) => t.isNotEmpty)
+                            .toList();
+                        widget.state.updateProject(index, ProjectItem(
+                          name: proj.name,
+                          domain: proj.domain,
+                          description: proj.description,
+                          technologies: techs,
+                          sourceUrl: proj.sourceUrl,
+                        ));
+                      },
+                      hint: 'Flutter, Firebase, Node.js (comma-separated)',
+                    ),
+                    _Field(
+                      label: 'Source Code / Live Link',
                       init: proj.sourceUrl,
                       onChanged: (val) {
                         widget.state.updateProject(index, ProjectItem(
@@ -426,16 +448,15 @@ class _EditFormState extends State<_EditForm> {
                           sourceUrl: val,
                         ));
                       },
-                      hint: 'GitHub or Live Link',
+                      hint: 'https://github.com/…',
+                      keyboard: TextInputType.url,
                     ),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
+                      child: TextButton.icon(
                         onPressed: () => widget.state.removeProject(index),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                        label: const Text('Remove', style: TextStyle(color: Colors.red)),
                       ),
                     ),
                   ],
@@ -445,22 +466,28 @@ class _EditFormState extends State<_EditForm> {
               // Add Project Button
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.h),
-                child: TextButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: () {
+                    final projs = widget.state.projects;
+                    if (projs.isNotEmpty && projs.last.name.trim().isEmpty) {
+                      Get.snackbar(
+                        'Fill required fields',
+                        'Complete the current project (name) before adding another.',
+                        backgroundColor: kOrange,
+                        colorText: kLight,
+                        snackPosition: SnackPosition.TOP,
+                      );
+                      return;
+                    }
                     widget.state.addProject(
-                      ProjectItem(
-                        name: '',
-                        domain: '',
-                        description: '',
-                        technologies: [],
-                        sourceUrl: '',
-                      ),
+                      ProjectItem(name: '', domain: '', description: '', technologies: [], sourceUrl: ''),
                     );
                   },
-                  icon: const Icon(Icons.add, color: kThemeColor),
-                  label: const Text(
-                    'ADD PROJECT',
-                    style: TextStyle(color: kThemeColor),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('ADD PROJECT'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: kThemeColor,
+                    side: const BorderSide(color: kThemeColor),
                   ),
                 ),
               ),
@@ -733,11 +760,13 @@ class _ExpandableSection extends StatefulWidget {
     required this.sectionLabel,
     required this.icon,
     required this.children,
+    this.initiallyExpanded = false,
   });
 
   final String sectionLabel;
   final IconData icon;
   final List<Widget> children;
+  final bool initiallyExpanded;
 
   @override
   State<_ExpandableSection> createState() => _ExpandableSectionState();
@@ -752,9 +781,11 @@ class _ExpandableSectionState extends State<_ExpandableSection>
   @override
   void initState() {
     super.initState();
+    _expanded = widget.initiallyExpanded;
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
+      value: widget.initiallyExpanded ? 1.0 : 0.0,
     );
     _expandAnimation = CurvedAnimation(
       parent: _controller,
@@ -1340,6 +1371,224 @@ class _LinksEditorState extends State<_LinksEditor> {
             ),
           ),
       ],
+    );
+  }
+}
+
+// ── Date Range Picker ─────────────────────────────────────────────────────────
+class _DateRangePicker extends StatefulWidget {
+  const _DateRangePicker({required this.value, required this.onChanged});
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_DateRangePicker> createState() => _DateRangePickerState();
+}
+
+class _DateRangePickerState extends State<_DateRangePicker> {
+  String _from = '';
+  String _to = '';
+  bool _isPresent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _parse(widget.value);
+  }
+
+  void _parse(String value) {
+    if (value.isEmpty) return;
+    final parts = value.split(' - ');
+    _from = parts[0].trim();
+    if (parts.length > 1) {
+      _isPresent = parts[1].trim().toLowerCase() == 'present';
+      _to = _isPresent ? '' : parts[1].trim();
+    }
+  }
+
+  String _combined() {
+    if (_from.isEmpty) return '';
+    if (_isPresent) return '$_from - Present';
+    if (_to.isNotEmpty) return '$_from - $_to';
+    return _from;
+  }
+
+  static String _fmt(DateTime d) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[d.month - 1]} ${d.year}';
+  }
+
+  Future<void> _pickFrom() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365)),
+      firstDate: DateTime(1990),
+      lastDate: DateTime.now(),
+      builder: (ctx, child) => Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(primary: kThemeColor),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return;
+    setState(() => _from = _fmt(picked));
+    widget.onChanged(_combined());
+  }
+
+  Future<void> _pickTo() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1990),
+      lastDate: DateTime(2030),
+      builder: (ctx, child) => Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(primary: kThemeColor),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return;
+    setState(() {
+      _to = _fmt(picked);
+      _isPresent = false;
+    });
+    widget.onChanged(_combined());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 14.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Duration',
+            style: TextStyle(
+              fontFamily: kFontDMSans,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: kDarkGrey,
+              letterSpacing: 0.5,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              Expanded(child: _dateTile(label: 'From', value: _from, onTap: _pickFrom)),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _dateTile(
+                  label: 'To',
+                  value: _isPresent ? 'Present' : _to,
+                  isPresent: _isPresent,
+                  onTap: _isPresent ? null : _pickTo,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          InkWell(
+            borderRadius: BorderRadius.circular(6.r),
+            onTap: () {
+              setState(() {
+                _isPresent = !_isPresent;
+                if (_isPresent) _to = '';
+              });
+              widget.onChanged(_combined());
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Checkbox(
+                  value: _isPresent,
+                  onChanged: (v) {
+                    setState(() {
+                      _isPresent = v ?? false;
+                      if (_isPresent) _to = '';
+                    });
+                    widget.onChanged(_combined());
+                  },
+                  activeColor: kThemeColor,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  'Currently working here',
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 12.sp,
+                    color: kDarkGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dateTile({
+    required String label,
+    required String value,
+    bool isPresent = false,
+    VoidCallback? onTap,
+  }) {
+    final hasValue = value.isNotEmpty;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: isPresent ? kBackgroundColor : kLight,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: isPresent
+                ? kThemeColor.withValues(alpha: 0.5)
+                : kLightGrey,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 10.sp,
+                color: kDarkGrey,
+                letterSpacing: 0.5,
+              ),
+            ),
+            SizedBox(height: 3.h),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 12.sp,
+                  color: isPresent ? kThemeColor : kDarkGrey,
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  hasValue ? value : 'Tap to set',
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 13.sp,
+                    color: isPresent
+                        ? kThemeColor
+                        : (hasValue ? kDark : const Color(0xFFBBBBBB)),
+                    fontWeight: isPresent ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

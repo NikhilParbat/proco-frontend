@@ -3,6 +3,7 @@ import 'package:proco/models/request/auth/profile_update_model.dart';
 class UserResponse {
   final String id;
   final String username;
+  final String? bio;
   final String email;
   final String? phone;
   final bool? isAdmin;
@@ -38,6 +39,7 @@ class UserResponse {
   UserResponse({
     required this.id,
     required this.username,
+    this.bio,
     required this.email,
     this.phone,
     this.isAdmin,
@@ -75,6 +77,7 @@ class UserResponse {
     return UserResponse(
       id: json['id'] ?? '',
       username: json['username'] ?? '',
+      bio: json['bio'],
       email: json['email'] ?? '',
       phone: json['phone'],
       isAdmin: json['isAdmin'],
@@ -120,6 +123,7 @@ class UserResponse {
     return {
       'id': id,
       'username': username,
+      'bio': bio,
       'email': email,
       'phone': phone,
       'isAdmin': isAdmin,
@@ -157,6 +161,7 @@ class UserResponse {
   UserResponse copyWith({
     String? id,
     String? username,
+    String? bio,
     String? email,
     String? phone,
     bool? isAdmin,
@@ -192,6 +197,7 @@ class UserResponse {
     return UserResponse(
       id: id ?? this.id,
       username: username ?? this.username,
+      bio: bio ?? this.bio,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       isAdmin: isAdmin ?? this.isAdmin,

@@ -555,7 +555,7 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
           ),
           SizedBox(height: 18.h),
           if (_s.experiences.isEmpty)
-            const _EmptySection(label: 'No experience added yet')
+            const _EmptyBox()
           else
             ..._s.experiences.asMap().entries.map(
               (e) => _ExperienceRow(
@@ -573,7 +573,7 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
           ),
           SizedBox(height: 18.h),
           if (_s.projects.isEmpty)
-            const _EmptySection(label: 'No projects added yet')
+            const _EmptyBox()
           else
             ..._s.projects.asMap().entries.map(
               (p) => _ProjectCard(
@@ -592,7 +592,7 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
           ),
           SizedBox(height: 18.h),
           if (_s.achievements.isEmpty)
-            const _EmptySection(label: 'No achievements added yet')
+            const _EmptyBox()
           else
             ..._s.achievements.asMap().entries.map(
               (a) => _AchievementRow(
@@ -970,29 +970,25 @@ class _AchievementRow extends StatelessWidget {
 
 // ── Empty section placeholder ──────────────────────────────────────────────
 
-class _EmptySection extends StatelessWidget {
-  const _EmptySection({required this.label});
-  final String label;
+class _EmptyBox extends StatelessWidget {
+  const _EmptyBox();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 18.h),
+      height: 56.h,
       decoration: BoxDecoration(
         color: kLight,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
-      ),
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontFamily: 'DMSans',
-          fontSize: 13.sp,
-          color: kDarkGrey,
-          fontStyle: FontStyle.italic,
-        ),
+        border: Border.all(color: const Color(0xFFEEEEEE)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
     );
   }

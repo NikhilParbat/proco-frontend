@@ -6,8 +6,8 @@ import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'applicant_detail_page.dart';
 import 'widgets/parallax_user_card.dart';
+import 'widgets/user_expanded_sheet.dart';
 
 class InterestedUsersScreen extends StatefulWidget {
   const InterestedUsersScreen({super.key});
@@ -55,14 +55,14 @@ class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
   }
 
   void _openSwipePage(SwipedRes user) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ApplicantDetailPage(
-          user: user,
-          jobId: _jobId,
-          totalApplicants: _users.length,
-        ),
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => UserExpandedSheet(
+        user: user,
+        jobId: _jobId,
+        totalApplicants: _users.length,
       ),
     );
   }
@@ -165,7 +165,7 @@ class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
         SizedBox(height: 12.h),
         Center(
           child: Text(
-            'Tap a card to view applicant details',
+            'Tap a card to expand',
             style: TextStyle(
               fontSize: 12.sp,
               color: Colors.grey,
