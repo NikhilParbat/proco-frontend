@@ -11,25 +11,40 @@ import 'profile_state.dart';
 const int _kMaxLinks = 6;
 
 // ── Section keys for scroll-to ────────────────────────────────────────────────
-final _identityKey = GlobalKey();
-final _personalKey = GlobalKey();
-final _educationKey = GlobalKey();
-final _professionalKey = GlobalKey();
-final _attributesKey = GlobalKey();
+final _aboutKey      = GlobalKey();
+final _educationKey  = GlobalKey();
+final _personalKey   = GlobalKey();
+final _workStyleKey  = GlobalKey();
+final _skillsKey     = GlobalKey();
+final _interestsKey  = GlobalKey();
+final _linksKey      = GlobalKey();
+final _experienceKey = GlobalKey();
+final _projectsKey   = GlobalKey();
+final _achievementsKey = GlobalKey();
 
 const _tabs = [
-  'Identity',
-  'Personal',
+  'About',
   'Education',
-  'Professional',
-  'Attributes',
+  'Personal',
+  'Work Style',
+  'Skills',
+  'Interests',
+  'Links',
+  'Experience',
+  'Projects',
+  'Achievements',
 ];
 final _sectionKeys = <GlobalKey>[
-  _identityKey,
-  _personalKey,
+  _aboutKey,
   _educationKey,
-  _professionalKey,
-  _attributesKey,
+  _personalKey,
+  _workStyleKey,
+  _skillsKey,
+  _interestsKey,
+  _linksKey,
+  _experienceKey,
+  _projectsKey,
+  _achievementsKey,
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -203,136 +218,180 @@ class _EditFormState extends State<_EditForm> {
             controller: _scrollController,
             padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 100.h),
             children: [
-              // Identity
-              _SectionTitle(key: _identityKey, title: 'Identity'),
+              // ── 1. About ────────────────────────────────────────────────────
+              _SectionTitle(key: _aboutKey, title: 'About'),
               _IdentitySection(state: widget.state),
-              SizedBox(height: 20.h),
+              SizedBox(height: 28.h),
 
-              // Personal
-              _SectionTitle(key: _personalKey, title: 'Personal'),
-              PhoneInputField(
-                initialValue: widget.state.phone,
-                onChanged: (v) => widget.state.phone = v,
-              ),
-              SizedBox(height: 10.h),
-              _Field(
-                label: 'Gender',
-                init: widget.state.gender,
-                onChanged: (v) => widget.state.gender = v,
-              ),
-              _Field(
-                label: 'Date of Birth',
-                init: widget.state.dob,
-                onChanged: (v) => widget.state.dob = v,
-                hint: 'YYYY-MM-DD',
-              ),
-              _Field(
-                label: 'Work Style',
-                init: widget.state.workStyle,
-                onChanged: (v) => widget.state.workStyle = v,
-                hint: 'e.g. Remote-first, Hybrid, In-office',
-              ),
-              _Field(
-                label: 'Communication Style',
-                init: widget.state.communicationStyle,
-                onChanged: (v) => widget.state.communicationStyle = v,
-                hint: 'e.g. Asynchronous, Synchronous',
-              ),
-              SizedBox(height: 6.h),
-              _LinksEditor(state: widget.state),
-              SizedBox(height: 20.h),
-
-              // Education
+              // ── 2. Education ─────────────────────────────────────────────────
               _SectionTitle(key: _educationKey, title: 'Education'),
               _Field(
                 label: 'Institution / College',
                 init: widget.state.college,
                 onChanged: (v) => widget.state.college = v,
+                hint: 'e.g. IIT Bombay',
               ),
               _Field(
-                label: 'Degree / Branch',
+                label: 'Field of Study / Branch',
                 init: widget.state.branch,
                 onChanged: (v) => widget.state.branch = v,
+                hint: 'e.g. Computer Science',
               ),
               _Field(
-                label: 'Class of (Graduation Year)',
+                label: 'Graduation Year',
                 init: widget.state.classOf,
                 onChanged: (v) => widget.state.classOf = v,
                 hint: 'e.g. 2025',
                 keyboard: TextInputType.number,
               ),
               _Field(
-                label: 'CGPA / Academic Rank',
+                label: 'Academic Score (CGPA)',
                 init: widget.state.cgpa,
                 onChanged: (v) => widget.state.cgpa = v,
                 hint: 'e.g. 8.5 or 3.9/4.0',
                 keyboard: const TextInputType.numberWithOptions(decimal: true),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 28.h),
 
-              // Professional
-              _SectionTitle(key: _professionalKey, title: 'Professional'),
+              // ── 3. Personal ──────────────────────────────────────────────────
+              _SectionTitle(key: _personalKey, title: 'Personal'),
+              PhoneInputField(
+                initialValue: widget.state.phone,
+                onChanged: (v) => widget.state.phone = v,
+              ),
+              SizedBox(height: 14.h),
+              _GenderSelector(
+                value: widget.state.gender,
+                onChanged: (v) => widget.state.gender = v,
+              ),
+              SizedBox(height: 14.h),
+              _DOBPicker(
+                value: widget.state.dob,
+                onChanged: (v) => widget.state.dob = v,
+              ),
+              SizedBox(height: 28.h),
 
-              // Experience Section
+              // ── 4. Work Style ────────────────────────────────────────────────
+              _SectionTitle(key: _workStyleKey, title: 'Work Style'),
+              _OptionSelector(
+                label: 'Work Style',
+                value: widget.state.workStyle,
+                options: const [
+                  'Remote-first',
+                  'Hybrid',
+                  'In-office',
+                  'Flexible',
+                ],
+                onChanged: (v) => widget.state.workStyle = v,
+              ),
+              SizedBox(height: 14.h),
+              _OptionSelector(
+                label: 'Communication Style',
+                value: widget.state.communicationStyle,
+                options: const [
+                  'Asynchronous',
+                  'Synchronous',
+                  'Mixed',
+                ],
+                onChanged: (v) => widget.state.communicationStyle = v,
+              ),
+              SizedBox(height: 28.h),
+
+              // ── 5. Skills ────────────────────────────────────────────────────
+              _SectionTitle(key: _skillsKey, title: 'Skills'),
+              _ChipInputSection(
+                label: 'Skills',
+                values: widget.state.skills,
+                onAdded: (v) => widget.state.addSkill(v),
+                onRemoved: (v) => widget.state.removeSkill(v),
+              ),
+              SizedBox(height: 28.h),
+
+              // ── 6. Interests & Hobbies ───────────────────────────────────────
+              _SectionTitle(key: _interestsKey, title: 'Interests & Hobbies'),
+              _ChipInputSection(
+                label: 'Interests',
+                values: widget.state.interests,
+                onAdded: (v) => widget.state.addInterest(v),
+                onRemoved: (v) => widget.state.removeInterest(v),
+              ),
+              SizedBox(height: 14.h),
+              _ChipInputSection(
+                label: 'Hobbies',
+                values: widget.state.hobbies,
+                onAdded: (v) => widget.state.addHobbies(v),
+                onRemoved: (v) => widget.state.removeHobby(v),
+              ),
+              SizedBox(height: 28.h),
+
+              // ── 7. Links ─────────────────────────────────────────────────────
+              _SectionTitle(key: _linksKey, title: 'Links'),
+              _Field(
+                label: 'LinkedIn URL',
+                init: widget.state.linkedInUrl,
+                onChanged: (v) => widget.state.linkedInUrl = v,
+                keyboard: TextInputType.url,
+                hint: 'https://linkedin.com/in/…',
+              ),
+              _Field(
+                label: 'GitHub URL',
+                init: widget.state.gitHubUrl,
+                onChanged: (v) => widget.state.gitHubUrl = v,
+                keyboard: TextInputType.url,
+                hint: 'https://github.com/…',
+              ),
+              _Field(
+                label: 'Twitter / X URL',
+                init: widget.state.twitterUrl,
+                onChanged: (v) => widget.state.twitterUrl = v,
+                keyboard: TextInputType.url,
+                hint: 'https://twitter.com/…',
+              ),
+              _Field(
+                label: 'Portfolio / Behance URL',
+                init: widget.state.portfolioUrl,
+                onChanged: (v) => widget.state.portfolioUrl = v,
+                keyboard: TextInputType.url,
+                hint: 'https://…',
+              ),
+              SizedBox(height: 10.h),
+              _LinksEditor(state: widget.state),
+              SizedBox(height: 28.h),
+
+              // ── 8. Experience ────────────────────────────────────────────────
+              _SectionTitle(key: _experienceKey, title: 'Experience'),
               ...widget.state.experiences.asMap().entries.map((entry) {
-                int index = entry.key;
-                ExperienceItem exp = entry.value;
-
+                final index = entry.key;
+                final exp = entry.value;
                 return _ExpandableSection(
-                  sectionLabel: exp.company.isEmpty
-                      ? 'New Experience'
-                      : exp.company,
+                  sectionLabel: exp.company.isEmpty ? 'New Experience' : exp.company,
                   icon: Icons.work_outline,
                   initiallyExpanded: exp.company.isEmpty,
                   children: [
                     _Field(
-                      label: 'Company *',
+                      label: 'Company Name *',
                       init: exp.company,
-                      onChanged: (val) {
-                        widget.state.updateExperience(index, ExperienceItem(
-                          company: val,
-                          position: exp.position,
-                          description: exp.description,
-                          dateRange: exp.dateRange,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateExperience(index,
+                        ExperienceItem(company: val, position: exp.position, description: exp.description, dateRange: exp.dateRange)),
                     ),
                     _Field(
-                      label: 'Job Title / Role *',
+                      label: 'Role / Job Title *',
                       init: exp.position,
-                      onChanged: (val) {
-                        widget.state.updateExperience(index, ExperienceItem(
-                          company: exp.company,
-                          position: val,
-                          description: exp.description,
-                          dateRange: exp.dateRange,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateExperience(index,
+                        ExperienceItem(company: exp.company, position: val, description: exp.description, dateRange: exp.dateRange)),
                     ),
                     _Field(
-                      label: 'Description',
+                      label: 'About the Role',
                       init: exp.description,
-                      onChanged: (val) {
-                        widget.state.updateExperience(index, ExperienceItem(
-                          company: exp.company,
-                          position: exp.position,
-                          description: val,
-                          dateRange: exp.dateRange,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateExperience(index,
+                        ExperienceItem(company: exp.company, position: exp.position, description: val, dateRange: exp.dateRange)),
                       maxLines: 3,
-                      hint: 'Describe your role and impact…',
+                      hint: 'Describe your responsibilities and impact…',
                     ),
                     _DateRangePicker(
                       value: exp.dateRange,
-                      onChanged: (val) {
-                        widget.state.updateExperience(index, ExperienceItem(
-                          company: exp.company,
-                          position: exp.position,
-                          description: exp.description,
-                          dateRange: val,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateExperience(index,
+                        ExperienceItem(company: exp.company, position: exp.position, description: exp.description, dateRange: val)),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
@@ -345,45 +404,30 @@ class _EditFormState extends State<_EditForm> {
                   ],
                 );
               }),
-
-              // Add Experience Button
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    final exps = widget.state.experiences;
-                    if (exps.isNotEmpty) {
-                      final last = exps.last;
-                      if (last.company.trim().isEmpty || last.position.trim().isEmpty) {
-                        Get.snackbar(
-                          'Fill required fields',
-                          'Complete the current experience (company & role) before adding another.',
-                          backgroundColor: kOrange,
-                          colorText: kLight,
-                          snackPosition: SnackPosition.TOP,
-                        );
-                        return;
-                      }
+              _AddButton(
+                label: 'ADD EXPERIENCE',
+                onPressed: () {
+                  final exps = widget.state.experiences;
+                  if (exps.isNotEmpty) {
+                    final last = exps.last;
+                    if (last.company.trim().isEmpty || last.position.trim().isEmpty) {
+                      Get.snackbar('Fill required fields',
+                        'Complete the current experience (company & role) before adding another.',
+                        backgroundColor: kOrange, colorText: kLight, snackPosition: SnackPosition.TOP);
+                      return;
                     }
-                    widget.state.addExperience(
-                      ExperienceItem(company: '', position: '', description: '', dateRange: ''),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('ADD EXPERIENCE'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: kThemeColor,
-                    side: const BorderSide(color: kThemeColor),
-                  ),
-                ),
+                  }
+                  widget.state.addExperience(
+                    ExperienceItem(company: '', position: '', description: '', dateRange: ''));
+                },
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: 28.h),
 
-              // Projects Section
+              // ── 9. Project Showcase ──────────────────────────────────────────
+              _SectionTitle(key: _projectsKey, title: 'Project Showcase'),
               ...widget.state.projects.asMap().entries.map((entry) {
-                int index = entry.key;
-                ProjectItem proj = entry.value;
-
+                final index = entry.key;
+                final proj = entry.value;
                 return _ExpandableSection(
                   sectionLabel: proj.name.isEmpty ? 'New Project' : proj.name,
                   icon: Icons.code_outlined,
@@ -392,62 +436,32 @@ class _EditFormState extends State<_EditForm> {
                     _Field(
                       label: 'Project Name *',
                       init: proj.name,
-                      onChanged: (val) {
-                        widget.state.updateProject(index, ProjectItem(
-                          name: val,
-                          domain: proj.domain,
-                          description: proj.description,
-                          technologies: proj.technologies,
-                          sourceUrl: proj.sourceUrl,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateProject(index,
+                        ProjectItem(name: val, domain: proj.domain, description: proj.description, technologies: proj.technologies, sourceUrl: proj.sourceUrl)),
                     ),
                     _Field(
-                      label: 'Description',
-                      init: proj.description,
-                      onChanged: (val) {
-                        widget.state.updateProject(index, ProjectItem(
-                          name: proj.name,
-                          domain: proj.domain,
-                          description: val,
-                          technologies: proj.technologies,
-                          sourceUrl: proj.sourceUrl,
-                        ));
-                      },
-                      maxLines: 3,
-                      hint: 'What does this project do?',
-                    ),
-                    _Field(
-                      label: 'Skills / Technologies',
+                      label: 'Technologies Used',
                       init: proj.technologies.join(', '),
                       onChanged: (val) {
-                        final techs = val
-                            .split(',')
-                            .map((t) => t.trim().toUpperCase())
-                            .where((t) => t.isNotEmpty)
-                            .toList();
-                        widget.state.updateProject(index, ProjectItem(
-                          name: proj.name,
-                          domain: proj.domain,
-                          description: proj.description,
-                          technologies: techs,
-                          sourceUrl: proj.sourceUrl,
-                        ));
+                        final techs = val.split(',').map((t) => t.trim().toUpperCase()).where((t) => t.isNotEmpty).toList();
+                        widget.state.updateProject(index,
+                          ProjectItem(name: proj.name, domain: proj.domain, description: proj.description, technologies: techs, sourceUrl: proj.sourceUrl));
                       },
                       hint: 'Flutter, Firebase, Node.js (comma-separated)',
                     ),
                     _Field(
-                      label: 'Source Code / Live Link',
+                      label: 'Project Description',
+                      init: proj.description,
+                      onChanged: (val) => widget.state.updateProject(index,
+                        ProjectItem(name: proj.name, domain: proj.domain, description: val, technologies: proj.technologies, sourceUrl: proj.sourceUrl)),
+                      maxLines: 3,
+                      hint: 'What does this project do?',
+                    ),
+                    _Field(
+                      label: 'Project URL / Source Code',
                       init: proj.sourceUrl,
-                      onChanged: (val) {
-                        widget.state.updateProject(index, ProjectItem(
-                          name: proj.name,
-                          domain: proj.domain,
-                          description: proj.description,
-                          technologies: proj.technologies,
-                          sourceUrl: val,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateProject(index,
+                        ProjectItem(name: proj.name, domain: proj.domain, description: proj.description, technologies: proj.technologies, sourceUrl: val)),
                       hint: 'https://github.com/…',
                       keyboard: TextInputType.url,
                     ),
@@ -462,166 +476,60 @@ class _EditFormState extends State<_EditForm> {
                   ],
                 );
               }),
-
-              // Add Project Button
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    final projs = widget.state.projects;
-                    if (projs.isNotEmpty && projs.last.name.trim().isEmpty) {
-                      Get.snackbar(
-                        'Fill required fields',
-                        'Complete the current project (name) before adding another.',
-                        backgroundColor: kOrange,
-                        colorText: kLight,
-                        snackPosition: SnackPosition.TOP,
-                      );
-                      return;
-                    }
-                    widget.state.addProject(
-                      ProjectItem(name: '', domain: '', description: '', technologies: [], sourceUrl: ''),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('ADD PROJECT'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: kThemeColor,
-                    side: const BorderSide(color: kThemeColor),
-                  ),
-                ),
+              _AddButton(
+                label: 'ADD PROJECT',
+                onPressed: () {
+                  final projs = widget.state.projects;
+                  if (projs.isNotEmpty && projs.last.name.trim().isEmpty) {
+                    Get.snackbar('Fill required fields',
+                      'Complete the current project (name) before adding another.',
+                      backgroundColor: kOrange, colorText: kLight, snackPosition: SnackPosition.TOP);
+                    return;
+                  }
+                  widget.state.addProject(
+                    ProjectItem(name: '', domain: '', description: '', technologies: [], sourceUrl: ''));
+                },
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: 28.h),
 
-              // ── Achievements Loop ──────────────────────────────────────────────────────
+              // ── 10. Achievements ─────────────────────────────────────────────
+              _SectionTitle(key: _achievementsKey, title: 'Achievements'),
               ...widget.state.achievements.asMap().entries.map((entry) {
-                int index = entry.key;
-                AchievementItem ach = entry.value;
-
+                final index = entry.key;
+                final ach = entry.value;
                 return _ExpandableSection(
-                  sectionLabel: ach.title.isEmpty
-                      ? 'New Achievement'
-                      : ach.title,
+                  sectionLabel: ach.title.isEmpty ? 'New Achievement' : ach.title,
                   icon: Icons.emoji_events_outlined,
                   children: [
                     _Field(
-                      label: 'Title',
+                      label: 'Title *',
                       init: ach.title,
-                      onChanged: (val) {
-                        widget.state.updateAchievement(index, AchievementItem(
-                          title: val,
-                          subtitle: ach.subtitle,
-                          icon: ach.icon,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateAchievement(index,
+                        AchievementItem(title: val, subtitle: ach.subtitle, icon: ach.icon)),
                       hint: 'e.g. Hackathon Winner',
                     ),
                     _Field(
-                      label: 'Subtitle / Description',
+                      label: 'Description',
                       init: ach.subtitle,
-                      onChanged: (val) {
-                        widget.state.updateAchievement(index, AchievementItem(
-                          title: ach.title,
-                          subtitle: val,
-                          icon: ach.icon,
-                        ));
-                      },
+                      onChanged: (val) => widget.state.updateAchievement(index,
+                        AchievementItem(title: ach.title, subtitle: val, icon: ach.icon)),
                       hint: 'e.g. Secured 1st rank among 50 teams',
-                    ),
-                    _Field(
-                      label: 'Icon Name',
-                      init: ach.icon,
-                      onChanged: (val) {
-                        widget.state.updateAchievement(index, AchievementItem(
-                          title: ach.title,
-                          subtitle: ach.subtitle,
-                          icon: val,
-                        ));
-                      },
-                      hint: 'e.g. star, military_tech, trophy',
                     ),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
+                      child: TextButton.icon(
                         onPressed: () => widget.state.removeAchievement(index),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                        label: const Text('Remove', style: TextStyle(color: Colors.red)),
                       ),
                     ),
                   ],
                 );
               }),
-
-              // Add Achievement Button
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                child: TextButton.icon(
-                  onPressed: () {
-                    widget.state.addAchievement(
-                      AchievementItem(
-                        title: '',
-                        subtitle: '',
-                        icon: 'star', // Default icon
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add, color: kThemeColor),
-                  label: const Text(
-                    'ADD ACHIEVEMENT',
-                    style: TextStyle(color: kThemeColor),
-                  ),
-                ),
-              ),
-
-              _Field(
-                label: 'LinkedIn URL',
-                init: widget.state.linkedInUrl,
-                onChanged: (v) => widget.state.linkedInUrl = v,
-                keyboard: TextInputType.url,
-              ),
-              _Field(
-                label: 'GitHub URL',
-                init: widget.state.gitHubUrl,
-                onChanged: (v) => widget.state.gitHubUrl = v,
-                keyboard: TextInputType.url,
-              ),
-              _Field(
-                label: 'Twitter / X URL',
-                init: widget.state.twitterUrl,
-                onChanged: (v) => widget.state.twitterUrl = v,
-                keyboard: TextInputType.url,
-              ),
-              _Field(
-                label: 'Portfolio / Behance URL',
-                init: widget.state.portfolioUrl,
-                onChanged: (v) => widget.state.portfolioUrl = v,
-                keyboard: TextInputType.url,
-              ),
-              SizedBox(height: 20.h),
-
-              // Attributes
-              _SectionTitle(key: _attributesKey, title: 'Attributes'),
-              _ChipInputSection(
-                label: 'Skills',
-                values: widget.state.skills,
-                onAdded: (v) => widget.state.addSkill(v),
-                onRemoved: (v) => widget.state.removeSkill(v),
-              ),
-              SizedBox(height: 14.h),
-              _ChipInputSection(
-                label: 'Interests',
-                values: widget.state.interests,
-                onAdded: (v) => widget.state.addInterest(v),
-                onRemoved: (v) => widget.state.removeInterest(v),
-              ),
-              SizedBox(height: 14.h),
-              _ChipInputSection(
-                label: 'Hobbies',
-                values: widget.state.hobbies,
-                onAdded: (v) => widget.state.addHobbies(v),
-                onRemoved: (v) => widget.state.removeHobby(v),
+              _AddButton(
+                label: 'ADD ACHIEVEMENT',
+                onPressed: () => widget.state.addAchievement(
+                  AchievementItem(title: '', subtitle: '', icon: 'star')),
               ),
             ],
           ),
@@ -631,7 +539,7 @@ class _EditFormState extends State<_EditForm> {
   }
 }
 
-// ── Sticky Navbar ─────────────────────────────────────────────────────────────
+// ── Sticky Navbar — pill chips ────────────────────────────────────────────────
 class _StickyNavbar extends StatelessWidget {
   const _StickyNavbar({required this.activeIndex, required this.onTabTapped});
 
@@ -642,6 +550,7 @@ class _StickyNavbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: kLight,
+      padding: EdgeInsets.symmetric(vertical: 10.h),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -651,24 +560,23 @@ class _StickyNavbar extends StatelessWidget {
             return GestureDetector(
               onTap: () => onTabTapped(i),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: EdgeInsets.only(right: 4.w),
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                duration: const Duration(milliseconds: 180),
+                margin: EdgeInsets.only(right: 8.w),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isActive ? kThemeColor : Colors.transparent,
-                      width: 2.5,
-                    ),
+                  color: isActive ? kThemeColor : kBackgroundColor,
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: isActive ? kThemeColor : const Color(0xFFDDDDDD),
                   ),
                 ),
                 child: Text(
                   _tabs[i],
                   style: TextStyle(
                     fontFamily: kFontDMSans,
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    color: isActive ? kDark : kDarkGrey,
+                    color: isActive ? kLight : kDarkGrey,
                   ),
                 ),
               ),
@@ -1370,6 +1278,283 @@ class _LinksEditorState extends State<_LinksEditor> {
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+// ── Add Button ────────────────────────────────────────────────────────────────
+class _AddButton extends StatelessWidget {
+  const _AddButton({required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: const Icon(Icons.add_rounded, size: 18),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: kThemeColor,
+            side: const BorderSide(color: kThemeColor),
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            textStyle: TextStyle(
+              fontFamily: kFontDMSans,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Gender Selector ───────────────────────────────────────────────────────────
+class _GenderSelector extends StatefulWidget {
+  const _GenderSelector({required this.value, required this.onChanged});
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_GenderSelector> createState() => _GenderSelectorState();
+}
+
+class _GenderSelectorState extends State<_GenderSelector> {
+  late String _selected;
+
+  static const _options = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Gender',
+          style: TextStyle(
+            fontFamily: kFontDMSans,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: kDarkGrey,
+            letterSpacing: 0.5,
+          ),
+        ),
+        SizedBox(height: 10.h),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: _options.map((opt) {
+            final active = _selected == opt;
+            return GestureDetector(
+              onTap: () {
+                setState(() => _selected = opt);
+                widget.onChanged(opt);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+                decoration: BoxDecoration(
+                  color: active ? kThemeColor : kLight,
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: active ? kThemeColor : const Color(0xFFDDDDDD),
+                  ),
+                ),
+                child: Text(
+                  opt,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 13.sp,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                    color: active ? kLight : kDark,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+// ── DOB Date Picker ───────────────────────────────────────────────────────────
+class _DOBPicker extends StatefulWidget {
+  const _DOBPicker({required this.value, required this.onChanged});
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_DOBPicker> createState() => _DOBPickerState();
+}
+
+class _DOBPickerState extends State<_DOBPicker> {
+  late String _display;
+
+  @override
+  void initState() {
+    super.initState();
+    _display = _format(widget.value);
+  }
+
+  String _format(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      final d = DateTime.parse(iso);
+      const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return '${d.day} ${m[d.month - 1]} ${d.year}';
+    } catch (_) {
+      return iso;
+    }
+  }
+
+  Future<void> _pick() async {
+    DateTime initial = DateTime(2000);
+    try {
+      if (widget.value.isNotEmpty) initial = DateTime.parse(widget.value);
+    } catch (_) {}
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+      builder: (ctx, child) => Theme(
+        data: ThemeData.light().copyWith(
+          colorScheme: const ColorScheme.light(primary: kThemeColor),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final iso = picked.toIso8601String().split('T').first;
+    setState(() => _display = _format(iso));
+    widget.onChanged(iso);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _pick,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: kLight,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: const Color(0xFFDDDDDD)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.cake_outlined, size: 18.sp, color: kDarkGrey),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                _display.isEmpty ? 'Date of Birth' : _display,
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 14.sp,
+                  color: _display.isEmpty ? const Color(0xFFBBBBBB) : kDark,
+                ),
+              ),
+            ),
+            Icon(Icons.calendar_today_outlined, size: 16.sp, color: kDarkGrey),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Option Selector (chips for fixed choices) ─────────────────────────────────
+class _OptionSelector extends StatefulWidget {
+  const _OptionSelector({
+    required this.label,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+  final String label;
+  final String value;
+  final List<String> options;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_OptionSelector> createState() => _OptionSelectorState();
+}
+
+class _OptionSelectorState extends State<_OptionSelector> {
+  late String _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: TextStyle(
+            fontFamily: kFontDMSans,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: kDarkGrey,
+            letterSpacing: 0.5,
+          ),
+        ),
+        SizedBox(height: 10.h),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: widget.options.map((opt) {
+            final active = _selected == opt;
+            return GestureDetector(
+              onTap: () {
+                setState(() => _selected = opt);
+                widget.onChanged(opt);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+                decoration: BoxDecoration(
+                  color: active ? kThemeColor : kLight,
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: active ? kThemeColor : const Color(0xFFDDDDDD),
+                  ),
+                ),
+                child: Text(
+                  opt,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 13.sp,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                    color: active ? kLight : kDark,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
       ],
     );
   }

@@ -359,7 +359,6 @@ class _PersonalTab extends StatelessWidget {
     final hasWorkStyle = state.workStyle.isNotEmpty;
     final hasCommunicationStyle = state.communicationStyle.isNotEmpty;
     final hasSkills = state.skills.isNotEmpty;
-    final hasInterests = state.interests.isNotEmpty || state.hobbies.isNotEmpty;
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 32.h),
@@ -421,29 +420,39 @@ class _PersonalTab extends StatelessWidget {
               ],
             ),
           ],
-          if (hasSkills) ...[
-            SizedBox(height: 24.h),
-            const _CapLabel('SKILLS'),
-            SizedBox(height: 12.h),
+          SizedBox(height: 24.h),
+          const _CapLabel('SKILLS'),
+          SizedBox(height: 12.h),
+          if (hasSkills)
             Wrap(
               spacing: 8.w,
               runSpacing: 8.h,
               children: state.skills.map((s) => _OutlineChip(label: s)).toList(),
-            ),
-          ],
-          if (hasInterests) ...[
-            SizedBox(height: 24.h),
-            const _CapLabel('INTERESTS & HOBBIES'),
-            SizedBox(height: 12.h),
+            )
+          else
+            _NotAddedHint(label: 'No skills added yet'),
+          SizedBox(height: 24.h),
+          const _CapLabel('INTERESTS'),
+          SizedBox(height: 12.h),
+          if (state.interests.isNotEmpty)
             Wrap(
               spacing: 8.w,
               runSpacing: 8.h,
-              children: [
-                ...state.interests.map((i) => _OutlineChip(label: i)),
-                ...state.hobbies.map((h) => _OutlineChip(label: h)),
-              ],
-            ),
-          ],
+              children: state.interests.map((i) => _OutlineChip(label: i)).toList(),
+            )
+          else
+            _NotAddedHint(label: 'No interests added yet'),
+          SizedBox(height: 24.h),
+          const _CapLabel('HOBBIES'),
+          SizedBox(height: 12.h),
+          if (state.hobbies.isNotEmpty)
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 8.h,
+              children: state.hobbies.map((h) => _OutlineChip(label: h)).toList(),
+            )
+          else
+            _NotAddedHint(label: 'No hobbies added yet'),
           if (state.links.isNotEmpty) ...[
             SizedBox(height: 24.h),
             const _CapLabel('EXTERNAL LINKS'),
@@ -780,101 +789,134 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayedTechs = data.technologies.take(4).toList();
+    final techs = data.technologies.toList();
     final description = _truncateWords(data.description, 100);
 
     return Padding(
       padding: EdgeInsets.only(bottom: 20.h),
-      child: GestureDetector(
-        onTap: data.sourceUrl.isNotEmpty ? _launch : null,
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: kThemeColor,
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(20.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Project name
-                    Text(
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: kLight,
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16.r),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top — kThemeColor, auto-height, project name only
+                  Container(
+                    width: double.infinity,
+                    color: kThemeColor,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 16.w, vertical: 14.h),
+                    child: Text(
                       data.name,
                       style: TextStyle(
-                        fontFamily: 'DMSans',
+                        fontFamily: kFontDMSans,
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
                         color: kLight,
                       ),
                     ),
-                    if (description.isNotEmpty) ...[
-                      SizedBox(height: 8.h),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontFamily: 'DMSans',
-                          fontSize: 12.sp,
-                          color: kLight.withValues(alpha: 0.8),
-                          height: 1.55,
-                        ),
-                      ),
-                    ],
-                    if (displayedTechs.isNotEmpty) ...[
-                      SizedBox(height: 14.h),
-                      Wrap(
-                        spacing: 6.w,
-                        runSpacing: 6.h,
-                        children: displayedTechs
-                            .map((t) => _CardTechChip(label: t))
-                            .toList(),
-                      ),
-                    ],
-                    if (data.sourceUrl.isNotEmpty) ...[
-                      SizedBox(height: 16.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Icon(
-                            _linkIcon(),
-                            size: 14.sp,
-                            color: kLight.withValues(alpha: 0.7),
-                          ),
-                          SizedBox(width: 5.w),
+                  ),
+                  // Bottom — white, description + techs + link
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (description.isNotEmpty) ...[
                           Text(
-                            'VIEW PROJECT',
+                            description,
                             style: TextStyle(
-                              fontFamily: 'DMSans',
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w600,
-                              color: kLight.withValues(alpha: 0.7),
-                              letterSpacing: 0.5,
+                              fontFamily: kFontDMSans,
+                              fontSize: 12.sp,
+                              color: kDarkGrey,
+                              height: 1.55,
                             ),
                           ),
+                          SizedBox(height: 14.h),
                         ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (onDelete != null)
-                Positioned(
-                  top: 10.h,
-                  right: 10.w,
-                  child: GestureDetector(
-                    onTap: onDelete,
-                    child: Icon(
-                      Icons.delete_outline,
-                      size: 18.sp,
-                      color: kLight.withValues(alpha: 0.5),
+                        if (techs.isNotEmpty) ...[
+                          Text(
+                            'TECHNOLOGIES USED',
+                            style: TextStyle(
+                              fontFamily: kFontDMSans,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              color: kDarkGrey,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Wrap(
+                            spacing: 6.w,
+                            runSpacing: 6.h,
+                            children:
+                                techs.map((t) => _CardTechChip(label: t)).toList(),
+                          ),
+                          SizedBox(height: 14.h),
+                        ],
+                        if (data.sourceUrl.isNotEmpty)
+                          GestureDetector(
+                            onTap: _launch,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(_linkIcon(),
+                                    size: 14.sp, color: kThemeColor),
+                                SizedBox(width: 5.w),
+                                Text(
+                                  'Visit Project',
+                                  style: TextStyle(
+                                    fontFamily: kFontDMSans,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: kThemeColor,
+                                  ),
+                                ),
+                                SizedBox(width: 3.w),
+                                Icon(Icons.arrow_outward_rounded,
+                                    size: 12.sp, color: kThemeColor),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
-        ),
+          if (onDelete != null)
+            Positioned(
+              top: 8.h,
+              right: 10.w,
+              child: GestureDetector(
+                onTap: onDelete,
+                child: Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.delete_outline,
+                      size: 16.sp, color: kLight),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -889,14 +931,13 @@ class _CardTechChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: kDark,
         borderRadius: BorderRadius.circular(4.r),
-        border: Border.all(color: kLight.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontFamily: 'DMSans',
+          fontFamily: kFontDMSans,
           fontSize: 10.sp,
           fontWeight: FontWeight.w600,
           color: kLight,
@@ -1743,6 +1784,26 @@ class _CapLabel extends StatelessWidget {
         fontWeight: FontWeight.w600,
         color: kDarkGrey,
         letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+// ── Not-added hint ─────────────────────────────────────────────────────────
+
+class _NotAddedHint extends StatelessWidget {
+  const _NotAddedHint({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: TextStyle(
+        fontFamily: kFontDMSans,
+        fontSize: 13.sp,
+        fontStyle: FontStyle.italic,
+        color: const Color(0xFFBBBBBB),
       ),
     );
   }

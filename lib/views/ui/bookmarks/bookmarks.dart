@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/empty_state_widget.dart';
@@ -71,8 +72,25 @@ class _BookMarkPageState extends State<BookMarkPage> {
 
                   itemBuilder: (context, index) {
                     final bookmark = bookmarks[index];
-
+                    final active = bookmark.job.isActive;
                     final selected = index == _selectedIndex;
+
+                    final chipColor = active
+                        ? (selected ? kThemeColor : Colors.white)
+                        : (selected
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade100);
+                    final chipBorder = active
+                        ? (selected
+                            ? kThemeColor
+                            : kThemeColor.withValues(alpha: 0.08))
+                        : Colors.grey.shade300;
+                    final iconColor = active
+                        ? (selected ? Colors.white : kThemeColor)
+                        : Colors.grey.shade400;
+                    final textColor = active
+                        ? (selected ? Colors.white : Colors.black87)
+                        : Colors.grey.shade400;
 
                     return GestureDetector(
                       onTap: () {
@@ -90,19 +108,15 @@ class _BookMarkPageState extends State<BookMarkPage> {
                         ),
 
                         decoration: BoxDecoration(
-                          color: selected ? kThemeColor : Colors.white,
+                          color: chipColor,
 
                           borderRadius: BorderRadius.circular(16.r),
 
-                          border: Border.all(
-                            color: selected
-                                ? kThemeColor
-                                : kThemeColor.withOpacity(0.08),
-                          ),
+                          border: Border.all(color: chipBorder),
 
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
 
                               blurRadius: 10,
 
@@ -117,10 +131,8 @@ class _BookMarkPageState extends State<BookMarkPage> {
                           children: [
                             Icon(
                               Icons.bookmark_outline_rounded,
-
                               size: 16.sp,
-
-                              color: selected ? Colors.white : kThemeColor,
+                              color: iconColor,
                             ),
 
                             SizedBox(width: 8.w),
@@ -140,9 +152,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
 
                                   fontWeight: FontWeight.w700,
 
-                                  color: selected
-                                      ? Colors.white
-                                      : Colors.black87,
+                                  color: textColor,
                                 ),
                               ),
                             ),
@@ -171,12 +181,28 @@ class _BookMarkPageState extends State<BookMarkPage> {
                   itemBuilder: (context, index) {
                     final bookmark = bookmarks[index];
                     final job = bookmark.job;
+                    final active = job.isActive;
 
                     return Padding(
                       padding: EdgeInsets.only(bottom: 14.h),
 
                       child: GestureDetector(
                         onTap: () {
+                          if (!active) {
+                            Get.snackbar(
+                              'Temporarily Unavailable',
+                              'This opportunity is currently paused. Check back later.',
+                              backgroundColor: Colors.grey.shade700,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                              borderRadius: 12,
+                              margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
+                              duration: const Duration(seconds: 3),
+                              icon: const Icon(Icons.pause_circle_outline,
+                                  color: Colors.white),
+                            );
+                            return;
+                          }
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -213,197 +239,194 @@ class _BookMarkPageState extends State<BookMarkPage> {
                           );
                         },
 
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+                        child: Opacity(
+                          opacity: active ? 1.0 : 0.55,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
 
-                            borderRadius: BorderRadius.circular(22.r),
+                              borderRadius: BorderRadius.circular(22.r),
 
-                            border: Border.all(
-                              color: kThemeColor.withOpacity(0.06),
+                              border: Border.all(
+                                color: active
+                                    ? kThemeColor.withValues(alpha: 0.06)
+                                    : Colors.grey.shade300,
+                                width: active ? 1.0 : 1.5,
+                              ),
+
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withValues(alpha: 0.12),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
                             ),
 
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.22),
-
-                                blurRadius: 14,
-
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-
-                          child: Row(
-                            children: [
-                              // ── Image ────────────────────
-                              ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(22.r),
-                                  bottomLeft: Radius.circular(22.r),
-                                ),
-
-                                child: SizedBox(
-                                  width: 105.w,
-                                  height: 96.h,
-
-                                  child: job.hasImage
-                                      ? Image.network(
-                                          job.imageUrl,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Container(
-                                          color: kThemeColor.withOpacity(0.08),
-
-                                          child: Icon(
-                                            Icons.work_outline_rounded,
-
-                                            color: kThemeColor,
-
-                                            size: 34.sp,
-                                          ),
-                                        ),
-                                ),
-                              ),
-
-                              // ── Content ──────────────────
-                              Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 14.w,
-                                    vertical: 12.h,
+                            child: Row(
+                              children: [
+                                // ── Image ────────────────────
+                                ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(22.r),
+                                    bottomLeft: Radius.circular(22.r),
                                   ),
 
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child: SizedBox(
+                                    width: 105.w,
+                                    height: 96.h,
 
-                                    children: [
-                                      // ── Title ───────────
-                                      Text(
-                                        job.title,
+                                    child: job.hasImage
+                                        ? Image.network(
+                                            job.imageUrl,
+                                            fit: BoxFit.cover,
+                                            color: active
+                                                ? null
+                                                : Colors.grey,
+                                            colorBlendMode: active
+                                                ? null
+                                                : BlendMode.saturation,
+                                          )
+                                        : Container(
+                                            color: active
+                                                ? kThemeColor
+                                                    .withValues(alpha: 0.08)
+                                                : Colors.grey.shade100,
 
-                                        maxLines: 1,
-
-                                        overflow: TextOverflow.ellipsis,
-
-                                        style: TextStyle(
-                                          fontFamily: kFontDMSans,
-
-                                          fontSize: 15.sp,
-
-                                          fontWeight: FontWeight.w700,
-
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-
-                                      SizedBox(height: 5.h),
-
-                                      // ── Company ─────────
-                                      Text(
-                                        job.companyText,
-
-                                        maxLines: 1,
-
-                                        overflow: TextOverflow.ellipsis,
-
-                                        style: TextStyle(
-                                          fontFamily: kFontDMSans,
-
-                                          fontSize: 12.sp,
-
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-
-                                      SizedBox(height: 9.h),
-
-                                      // ── Bottom Row ──────
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.location_on_outlined,
-
-                                            size: 15.sp,
-
-                                            color: kThemeColor,
-                                          ),
-
-                                          SizedBox(width: 4.w),
-
-                                          Expanded(
-                                            child: Text(
-                                              job.location,
-
-                                              maxLines: 1,
-
-                                              overflow: TextOverflow.ellipsis,
-
-                                              style: TextStyle(
-                                                fontFamily: kFontDMSans,
-
-                                                fontSize: 11.5.sp,
-
-                                                color: Colors.grey.shade700,
-                                              ),
+                                            child: Icon(
+                                              Icons.work_outline_rounded,
+                                              color: active
+                                                  ? kThemeColor
+                                                  : Colors.grey.shade400,
+                                              size: 34.sp,
                                             ),
                                           ),
-                                        ],
-                                      ),
-
-                                      SizedBox(height: 10.h),
-
-                                      // ── Type Chip ───────
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 10.w,
-                                          vertical: 5.h,
-                                        ),
-
-                                        decoration: BoxDecoration(
-                                          color: kThemeColor.withOpacity(0.08),
-
-                                          borderRadius: BorderRadius.circular(
-                                            14.r,
-                                          ),
-                                        ),
-
-                                        child: Text(
-                                          job.opportunityType,
-
-                                          style: TextStyle(
-                                            fontFamily: kFontDMSans,
-
-                                            fontSize: 10.5.sp,
-
-                                            fontWeight: FontWeight.w700,
-
-                                            color: kThemeColor,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ),
-                              ),
 
-                              // ── Arrow ───────────────────
-                              Padding(
-                                padding: EdgeInsets.only(right: 14.w),
+                                // ── Content ──────────────────
+                                Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 14.w,
+                                      vertical: 12.h,
+                                    ),
 
-                                child: Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 15.sp,
-                                  color: Colors.black26,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+
+                                      children: [
+                                        // ── Title ───────────
+                                        Text(
+                                          job.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontFamily: kFontDMSans,
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+
+                                        SizedBox(height: 5.h),
+
+                                        // ── Company ─────────
+                                        Text(
+                                          job.companyText,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontFamily: kFontDMSans,
+                                            fontSize: 12.sp,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+
+                                        SizedBox(height: 9.h),
+
+                                        // ── Location ──────
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_on_outlined,
+                                              size: 15.sp,
+                                              color: active
+                                                  ? kThemeColor
+                                                  : Colors.grey.shade400,
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Expanded(
+                                              child: Text(
+                                                job.location,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontFamily: kFontDMSans,
+                                                  fontSize: 11.5.sp,
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        SizedBox(height: 10.h),
+
+                                        // ── Type Chip / Paused badge ──
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w,
+                                            vertical: 5.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: active
+                                                ? kThemeColor
+                                                    .withValues(alpha: 0.08)
+                                                : Colors.grey.shade200,
+                                            borderRadius:
+                                                BorderRadius.circular(14.r),
+                                          ),
+                                          child: Text(
+                                            active
+                                                ? job.opportunityType
+                                                : 'PAUSED',
+                                            style: TextStyle(
+                                              fontFamily: kFontDMSans,
+                                              fontSize: 10.5.sp,
+                                              fontWeight: FontWeight.w700,
+                                              color: active
+                                                  ? kThemeColor
+                                                  : Colors.grey.shade500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+
+                                // ── Arrow ───────────────────
+                                Padding(
+                                  padding: EdgeInsets.only(right: 14.w),
+                                  child: Icon(
+                                    active
+                                        ? Icons.arrow_forward_ios_rounded
+                                        : Icons.pause_circle_outline_rounded,
+                                    size: 15.sp,
+                                    color: active
+                                        ? Colors.black26
+                                        : Colors.grey.shade400,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  );
+                },
                 ),
               ),
             ],
