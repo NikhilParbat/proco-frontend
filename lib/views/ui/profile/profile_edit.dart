@@ -16,15 +16,15 @@ import 'profile_state.dart';
 const int _kMaxLinks = 6;
 
 // ── Section keys for scroll-to ────────────────────────────────────────────────
-final _aboutKey      = GlobalKey();
-final _educationKey  = GlobalKey();
-final _personalKey   = GlobalKey();
-final _workStyleKey  = GlobalKey();
-final _skillsKey     = GlobalKey();
-final _interestsKey  = GlobalKey();
-final _linksKey      = GlobalKey();
+final _aboutKey = GlobalKey();
+final _educationKey = GlobalKey();
+final _personalKey = GlobalKey();
+final _workStyleKey = GlobalKey();
+final _skillsKey = GlobalKey();
+final _interestsKey = GlobalKey();
+final _linksKey = GlobalKey();
 final _experienceKey = GlobalKey();
-final _projectsKey   = GlobalKey();
+final _projectsKey = GlobalKey();
 final _achievementsKey = GlobalKey();
 
 const _tabs = [
@@ -293,11 +293,7 @@ class _EditFormState extends State<_EditForm> {
               _OptionSelector(
                 label: 'Communication Style',
                 value: widget.state.communicationStyle,
-                options: const [
-                  'Asynchronous',
-                  'Synchronous',
-                  'Mixed',
-                ],
+                options: const ['Asynchronous', 'Synchronous', 'Mixed'],
                 onChanged: (v) => widget.state.communicationStyle = v,
               ),
               SizedBox(height: 28.h),
@@ -369,41 +365,78 @@ class _EditFormState extends State<_EditForm> {
                 final index = entry.key;
                 final exp = entry.value;
                 return _ExpandableSection(
-                  sectionLabel: exp.company.isEmpty ? 'New Experience' : exp.company,
+                  sectionLabel: exp.company.isEmpty
+                      ? 'New Experience'
+                      : exp.company,
                   icon: Icons.work_outline,
                   initiallyExpanded: exp.company.isEmpty,
                   children: [
                     _Field(
                       label: 'Company Name *',
                       init: exp.company,
-                      onChanged: (val) => widget.state.updateExperience(index,
-                        ExperienceItem(company: val, position: exp.position, description: exp.description, dateRange: exp.dateRange)),
+                      onChanged: (val) => widget.state.updateExperience(
+                        index,
+                        ExperienceItem(
+                          company: val,
+                          position: exp.position,
+                          description: exp.description,
+                          dateRange: exp.dateRange,
+                        ),
+                      ),
                     ),
                     _Field(
                       label: 'Role / Job Title *',
                       init: exp.position,
-                      onChanged: (val) => widget.state.updateExperience(index,
-                        ExperienceItem(company: exp.company, position: val, description: exp.description, dateRange: exp.dateRange)),
+                      onChanged: (val) => widget.state.updateExperience(
+                        index,
+                        ExperienceItem(
+                          company: exp.company,
+                          position: val,
+                          description: exp.description,
+                          dateRange: exp.dateRange,
+                        ),
+                      ),
                     ),
                     _Field(
                       label: 'About the Role',
                       init: exp.description,
-                      onChanged: (val) => widget.state.updateExperience(index,
-                        ExperienceItem(company: exp.company, position: exp.position, description: val, dateRange: exp.dateRange)),
+                      onChanged: (val) => widget.state.updateExperience(
+                        index,
+                        ExperienceItem(
+                          company: exp.company,
+                          position: exp.position,
+                          description: val,
+                          dateRange: exp.dateRange,
+                        ),
+                      ),
                       maxLines: 3,
                       hint: 'Describe your responsibilities and impact…',
                     ),
                     _DateRangePicker(
                       value: exp.dateRange,
-                      onChanged: (val) => widget.state.updateExperience(index,
-                        ExperienceItem(company: exp.company, position: exp.position, description: exp.description, dateRange: val)),
+                      onChanged: (val) => widget.state.updateExperience(
+                        index,
+                        ExperienceItem(
+                          company: exp.company,
+                          position: exp.position,
+                          description: exp.description,
+                          dateRange: val,
+                        ),
+                      ),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: () => widget.state.removeExperience(index),
-                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                        label: const Text('Remove', style: TextStyle(color: Colors.red)),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Remove',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ),
                   ],
@@ -415,15 +448,26 @@ class _EditFormState extends State<_EditForm> {
                   final exps = widget.state.experiences;
                   if (exps.isNotEmpty) {
                     final last = exps.last;
-                    if (last.company.trim().isEmpty || last.position.trim().isEmpty) {
-                      Get.snackbar('Fill required fields',
+                    if (last.company.trim().isEmpty ||
+                        last.position.trim().isEmpty) {
+                      Get.snackbar(
+                        'Fill required fields',
                         'Complete the current experience (company & role) before adding another.',
-                        backgroundColor: kOrange, colorText: kLight, snackPosition: SnackPosition.TOP);
+                        backgroundColor: kOrange,
+                        colorText: kLight,
+                        snackPosition: SnackPosition.TOP,
+                      );
                       return;
                     }
                   }
                   widget.state.addExperience(
-                    ExperienceItem(company: '', position: '', description: '', dateRange: ''));
+                    ExperienceItem(
+                      company: '',
+                      position: '',
+                      description: '',
+                      dateRange: '',
+                    ),
+                  );
                 },
               ),
               SizedBox(height: 28.h),
@@ -441,32 +485,68 @@ class _EditFormState extends State<_EditForm> {
                     _Field(
                       label: 'Project Name *',
                       init: proj.name,
-                      onChanged: (val) => widget.state.updateProject(index,
-                        ProjectItem(name: val, domain: proj.domain, description: proj.description, technologies: proj.technologies, sourceUrl: proj.sourceUrl)),
+                      onChanged: (val) => widget.state.updateProject(
+                        index,
+                        ProjectItem(
+                          name: val,
+                          domain: proj.domain,
+                          description: proj.description,
+                          technologies: proj.technologies,
+                          sourceUrl: proj.sourceUrl,
+                        ),
+                      ),
                     ),
                     _Field(
                       label: 'Technologies Used',
                       init: proj.technologies.join(', '),
                       onChanged: (val) {
-                        final techs = val.split(',').map((t) => t.trim().toUpperCase()).where((t) => t.isNotEmpty).toList();
-                        widget.state.updateProject(index,
-                          ProjectItem(name: proj.name, domain: proj.domain, description: proj.description, technologies: techs, sourceUrl: proj.sourceUrl));
+                        final techs = val
+                            .split(',')
+                            .map((t) => t.trim().toUpperCase())
+                            .where((t) => t.isNotEmpty)
+                            .toList();
+                        widget.state.updateProject(
+                          index,
+                          ProjectItem(
+                            name: proj.name,
+                            domain: proj.domain,
+                            description: proj.description,
+                            technologies: techs,
+                            sourceUrl: proj.sourceUrl,
+                          ),
+                        );
                       },
                       hint: 'Flutter, Firebase, Node.js (comma-separated)',
                     ),
                     _Field(
                       label: 'Project Description',
                       init: proj.description,
-                      onChanged: (val) => widget.state.updateProject(index,
-                        ProjectItem(name: proj.name, domain: proj.domain, description: val, technologies: proj.technologies, sourceUrl: proj.sourceUrl)),
+                      onChanged: (val) => widget.state.updateProject(
+                        index,
+                        ProjectItem(
+                          name: proj.name,
+                          domain: proj.domain,
+                          description: val,
+                          technologies: proj.technologies,
+                          sourceUrl: proj.sourceUrl,
+                        ),
+                      ),
                       maxLines: 3,
                       hint: 'What does this project do?',
                     ),
                     _Field(
                       label: 'Project URL / Source Code',
                       init: proj.sourceUrl,
-                      onChanged: (val) => widget.state.updateProject(index,
-                        ProjectItem(name: proj.name, domain: proj.domain, description: proj.description, technologies: proj.technologies, sourceUrl: val)),
+                      onChanged: (val) => widget.state.updateProject(
+                        index,
+                        ProjectItem(
+                          name: proj.name,
+                          domain: proj.domain,
+                          description: proj.description,
+                          technologies: proj.technologies,
+                          sourceUrl: val,
+                        ),
+                      ),
                       hint: 'https://github.com/…',
                       keyboard: TextInputType.url,
                     ),
@@ -474,8 +554,15 @@ class _EditFormState extends State<_EditForm> {
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: () => widget.state.removeProject(index),
-                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                        label: const Text('Remove', style: TextStyle(color: Colors.red)),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Remove',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ),
                   ],
@@ -486,13 +573,24 @@ class _EditFormState extends State<_EditForm> {
                 onPressed: () {
                   final projs = widget.state.projects;
                   if (projs.isNotEmpty && projs.last.name.trim().isEmpty) {
-                    Get.snackbar('Fill required fields',
+                    Get.snackbar(
+                      'Fill required fields',
                       'Complete the current project (name) before adding another.',
-                      backgroundColor: kOrange, colorText: kLight, snackPosition: SnackPosition.TOP);
+                      backgroundColor: kOrange,
+                      colorText: kLight,
+                      snackPosition: SnackPosition.TOP,
+                    );
                     return;
                   }
                   widget.state.addProject(
-                    ProjectItem(name: '', domain: '', description: '', technologies: [], sourceUrl: ''));
+                    ProjectItem(
+                      name: '',
+                      domain: '',
+                      description: '',
+                      technologies: [],
+                      sourceUrl: '',
+                    ),
+                  );
                 },
               ),
               SizedBox(height: 28.h),
@@ -503,29 +601,50 @@ class _EditFormState extends State<_EditForm> {
                 final index = entry.key;
                 final ach = entry.value;
                 return _ExpandableSection(
-                  sectionLabel: ach.title.isEmpty ? 'New Achievement' : ach.title,
+                  sectionLabel: ach.title.isEmpty
+                      ? 'New Achievement'
+                      : ach.title,
                   icon: Icons.emoji_events_outlined,
                   children: [
                     _Field(
                       label: 'Title *',
                       init: ach.title,
-                      onChanged: (val) => widget.state.updateAchievement(index,
-                        AchievementItem(title: val, subtitle: ach.subtitle, icon: ach.icon)),
+                      onChanged: (val) => widget.state.updateAchievement(
+                        index,
+                        AchievementItem(
+                          title: val,
+                          subtitle: ach.subtitle,
+                          icon: ach.icon,
+                        ),
+                      ),
                       hint: 'e.g. Hackathon Winner',
                     ),
                     _Field(
                       label: 'Description',
                       init: ach.subtitle,
-                      onChanged: (val) => widget.state.updateAchievement(index,
-                        AchievementItem(title: ach.title, subtitle: val, icon: ach.icon)),
+                      onChanged: (val) => widget.state.updateAchievement(
+                        index,
+                        AchievementItem(
+                          title: ach.title,
+                          subtitle: val,
+                          icon: ach.icon,
+                        ),
+                      ),
                       hint: 'e.g. Secured 1st rank among 50 teams',
                     ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: () => widget.state.removeAchievement(index),
-                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                        label: const Text('Remove', style: TextStyle(color: Colors.red)),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          'Remove',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ),
                   ],
@@ -534,7 +653,8 @@ class _EditFormState extends State<_EditForm> {
               _AddButton(
                 label: 'ADD ACHIEVEMENT',
                 onPressed: () => widget.state.addAchievement(
-                  AchievementItem(title: '', subtitle: '', icon: 'star')),
+                  AchievementItem(title: '', subtitle: '', icon: 'star'),
+                ),
               ),
             ],
           ),
@@ -643,10 +763,7 @@ class _IdentitySection extends StatelessWidget {
           init: state.username,
           onChanged: (v) => state.username = v,
         ),
-        _BioField(
-          init: state.bio,
-          onChanged: (v) => state.bio = v,
-        ),
+        _BioField(init: state.bio, onChanged: (v) => state.bio = v),
         _LocationPickerRow(state: state),
       ],
     );
@@ -654,460 +771,372 @@ class _IdentitySection extends StatelessWidget {
 }
 
 // ── Location Picker Row ───────────────────────────────────────────────────────
-class _LocationPickerRow extends StatelessWidget {
+// ── Location Picker Row (inline, no navigation) ───────────────────────────────
+class _LocationPickerRow extends StatefulWidget {
   const _LocationPickerRow({required this.state});
   final ProfileEditState state;
 
-  String get _displayText {
-    final parts = [state.city, state.state, state.country]
-        .where((s) => s.isNotEmpty)
-        .toList();
-    return parts.isEmpty ? 'Tap to set your location' : parts.join(', ');
-  }
-
-  bool get _hasLocation => state.city.isNotEmpty || state.state.isNotEmpty;
-
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final result = await Navigator.push<Map<String, dynamic>>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => _LocationPickerPage(
-              initialLat: state.latitude,
-              initialLng: state.longitude,
-              initialDisplay: [state.city, state.state, state.country]
-                  .where((s) => s.isNotEmpty)
-                  .join(', '),
-            ),
-          ),
-        );
-        if (result != null) {
-          state.setLocation(
-            city: result['city'] ?? '',
-            state: result['state'] ?? '',
-            country: result['country'] ?? '',
-            latitude: (result['lat'] as num?)?.toDouble() ?? 0.0,
-            longitude: (result['lng'] as num?)?.toDouble() ?? 0.0,
-          );
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-        margin: EdgeInsets.only(bottom: 14.h),
-        decoration: BoxDecoration(
-          color: kLight,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: _hasLocation ? kThemeColor.withValues(alpha: 0.5) : const Color(0xFFDDDDDD),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.location_on_outlined,
-              color: _hasLocation ? kThemeColor : kDarkGrey,
-              size: 20.r,
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Text(
-                _displayText,
-                style: TextStyle(
-                  fontFamily: kFontDMSans,
-                  fontSize: 14.sp,
-                  color: _hasLocation ? kDark : kDarkGrey,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: kDarkGrey, size: 18.r),
-          ],
-        ),
-      ),
-    );
-  }
+  State<_LocationPickerRow> createState() => _LocationPickerRowState();
 }
 
-// ── Location Picker Page (full-screen map) ────────────────────────────────────
-class _LocationPickerPage extends StatefulWidget {
-  const _LocationPickerPage({
-    this.initialLat,
-    this.initialLng,
-    this.initialDisplay = '',
-  });
-  final double? initialLat;
-  final double? initialLng;
-  final String initialDisplay;
-
-  @override
-  State<_LocationPickerPage> createState() => _LocationPickerPageState();
-}
-
-class _LocationPickerPageState extends State<_LocationPickerPage> {
-  final MapController _mapController = MapController();
-  final TextEditingController _searchController = TextEditingController();
-
-  LatLng _markerPosition = const LatLng(20.5937, 78.9629);
-  bool _markerVisible = false;
-  List<Map<String, dynamic>> _searchResults = [];
-  bool _isSearching = false;
-  bool _locationLoading = false;
-  Map<String, dynamic>? _selected;
+class _LocationPickerRowState extends State<_LocationPickerRow> {
+  final _locationSearchCtrl = TextEditingController();
+  final List<Map<String, dynamic>> _locationResults = [];
+  bool _isSearchingLocation = false;
+  bool _isFetchingCurrentLocation = false;
+  String? _selectedLocationLabel;
+  bool _preferTypingLocation = false;
 
   @override
   void initState() {
     super.initState();
-    final lat = widget.initialLat;
-    final lng = widget.initialLng;
-    if (lat != null && lng != null && lat != 0.0 && lng != 0.0) {
-      _markerPosition = LatLng(lat, lng);
-      _markerVisible = true;
-      _searchController.text = widget.initialDisplay;
+    // Restore previously saved location label
+    final parts = [
+      widget.state.city,
+      widget.state.state,
+      widget.state.country,
+    ].where((s) => s.isNotEmpty).toList();
+    if (parts.isNotEmpty) {
+      _selectedLocationLabel = parts.join(', ');
     }
   }
 
   @override
   void dispose() {
-    _mapController.dispose();
-    _searchController.dispose();
+    _locationSearchCtrl.dispose();
     super.dispose();
   }
 
-  void _moveMap(double lat, double lng) {
-    final target = LatLng(lat, lng);
-    setState(() {
-      _markerPosition = target;
-      _markerVisible = true;
-      _searchResults = [];
-    });
-    _mapController.move(target, 13.0);
-  }
-
-  Future<void> _onSearchChanged(String query) async {
-    if (query.length < 3) {
-      setState(() => _searchResults = []);
+  Future<void> _onLocationSearchChanged(String query) async {
+    if (query.trim().length < 3) {
+      setState(() {
+        _locationResults.clear();
+        _isSearchingLocation = false;
+      });
       return;
     }
-    setState(() => _isSearching = true);
+    setState(() => _isSearchingLocation = true);
     try {
       final url =
-          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=5&addressdetails=1';
-      final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'proco_app'});
+          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query.trim())}&format=json&limit=5&addressdetails=1';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'User-Agent': 'proco_app'},
+      );
+      if (!mounted) return;
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
         setState(() {
-          _searchResults = data.map((item) {
-            final addr = item['address'] as Map<String, dynamic>? ?? {};
-            return {
-              'display_name': item['display_name'],
-              'lat': double.parse(item['lat']),
-              'lon': double.parse(item['lon']),
-              'city': addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '',
-              'state': addr['state'] ?? '',
-              'country': addr['country'] ?? '',
-            };
-          }).toList();
+          _locationResults
+            ..clear()
+            ..addAll(
+              data.map((item) {
+                final addr = item['address'] as Map<String, dynamic>? ?? {};
+                return {
+                  'display_name': item['display_name'],
+                  'lat': double.parse(item['lat']),
+                  'lon': double.parse(item['lon']),
+                  'city':
+                      addr['city'] ??
+                      addr['town'] ??
+                      addr['village'] ??
+                      addr['county'] ??
+                      '',
+                  'state': addr['state'] ?? '',
+                  'country': addr['country'] ?? '',
+                };
+              }),
+            );
         });
       }
     } catch (e) {
       debugPrint('Location search error: $e');
     } finally {
-      setState(() => _isSearching = false);
+      if (mounted) setState(() => _isSearchingLocation = false);
     }
   }
 
-  Future<Map<String, String>> _reverseGeocode(double lat, double lng) async {
+  void _selectLocationResult(Map<String, dynamic> item) {
+    final lat = item['lat'] as double;
+    final lon = item['lon'] as double;
+    final display = (item['display_name'] as String?) ?? '';
+    widget.state.setLocation(
+      city: (item['city'] as String?) ?? '',
+      state: (item['state'] as String?) ?? '',
+      country: (item['country'] as String?) ?? '',
+      latitude: lat,
+      longitude: lon,
+    );
+    setState(() {
+      _selectedLocationLabel = display;
+      _locationSearchCtrl.text = display;
+      _locationResults.clear();
+    });
+  }
+
+  Future<void> _useCurrentLocation() async {
+    setState(() => _isFetchingCurrentLocation = true);
     try {
-      final url =
-          'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lng&format=json&addressdetails=1';
-      final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'proco_app'});
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final addr = data['address'] as Map<String, dynamic>? ?? {};
-        return {
-          'display': data['display_name'] as String? ?? '',
-          'city': addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '',
-          'state': addr['state'] ?? '',
-          'country': addr['country'] ?? '',
-        };
-      }
+      final result = await LocationService.getCurrentLocation();
+      final address = await LocationService.getAddressFromLatLng(
+        result.latitude,
+        result.longitude,
+      );
+      if (!mounted) return;
+      final display = result.displayAddress?.isNotEmpty == true
+          ? result.displayAddress!
+          : '${address.city}, ${address.state}';
+      widget.state.setLocation(
+        city: address.city,
+        state: address.state,
+        country: address.country,
+        latitude: result.latitude,
+        longitude: result.longitude,
+      );
+      setState(() => _selectedLocationLabel = display);
     } catch (e) {
-      debugPrint('Reverse geocode error: $e');
+      Get.snackbar(
+        'Location Error',
+        e.toString(),
+        backgroundColor: kOrange,
+        colorText: kLight,
+      );
+    } finally {
+      if (mounted) setState(() => _isFetchingCurrentLocation = false);
     }
-    return {'display': '', 'city': '', 'state': '', 'country': ''};
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF040326),
-      body: Stack(
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Full-screen map
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _markerPosition,
-              initialZoom: _markerVisible ? 13.0 : 5.0,
-              onTap: (_, latLng) async {
-                _moveMap(latLng.latitude, latLng.longitude);
-                _searchController.clear();
-                FocusScope.of(context).unfocus();
-                final geo = await _reverseGeocode(latLng.latitude, latLng.longitude);
-                setState(() {
-                  _selected = {
-                    'lat': latLng.latitude,
-                    'lng': latLng.longitude,
-                    'city': geo['city'] ?? '',
-                    'state': geo['state'] ?? '',
-                    'country': geo['country'] ?? '',
-                    'display': geo['display'] ?? '',
-                  };
-                  _searchController.text = geo['display'] ?? '';
-                });
-              },
-            ),
+          // Mode toggle chips
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.proco.proco',
+              _locationChip(
+                label: 'Use current location',
+                icon: Icons.my_location_rounded,
+                selected: !_preferTypingLocation,
+                onTap: () => setState(() => _preferTypingLocation = false),
               ),
-              MarkerLayer(
-                markers: [
-                  if (_markerVisible)
-                    Marker(
-                      point: _markerPosition,
-                      width: 48,
-                      height: 48,
-                      child: const Icon(Icons.location_pin, color: kThemeColor, size: 48),
-                    ),
-                ],
+              _locationChip(
+                label: 'Search location',
+                icon: Icons.search,
+                selected: _preferTypingLocation,
+                onTap: () => setState(() => _preferTypingLocation = true),
               ),
             ],
           ),
+          SizedBox(height: 10.h),
 
-          // Back button
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
-            left: 16,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF040326).withValues(alpha: 0.75),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24),
+          // GPS button or search field
+          if (!_preferTypingLocation)
+            SizedBox(
+              width: double.infinity,
+              height: 46.h,
+              child: ElevatedButton.icon(
+                onPressed: _isFetchingCurrentLocation
+                    ? null
+                    : _useCurrentLocation,
+                icon: _isFetchingCurrentLocation
+                    ? SizedBox(
+                        width: 16.w,
+                        height: 16.w,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: kLight,
+                        ),
+                      )
+                    : const Icon(Icons.my_location_rounded, size: 18),
+                label: Text(
+                  _isFetchingCurrentLocation
+                      ? 'Fetching...'
+                      : 'Fetch Current Location',
+                  style: TextStyle(
+                    color: kLight,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kThemeColor,
+                  foregroundColor: kLight,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  elevation: 0,
+                ),
               ),
-            ),
-          ),
-
-          // Top overlay: title + search + GPS
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Where are you based?',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+            )
+          else
+            Column(
+              children: [
+                // Search field
+                Container(
+                  decoration: BoxDecoration(
+                    color: kLight,
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(color: const Color(0xFFDDDDDD)),
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withValues(alpha: 0.92),
-                      borderRadius: _searchResults.isEmpty
-                          ? BorderRadius.circular(12)
-                          : const BorderRadius.vertical(top: Radius.circular(12)),
-                      border: Border.all(color: kThemeColor.withValues(alpha: 0.6)),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: const TextStyle(color: Colors.white),
-                      onChanged: _onSearchChanged,
-                      decoration: InputDecoration(
-                        hintText: 'Search location…',
-                        hintStyle: const TextStyle(color: Colors.white54),
-                        prefixIcon: const Icon(Icons.search, color: kThemeColor),
-                        suffixIcon: _isSearching
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: kThemeColor),
-                                ),
-                              )
-                            : _searchController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, color: Colors.white54, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchResults = []);
-                                    },
-                                  )
-                                : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.search,
+                        size: 18.sp,
+                        color: Colors.grey.shade400,
                       ),
-                    ),
-                  ),
-                  if (_searchResults.isNotEmpty)
-                    Container(
-                      constraints: const BoxConstraints(maxHeight: 220),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF040326).withValues(alpha: 0.95),
-                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-                        border: Border.all(color: kThemeColor.withValues(alpha: 0.4)),
-                      ),
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        itemCount: _searchResults.length,
-                        separatorBuilder: (_, _) => const Divider(color: Colors.white10, height: 1),
-                        itemBuilder: (context, index) {
-                          final item = _searchResults[index];
-                          return ListTile(
-                            leading: const Icon(Icons.location_on_outlined, color: kThemeColor, size: 18),
-                            title: Text(
-                              item['display_name'],
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: TextField(
+                          controller: _locationSearchCtrl,
+                          onChanged: _onLocationSearchChanged,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.black87,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search city / area',
+                            hintStyle: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey.shade400,
                             ),
-                            onTap: () {
-                              final lat = item['lat'] as double;
-                              final lon = item['lon'] as double;
-                              _moveMap(lat, lon);
-                              _searchController.text = item['display_name'];
-                              FocusScope.of(context).unfocus();
-                              setState(() {
-                                _selected = {
-                                  'lat': lat,
-                                  'lng': lon,
-                                  'city': item['city'] ?? '',
-                                  'state': item['state'] ?? '',
-                                  'country': item['country'] ?? '',
-                                  'display': item['display_name'],
-                                };
-                              });
-                            },
-                          );
-                        },
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 12.h,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  const SizedBox(height: 10),
-                  SizedBox(
+                    ],
+                  ),
+                ),
+                if (_isSearchingLocation) ...[
+                  SizedBox(height: 4.h),
+                  const LinearProgressIndicator(
+                    minHeight: 2,
+                    color: kThemeColor,
+                  ),
+                ],
+                if (_locationResults.isNotEmpty) ...[
+                  SizedBox(height: 8.h),
+                  Container(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kThemeColor.withValues(alpha: 0.9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    constraints: BoxConstraints(maxHeight: 170.h),
+                    decoration: BoxDecoration(
+                      color: kLight,
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _locationResults.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: Colors.grey.shade200),
+                      itemBuilder: (context, index) {
+                        final item = _locationResults[index];
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(
+                            Icons.location_on_outlined,
+                            color: Colors.grey.shade600,
+                            size: 18.sp,
+                          ),
+                          title: Text(
+                            item['display_name'] ?? '',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          onTap: () => _selectLocationResult(item),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+
+          // Selected location confirmation chip
+          if (_selectedLocationLabel?.isNotEmpty ?? false) ...[
+            SizedBox(height: 10.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                color: kThemeColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: kThemeColor.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: kThemeColor, size: 16),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      _selectedLocationLabel!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
                       ),
-                      icon: _locationLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Icon(Icons.my_location, size: 20),
-                      label: const Text('Use Current Location'),
-                      onPressed: _locationLoading
-                          ? null
-                          : () async {
-                              setState(() => _locationLoading = true);
-                              try {
-                                final result = await LocationService.getCurrentLocation();
-                                _moveMap(result.latitude, result.longitude);
-                                final geo = await _reverseGeocode(result.latitude, result.longitude);
-                                setState(() {
-                                  _selected = {
-                                    'lat': result.latitude,
-                                    'lng': result.longitude,
-                                    'city': geo['city'] ?? '',
-                                    'state': geo['state'] ?? '',
-                                    'country': geo['country'] ?? '',
-                                    'display': geo['display'] ?? result.displayAddress ?? '',
-                                  };
-                                  _searchController.text = _selected!['display'];
-                                });
-                              } catch (e) {
-                                Get.snackbar('Location Error', e.toString(),
-                                    backgroundColor: kOrange, colorText: kLight);
-                              } finally {
-                                setState(() => _locationLoading = false);
-                              }
-                            },
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-
-          // Bottom: selected address chip + confirm button
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 32,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_selected != null && (_selected!['display'] as String).isNotEmpty)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF040326).withValues(alpha: 0.88),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: kThemeColor.withValues(alpha: 0.5)),
-                    ),
-                    child: Text(
-                      _selected!['display'],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kThemeColor,
-                      disabledBackgroundColor: kThemeColor.withValues(alpha: 0.4),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: _selected != null
-                        ? () => Navigator.pop(context, _selected)
-                        : null,
-                    child: const Text(
-                      'Confirm Location',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _locationChip({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+        decoration: BoxDecoration(
+          color: selected ? kThemeColor : kLight,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: selected ? kThemeColor : const Color(0xFFDDDDDD),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14.sp, color: selected ? kLight : Colors.black54),
+            SizedBox(width: 4.w),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? kLight : Colors.black87,
+                fontSize: 13.sp,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1867,7 +1896,20 @@ class _DOBPickerState extends State<_DOBPicker> {
     if (iso.isEmpty) return '';
     try {
       final d = DateTime.parse(iso);
-      const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const m = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${d.day} ${m[d.month - 1]} ${d.year}';
     } catch (_) {
       return iso;
@@ -2050,7 +2092,20 @@ class _DateRangePickerState extends State<_DateRangePicker> {
   }
 
   static String _fmt(DateTime d) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[d.month - 1]} ${d.year}';
   }
 
@@ -2113,7 +2168,9 @@ class _DateRangePickerState extends State<_DateRangePicker> {
           SizedBox(height: 8.h),
           Row(
             children: [
-              Expanded(child: _dateTile(label: 'From', value: _from, onTap: _pickFrom)),
+              Expanded(
+                child: _dateTile(label: 'From', value: _from, onTap: _pickFrom),
+              ),
               SizedBox(width: 10.w),
               Expanded(
                 child: _dateTile(
@@ -2183,9 +2240,7 @@ class _DateRangePickerState extends State<_DateRangePicker> {
           color: isPresent ? kBackgroundColor : kLight,
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(
-            color: isPresent
-                ? kThemeColor.withValues(alpha: 0.5)
-                : kLightGrey,
+            color: isPresent ? kThemeColor.withValues(alpha: 0.5) : kLightGrey,
           ),
         ),
         child: Column(
