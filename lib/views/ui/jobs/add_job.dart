@@ -25,7 +25,6 @@ class _AddJobPageState extends State<AddJobPage> {
   static const Color _border = Color(0xFFE0E0E0);
   static const Color _textDark = Color(0xFF1A1A2E);
   static const Color _textGrey = Color(0xFF999999);
-  static const Color _sectionColor = Color(0xFF888888);
 
   // ─── Controllers ──────────────────────────────────────────────────────────
   final _titleController = TextEditingController();

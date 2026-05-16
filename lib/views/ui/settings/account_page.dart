@@ -134,11 +134,11 @@ class _AccountPageState extends State<AccountPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18.r),
 
-                  border: Border.all(color: _red.withOpacity(0.12)),
+                  border: Border.all(color: _red.withValues(alpha:0.12)),
 
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha:0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -152,7 +152,7 @@ class _AccountPageState extends State<AccountPage> {
                       width: 46.w,
                       height: 46.w,
                       decoration: BoxDecoration(
-                        color: _red.withOpacity(0.10),
+                        color: _red.withValues(alpha:0.10),
                         borderRadius: BorderRadius.circular(14.r),
                       ),
 
@@ -203,7 +203,7 @@ class _AccountPageState extends State<AccountPage> {
 
                     Icon(
                       Icons.arrow_forward_ios_rounded,
-                      color: _red.withOpacity(0.4),
+                      color: _red.withValues(alpha:0.4),
                       size: 15.sp,
                     ),
                   ],

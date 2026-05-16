@@ -1,9 +1,12 @@
 {
     "cSpell.words": [
+        "anims",
         "appstyle",
         "chatbubble",
+        "ctrls",
         "Cupertino",
         "Dfile",
+        "Flippable",
         "Fontisto",
         "geolocator",
         "jvmargs",
@@ -13,16 +16,19 @@
         "MAPTILER",
         "Messsaging",
         "Metaspace",
+        "Mgmt",
         "multer",
         "multipage",
         "Nominatim",
+        "notif",
         "placemarks",
         "prefs",
         "pubspec",
         "screenutil",
         "Snackbars",
         "Swipeable",
-        "Unmatch"
+        "Unmatch",
+        "userbox"
     ],
     "cmake.sourceDirectory": "D:/Downloads/proco-frontend/linux"
 }

@@ -161,12 +161,12 @@ class _ChatsListState extends State<ChatsList> {
                           borderRadius: BorderRadius.circular(24.r),
 
                           border: Border.all(
-                            color: kThemeColor.withOpacity(0.06),
+                            color: kThemeColor.withValues(alpha:0.06),
                           ),
 
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.035),
+                              color: Colors.black.withValues(alpha:0.035),
                               blurRadius: 18,
                               offset: const Offset(0, 8),
                             ),
@@ -187,8 +187,8 @@ class _ChatsListState extends State<ChatsList> {
 
                                     gradient: LinearGradient(
                                       colors: [
-                                        kThemeColor.withOpacity(0.14),
-                                        kThemeColor.withOpacity(0.06),
+                                        kThemeColor.withValues(alpha:0.14),
+                                        kThemeColor.withValues(alpha:0.06),
                                       ],
                                     ),
                                   ),
@@ -336,7 +336,7 @@ class _ChatsListState extends State<ChatsList> {
                                     padding: EdgeInsets.all(7.w),
 
                                     decoration: BoxDecoration(
-                                      color: kThemeColor.withOpacity(0.10),
+                                      color: kThemeColor.withValues(alpha:0.10),
 
                                       shape: BoxShape.circle,
                                     ),
@@ -385,7 +385,7 @@ class _ChatsListState extends State<ChatsList> {
               height: 92.w,
 
               decoration: BoxDecoration(
-                color: kThemeColor.withOpacity(0.10),
+                color: kThemeColor.withValues(alpha:0.10),
 
                 shape: BoxShape.circle,
               ),

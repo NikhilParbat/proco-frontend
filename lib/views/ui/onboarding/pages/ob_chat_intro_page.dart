@@ -11,7 +11,7 @@ import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 
-// ── Colours ────────────────────────────────────────────────────────────────────
+// ── Colors ────────────────────────────────────────────────────────────────────
 
 const _kBotBubble = kThemeColor;
 const _kUserBubble = Color.fromARGB(200, 216, 87, 87);
@@ -333,7 +333,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   // ── Advance ────────────────────────────────────────────────────────────────
 
-  void _advance({required String userSummary, bool skipped = false}) {
+  void _advance({required String userSummary}) {
     final provider = context.read<OnboardingFlowProvider>();
 
     // Persist data for current step

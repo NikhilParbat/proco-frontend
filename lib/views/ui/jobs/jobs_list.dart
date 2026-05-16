@@ -6,7 +6,6 @@ import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
-import 'package:proco/views/common/loader.dart';
 import 'package:proco/views/common/status_filter_chip.dart';
 import 'package:proco/views/ui/jobs/add_job.dart';
 import 'package:proco/views/ui/jobs/matched_users.dart';
@@ -300,7 +299,7 @@ class JobCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha:0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -319,7 +318,7 @@ class JobCard extends StatelessWidget {
                     job.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: kThemeColor.withOpacity(0.12),
+                      color: kThemeColor.withValues(alpha:0.12),
                       child: const Icon(
                         Icons.business,
                         color: kThemeColor,
@@ -336,7 +335,7 @@ class JobCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.75),
+                            Colors.black.withValues(alpha:0.75),
                           ],
                         ),
                       ),

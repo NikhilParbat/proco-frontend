@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
 List<JobsResponse> jobsResponseFromJson(String str) {
   final decoded = json.decode(str);
 

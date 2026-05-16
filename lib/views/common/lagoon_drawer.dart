@@ -41,10 +41,10 @@ class LagoonDrawer extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(22.r),
-                  border: Border.all(color: kThemeColor.withOpacity(0.08)),
+                  border: Border.all(color: kThemeColor.withValues(alpha:0.08)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha:0.03),
                       blurRadius: 14,
                       offset: const Offset(0, 6),
                     ),
@@ -56,7 +56,7 @@ class LagoonDrawer extends StatelessWidget {
                       width: 46.w,
                       height: 46.w,
                       decoration: BoxDecoration(
-                        color: kThemeColor.withOpacity(0.10),
+                        color: kThemeColor.withValues(alpha:0.10),
                         borderRadius: BorderRadius.circular(14.r),
                       ),
                       child: Center(
@@ -72,7 +72,7 @@ class LagoonDrawer extends StatelessWidget {
 
                     Expanded(
                       child: SvgPicture.asset(
-                        'assets/Lagcon.svg',
+                        'assets/Lagoon.svg',
                         height: 22.h,
                         fit: BoxFit.contain,
                         alignment: Alignment.centerLeft,
@@ -163,7 +163,7 @@ class LagoonDrawer extends StatelessWidget {
                   width: 42.w,
                   height: 42.w,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.10),
+                    color: color.withValues(alpha:0.10),
                     borderRadius: BorderRadius.circular(14.r),
                   ),
                   child: Icon(icon, color: color, size: 21.sp),

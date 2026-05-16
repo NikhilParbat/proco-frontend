@@ -28,7 +28,7 @@ class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: SvgPicture.asset(
-                'assets/WLagcon.svg',
+                'assets/WLagoon.svg',
                 width: 80.w,
                 height: 26.h,
                 fit: BoxFit.contain,

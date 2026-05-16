@@ -98,7 +98,7 @@ class HomeCardLayout extends StatelessWidget {
             ),
           ),
 
-          // ── Top header: Lagcon logo + filter & notification icons ──────────
+          // ── Top header: Lagoon logo + filter & notification icons ──────────
           Positioned(
             left: fw(38),
             right: fw(38),
@@ -109,7 +109,7 @@ class HomeCardLayout extends StatelessWidget {
                 GestureDetector(
                   onTap: onMenuTap,
                   child: SvgPicture.asset(
-                    'assets/WLagcon.svg',
+                    'assets/WLagoon.svg',
                     width: fw(205),
                     height: fh(61),
                     fit: BoxFit.contain,

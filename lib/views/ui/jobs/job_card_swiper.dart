@@ -33,7 +33,6 @@ class JobCardSwiper extends StatefulWidget {
 }
 
 class _JobCardSwiperState extends State<JobCardSwiper> {
-  static const Color _teal = Color(0xFF08979F);
 
   bool isExpanded(String id) => _expandedDesc[id] ?? false;
 
@@ -786,7 +785,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Left colour strip with rotated opportunity type
+              // Left color strip with rotated opportunity type
               Container(
                 width: cfx(44),
                 color: kThemeColor,

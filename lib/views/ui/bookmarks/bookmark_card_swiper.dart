@@ -42,8 +42,9 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
 
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted)
+    if (mounted) {
       setState(() => _currentUserId = prefs.getString('userId') ?? '');
+    }
   }
 
   @override

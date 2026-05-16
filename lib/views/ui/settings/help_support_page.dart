@@ -93,10 +93,10 @@ class HelpSupportPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18.r),
-                  border: Border.all(color: kThemeColor.withOpacity(0.05)),
+                  border: Border.all(color: kThemeColor.withValues(alpha:0.05)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha:0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -109,7 +109,7 @@ class HelpSupportPage extends StatelessWidget {
                       width: 46.w,
                       height: 46.w,
                       decoration: BoxDecoration(
-                        color: kThemeColor.withOpacity(0.10),
+                        color: kThemeColor.withValues(alpha:0.10),
                         borderRadius: BorderRadius.circular(14.r),
                       ),
                       child: Icon(
@@ -204,10 +204,10 @@ class _FaqTileState extends State<_FaqTile> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: kThemeColor.withOpacity(0.05)),
+        border: Border.all(color: kThemeColor.withValues(alpha:0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha:0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

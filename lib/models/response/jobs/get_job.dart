@@ -108,8 +108,9 @@ class GetJobRes {
     if (raw is List) {
       return raw
           .map((e) {
-            if (e is Map)
+            if (e is Map) {
               return (e['requirement'] ?? e['text'] ?? '').toString();
+            }
             return e.toString();
           })
           .where((s) => s.isNotEmpty)

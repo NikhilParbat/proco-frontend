@@ -47,7 +47,7 @@ class _BrandSplashScreenState extends State<BrandSplashScreen>
           opacity: _fadeAnimation,
           child: RepaintBoundary(
             child: SvgPicture.asset(
-              'assets/WLagcon.svg',
+              'assets/WLagoon.svg',
               width: 190.w,
               fit: BoxFit.contain,
             ),

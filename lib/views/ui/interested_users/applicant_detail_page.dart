@@ -42,7 +42,6 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
   static const Color _teal = Color(0xFF08979F);
   static const Color _reject = Color(0xFFE8505B);
   static const Color _bg = Color(0xFFF7F7F7);
-  static const Color _accept = Color(0xFF2DB67D);
 
   // Parallax scroll tracking
   late final ScrollController _scrollController;
