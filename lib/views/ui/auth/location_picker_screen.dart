@@ -3,7 +3,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
 
 class LocationPickerScreen extends StatefulWidget {
@@ -20,7 +19,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   Timer? _debounce;
-  bool _markerVisible = true;
   bool _isLoading = false;
   bool _isGeocoding = false;
   String _displayAddress = '';
@@ -61,7 +59,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     _mapController.move(LatLng(lat, lng), 15.0);
     setState(() {
       _selectedPosition = LatLng(lat, lng);
-      _markerVisible = true;
     });
     _updateAddress(lat, lng);
   }
@@ -95,47 +92,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       backgroundColor: const Color(0xFF040326),
       body: Stack(
         children: [
-          // 1. The Map
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _selectedPosition,
-              initialZoom: 25.0,
-              onTap: (tapPosition, latLng) {
-                setState(() {
-                  _selectedPosition = latLng;
-                  _markerVisible = true;
-                  _searchResults = [];
-                  _searchController.clear();
-                });
-                _updateAddress(latLng.latitude, latLng.longitude);
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://api.maptiler.com/maps/hybrid-v4/{z}/{x}/{y}.png?key={apiKey}',
-                additionalOptions: {
-                  'apiKey': dotenv.get('MAPTILER_API_KEY'),
-                },
-                userAgentPackageName: 'com.proco.proco',
-              ),
-              MarkerLayer(
-                markers: [
-                  if (_markerVisible)
-                    Marker(
-                      point: _selectedPosition,
-                      width: 48,
-                      height: 48,
-                      child: const Icon(
-                        Icons.location_pin,
-                        color: Color(0xFF08979F),
-                        size: 48,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
 
           // 2. Top Overlay: Search and GPS
           SafeArea(
