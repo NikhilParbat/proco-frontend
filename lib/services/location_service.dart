@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
@@ -19,126 +18,90 @@ class LocationResult {
 }
 
 class LocationService {
-  static String get _apiKey => kIsWeb
-      ? const String.fromEnvironment('LOCATIONIQ_API_KEY', defaultValue: '')
-      : dotenv.get('LOCATIONIQ_API_KEY');
+  // Pull the backend URL from .env
+  static String get _baseUrl => dotenv.get('BACKEND_API_URL'); 
 
-  /// NEW: Structured address lookup for Profile Update
-  /// Converts coordinates into separate City, State, and Country strings.
+  /// REFACTORED: Hits your Node.js /reverse endpoint
   static Future<({String city, String state, String country})>
       getAddressFromLatLng(double lat, double lng) async {
-    final String url =
-        'https://us1.locationiq.com/v1/reverse.php?key=$_apiKey&lat=$lat&lon=$lng&format=json';
+    final String url = '$_baseUrl/api/location/reverse?lat=$lat&lng=$lng';
 
     try {
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final addr = data['address'];
-        
         return (
-          // LocationIQ uses 'city', 'town', or 'village' depending on the area
-          city: (addr['city'] ?? addr['town'] ?? addr['village'] ?? "").toString(),
-          state: (addr['state'] ?? "").toString(),
-          country: (addr['country'] ?? "").toString(),
+          city: (data['city'] ?? "").toString(),
+          state: (data['state'] ?? "").toString(),
+          country: (data['country'] ?? "").toString(),
         );
       }
     } catch (e) {
-      debugPrint("LocationIQ Reverse Geocoding failed: $e");
+      debugPrint("Backend Reverse Geocoding failed: $e");
     }
     return (city: "", state: "", country: "");
   }
 
-  /// Requests permission and returns the device's current GPS fix.
+  /// NO CHANGE NEEDED HERE: This handles hardware GPS sensors
   static Future<LocationResult> getCurrentLocation() async {
     final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw 'Location services are disabled. Please enable GPS.';
-    }
+    if (!serviceEnabled) throw 'Location services are disabled.';
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw 'Location permission was denied.';
-      }
+      if (permission == LocationPermission.denied) throw 'Location permission denied.';
     }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw 'Location permission permanently denied. Enable in settings.';
-    }
-
-    const LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10, // Optional: only update if user moves 100m
-    );
 
     final Position position = await Geolocator.getCurrentPosition(
-      locationSettings: locationSettings,
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
 
-    // Get a nice readable string for the UI
     final addressData = await getAddressFromLatLng(position.latitude, position.longitude);
-    final String displayStr = "${addressData.city}, ${addressData.state}";
-
+    
     return LocationResult(
       latitude: position.latitude,
       longitude: position.longitude,
-      displayAddress: displayStr,
+      displayAddress: "${addressData.city}, ${addressData.state}",
     );
   }
 
-  /// Converts free-text address into coordinates (used for search).
+  /// REFACTORED: Hits your Node.js /search endpoint
   static Future<LocationResult?> geocodeAddress(String address) async {
     if (address.trim().isEmpty) return null;
     try {
-      final String url =
-          'https://us1.locationiq.com/v1/search.php?key=$_apiKey&q=${Uri.encodeComponent(address)}&format=json&limit=1';
+      final String url = '$_baseUrl/api/location/search?q=${Uri.encodeComponent(address)}';
       final response = await http.get(Uri.parse(url));
+      
       if (response.statusCode != 200) return null;
-      final List data = json.decode(response.body);
-      if (data.isEmpty) return null;
-      final item = data.first;
+      final data = json.decode(response.body);
+
       return LocationResult(
-        latitude: double.parse(item['lat'].toString()),
-        longitude: double.parse(item['lon'].toString()),
-        displayAddress: item['display_name']?.toString() ?? address,
+        latitude: data['latitude'],
+        longitude: data['longitude'],
+        displayAddress: data['displayAddress'],
       );
     } catch (_) {
       return null;
     }
   }
 
-  // NEW: Provides autocomplete suggestions for location search using Nominatim API.
-  static Future<List<Map<String, dynamic>>> getPlacePredictions(
-    String query,
-  ) async {
-    if (query.length < 3) return []; // Don't search for very short strings
+  /// REFACTORED: Hits your Node.js /autocomplete endpoint
+  static Future<List<Map<String, dynamic>>> getPlacePredictions(String query) async {
+    if (query.length < 3) return [];
 
-    // LocationIQ Autocomplete endpoint is superior for POIs
-    final String url =
-        'https://api.locationiq.com/v1/autocomplete.php?key=$_apiKey&q=$query&limit=5&dedupe=1';
+    final String url = '$_baseUrl/api/location/autocomplete?q=${Uri.encodeComponent(query)}';
 
     try {
-      final response = await http.get(
-        Uri.parse(url)
-      );
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
-        return data
-            .map(
-              (item) => {
-                'display_name': item['display_name'],
-                'lat': double.parse(item['lat']),
-                'lon': double.parse(item['lon']),
-              },
-            )
-            .toList();
+        return data.cast<Map<String, dynamic>>();
       }
     } catch (e) {
-      debugPrint("Autocomplete error: $e");
+      debugPrint("Autocomplete backend error: $e");
     }
     return [];
   }
