@@ -46,6 +46,21 @@ class ProfileEditState extends ChangeNotifier {
   // ── List Management Helpers ──────────────────────────────────────────────
   // These are crucial for the UI to add/remove items dynamically
 
+  void setLocation({
+    required String city,
+    required String state,
+    required String country,
+    required double latitude,
+    required double longitude,
+  }) {
+    this.city = city;
+    this.state = state;
+    this.country = country;
+    this.latitude = latitude;
+    this.longitude = longitude;
+    notifyListeners();
+  }
+
   void addSkill(String skill) {
     if (skill.isNotEmpty && !skills.contains(skill)) {
       skills.add(skill);

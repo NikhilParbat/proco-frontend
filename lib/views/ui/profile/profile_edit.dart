@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_constants.dart';
+import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/common/phone_field.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
@@ -642,22 +647,468 @@ class _IdentitySection extends StatelessWidget {
           init: state.bio,
           onChanged: (v) => state.bio = v,
         ),
-        _Field(
-          label: 'City',
-          init: state.city,
-          onChanged: (v) => state.city = v,
-        ),
-        _Field(
-          label: 'State',
-          init: state.state,
-          onChanged: (v) => state.state = v,
-        ),
-        _Field(
-          label: 'Country',
-          init: state.country,
-          onChanged: (v) => state.country = v,
-        ),
+        _LocationPickerRow(state: state),
       ],
+    );
+  }
+}
+
+// ── Location Picker Row ───────────────────────────────────────────────────────
+class _LocationPickerRow extends StatelessWidget {
+  const _LocationPickerRow({required this.state});
+  final ProfileEditState state;
+
+  String get _displayText {
+    final parts = [state.city, state.state, state.country]
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return parts.isEmpty ? 'Tap to set your location' : parts.join(', ');
+  }
+
+  bool get _hasLocation => state.city.isNotEmpty || state.state.isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push<Map<String, dynamic>>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => _LocationPickerPage(
+              initialLat: state.latitude,
+              initialLng: state.longitude,
+              initialDisplay: [state.city, state.state, state.country]
+                  .where((s) => s.isNotEmpty)
+                  .join(', '),
+            ),
+          ),
+        );
+        if (result != null) {
+          state.setLocation(
+            city: result['city'] ?? '',
+            state: result['state'] ?? '',
+            country: result['country'] ?? '',
+            latitude: (result['lat'] as num?)?.toDouble() ?? 0.0,
+            longitude: (result['lng'] as num?)?.toDouble() ?? 0.0,
+          );
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+        margin: EdgeInsets.only(bottom: 14.h),
+        decoration: BoxDecoration(
+          color: kLight,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: _hasLocation ? kThemeColor.withValues(alpha: 0.5) : const Color(0xFFDDDDDD),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.location_on_outlined,
+              color: _hasLocation ? kThemeColor : kDarkGrey,
+              size: 20.r,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                _displayText,
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 14.sp,
+                  color: _hasLocation ? kDark : kDarkGrey,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: kDarkGrey, size: 18.r),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Location Picker Page (full-screen map) ────────────────────────────────────
+class _LocationPickerPage extends StatefulWidget {
+  const _LocationPickerPage({
+    this.initialLat,
+    this.initialLng,
+    this.initialDisplay = '',
+  });
+  final double? initialLat;
+  final double? initialLng;
+  final String initialDisplay;
+
+  @override
+  State<_LocationPickerPage> createState() => _LocationPickerPageState();
+}
+
+class _LocationPickerPageState extends State<_LocationPickerPage> {
+  final MapController _mapController = MapController();
+  final TextEditingController _searchController = TextEditingController();
+
+  LatLng _markerPosition = const LatLng(20.5937, 78.9629);
+  bool _markerVisible = false;
+  List<Map<String, dynamic>> _searchResults = [];
+  bool _isSearching = false;
+  bool _locationLoading = false;
+  Map<String, dynamic>? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    final lat = widget.initialLat;
+    final lng = widget.initialLng;
+    if (lat != null && lng != null && lat != 0.0 && lng != 0.0) {
+      _markerPosition = LatLng(lat, lng);
+      _markerVisible = true;
+      _searchController.text = widget.initialDisplay;
+    }
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _moveMap(double lat, double lng) {
+    final target = LatLng(lat, lng);
+    setState(() {
+      _markerPosition = target;
+      _markerVisible = true;
+      _searchResults = [];
+    });
+    _mapController.move(target, 13.0);
+  }
+
+  Future<void> _onSearchChanged(String query) async {
+    if (query.length < 3) {
+      setState(() => _searchResults = []);
+      return;
+    }
+    setState(() => _isSearching = true);
+    try {
+      final url =
+          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=5&addressdetails=1';
+      final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'proco_app'});
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _searchResults = data.map((item) {
+            final addr = item['address'] as Map<String, dynamic>? ?? {};
+            return {
+              'display_name': item['display_name'],
+              'lat': double.parse(item['lat']),
+              'lon': double.parse(item['lon']),
+              'city': addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '',
+              'state': addr['state'] ?? '',
+              'country': addr['country'] ?? '',
+            };
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Location search error: $e');
+    } finally {
+      setState(() => _isSearching = false);
+    }
+  }
+
+  Future<Map<String, String>> _reverseGeocode(double lat, double lng) async {
+    try {
+      final url =
+          'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lng&format=json&addressdetails=1';
+      final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'proco_app'});
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final addr = data['address'] as Map<String, dynamic>? ?? {};
+        return {
+          'display': data['display_name'] as String? ?? '',
+          'city': addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '',
+          'state': addr['state'] ?? '',
+          'country': addr['country'] ?? '',
+        };
+      }
+    } catch (e) {
+      debugPrint('Reverse geocode error: $e');
+    }
+    return {'display': '', 'city': '', 'state': '', 'country': ''};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF040326),
+      body: Stack(
+        children: [
+          // Full-screen map
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _markerPosition,
+              initialZoom: _markerVisible ? 13.0 : 5.0,
+              onTap: (_, latLng) async {
+                _moveMap(latLng.latitude, latLng.longitude);
+                _searchController.clear();
+                FocusScope.of(context).unfocus();
+                final geo = await _reverseGeocode(latLng.latitude, latLng.longitude);
+                setState(() {
+                  _selected = {
+                    'lat': latLng.latitude,
+                    'lng': latLng.longitude,
+                    'city': geo['city'] ?? '',
+                    'state': geo['state'] ?? '',
+                    'country': geo['country'] ?? '',
+                    'display': geo['display'] ?? '',
+                  };
+                  _searchController.text = geo['display'] ?? '';
+                });
+              },
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.proco.proco',
+              ),
+              MarkerLayer(
+                markers: [
+                  if (_markerVisible)
+                    Marker(
+                      point: _markerPosition,
+                      width: 48,
+                      height: 48,
+                      child: const Icon(Icons.location_pin, color: kThemeColor, size: 48),
+                    ),
+                ],
+              ),
+            ],
+          ),
+
+          // Back button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            left: 16,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF040326).withValues(alpha: 0.75),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+
+          // Top overlay: title + search + GPS
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Where are you based?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF040326).withValues(alpha: 0.92),
+                      borderRadius: _searchResults.isEmpty
+                          ? BorderRadius.circular(12)
+                          : const BorderRadius.vertical(top: Radius.circular(12)),
+                      border: Border.all(color: kThemeColor.withValues(alpha: 0.6)),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(color: Colors.white),
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Search location…',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        prefixIcon: const Icon(Icons.search, color: kThemeColor),
+                        suffixIcon: _isSearching
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: kThemeColor),
+                                ),
+                              )
+                            : _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, color: Colors.white54, size: 18),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchResults = []);
+                                    },
+                                  )
+                                : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                    ),
+                  ),
+                  if (_searchResults.isNotEmpty)
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 220),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF040326).withValues(alpha: 0.95),
+                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                        border: Border.all(color: kThemeColor.withValues(alpha: 0.4)),
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: _searchResults.length,
+                        separatorBuilder: (_, _) => const Divider(color: Colors.white10, height: 1),
+                        itemBuilder: (context, index) {
+                          final item = _searchResults[index];
+                          return ListTile(
+                            leading: const Icon(Icons.location_on_outlined, color: kThemeColor, size: 18),
+                            title: Text(
+                              item['display_name'],
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                            ),
+                            onTap: () {
+                              final lat = item['lat'] as double;
+                              final lon = item['lon'] as double;
+                              _moveMap(lat, lon);
+                              _searchController.text = item['display_name'];
+                              FocusScope.of(context).unfocus();
+                              setState(() {
+                                _selected = {
+                                  'lat': lat,
+                                  'lng': lon,
+                                  'city': item['city'] ?? '',
+                                  'state': item['state'] ?? '',
+                                  'country': item['country'] ?? '',
+                                  'display': item['display_name'],
+                                };
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kThemeColor.withValues(alpha: 0.9),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: _locationLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Icon(Icons.my_location, size: 20),
+                      label: const Text('Use Current Location'),
+                      onPressed: _locationLoading
+                          ? null
+                          : () async {
+                              setState(() => _locationLoading = true);
+                              try {
+                                final result = await LocationService.getCurrentLocation();
+                                _moveMap(result.latitude, result.longitude);
+                                final geo = await _reverseGeocode(result.latitude, result.longitude);
+                                setState(() {
+                                  _selected = {
+                                    'lat': result.latitude,
+                                    'lng': result.longitude,
+                                    'city': geo['city'] ?? '',
+                                    'state': geo['state'] ?? '',
+                                    'country': geo['country'] ?? '',
+                                    'display': geo['display'] ?? result.displayAddress ?? '',
+                                  };
+                                  _searchController.text = _selected!['display'];
+                                });
+                              } catch (e) {
+                                Get.snackbar('Location Error', e.toString(),
+                                    backgroundColor: kOrange, colorText: kLight);
+                              } finally {
+                                setState(() => _locationLoading = false);
+                              }
+                            },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Bottom: selected address chip + confirm button
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 32,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_selected != null && (_selected!['display'] as String).isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF040326).withValues(alpha: 0.88),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: kThemeColor.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      _selected!['display'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kThemeColor,
+                      disabledBackgroundColor: kThemeColor.withValues(alpha: 0.4),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _selected != null
+                        ? () => Navigator.pop(context, _selected)
+                        : null,
+                    child: const Text(
+                      'Confirm Location',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
