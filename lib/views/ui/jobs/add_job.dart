@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
@@ -8,8 +11,6 @@ import 'package:proco/models/request/jobs/create_job.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:proco/views/ui/auth/location_picker_screen.dart';
 import 'package:proco/services/location_service.dart';
 
 class AddJobPage extends StatefulWidget {
@@ -28,7 +29,6 @@ class _AddJobPageState extends State<AddJobPage> {
 
   // ─── Controllers ──────────────────────────────────────────────────────────
   final _titleController = TextEditingController();
-  final _locationController = TextEditingController();
   final _companyController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _salaryController = TextEditingController();
@@ -38,10 +38,17 @@ class _AddJobPageState extends State<AddJobPage> {
   final _skillInputController = TextEditingController();
   final List<TextEditingController> _reqControllers = [];
 
-  // ─── State ────────────────────────────────────────────────────────────────
+  // ─── Location state ────────────────────────────────────────────────────────
+  final _locationSearchCtrl = TextEditingController();
+  final List<Map<String, dynamic>> _locationResults = [];
+  bool _isSearchingLocation = false;
+  bool _isFetchingCurrentLocation = false;
+  String? _selectedLocationLabel;
+  bool _preferTypingLocation = false;
+
+  // ─── Other state ──────────────────────────────────────────────────────────
   double _jobLat = 0.0;
   double _jobLng = 0.0;
-  bool _locationPicked = false;
   bool _isActive = true;
   String _currency = '₹';
   String _durationUnit = 'Months';
@@ -62,7 +69,7 @@ class _AddJobPageState extends State<AddJobPage> {
       _titleController.text = j.title;
       _companyController.text = j.company;
       _descriptionController.text = j.description;
-      // Parse stored salary — strip leading currency symbol if present
+
       final rawSalary = j.salary;
       if (rawSalary.startsWith('\$')) {
         _currency = '\$';
@@ -74,7 +81,6 @@ class _AddJobPageState extends State<AddJobPage> {
         _salaryController.text = rawSalary;
       }
 
-      // Parse stored period — split "3 Months" → value + unit
       final parts = j.period.trim().split(RegExp(r'\s+'));
       if (parts.length >= 2 && ['Days', 'Months', 'Years'].contains(parts[1])) {
         _durationValueController.text = parts[0];
@@ -86,7 +92,6 @@ class _AddJobPageState extends State<AddJobPage> {
       _isActive = j.isActive;
       _jobLat = j.latitude;
       _jobLng = j.longitude;
-      _locationPicked = true;
       _reverseGeocodeExistingLocation();
 
       _reqControllers.clear();
@@ -102,15 +107,10 @@ class _AddJobPageState extends State<AddJobPage> {
 
       if (j.domain.isNotEmpty) {
         final splitDomains = j.domain.split(',').map((e) => e.trim()).toList();
-
         for (final d in splitDomains) {
-          if (kDomains.contains(d)) {
-            selectedDomains.add(d);
-          }
+          if (kDomains.contains(d)) selectedDomains.add(d);
         }
-
         final customDomains = splitDomains.where((d) => !kDomains.contains(d));
-
         if (customDomains.isNotEmpty) {
           selectedDomains.add('Other');
           _customDomainController.text = customDomains.join(', ');
@@ -128,7 +128,7 @@ class _AddJobPageState extends State<AddJobPage> {
   @override
   void dispose() {
     _titleController.dispose();
-    _locationController.dispose();
+    _locationSearchCtrl.dispose();
     _companyController.dispose();
     _descriptionController.dispose();
     _salaryController.dispose();
@@ -153,10 +153,10 @@ class _AddJobPageState extends State<AddJobPage> {
   }
 
   void _removeRequirement(int index) => setState(() {
-    _reqControllers[index].dispose();
-    _reqControllers.removeAt(index);
-    if (_reqControllers.isEmpty) _reqControllers.add(TextEditingController());
-  });
+        _reqControllers[index].dispose();
+        _reqControllers.removeAt(index);
+        if (_reqControllers.isEmpty) _reqControllers.add(TextEditingController());
+      });
 
   // ─── Skills ───────────────────────────────────────────────────────────────
   void _addSkill(String skill) {
@@ -182,14 +182,106 @@ class _AddJobPageState extends State<AddJobPage> {
         _jobLng,
       );
       if (mounted) {
-        setState(
-          () => _locationController.text = '${address.city}, ${address.state}',
-        );
+        final label = '${address.city}, ${address.state}';
+        setState(() {
+          _selectedLocationLabel = label;
+          _locationSearchCtrl.text = label;
+        });
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _locationController.text = widget.job!.location);
+        final fallback = widget.job!.location;
+        setState(() {
+          _selectedLocationLabel = fallback;
+          _locationSearchCtrl.text = fallback;
+        });
       }
+    }
+  }
+
+  Future<void> _onLocationSearchChanged(String query) async {
+    if (query.trim().length < 3) {
+      if (mounted) {
+        setState(() {
+          _locationResults.clear();
+          _isSearchingLocation = false;
+        });
+      }
+      return;
+    }
+    setState(() => _isSearchingLocation = true);
+    try {
+      final url =
+          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query.trim())}&format=json&limit=5&addressdetails=1';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'User-Agent': 'proco_app'},
+      );
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _locationResults
+            ..clear()
+            ..addAll(data.map((item) {
+              final addr = item['address'] as Map<String, dynamic>? ?? {};
+              return {
+                'display_name': item['display_name'],
+                'lat': double.parse(item['lat']),
+                'lon': double.parse(item['lon']),
+                'city': addr['city'] ??
+                    addr['town'] ??
+                    addr['village'] ??
+                    addr['county'] ??
+                    '',
+                'state': addr['state'] ?? '',
+                'country': addr['country'] ?? '',
+              };
+            }));
+        });
+      }
+    } catch (e) {
+      debugPrint('Location search error: $e');
+    } finally {
+      if (mounted) setState(() => _isSearchingLocation = false);
+    }
+  }
+
+  void _selectLocationResult(Map<String, dynamic> item) {
+    final lat = item['lat'] as double;
+    final lon = item['lon'] as double;
+    final display = (item['display_name'] as String?) ?? '';
+    setState(() {
+      _jobLat = lat;
+      _jobLng = lon;
+      _selectedLocationLabel = display;
+      _locationSearchCtrl.text = display;
+      _locationResults.clear();
+    });
+  }
+
+  Future<void> _useCurrentLocation() async {
+    setState(() => _isFetchingCurrentLocation = true);
+    try {
+      final result = await LocationService.getCurrentLocation();
+      final address = await LocationService.getAddressFromLatLng(
+        result.latitude,
+        result.longitude,
+      );
+      if (!mounted) return;
+      final display = result.displayAddress?.isNotEmpty == true
+          ? result.displayAddress!
+          : '${address.city}, ${address.state}';
+      setState(() {
+        _jobLat = result.latitude;
+        _jobLng = result.longitude;
+        _selectedLocationLabel = display;
+        _locationSearchCtrl.text = display;
+      });
+    } catch (e) {
+      if (mounted) _snack('Could not fetch location: $e');
+    } finally {
+      if (mounted) setState(() => _isFetchingCurrentLocation = false);
     }
   }
 
@@ -208,17 +300,13 @@ class _AddJobPageState extends State<AddJobPage> {
     }
 
     final domains = [...selectedDomains];
-
     if (domains.contains('Other')) {
       domains.remove('Other');
-
       if (_customDomainController.text.trim().isNotEmpty) {
         domains.add(_customDomainController.text.trim());
       }
     }
-
     final effectiveDomain = domains.join(', ');
-
     if (effectiveDomain.isEmpty) {
       _snack('Please enter a custom domain.');
       return;
@@ -237,14 +325,14 @@ class _AddJobPageState extends State<AddJobPage> {
         .where((t) => t.isNotEmpty)
         .toList();
 
+    final cityLabel = _selectedLocationLabel?.trim() ?? '';
+
     final jobData = CreateJobsRequest(
       agentId: userId,
       domain: effectiveDomain,
       opportunityType: _selectedOpportunityType ?? '',
       title: _titleController.text.trim(),
-      city: _locationController.text.trim().isNotEmpty
-          ? _locationController.text.trim()
-          : 'Remote',
+      city: cityLabel.isNotEmpty ? cityLabel : 'Remote',
       latitude: _jobLat,
       longitude: _jobLng,
       company: _companyController.text.trim(),
@@ -271,12 +359,10 @@ class _AddJobPageState extends State<AddJobPage> {
         context,
         imageFile: imageNotifier.selectedImage,
       );
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Opportunity updated successfully')),
         );
-
         Navigator.pop(context, true);
       }
     } else {
@@ -285,14 +371,7 @@ class _AddJobPageState extends State<AddJobPage> {
         context,
         imageFile: imageNotifier.selectedImage,
       );
-
-      if (mounted) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(content: Text('Opportunity created successfully')),
-        // );
-
-        Navigator.pop(context, true);
-      }
+      if (mounted) Navigator.pop(context, true);
     }
   }
 
@@ -346,7 +425,6 @@ class _AddJobPageState extends State<AddJobPage> {
                           fontSize: 16.sp,
                         ),
                       ),
-
                       SizedBox(width: 12.w),
                     ],
                   ),
@@ -362,7 +440,6 @@ class _AddJobPageState extends State<AddJobPage> {
         elevation: 0,
         centerTitle: true,
         scrolledUnderElevation: 0,
-
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
           child: GestureDetector(
@@ -374,7 +451,6 @@ class _AddJobPageState extends State<AddJobPage> {
             ),
           ),
         ),
-
         title: Text(
           _isEditMode ? 'Edit Opportunity' : 'Post Opportunity',
           style: TextStyle(
@@ -435,13 +511,10 @@ class _AddJobPageState extends State<AddJobPage> {
               // ── COMPENSATION ──────────────────────────────────────────────
               _sectionLabel('COMPENSATION'),
               SizedBox(height: 10.h),
-
-              // Stipend: [₹/$] + [amount — numbers only]
               Text('Stipend', style: _labelStyle()),
               SizedBox(height: 8.h),
               Row(
                 children: [
-                  // Currency selector
                   Container(
                     height: 56.h,
                     decoration: BoxDecoration(
@@ -475,41 +548,31 @@ class _AddJobPageState extends State<AddJobPage> {
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  // Amount — digits only
                   Expanded(
                     child: _field(
                       _salaryController,
                       hint: 'Amount',
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                   ),
                 ],
               ),
-
               SizedBox(height: 14.h),
-
-              // Duration: [number] + [Days / Months / Years]
               Text('Duration', style: _labelStyle()),
               SizedBox(height: 8.h),
               Row(
                 children: [
-                  // Numeric input
                   SizedBox(
                     width: 90.w,
                     child: _field(
                       _durationValueController,
                       hint: '0',
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  // Unit dropdown
                   Expanded(
                     child: Container(
                       height: 56.h,
@@ -548,7 +611,6 @@ class _AddJobPageState extends State<AddJobPage> {
                   ),
                 ],
               ),
-
               SizedBox(height: 14.h),
               _field(_contractController, hint: 'Contract type'),
               SizedBox(height: 24.h),
@@ -575,10 +637,7 @@ class _AddJobPageState extends State<AddJobPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: _field(
-                          entry.value,
-                          hint: 'Requirement ${i + 1}',
-                        ),
+                        child: _field(entry.value, hint: 'Requirement ${i + 1}'),
                       ),
                       SizedBox(width: 8.w),
                       GestureDetector(
@@ -678,7 +737,7 @@ class _AddJobPageState extends State<AddJobPage> {
                             Container(
                               width: 54.w,
                               height: 54.w,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
@@ -688,9 +747,7 @@ class _AddJobPageState extends State<AddJobPage> {
                                 size: 24.sp,
                               ),
                             ),
-
                             SizedBox(height: 14.h),
-
                             Text(
                               'Upload Cover Image',
                               style: TextStyle(
@@ -730,11 +787,11 @@ class _AddJobPageState extends State<AddJobPage> {
   }
 
   TextStyle _labelStyle() => TextStyle(
-    fontFamily: kFontDMSans,
-    fontSize: 14.sp,
-    fontWeight: FontWeight.w500,
-    color: _textDark,
-  );
+        fontFamily: kFontDMSans,
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        color: _textDark,
+      );
 
   // ─── Text field ───────────────────────────────────────────────────────────
   Widget _field(
@@ -753,34 +810,27 @@ class _AddJobPageState extends State<AddJobPage> {
       maxLines: maxLines,
       maxLength: maxLength,
       inputFormatters: inputFormatters,
-
       style: TextStyle(
         fontFamily: kFontDMSans,
         fontSize: 16.sp,
         color: kDark,
         fontWeight: FontWeight.w500,
       ),
-
       decoration: InputDecoration(
         counterText: '',
         hintText: hint,
-
         hintStyle: TextStyle(
           fontFamily: kFontDMSans,
           fontSize: 16.sp,
           color: const Color(0xFF9EA4B0),
         ),
-
         filled: true,
         fillColor: Colors.transparent,
-
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 18.h),
-
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.r),
-          borderSide: BorderSide(color: const Color(0xFFD2D6DE), width: 1),
+          borderSide: const BorderSide(color: Color(0xFFD2D6DE), width: 1),
         ),
-
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.r),
           borderSide: BorderSide(color: kThemeColor, width: 1.4),
@@ -789,58 +839,239 @@ class _AddJobPageState extends State<AddJobPage> {
     );
   }
 
-  // ─── Location picker row ──────────────────────────────────────────────────
+  // ─── Inline location picker ───────────────────────────────────────────────
   Widget _locationPicker() {
-    return GestureDetector(
-      onTap: () async {
-        final LatLng? result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                LocationPickerScreen(initialPosition: LatLng(_jobLat, _jobLng)),
-          ),
-        );
-        if (result != null) {
-          final address = await LocationService.getAddressFromLatLng(
-            result.latitude,
-            result.longitude,
-          );
-          setState(() {
-            _jobLat = result.latitude;
-            _jobLng = result.longitude;
-            _locationPicked = true;
-            _locationController.text = '${address.city}, ${address.state}';
-          });
-        }
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _locationPicked ? kThemeColor : _border),
-        ),
-        child: Row(
+    final locationConfirmed = _selectedLocationLabel?.isNotEmpty == true;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Mode selector chips
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
           children: [
-            Icon(
-              Icons.location_on_outlined,
-              color: _locationPicked ? kThemeColor : _textGrey,
-              size: 18,
+            _locationChip(
+              label: 'Use current location',
+              icon: Icons.my_location_rounded,
+              selected: !_preferTypingLocation,
+              onTap: () => setState(() => _preferTypingLocation = false),
             ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Text(
-                _locationPicked
-                    ? _locationController.text
-                    : 'Pin opportunity location on map',
+            _locationChip(
+              label: 'Search location',
+              icon: Icons.search,
+              selected: _preferTypingLocation,
+              onTap: () => setState(() => _preferTypingLocation = true),
+            ),
+          ],
+        ),
+        SizedBox(height: 10.h),
+
+        // Current-location button
+        if (!_preferTypingLocation)
+          SizedBox(
+            width: double.infinity,
+            height: 46.h,
+            child: ElevatedButton.icon(
+              onPressed: _isFetchingCurrentLocation ? null : _useCurrentLocation,
+              icon: _isFetchingCurrentLocation
+                  ? SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.my_location_rounded, size: 18),
+              label: Text(
+                _isFetchingCurrentLocation
+                    ? 'Fetching location...'
+                    : 'Fetch Current Location',
                 style: TextStyle(
                   fontFamily: kFontDMSans,
-                  fontSize: 14.sp,
-                  color: _locationPicked ? _textDark : _textGrey,
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kThemeColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC), size: 18),
+          )
+
+        // Search input + results
+        else
+          Column(
+            children: [
+              // Search field (reuses existing _field style)
+              TextFormField(
+                controller: _locationSearchCtrl,
+                onChanged: _onLocationSearchChanged,
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 14.sp,
+                  color: kDark,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search city / area',
+                  hintStyle: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 14.sp,
+                    color: const Color(0xFF9EA4B0),
+                  ),
+                  prefixIcon: Icon(Icons.search,
+                      size: 18.sp, color: const Color(0xFF9EA4B0)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFD2D6DE), width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: BorderSide(color: kThemeColor, width: 1.4),
+                  ),
+                ),
+              ),
+              if (_isSearchingLocation) ...[
+                SizedBox(height: 6.h),
+                LinearProgressIndicator(
+                  minHeight: 2,
+                  color: kThemeColor,
+                  backgroundColor: kThemeColor.withValues(alpha: 0.15),
+                ),
+              ],
+              if (_locationResults.isNotEmpty) ...[
+                SizedBox(height: 8.h),
+                Container(
+                  width: double.infinity,
+                  constraints: BoxConstraints(maxHeight: 170.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: const Color(0xFFD2D6DE)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: _locationResults.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(height: 1, color: Colors.grey.shade200),
+                    itemBuilder: (context, index) {
+                      final item = _locationResults[index];
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(
+                          Icons.location_on_outlined,
+                          color: Colors.grey.shade500,
+                          size: 18.sp,
+                        ),
+                        title: Text(
+                          item['display_name'] ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: kFontDMSans,
+                            fontSize: 12.sp,
+                            color: _textDark,
+                          ),
+                        ),
+                        onTap: () => _selectLocationResult(item),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+
+        // Confirmed location badge
+        if (locationConfirmed) ...[
+          SizedBox(height: 10.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: kThemeColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: kThemeColor.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle, color: kThemeColor, size: 16),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    _selectedLocationLabel!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: kFontDMSans,
+                      color: _textDark,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // Small chip used in the location mode selector
+  Widget _locationChip({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+        decoration: BoxDecoration(
+          color: selected ? kThemeColor : Colors.white,
+          borderRadius: BorderRadius.circular(24.r),
+          border: Border.all(
+            color: selected ? kThemeColor : const Color(0xFFD2D6DE),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon,
+                size: 14.sp,
+                color: selected ? Colors.white : const Color(0xFF9EA4B0)),
+            SizedBox(width: 5.w),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 13.sp,
+                color: selected ? Colors.white : _textDark,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
           ],
         ),
       ),
@@ -881,16 +1112,14 @@ class _AddJobPageState extends State<AddJobPage> {
     );
   }
 
-  // ─── Domain chips (kDomains + Other) ─────────────────────────────────────
+  // ─── Domain chips ─────────────────────────────────────────────────────────
   Widget _domainChips() {
     final domains = [...kDomains, 'Other'];
-
     return Wrap(
       spacing: 8.w,
       runSpacing: 8.h,
       children: domains.map((d) {
         final selected = selectedDomains.contains(d);
-
         return GestureDetector(
           onTap: () {
             setState(() {
@@ -903,24 +1132,18 @@ class _AddJobPageState extends State<AddJobPage> {
               }
             });
           },
-
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-
             decoration: BoxDecoration(
               color: selected ? kThemeColor : Colors.white,
-
               borderRadius: BorderRadius.circular(24.r),
-
               border: Border.all(
                 color: selected
                     ? kThemeColor
                     : Colors.black.withValues(alpha: 0.06),
                 width: selected ? 1.4 : 1,
               ),
-
               boxShadow: selected
                   ? [
                       BoxShadow(
@@ -931,7 +1154,6 @@ class _AddJobPageState extends State<AddJobPage> {
                     ]
                   : [],
             ),
-
             child: Text(
               d,
               style: TextStyle(
@@ -947,7 +1169,7 @@ class _AddJobPageState extends State<AddJobPage> {
     );
   }
 
-  // ─── Opportunity type selector (single-select circular chips) ───────────────
+  // ─── Opportunity type selector ────────────────────────────────────────────
   Widget _opportunityTypeSelector() {
     return Wrap(
       spacing: 10.w,
@@ -1010,10 +1232,8 @@ class _AddJobPageState extends State<AddJobPage> {
               runSpacing: 6.h,
               children: _skills.asMap().entries.map((e) {
                 return Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 5.h,
-                  ),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F2F5),
                     borderRadius: BorderRadius.circular(24.r),
@@ -1034,11 +1254,8 @@ class _AddJobPageState extends State<AddJobPage> {
                       SizedBox(width: 6.w),
                       GestureDetector(
                         onTap: () => _removeSkill(e.key),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white70,
-                          size: 14,
-                        ),
+                        child: const Icon(Icons.close,
+                            color: Colors.white70, size: 14),
                       ),
                     ],
                   ),
@@ -1082,7 +1299,8 @@ class _AddJobPageState extends State<AddJobPage> {
                 style: TextStyle(
                   fontFamily: kFontDMSans,
                   fontSize: 11.sp,
-                  color: _skills.length >= 9 ? Colors.redAccent : _textGrey,
+                  color:
+                      _skills.length >= 9 ? Colors.redAccent : _textGrey,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1093,11 +1311,11 @@ class _AddJobPageState extends State<AddJobPage> {
                     : null,
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 5.h,
-                  ),
+                      horizontal: 12.w, vertical: 5.h),
                   decoration: BoxDecoration(
-                    color: _skills.length < 9 ? kThemeColor : Colors.grey.shade300,
+                    color: _skills.length < 9
+                        ? kThemeColor
+                        : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
@@ -1105,7 +1323,9 @@ class _AddJobPageState extends State<AddJobPage> {
                     style: TextStyle(
                       fontFamily: kFontDMSans,
                       fontSize: 12.sp,
-                      color: _skills.length < 9 ? Colors.white : Colors.grey,
+                      color: _skills.length < 9
+                          ? Colors.white
+                          : Colors.grey,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
