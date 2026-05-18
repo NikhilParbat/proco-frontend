@@ -9,9 +9,7 @@ class ProfileRes {
   final bool? isAdmin;
   final bool? isAgent;
   final String? profile;
-  final String? college;
   final String? gender;
-  final String? branch;
   final double? latitude;
   final double? longitude;
   final String? city;
@@ -23,8 +21,6 @@ class ProfileRes {
   final String? twitterUrl;
   final String? portfolioUrl;
   final String? userType;
-  final String? classOf;
-  final String? cgpa;
   final String? workStyle;
   final String? communicationStyle;
   final String? provider;
@@ -34,6 +30,7 @@ class ProfileRes {
   final List<String> skills;
   final List<String> interests;
   final List<String> hobbies;
+  final List<String> education;
   final int queriesCreated;
   final List<ExperienceItem> experiences;
   final List<ProjectItem> projects;
@@ -49,9 +46,7 @@ class ProfileRes {
     this.isAdmin,
     this.isAgent,
     this.profile,
-    this.college,
     this.gender,
-    this.branch,
     this.latitude,
     this.longitude,
     this.city,
@@ -63,8 +58,6 @@ class ProfileRes {
     this.twitterUrl,
     this.portfolioUrl,
     this.userType,
-    this.classOf,
-    this.cgpa,
     this.workStyle,
     this.communicationStyle,
     this.provider,
@@ -74,6 +67,7 @@ class ProfileRes {
     this.skills = const [],
     this.interests = const [],
     this.hobbies = const [],
+    this.education = const [],
     this.queriesCreated = 0,
     this.experiences = const [],
     this.projects = const [],
@@ -91,9 +85,7 @@ class ProfileRes {
       isAdmin: json['isAdmin'],
       isAgent: json['isAgent'],
       profile: json['profile'],
-      college: json['college'],
       gender: json['gender'],
-      branch: json['branch'],
       latitude: json['latitude']?.toDouble(),
       longitude: json['longitude']?.toDouble(),
       city: json['city'],
@@ -105,8 +97,6 @@ class ProfileRes {
       twitterUrl: json['twitterUrl'],
       portfolioUrl: json['portfolioUrl'],
       userType: json['userType'],
-      classOf: json['classOf'],
-      cgpa: json['cgpa'],
       workStyle: json['workStyle'],
       communicationStyle: json['communicationStyle'],
       provider: json['provider'],
@@ -123,6 +113,9 @@ class ProfileRes {
           : [],
       hobbies: json['hobbies'] != null
           ? List<String>.from(json['hobbies'])
+          : [],
+      education: json['education'] != null
+          ? List<String>.from(json['education'])
           : [],
       queriesCreated: (json['queriesCreated'] as num?)?.toInt() ?? 0,
       experiences:
@@ -158,9 +151,7 @@ class ProfileRes {
       'isAdmin': isAdmin,
       'isAgent': isAgent,
       'profile': profile,
-      'college': college,
       'gender': gender,
-      'branch': branch,
       'latitude': latitude,
       'longitude': longitude,
       'city': city,
@@ -172,8 +163,6 @@ class ProfileRes {
       'twitterUrl': twitterUrl,
       'portfolioUrl': portfolioUrl,
       'userType': userType,
-      'classOf': classOf,
-      'cgpa': cgpa,
       'workStyle': workStyle,
       'communicationStyle': communicationStyle,
       'provider': provider,
@@ -183,6 +172,7 @@ class ProfileRes {
       'skills': skills,
       'interests': interests,
       'hobbies': hobbies,
+      'education': education,
       'queriesCreated': queriesCreated,
       'experiences': experiences.map((e) => e.toJson()).toList(),
       'projects': projects.map((p) => p.toJson()).toList(),

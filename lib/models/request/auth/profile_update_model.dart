@@ -7,24 +7,26 @@ class ProfileUpdateReq {
   final String state;
   final String country;
   final String phone;
-  final String college;
-  final String branch;
   final String? gender;
   final String dob;
   final String userType;
+
   final String linkedInUrl;
   final String gitHubUrl;
   final String twitterUrl;
   final String portfolioUrl;
+
   final double latitude;
   final double longitude;
-  final String classOf;
-  final String cgpa;
+
   final String workStyle;
   final String communicationStyle;
+
   final List<String> skills;
   final List<String> interests;
   final List<String> hobbies;
+
+  final List<EducationItem> education;
   final List<ExperienceItem> experiences;
   final List<ProjectItem> projects;
   final List<AchievementItem> achievements;
@@ -37,8 +39,6 @@ class ProfileUpdateReq {
     this.state = '',
     this.country = '',
     this.phone = '',
-    this.college = '',
-    this.branch = '',
     this.gender,
     this.dob = '',
     this.userType = '',
@@ -48,13 +48,12 @@ class ProfileUpdateReq {
     this.portfolioUrl = '',
     this.latitude = 0.0,
     this.longitude = 0.0,
-    this.classOf = '',
-    this.cgpa = '',
     this.workStyle = '',
     this.communicationStyle = '',
     this.skills = const [],
     this.interests = const [],
     this.hobbies = const [],
+    this.education = const [],
     this.experiences = const [],
     this.projects = const [],
     this.achievements = const [],
@@ -69,8 +68,6 @@ class ProfileUpdateReq {
       'state': state,
       'country': country,
       'phone': phone,
-      'college': college,
-      'branch': branch,
       'gender': gender,
       'dob': dob,
       'userType': userType,
@@ -80,13 +77,12 @@ class ProfileUpdateReq {
       'portfolioUrl': portfolioUrl,
       'latitude': latitude,
       'longitude': longitude,
-      'classOf': classOf,
-      'cgpa': cgpa,
       'workStyle': workStyle,
       'communicationStyle': communicationStyle,
       'skills': skills,
       'interests': interests,
       'hobbies': hobbies,
+      'education': education.map((e) => e.toJson()).toList(),
       'experiences': experiences.map((e) => e.toJson()).toList(),
       'projects': projects.map((p) => p.toJson()).toList(),
       'achievements': achievements.map((a) => a.toJson()).toList(),
@@ -95,7 +91,44 @@ class ProfileUpdateReq {
   }
 }
 
-// ── Item Classes matching your DB Schema ────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// EDUCATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+class EducationItem {
+  final String college;
+  final String branch;
+  final String classOf;
+  final String cgpa;
+
+  EducationItem({
+    required this.college,
+    this.branch = '',
+    this.classOf = '',
+    this.cgpa = '',
+  });
+
+  factory EducationItem.fromJson(Map<String, dynamic> json) {
+    return EducationItem(
+      college: json['college'] ?? '',
+      branch: json['branch'] ?? '',
+      classOf: json['classOf'] ?? '',
+      cgpa: json['cgpa'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'college': college,
+    'branch': branch,
+    'classOf': classOf,
+    'cgpa': cgpa,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPERIENCE
+// ─────────────────────────────────────────────────────────────────────────────
+
 class ExperienceItem {
   final String company;
   final String position;
@@ -125,6 +158,10 @@ class ExperienceItem {
     'dateRange': dateRange,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 class ProjectItem {
   final String name;
@@ -162,6 +199,10 @@ class ProjectItem {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ACHIEVEMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
 class AchievementItem {
   final String title;
   final String subtitle;
@@ -188,16 +229,19 @@ class AchievementItem {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LINKS
+// ─────────────────────────────────────────────────────────────────────────────
+
 class LinkItem {
   final String label;
   final String url;
 
   LinkItem({required this.label, required this.url});
 
-  factory LinkItem.fromJson(Map<String, dynamic> json) => LinkItem(
-    label: json['label'] ?? '',
-    url: json['url'] ?? '',
-  );
+  factory LinkItem.fromJson(Map<String, dynamic> json) {
+    return LinkItem(label: json['label'] ?? '', url: json['url'] ?? '');
+  }
 
   Map<String, dynamic> toJson() => {'label': label, 'url': url};
 }

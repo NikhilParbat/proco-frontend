@@ -34,39 +34,60 @@ class UserHelper {
       request.headers['token'] = 'Bearer $token';
 
       // 1. Basic Identity & Contact
-      if (model.username.isNotEmpty) request.fields['username'] = model.username;
+      if (model.username.isNotEmpty)
+        request.fields['username'] = model.username;
       if (model.phone.isNotEmpty) request.fields['phone'] = model.phone;
       if (model.bio.isNotEmpty) request.fields['bio'] = model.bio;
       if (model.gender != null) request.fields['gender'] = model.gender!;
       if (model.dob.isNotEmpty) request.fields['dob'] = model.dob;
-      if (model.userType.isNotEmpty) request.fields['userType'] = model.userType;
+      if (model.userType.isNotEmpty)
+        request.fields['userType'] = model.userType;
 
       // 2. Location & Education
       if (model.city.isNotEmpty) request.fields['city'] = model.city;
       if (model.state.isNotEmpty) request.fields['state'] = model.state;
       if (model.country.isNotEmpty) request.fields['country'] = model.country;
-      if (model.college.isNotEmpty) request.fields['college'] = model.college;
-      if (model.branch.isNotEmpty) request.fields['branch'] = model.branch;
-      if (model.classOf.isNotEmpty) request.fields['classOf'] = model.classOf;
-      if (model.cgpa.isNotEmpty) request.fields['cgpa'] = model.cgpa;
-      if (model.workStyle.isNotEmpty) request.fields['workStyle'] = model.workStyle;
-      if (model.communicationStyle.isNotEmpty) request.fields['communicationStyle'] = model.communicationStyle;
-      if (model.latitude != 0) request.fields['latitude'] = model.latitude.toString();
-      if (model.longitude != 0) request.fields['longitude'] = model.longitude.toString();
+      if (model.workStyle.isNotEmpty)
+        request.fields['workStyle'] = model.workStyle;
+      if (model.communicationStyle.isNotEmpty)
+        request.fields['communicationStyle'] = model.communicationStyle;
+      if (model.latitude != 0)
+        request.fields['latitude'] = model.latitude.toString();
+      if (model.longitude != 0)
+        request.fields['longitude'] = model.longitude.toString();
 
       // 3. Socials
-      if (model.linkedInUrl.isNotEmpty) request.fields['linkedInUrl'] = model.linkedInUrl;
-      if (model.gitHubUrl.isNotEmpty) request.fields['gitHubUrl'] = model.gitHubUrl;
-      if (model.twitterUrl.isNotEmpty) request.fields['twitterUrl'] = model.twitterUrl;
-      if (model.portfolioUrl.isNotEmpty) request.fields['portfolioUrl'] = model.portfolioUrl;
+      if (model.linkedInUrl.isNotEmpty)
+        request.fields['linkedInUrl'] = model.linkedInUrl;
+      if (model.gitHubUrl.isNotEmpty)
+        request.fields['gitHubUrl'] = model.gitHubUrl;
+      if (model.twitterUrl.isNotEmpty)
+        request.fields['twitterUrl'] = model.twitterUrl;
+      if (model.portfolioUrl.isNotEmpty)
+        request.fields['portfolioUrl'] = model.portfolioUrl;
 
       // 4 & 5. Attributes + Professional Lists
       _assignJsonListFields(request, model);
-      request.fields['links'] = jsonEncode(model.links.map((l) => l.toJson()).toList());
+
+      // Education
+      if (model.education.isNotEmpty) {
+        request.fields['education'] = jsonEncode(
+          model.education.map((e) => e.toJson()).toList(),
+        );
+      }
+
+      // Links
+      if (model.links.isNotEmpty) {
+        request.fields['links'] = jsonEncode(
+          model.links.map((l) => l.toJson()).toList(),
+        );
+      }
 
       // 6. Image Upload
       if (image != null) {
-        request.files.add(await https.MultipartFile.fromPath('profile', image.path));
+        request.files.add(
+          await https.MultipartFile.fromPath('profile', image.path),
+        );
       }
 
       final streamedResponse = await request.send();
@@ -80,7 +101,10 @@ class UserHelper {
           data: UserResponse.fromJson(decoded['data']),
         );
       }
-      return ApiResponse(success: false, message: decoded['message'] ?? 'Update failed');
+      return ApiResponse(
+        success: false,
+        message: decoded['message'] ?? 'Update failed',
+      );
     } catch (e) {
       return ApiResponse(success: false, message: e.toString());
     }
@@ -117,9 +141,6 @@ class UserHelper {
       request.fields['city'] = model.city;
       request.fields['state'] = model.state;
       request.fields['country'] = model.country;
-      request.fields['college'] = model.college;
-      request.fields['branch'] = model.branch;
-      request.fields['classOf'] = model.classOf;
       request.fields['latitude'] = model.latitude.toString();
       request.fields['longitude'] = model.longitude.toString();
 
@@ -142,7 +163,8 @@ class UserHelper {
       final streamedResponse = await request.send();
       final responseBody = await streamedResponse.stream.bytesToString();
 
-      if (streamedResponse.statusCode == 200 || streamedResponse.statusCode == 201) {
+      if (streamedResponse.statusCode == 200 ||
+          streamedResponse.statusCode == 201) {
         return null; // Null indicates success
       }
 
@@ -153,13 +175,23 @@ class UserHelper {
       return e.toString();
     }
   }
-  static void _assignJsonListFields(https.MultipartRequest request, ProfileUpdateReq model) {
+
+  static void _assignJsonListFields(
+    https.MultipartRequest request,
+    ProfileUpdateReq model,
+  ) {
     request.fields['skills'] = jsonEncode(model.skills);
     request.fields['interests'] = jsonEncode(model.interests);
     request.fields['hobbies'] = jsonEncode(model.hobbies);
-    request.fields['experiences'] = jsonEncode(model.experiences.map((e) => e.toJson()).toList());
-    request.fields['projects'] = jsonEncode(model.projects.map((p) => p.toJson()).toList());
-    request.fields['achievements'] = jsonEncode(model.achievements.map((a) => a.toJson()).toList());
+    request.fields['experiences'] = jsonEncode(
+      model.experiences.map((e) => e.toJson()).toList(),
+    );
+    request.fields['projects'] = jsonEncode(
+      model.projects.map((p) => p.toJson()).toList(),
+    );
+    request.fields['achievements'] = jsonEncode(
+      model.achievements.map((a) => a.toJson()).toList(),
+    );
   }
 
   static Future<ApiResponse<ProfileRes>> getProfile() async {

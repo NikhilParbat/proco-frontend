@@ -110,7 +110,7 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
     if (response.success) {
       Get.snackbar(
         'Filter Applied',
-        '',
+        response.message,
         colorText: kLight,
         backgroundColor: kLightBlue,
         icon: const Icon(Icons.check_circle),
@@ -126,7 +126,10 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
     }
   }
 
-  Future<void> updateFilter(String filterId, Map<String, dynamic> filterData) async {
+  Future<void> updateFilter(
+    String filterId,
+    Map<String, dynamic> filterData,
+  ) async {
     final response = await FilterHelper.updateFilter(filterId, filterData);
 
     if (!response.success) {

@@ -15,8 +15,6 @@ class SignupRequestModel {
     this.phone,
     this.profile,
     this.skills = const [],
-    this.college,
-    this.branch,
     this.gender,
     this.dob,
     this.userType,
@@ -41,8 +39,6 @@ class SignupRequestModel {
 
   final List<String> skills;
 
-  final String? college;
-  final String? branch;
   final String? gender;
   final String? dob;
 
@@ -68,8 +64,6 @@ class SignupRequestModel {
         phone: json['phone'],
         profile: json['profile'],
         skills: List<String>.from(json['skills'] ?? []),
-        college: json['college'],
-        branch: json['branch'],
         gender: json['gender'],
         dob: json['dob'],
         userType: json['userType'],
@@ -92,8 +86,6 @@ class SignupRequestModel {
     "phone": phone,
     "profile": profile,
     "skills": skills,
-    "college": college,
-    "branch": branch,
     "gender": gender,
     "dob": dob,
     "userType": userType,

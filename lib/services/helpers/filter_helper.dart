@@ -59,9 +59,9 @@ class FilterHelper {
       final url = Config.url('${Config.filters}/$agentId');
       final response = await client.get(url, headers: headers);
 
-      // debugPrint('getFilter url: $url');
-      // debugPrint('getFilter status: ${response.statusCode}');
-      // debugPrint('getFilter body: ${response.body}');
+      debugPrint('getFilter url: $url');
+      debugPrint('getFilter status: ${response.statusCode}');
+      debugPrint('getFilter body: ${response.body}');
 
       if (response.body.isEmpty) {
         return ApiResponse(

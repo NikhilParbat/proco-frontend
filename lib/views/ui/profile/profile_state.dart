@@ -8,8 +8,19 @@ import 'package:proco/models/response/auth/profile_model.dart';
 
 class ProfileEditState extends ChangeNotifier {
   // Data Fields
-  String username = '', bio = '', email = '', phone = '', gender = '', city = '', state = '', country = '';
-  String college = '', branch = '', profileImageUrl = '', dob = '', userType = '';
+  String username = '',
+      bio = '',
+      email = '',
+      phone = '',
+      gender = '',
+      city = '',
+      state = '',
+      country = '';
+  String college = '',
+      branch = '',
+      profileImageUrl = '',
+      dob = '',
+      userType = '';
   String linkedInUrl = '', gitHubUrl = '', twitterUrl = '', portfolioUrl = '';
   String classOf = '', cgpa = '', workStyle = '', communicationStyle = '';
   double latitude = 0.0, longitude = 0.0;
@@ -159,7 +170,7 @@ class ProfileEditState extends ChangeNotifier {
         if (res.success && res.data != null) {
           final UserResponse d = res.data!; // Explicit type
           _mapCommonFields(d);
-          // fetchUserById usually doesn't return professional lists, 
+          // fetchUserById usually doesn't return professional lists,
           // but we reset them to be safe
           experiences = [];
           projects = [];
@@ -171,7 +182,7 @@ class ProfileEditState extends ChangeNotifier {
         if (res.success && res.data != null) {
           final ProfileRes d = res.data!; // Explicit type
           _mapCommonFields(d);
-          
+
           // These fields exist on ProfileRes
           experiences = List<ExperienceItem>.from(d.experiences);
           projects = List<ProjectItem>.from(d.projects);
@@ -213,16 +224,25 @@ class ProfileEditState extends ChangeNotifier {
     communicationStyle = d.communicationStyle ?? '';
     latitude = d.latitude ?? 0.0;
     longitude = d.longitude ?? 0.0;
-    
+
     skills = List<String>.from(d.skills ?? []);
     interests = List<String>.from(d.interests ?? []);
     hobbies = List<String>.from(d.hobbies ?? []);
-    links = (d.links as List?)?.map((l) => l is LinkItem ? l : LinkItem.fromJson(l as Map<String, dynamic>)).toList() ?? [];
-  } 
+    links =
+        (d.links as List?)
+            ?.map(
+              (l) => l is LinkItem
+                  ? l
+                  : LinkItem.fromJson(l as Map<String, dynamic>),
+            )
+            .toList() ??
+        [];
+  }
+
   Future<bool> saveProfile(File? image) async {
     isSaving = true;
     notifyListeners();
-    
+
     final req = ProfileUpdateReq(
       username: username,
       bio: bio,
@@ -231,8 +251,6 @@ class ProfileEditState extends ChangeNotifier {
       country: country,
       phone: phone,
       skills: skills,
-      college: college,
-      branch: branch,
       gender: gender.isEmpty ? null : gender,
       dob: dob,
       userType: userType,
@@ -244,8 +262,6 @@ class ProfileEditState extends ChangeNotifier {
       gitHubUrl: gitHubUrl,
       twitterUrl: twitterUrl,
       portfolioUrl: portfolioUrl,
-      classOf: classOf,
-      cgpa: cgpa,
       workStyle: workStyle,
       communicationStyle: communicationStyle,
       experiences: experiences,
@@ -253,7 +269,7 @@ class ProfileEditState extends ChangeNotifier {
       achievements: achievements,
       links: links,
     );
-    
+
     final res = await UserHelper.updateProfile(req, image);
     isSaving = false;
     if (res.success) await loadProfile();
