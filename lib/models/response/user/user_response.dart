@@ -30,12 +30,12 @@ class UserResponse {
   final List<String> skills;
   final List<String> interests;
   final List<String> hobbies;
-  final List<EducationItem> education;
   final int queriesCreated;
   final List<ExperienceItem> experiences;
   final List<ProjectItem> projects;
   final List<AchievementItem> achievements;
   final List<LinkItem> links;
+  final List<EducationItem> education;
 
   UserResponse({
     required this.id,
@@ -64,10 +64,10 @@ class UserResponse {
     this.isFirstTimeUser,
     this.createdAt,
     this.updatedAt,
+    this.education = const [],
     this.skills = const [],
     this.interests = const [],
     this.hobbies = const [],
-    this.education = const [],
     this.queriesCreated = 0,
     this.experiences = const [],
     this.projects = const [],
@@ -163,5 +163,73 @@ class UserResponse {
       'achievements': achievements.map((a) => a.toJson()).toList(),
       'links': links.map((l) => l.toJson()).toList(),
     };
+  }
+
+  UserResponse copyWith({
+    String? id,
+    String? username,
+    String? bio,
+    String? email,
+    String? phone,
+    bool? isAdmin,
+    bool? isAgent,
+    String? profile,
+    String? gender,
+    double? latitude,
+    double? longitude,
+    String? city,
+    String? state,
+    String? country,
+    String? dob,
+    String? linkedInUrl,
+    String? gitHubUrl,
+    String? twitterUrl,
+    String? portfolioUrl,
+    String? userType,
+    String? workStyle,
+    String? communicationStyle,
+    String? provider,
+    bool? isFirstTimeUser,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<String>? skills,
+    List<String>? interests,
+    List<String>? hobbies,
+    List<EducationItem>? education,
+    List<LinkItem>? links,
+  }) {
+    return UserResponse(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      bio: bio ?? this.bio,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      isAdmin: isAdmin ?? this.isAdmin,
+      isAgent: isAgent ?? this.isAgent,
+      profile: profile ?? this.profile,
+      gender: gender ?? this.gender,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      country: country ?? this.country,
+      dob: dob ?? this.dob,
+      linkedInUrl: linkedInUrl ?? this.linkedInUrl,
+      gitHubUrl: gitHubUrl ?? this.gitHubUrl,
+      twitterUrl: twitterUrl ?? this.twitterUrl,
+      portfolioUrl: portfolioUrl ?? this.portfolioUrl,
+      userType: userType ?? this.userType,
+      workStyle: workStyle ?? this.workStyle,
+      communicationStyle: communicationStyle ?? this.communicationStyle,
+      provider: provider ?? this.provider,
+      isFirstTimeUser: isFirstTimeUser ?? this.isFirstTimeUser,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      skills: skills ?? this.skills,
+      interests: interests ?? this.interests,
+      hobbies: hobbies ?? this.hobbies,
+      education: education ?? this.education,
+      links: links ?? this.links,
+    );
   }
 }

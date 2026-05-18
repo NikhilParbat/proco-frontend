@@ -59,11 +59,14 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   Future<void> _onMatch() async {
     setState(() => _isMatching = true);
 
-    Provider.of<JobsNotifier>(context, listen: false)
-        .addMatchedUsers(widget.jobId, widget.user.id);
+    Provider.of<JobsNotifier>(
+      context,
+      listen: false,
+    ).addMatchedUsers(widget.jobId, widget.user.id);
 
-    final response =
-        await ChatHelper.createChat(CreateChat(userId: widget.user.id));
+    final response = await ChatHelper.createChat(
+      CreateChat(userId: widget.user.id),
+    );
     if (!mounted) return;
 
     setState(() => _isMatching = false);
@@ -84,12 +87,14 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
           user: widget.user,
           onGoToChat: () {
             Navigator.of(dialogContext).pop();
-            Get.to(() => ChatPage(
-                  id: chatId,
-                  title: widget.user.username,
-                  profile: widget.user.profile,
-                  user: [currentUserId, widget.user.id],
-                ));
+            Get.to(
+              () => ChatPage(
+                id: chatId,
+                title: widget.user.username,
+                profile: widget.user.profile,
+                user: [currentUserId, widget.user.id],
+              ),
+            );
           },
           onBackToList: () => Navigator.of(dialogContext).pop(),
         ),
@@ -188,7 +193,8 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                               placeholder: (context, url) => Container(
                                 color: _teal.withValues(alpha: 0.08),
                               ),
-                              errorWidget: (context, url, err) => _placeholder(),
+                              errorWidget: (context, url, err) =>
+                                  _placeholder(),
                             )
                           : _placeholder(),
                     ),
@@ -425,9 +431,8 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                             Navigator.of(context).pop();
                             Navigator.of(context, rootNavigator: true).push(
                               MaterialPageRoute(
-                                builder: (_) => ProfilePage(
-                                  viewUserId: widget.user.id,
-                                ),
+                                builder: (_) =>
+                                    ProfilePage(viewUserId: widget.user.id),
                               ),
                             );
                           },
@@ -437,8 +442,9 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                  color: _navy.withValues(alpha: 0.8),
-                                  width: 1.5),
+                                color: _navy.withValues(alpha: 0.8),
+                                width: 1.5,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.05),
@@ -450,8 +456,11 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.person_rounded,
-                                    color: _navy, size: 16.sp),
+                                Icon(
+                                  Icons.person_rounded,
+                                  color: _navy,
+                                  size: 16.sp,
+                                ),
                                 SizedBox(width: 6.w),
                                 Text(
                                   'Visit Profile',
@@ -498,11 +507,13 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                                     ),
                                   )
                                 : Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.favorite_rounded,
-                                          color: Colors.white, size: 16.sp),
+                                      Icon(
+                                        Icons.favorite_rounded,
+                                        color: Colors.white,
+                                        size: 16.sp,
+                                      ),
                                       SizedBox(width: 6.w),
                                       Text(
                                         'Match',
@@ -522,7 +533,8 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                   ),
 
                   SizedBox(
-                      height: MediaQuery.of(context).padding.bottom + 20.h),
+                    height: MediaQuery.of(context).padding.bottom + 20.h,
+                  ),
                 ],
               ),
             ),
@@ -533,52 +545,50 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   }
 
   Widget _placeholder() => Container(
-        color: _teal.withValues(alpha: 0.08),
-        child:
-            Center(child: Icon(Icons.person_rounded, color: _teal, size: 64)),
-      );
+    color: _teal.withValues(alpha: 0.08),
+    child: Center(child: Icon(Icons.person_rounded, color: _teal, size: 64)),
+  );
 
   Widget _infoRow({
     required IconData icon,
     required Color iconColor,
     required String text,
-  }) =>
-      Row(
-        children: [
-          Icon(icon, color: iconColor, size: 14),
-          SizedBox(width: 5.w),
-          Expanded(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ),
-        ],
-      );
-
-  Widget _skillChip(String skill) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-        decoration: BoxDecoration(
-          color: _navy,
-          borderRadius: BorderRadius.circular(20),
-        ),
+  }) => Row(
+    children: [
+      Icon(icon, color: iconColor, size: 14),
+      SizedBox(width: 5.w),
+      Expanded(
         child: Text(
-          skill.toUpperCase(),
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: kFontDMSans,
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            letterSpacing: 0.5,
+            fontSize: 13.sp,
+            color: Colors.grey.shade600,
           ),
         ),
-      );
+      ),
+    ],
+  );
+
+  Widget _skillChip(String skill) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+    decoration: BoxDecoration(
+      color: _navy,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      skill.toUpperCase(),
+      style: TextStyle(
+        fontFamily: kFontDMSans,
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+        letterSpacing: 0.5,
+      ),
+    ),
+  );
 
   Widget _shimmerLine({required double width}) => Container(
         height: 12.h,
