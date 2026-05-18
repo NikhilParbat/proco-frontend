@@ -153,10 +153,10 @@ class _AddJobPageState extends State<AddJobPage> {
   }
 
   void _removeRequirement(int index) => setState(() {
-        _reqControllers[index].dispose();
-        _reqControllers.removeAt(index);
-        if (_reqControllers.isEmpty) _reqControllers.add(TextEditingController());
-      });
+    _reqControllers[index].dispose();
+    _reqControllers.removeAt(index);
+    if (_reqControllers.isEmpty) _reqControllers.add(TextEditingController());
+  });
 
   // ─── Skills ───────────────────────────────────────────────────────────────
   void _addSkill(String skill) {
@@ -223,21 +223,24 @@ class _AddJobPageState extends State<AddJobPage> {
         setState(() {
           _locationResults
             ..clear()
-            ..addAll(data.map((item) {
-              final addr = item['address'] as Map<String, dynamic>? ?? {};
-              return {
-                'display_name': item['display_name'],
-                'lat': double.parse(item['lat']),
-                'lon': double.parse(item['lon']),
-                'city': addr['city'] ??
-                    addr['town'] ??
-                    addr['village'] ??
-                    addr['county'] ??
-                    '',
-                'state': addr['state'] ?? '',
-                'country': addr['country'] ?? '',
-              };
-            }));
+            ..addAll(
+              data.map((item) {
+                final addr = item['address'] as Map<String, dynamic>? ?? {};
+                return {
+                  'display_name': item['display_name'],
+                  'lat': double.parse(item['lat']),
+                  'lon': double.parse(item['lon']),
+                  'city':
+                      addr['city'] ??
+                      addr['town'] ??
+                      addr['village'] ??
+                      addr['county'] ??
+                      '',
+                  'state': addr['state'] ?? '',
+                  'country': addr['country'] ?? '',
+                };
+              }),
+            );
         });
       }
     } catch (e) {
@@ -600,9 +603,18 @@ class _AddJobPageState extends State<AddJobPage> {
                             color: const Color(0xFF9EA4B0),
                           ),
                           items: const [
-                            DropdownMenuItem(value: 'Days', child: Text('Days')),
-                            DropdownMenuItem(value: 'Months', child: Text('Months')),
-                            DropdownMenuItem(value: 'Years', child: Text('Years')),
+                            DropdownMenuItem(
+                              value: 'Days',
+                              child: Text('Days'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Months',
+                              child: Text('Months'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Years',
+                              child: Text('Years'),
+                            ),
                           ],
                           onChanged: (v) => setState(() => _durationUnit = v!),
                         ),
@@ -637,7 +649,10 @@ class _AddJobPageState extends State<AddJobPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: _field(entry.value, hint: 'Requirement ${i + 1}'),
+                        child: _field(
+                          entry.value,
+                          hint: 'Requirement ${i + 1}',
+                        ),
                       ),
                       SizedBox(width: 8.w),
                       GestureDetector(
@@ -787,11 +802,11 @@ class _AddJobPageState extends State<AddJobPage> {
   }
 
   TextStyle _labelStyle() => TextStyle(
-        fontFamily: kFontDMSans,
-        fontSize: 14.sp,
-        fontWeight: FontWeight.w500,
-        color: _textDark,
-      );
+    fontFamily: kFontDMSans,
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w500,
+    color: _textDark,
+  );
 
   // ─── Text field ───────────────────────────────────────────────────────────
   Widget _field(
@@ -873,7 +888,9 @@ class _AddJobPageState extends State<AddJobPage> {
             width: double.infinity,
             height: 46.h,
             child: ElevatedButton.icon(
-              onPressed: _isFetchingCurrentLocation ? null : _useCurrentLocation,
+              onPressed: _isFetchingCurrentLocation
+                  ? null
+                  : _useCurrentLocation,
               icon: _isFetchingCurrentLocation
                   ? SizedBox(
                       width: 16.w,
@@ -904,7 +921,6 @@ class _AddJobPageState extends State<AddJobPage> {
               ),
             ),
           )
-
         // Search input + results
         else
           Column(
@@ -925,16 +941,23 @@ class _AddJobPageState extends State<AddJobPage> {
                     fontSize: 14.sp,
                     color: const Color(0xFF9EA4B0),
                   ),
-                  prefixIcon: Icon(Icons.search,
-                      size: 18.sp, color: const Color(0xFF9EA4B0)),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 18.sp,
+                    color: const Color(0xFF9EA4B0),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16.r),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFD2D6DE), width: 1),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFD2D6DE),
+                      width: 1,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16.r),
@@ -971,7 +994,7 @@ class _AddJobPageState extends State<AddJobPage> {
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     itemCount: _locationResults.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         Divider(height: 1, color: Colors.grey.shade200),
                     itemBuilder: (context, index) {
                       final item = _locationResults[index];
@@ -1059,9 +1082,11 @@ class _AddJobPageState extends State<AddJobPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 14.sp,
-                color: selected ? Colors.white : const Color(0xFF9EA4B0)),
+            Icon(
+              icon,
+              size: 14.sp,
+              color: selected ? Colors.white : const Color(0xFF9EA4B0),
+            ),
             SizedBox(width: 5.w),
             Text(
               label,
@@ -1232,8 +1257,10 @@ class _AddJobPageState extends State<AddJobPage> {
               runSpacing: 6.h,
               children: _skills.asMap().entries.map((e) {
                 return Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F2F5),
                     borderRadius: BorderRadius.circular(24.r),
@@ -1254,8 +1281,11 @@ class _AddJobPageState extends State<AddJobPage> {
                       SizedBox(width: 6.w),
                       GestureDetector(
                         onTap: () => _removeSkill(e.key),
-                        child: const Icon(Icons.close,
-                            color: Colors.white70, size: 14),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white70,
+                          size: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -1279,8 +1309,8 @@ class _AddJobPageState extends State<AddJobPage> {
                     hintText: _skills.length >= 9
                         ? 'Max 9 skills reached'
                         : _skills.isEmpty
-                            ? 'Add a skill...'
-                            : 'Add another skill...',
+                        ? 'Add a skill...'
+                        : 'Add another skill...',
                     hintStyle: TextStyle(
                       fontFamily: kFontDMSans,
                       fontSize: 13.sp,
@@ -1299,8 +1329,7 @@ class _AddJobPageState extends State<AddJobPage> {
                 style: TextStyle(
                   fontFamily: kFontDMSans,
                   fontSize: 11.sp,
-                  color:
-                      _skills.length >= 9 ? Colors.redAccent : _textGrey,
+                  color: _skills.length >= 9 ? Colors.redAccent : _textGrey,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1311,7 +1340,9 @@ class _AddJobPageState extends State<AddJobPage> {
                     : null,
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 12.w, vertical: 5.h),
+                    horizontal: 12.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: _skills.length < 9
                         ? kThemeColor
@@ -1323,9 +1354,7 @@ class _AddJobPageState extends State<AddJobPage> {
                     style: TextStyle(
                       fontFamily: kFontDMSans,
                       fontSize: 12.sp,
-                      color: _skills.length < 9
-                          ? Colors.white
-                          : Colors.grey,
+                      color: _skills.length < 9 ? Colors.white : Colors.grey,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

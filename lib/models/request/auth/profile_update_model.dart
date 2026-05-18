@@ -97,12 +97,14 @@ class ProfileUpdateReq {
 
 class EducationItem {
   final String college;
+  final String degree;
   final String branch;
   final String classOf;
   final String cgpa;
 
   EducationItem({
     required this.college,
+    required this.degree,
     this.branch = '',
     this.classOf = '',
     this.cgpa = '',
@@ -111,6 +113,7 @@ class EducationItem {
   factory EducationItem.fromJson(Map<String, dynamic> json) {
     return EducationItem(
       college: json['college'] ?? '',
+      degree: json['degree'] ?? '',
       branch: json['branch'] ?? '',
       classOf: json['classOf'] ?? '',
       cgpa: json['cgpa'] ?? '',
@@ -119,6 +122,7 @@ class EducationItem {
 
   Map<String, dynamic> toJson() => {
     'college': college,
+    'degree': degree,
     'branch': branch,
     'classOf': classOf,
     'cgpa': cgpa,
