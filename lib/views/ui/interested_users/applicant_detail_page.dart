@@ -107,11 +107,14 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
   // ── Match action (unchanged logic) ────────────────────────────────────────
 
   Future<void> _onMatch() async {
-    Provider.of<JobsNotifier>(context, listen: false)
-        .addMatchedUsers(widget.jobId, widget.user.id);
+    Provider.of<JobsNotifier>(
+      context,
+      listen: false,
+    ).addMatchedUsers(widget.jobId, widget.user.id);
 
-    final response =
-        await ChatHelper.createChat(CreateChat(userId: widget.user.id));
+    final response = await ChatHelper.createChat(
+      CreateChat(userId: widget.user.id),
+    );
     if (!mounted) return;
 
     if (response.success && response.data != null) {
@@ -128,12 +131,14 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
           user: widget.user,
           onGoToChat: () {
             Navigator.of(dialogContext).pop();
-            Get.to(() => ChatPage(
-                  id: chatId,
-                  title: widget.user.username,
-                  profile: widget.user.profile,
-                  user: [currentUserId, widget.user.id],
-                ));
+            Get.to(
+              () => ChatPage(
+                id: chatId,
+                title: widget.user.username,
+                profile: widget.user.profile,
+                user: [currentUserId, widget.user.id],
+              ),
+            );
           },
           onBackToList: () {
             // Close dialog → pop this page → lands back on parallax screen
@@ -172,10 +177,11 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
   Widget build(BuildContext context) {
     final u = _profile;
     final age = _calcAge(u?.dob);
-    final college = u?.college ?? '';
-    final branch = u?.branch ?? '';
-    final skills =
-        (u?.skills.isNotEmpty == true) ? u!.skills : widget.user.skills;
+    final college = u?.education[0] ?? '';
+    final branch = u?.education[1] ?? '';
+    final skills = (u?.skills.isNotEmpty == true)
+        ? u!.skills
+        : widget.user.skills;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -190,10 +196,11 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
                 final scrollOffset = _scrollController.hasClients
                     ? _scrollController.offset
                     : 0.0;
-                final parallaxFraction =
-                    (scrollOffset / _headerHeight).clamp(0.0, 1.0);
-                final imageAlignment =
-                    Alignment(0, -parallaxFraction * 0.6);
+                final parallaxFraction = (scrollOffset / _headerHeight).clamp(
+                  0.0,
+                  1.0,
+                );
+                final imageAlignment = Alignment(0, -parallaxFraction * 0.6);
 
                 // Gaussian depth shadow — mirrors ParallaxUserCard
                 final gauss = math.exp(
@@ -247,8 +254,7 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
                           ),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.fromLTRB(
-                              20.w, 24.h, 20.w, 120.h),
+                          padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 120.h),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -270,11 +276,12 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
                                   ),
                                   Container(
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 10.w, vertical: 5.h),
+                                      horizontal: 10.w,
+                                      vertical: 5.h,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: _teal.withValues(alpha: 0.10),
-                                      borderRadius:
-                                          BorderRadius.circular(20),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
                                       '${widget.totalApplicants} applicant${widget.totalApplicants == 1 ? '' : 's'}',
@@ -294,8 +301,11 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
                                 SizedBox(height: 8.h),
                                 Row(
                                   children: [
-                                    const Icon(Icons.location_on_rounded,
-                                        color: kOrange, size: 14),
+                                    const Icon(
+                                      Icons.location_on_rounded,
+                                      color: kOrange,
+                                      size: 14,
+                                    ),
                                     SizedBox(width: 4.w),
                                     Text(
                                       widget.user.location,
@@ -314,8 +324,7 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
                               // Bio
                               if (_isLoadingProfile)
                                 _bioShimmer()
-                              else if (college.isNotEmpty ||
-                                  age != null) ...[
+                              else if (college != null || age != null) ...[
                                 _sectionLabel('BIO'),
                                 SizedBox(height: 10.h),
                                 Container(
@@ -323,12 +332,12 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
                                   padding: EdgeInsets.all(14.w),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius:
-                                        BorderRadius.circular(16.r),
+                                    borderRadius: BorderRadius.circular(16.r),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.05),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         blurRadius: 12,
                                         offset: const Offset(0, 4),
                                       ),
@@ -338,18 +347,24 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      if (college.isNotEmpty)
+                                      if (college != null)
                                         _bioRow(
-                                            Icons.school_rounded, college),
-                                      if (branch.isNotEmpty) ...[
+                                          Icons.school_rounded,
+                                          college.toString(),
+                                        ),
+                                      if (branch != null) ...[
                                         SizedBox(height: 8.h),
-                                        _bioRow(Icons.account_tree_rounded,
-                                            branch),
+                                        _bioRow(
+                                          Icons.account_tree_rounded,
+                                          branch.toString(),
+                                        ),
                                       ],
                                       if (age != null) ...[
                                         SizedBox(height: 8.h),
-                                        _bioRow(Icons.cake_rounded,
-                                            '$age years old'),
+                                        _bioRow(
+                                          Icons.cake_rounded,
+                                          '$age years old',
+                                        ),
                                       ],
                                     ],
                                   ),
@@ -416,10 +431,7 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  _navy.withValues(alpha: 0.55),
-                ],
+                colors: [Colors.transparent, _navy.withValues(alpha: 0.55)],
                 stops: const [0.55, 1.0],
               ),
             ),
@@ -429,8 +441,7 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
           bottom: 14.h,
           right: 14.w,
           child: Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -501,8 +512,9 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
       padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 16.h + bottomPad),
       decoration: BoxDecoration(
         color: _bg,
-        border:
-            Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.07))),
+        border: Border(
+          top: BorderSide(color: Colors.black.withValues(alpha: 0.07)),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -511,8 +523,11 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
           // ❌ Not interested — directly back to parallax screen
           circleBtn(
             size: smallSize,
-            icon: Icon(CupertinoIcons.xmark,
-                color: Colors.black87, size: 26.sp),
+            icon: Icon(
+              CupertinoIcons.xmark,
+              color: Colors.black87,
+              size: 26.sp,
+            ),
             onTap: () => Navigator.pop(context),
           ),
 
@@ -521,14 +536,11 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ProfilePage(
-                  viewUserId: widget.user.id,
-                ),
+                builder: (_) => ProfilePage(viewUserId: widget.user.id),
               ),
             ),
             child: Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
               decoration: BoxDecoration(
                 color: _navy,
                 borderRadius: BorderRadius.circular(30),
@@ -543,8 +555,7 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.person_rounded,
-                      color: Colors.white, size: 16.sp),
+                  Icon(Icons.person_rounded, color: Colors.white, size: 16.sp),
                   SizedBox(width: 6.w),
                   Text(
                     'View Profile',
@@ -578,77 +589,79 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage>
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _profilePlaceholder() => Container(
-        color: _teal.withValues(alpha: 0.08),
-        child: Center(
-          child: Icon(Icons.person_rounded, color: _teal, size: 72.r),
-        ),
-      );
+    color: _teal.withValues(alpha: 0.08),
+    child: Center(
+      child: Icon(Icons.person_rounded, color: _teal, size: 72.r),
+    ),
+  );
 
   Widget _sectionLabel(String text) => Text(
-        text,
-        style: TextStyle(
-          fontFamily: kFontDMSans,
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey,
-          letterSpacing: 1.0,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontFamily: kFontDMSans,
+      fontSize: 11.sp,
+      fontWeight: FontWeight.w600,
+      color: Colors.grey,
+      letterSpacing: 1.0,
+    ),
+  );
 
   Widget _bioRow(IconData icon, String text) => Row(
-        children: [
-          Icon(icon, color: _teal, size: 16),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                color: _navy,
-              ),
-            ),
-          ),
-        ],
-      );
-
-  Widget _skillChip(String skill) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-        decoration: BoxDecoration(
-          color: _navy,
-          borderRadius: BorderRadius.circular(20),
-        ),
+    children: [
+      Icon(icon, color: _teal, size: 16),
+      SizedBox(width: 8.w),
+      Expanded(
         child: Text(
-          skill.toUpperCase(),
+          text,
           style: TextStyle(
             fontFamily: kFontDMSans,
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            letterSpacing: 0.5,
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w500,
+            color: _navy,
           ),
         ),
-      );
+      ),
+    ],
+  );
+
+  Widget _skillChip(String skill) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+    decoration: BoxDecoration(
+      color: _navy,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      skill.toUpperCase(),
+      style: TextStyle(
+        fontFamily: kFontDMSans,
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+        letterSpacing: 0.5,
+      ),
+    ),
+  );
 
   Widget _bioShimmer() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionLabel('BIO'),
-          SizedBox(height: 10.h),
-          Container(
-            width: double.infinity,
-            height: 80.h,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(
-                  color: Color(0xFF08979F), strokeWidth: 2),
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _sectionLabel('BIO'),
+      SizedBox(height: 10.h),
+      Container(
+        width: double.infinity,
+        height: 80.h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF08979F),
+            strokeWidth: 2,
           ),
-          SizedBox(height: 20.h),
-        ],
-      );
+        ),
+      ),
+      SizedBox(height: 20.h),
+    ],
+  );
 }

@@ -157,8 +157,11 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     color: _teal.withValues(alpha: 0.10),
-                    child:
-                        const Icon(Icons.person_rounded, color: _teal, size: 80),
+                    child: const Icon(
+                      Icons.person_rounded,
+                      color: _teal,
+                      size: 80,
+                    ),
                   ),
                 ),
               ),
@@ -181,8 +184,11 @@ class _UserDetailPageState extends State<UserDetailPage> {
               SizedBox(height: 8.h),
               Row(
                 children: [
-                  const Icon(Icons.location_on_rounded,
-                      color: _orange, size: 15),
+                  const Icon(
+                    Icons.location_on_rounded,
+                    color: _orange,
+                    size: 15,
+                  ),
                   SizedBox(width: 4.w),
                   Text(
                     widget.user.location,
@@ -208,12 +214,15 @@ class _UserDetailPageState extends State<UserDetailPage> {
                     .map(
                       (skill) => Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 7.h),
+                          horizontal: 14.w,
+                          vertical: 7.h,
+                        ),
                         decoration: BoxDecoration(
                           color: _teal.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: _teal.withValues(alpha: 0.30)),
+                            color: _teal.withValues(alpha: 0.30),
+                          ),
                         ),
                         child: Text(
                           skill,
@@ -236,19 +245,24 @@ class _UserDetailPageState extends State<UserDetailPage> {
                 padding: EdgeInsets.symmetric(vertical: 24.h),
                 child: const Center(
                   child: CircularProgressIndicator(
-                      color: _teal, strokeWidth: 2),
+                    color: _teal,
+                    strokeWidth: 2,
+                  ),
                 ),
               )
             else if (u != null) ...[
               // Education
-              if ((u.college ?? '').isNotEmpty) ...[
+              if ((u.education[0]) != null) ...[
                 SizedBox(height: 24.h),
                 _sectionLabel('EDUCATION'),
                 SizedBox(height: 10.h),
-                _infoRow(Icons.school_rounded, u.college!),
-                if ((u.branch ?? '').isNotEmpty) ...[
+                _infoRow(Icons.school_rounded, u.education[0].toString()),
+                if ((u.education[2]) != null) ...[
                   SizedBox(height: 8.h),
-                  _infoRow(Icons.account_tree_rounded, u.branch!),
+                  _infoRow(
+                    Icons.account_tree_rounded,
+                    u.education[2].toString(),
+                  ),
                 ],
               ],
 
@@ -276,51 +290,51 @@ class _UserDetailPageState extends State<UserDetailPage> {
   }
 
   Widget _sectionLabel(String text) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 11.sp,
-          color: Colors.white38,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Poppins',
-          letterSpacing: 1.2,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 11.sp,
+      color: Colors.white38,
+      fontWeight: FontWeight.w600,
+      fontFamily: 'Poppins',
+      letterSpacing: 1.2,
+    ),
+  );
 
   Widget _infoRow(IconData icon, String text) => Row(
-        children: [
-          Icon(icon, color: _teal, size: 16),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.white70,
-                fontFamily: 'Poppins',
-              ),
-            ),
+    children: [
+      Icon(icon, color: _teal, size: 16),
+      SizedBox(width: 8.w),
+      Expanded(
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.white70,
+            fontFamily: 'Poppins',
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 
   Widget _linkRow(String label, String? url) => Padding(
-        padding: EdgeInsets.only(bottom: 8.h),
-        child: Row(
-          children: [
-            const Icon(Icons.link_rounded, color: _teal, size: 16),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                '$label: $url',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.white70,
-                  fontFamily: 'Poppins',
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+    padding: EdgeInsets.only(bottom: 8.h),
+    child: Row(
+      children: [
+        const Icon(Icons.link_rounded, color: _teal, size: 16),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            '$label: $url',
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.white70,
+              fontFamily: 'Poppins',
             ),
-          ],
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 }

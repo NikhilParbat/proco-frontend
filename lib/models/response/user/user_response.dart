@@ -9,9 +9,7 @@ class UserResponse {
   final bool? isAdmin;
   final bool? isAgent;
   final String? profile;
-  final String? college;
   final String? gender;
-  final String? branch;
   final double? latitude;
   final double? longitude;
   final String? city;
@@ -23,8 +21,6 @@ class UserResponse {
   final String? twitterUrl;
   final String? portfolioUrl;
   final String? userType;
-  final String? classOf;
-  final String? cgpa;
   final String? workStyle;
   final String? communicationStyle;
   final String? provider;
@@ -35,6 +31,7 @@ class UserResponse {
   final List<String> interests;
   final List<String> hobbies;
   final List<LinkItem> links;
+  final List<EducationItem> education;
 
   UserResponse({
     required this.id,
@@ -45,9 +42,7 @@ class UserResponse {
     this.isAdmin,
     this.isAgent,
     this.profile,
-    this.college,
     this.gender,
-    this.branch,
     this.latitude,
     this.longitude,
     this.city,
@@ -59,14 +54,13 @@ class UserResponse {
     this.twitterUrl,
     this.portfolioUrl,
     this.userType,
-    this.classOf,
-    this.cgpa,
     this.workStyle,
     this.communicationStyle,
     this.provider,
     this.isFirstTimeUser,
     this.createdAt,
     this.updatedAt,
+    this.education = const [],
     this.skills = const [],
     this.interests = const [],
     this.hobbies = const [],
@@ -83,9 +77,7 @@ class UserResponse {
       isAdmin: json['isAdmin'],
       isAgent: json['isAgent'],
       profile: json['profile'],
-      college: json['college'],
       gender: json['gender'],
-      branch: json['branch'],
       latitude: json['latitude']?.toDouble(),
       longitude: json['longitude']?.toDouble(),
       city: json['city'],
@@ -97,8 +89,6 @@ class UserResponse {
       twitterUrl: json['twitterUrl'],
       portfolioUrl: json['portfolioUrl'],
       userType: json['userType'],
-      classOf: json['classOf'],
-      cgpa: json['cgpa'],
       workStyle: json['workStyle'],
       communicationStyle: json['communicationStyle'],
       provider: json['provider'],
@@ -110,10 +100,20 @@ class UserResponse {
           ? DateTime.parse(json['updatedAt'])
           : null,
       skills: json['skills'] != null ? List<String>.from(json['skills']) : [],
-      interests: json['interests'] != null ? List<String>.from(json['interests']) : [],
-      hobbies: json['hobbies'] != null ? List<String>.from(json['hobbies']) : [],
-      links: (json['links'] as List<dynamic>?)
+      interests: json['interests'] != null
+          ? List<String>.from(json['interests'])
+          : [],
+      hobbies: json['hobbies'] != null
+          ? List<String>.from(json['hobbies'])
+          : [],
+      links:
+          (json['links'] as List<dynamic>?)
               ?.map((l) => LinkItem.fromJson(l as Map<String, dynamic>))
+              .toList() ??
+          [],
+      education:
+          (json['education'] as List<dynamic>?)
+              ?.map((e) => EducationItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -129,9 +129,7 @@ class UserResponse {
       'isAdmin': isAdmin,
       'isAgent': isAgent,
       'profile': profile,
-      'college': college,
       'gender': gender,
-      'branch': branch,
       'latitude': latitude,
       'longitude': longitude,
       'city': city,
@@ -143,8 +141,6 @@ class UserResponse {
       'twitterUrl': twitterUrl,
       'portfolioUrl': portfolioUrl,
       'userType': userType,
-      'classOf': classOf,
-      'cgpa': cgpa,
       'workStyle': workStyle,
       'communicationStyle': communicationStyle,
       'provider': provider,
@@ -155,6 +151,7 @@ class UserResponse {
       'interests': interests,
       'hobbies': hobbies,
       'links': links.map((l) => l.toJson()).toList(),
+      'education': education.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -167,9 +164,7 @@ class UserResponse {
     bool? isAdmin,
     bool? isAgent,
     String? profile,
-    String? college,
     String? gender,
-    String? branch,
     double? latitude,
     double? longitude,
     String? city,
@@ -181,8 +176,6 @@ class UserResponse {
     String? twitterUrl,
     String? portfolioUrl,
     String? userType,
-    String? classOf,
-    String? cgpa,
     String? workStyle,
     String? communicationStyle,
     String? provider,
@@ -192,6 +185,7 @@ class UserResponse {
     List<String>? skills,
     List<String>? interests,
     List<String>? hobbies,
+    List<EducationItem>? education,
     List<LinkItem>? links,
   }) {
     return UserResponse(
@@ -203,9 +197,7 @@ class UserResponse {
       isAdmin: isAdmin ?? this.isAdmin,
       isAgent: isAgent ?? this.isAgent,
       profile: profile ?? this.profile,
-      college: college ?? this.college,
       gender: gender ?? this.gender,
-      branch: branch ?? this.branch,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       city: city ?? this.city,
@@ -217,8 +209,6 @@ class UserResponse {
       twitterUrl: twitterUrl ?? this.twitterUrl,
       portfolioUrl: portfolioUrl ?? this.portfolioUrl,
       userType: userType ?? this.userType,
-      classOf: classOf ?? this.classOf,
-      cgpa: cgpa ?? this.cgpa,
       workStyle: workStyle ?? this.workStyle,
       communicationStyle: communicationStyle ?? this.communicationStyle,
       provider: provider ?? this.provider,
@@ -228,6 +218,7 @@ class UserResponse {
       skills: skills ?? this.skills,
       interests: interests ?? this.interests,
       hobbies: hobbies ?? this.hobbies,
+      education: education ?? this.education,
       links: links ?? this.links,
     );
   }
