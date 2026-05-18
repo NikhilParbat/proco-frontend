@@ -14,6 +14,7 @@ import 'package:proco/views/ui/jobs/match_dialog.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart'; // Ensure url_launcher is configured if handling internal web navigation links
 
 class UserExpandedSheet extends StatefulWidget {
   final SwipedRes user;
@@ -106,13 +107,46 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
     }
   }
 
+  int _calculateAge(String dobString) {
+    if (dobString.isEmpty) return 0;
+    try {
+      final dob = DateTime.parse(dobString);
+      final today = DateTime.now();
+      int age = today.year - dob.year;
+      if (today.month < dob.month || (today.month == dob.month && today.day < dob.day)) {
+        age--;
+      }
+      return age;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bio = _profile?.bio ?? '';
-    final college = _profile?.college ?? '';
-    final skills = (_profile?.skills.isNotEmpty == true)
-        ? _profile!.skills
-        : widget.user.skills;
+    final bio = _profile?.bio ?? widget.user.bio;
+    final skills = (_profile?.skills.isNotEmpty == true) ? _profile!.skills : widget.user.skills;
+    final location = (widget.user.city.isNotEmpty && widget.user.country.isNotEmpty)
+        ? '${widget.user.city}, ${widget.user.country}'
+        : '';
+
+    // Calculate age
+    final age = _calculateAge(widget.user.dob);
+    final genderStr = widget.user.gender.isNotEmpty 
+        ? '${widget.user.gender[0].toUpperCase()}${widget.user.gender.substring(1)}' 
+        : '';
+    final quickFacts = [
+      if (age > 0) '$age yrs',
+      if (genderStr.isNotEmpty) genderStr,
+    ].join(' • ');
+
+    // Sort education by graduation year descending
+    final sortedEducation = List.from(widget.user.education);
+    sortedEducation.sort((a, b) {
+      final yearA = int.tryParse(a.durationOrYear ?? '') ?? 0;
+      final yearB = int.tryParse(b.durationOrYear ?? '') ?? 0;
+      return yearB.compareTo(yearA); 
+    });
 
     return Container(
       decoration: BoxDecoration(
@@ -164,8 +198,7 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                     top: 12.h,
                     right: 12.w,
                     child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 5.h),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -211,18 +244,30 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                     ),
                   ),
 
-                  // Bio
+                  // Quick Facts Row
+                  if (quickFacts.isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    Text(
+                      quickFacts,
+                      style: TextStyle(
+                        fontFamily: kFontDMSans,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: _orange,
+                      ),
+                    ),
+                  ],
+
+                  // Bio (Full Text Deep-Dive)
                   if (_isLoading) ...[
                     SizedBox(height: 8.h),
                     _shimmerLine(width: 0.7),
                     SizedBox(height: 6.h),
                     _shimmerLine(width: 0.5),
                   ] else if (bio.isNotEmpty) ...[
-                    SizedBox(height: 6.h),
+                    SizedBox(height: 8.h),
                     Text(
                       bio,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: kFontDMSans,
                         fontSize: 13.sp,
@@ -235,28 +280,68 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                   SizedBox(height: 12.h),
 
                   // Location
-                  if (widget.user.location.isNotEmpty)
+                  if (location.isNotEmpty)
                     _infoRow(
                       icon: Icons.location_on_rounded,
                       iconColor: _orange,
-                      text: widget.user.location,
+                      text: location,
                     ),
 
-                  // College
-                  if (!_isLoading && college.isNotEmpty) ...[
-                    SizedBox(height: 6.h),
-                    _infoRow(
-                      icon: Icons.school_rounded,
-                      iconColor: _teal,
-                      text: college,
+                  // ── Education Section ─────────────────────────────────────
+                  if (sortedEducation.isNotEmpty) ...[
+                    SizedBox(height: 16.h),
+                    Text(
+                      'EDUCATION',
+                      style: TextStyle(
+                        fontFamily: kFontDMSans,
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                        letterSpacing: 1.0,
+                      ),
                     ),
+                    SizedBox(height: 6.h),
+                    ...sortedEducation.map((edu) => Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4.h),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.school_rounded, color: _teal, size: 16.sp),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${edu.degree ?? ''}${edu.degree != null && edu.fieldOfStudy != null ? " in " : ""}${edu.fieldOfStudy ?? ''}',
+                                      style: TextStyle(
+                                        fontFamily: kFontDMSans,
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: _navy,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${edu.school ?? ''} ${edu.durationOrYear != null ? "(${edu.durationOrYear})" : ""}',
+                                      style: TextStyle(
+                                        fontFamily: kFontDMSans,
+                                        fontSize: 12.sp,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
                   ],
 
-                  // TOP SKILLS
+                  // ── Skills Section (Full Wrap) ────────────────────────────
                   if (skills.isNotEmpty) ...[
                     SizedBox(height: 16.h),
                     Text(
-                      'TOP SKILLS',
+                      'SKILLS',
                       style: TextStyle(
                         fontFamily: kFontDMSans,
                         fontSize: 11.sp,
@@ -269,7 +354,62 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: skills.take(4).map(_skillChip).toList(),
+                      children: skills.map(_skillChip).toList(),
+                    ),
+                  ],
+
+                  // ── Links Section ─────────────────────────────────────────
+                  if (widget.user.links.isNotEmpty) ...[
+                    SizedBox(height: 16.h),
+                    Text(
+                      'LINKS & PORTFOLIOS',
+                      style: TextStyle(
+                        fontFamily: kFontDMSans,
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    Wrap(
+                      spacing: 10.w,
+                      runSpacing: 6.h,
+                      children: widget.user.links.map((link) {
+                        final title = link.label;
+                        IconData linkIcon = Icons.link_rounded;
+                        
+                        if (title.toLowerCase().contains('github')) {
+                          linkIcon = Icons.code_rounded;
+                        } else if (title.toLowerCase().contains('linkedin')) {
+                          linkIcon = Icons.work_history_rounded;
+                        }
+
+                        return InkWell(
+                          onTap: () async {
+                            if (link.url.isNotEmpty) {
+                              final uri = Uri.parse(link.url);
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            }
+                          },
+                          child: Chip(
+                            avatar: Icon(linkIcon, size: 14.sp, color: _teal),
+                            label: Text(
+                              title,
+                              style: TextStyle(
+                                fontFamily: kFontDMSans,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                                color: _navy,
+                              ),
+                            ),
+                            backgroundColor: Colors.grey.shade100,
+                            side: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ],
 

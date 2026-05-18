@@ -26,6 +26,7 @@ const kBackgroundColor = Color(0xFFF4F6FA);
 const kCross = Color.fromARGB(234, 14, 15, 15);
 const kBookmark = Color.fromARGB(234, 14, 15, 15);
 const krevert = Color.fromARGB(234, 14, 15, 15);
+const kNavy = Color(0xFF040326);
 
 double height = 825.h;
 double width = 375.w;

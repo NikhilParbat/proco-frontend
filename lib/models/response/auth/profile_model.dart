@@ -30,7 +30,7 @@ class ProfileRes {
   final List<String> skills;
   final List<String> interests;
   final List<String> hobbies;
-  final List<String> education;
+  final List<EducationItem> education;
   final int queriesCreated;
   final List<ExperienceItem> experiences;
   final List<ProjectItem> projects;
@@ -115,7 +115,9 @@ class ProfileRes {
           ? List<String>.from(json['hobbies'])
           : [],
       education: json['education'] != null
-          ? List<String>.from(json['education'])
+          ? (json['education'] as List)
+              .map((e) => EducationItem.fromJson(e as Map<String, dynamic>))
+              .toList()
           : [],
       queriesCreated: (json['queriesCreated'] as num?)?.toInt() ?? 0,
       experiences:
