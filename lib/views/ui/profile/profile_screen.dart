@@ -70,7 +70,7 @@ class ProfilePage extends StatelessWidget {
                     child: TabBarView(
                       children: [
                         _AboutTab(state: state),
-                        _PersonalTab(state: state),
+                        _PersonalTab(state: state, isReadOnly: isReadOnly),
                         _ProfessionalTab(state: state),
                       ],
                     ),
@@ -330,8 +330,9 @@ class _StatCard extends StatelessWidget {
 }
 
 class _PersonalTab extends StatelessWidget {
-  const _PersonalTab({required this.state});
+  const _PersonalTab({required this.state, required this.isReadOnly});
   final ProfileEditState state;
+  final bool isReadOnly;
 
   int _calculateAge() {
     if (state.dob.isEmpty) return 0;
@@ -354,18 +355,31 @@ class _PersonalTab extends StatelessWidget {
     final age = _calculateAge();
     final hasGender = state.gender.isNotEmpty;
     final hasAge = age > 0;
-    final hasEducation = state.college.isNotEmpty || state.branch.isNotEmpty ||
-        state.classOf.isNotEmpty || state.cgpa.isNotEmpty;
+    final hasEducation = state.education.isNotEmpty;
     final hasWorkStyle = state.workStyle.isNotEmpty;
     final hasCommunicationStyle = state.communicationStyle.isNotEmpty;
     final hasSkills = state.skills.isNotEmpty;
+    final hasLinks = state.links.isNotEmpty;
+    final hasHobbies = state.hobbies.isNotEmpty;
+    final hasInterests = state.interests.isNotEmpty;
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 32.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ConfidentialCard(email: state.email, phone: state.phone),
+          _ConfidentialCard(
+            email: state.email,
+            phone: state.phone,
+            isReadOnly: state.isReadOnly,
+            isPrivateInfoVisible:
+                state.isPrivateInfoVisible, // Add this field to your state
+            onToggleVisibility: (newValue) {
+              state.updatePrivacyPreference(
+                newValue,
+              ); // Add this backend sync function
+            },
+          ),
           if (hasGender || hasAge) ...[
             SizedBox(height: 16.h),
             Row(
@@ -386,7 +400,12 @@ class _PersonalTab extends StatelessWidget {
             SizedBox(height: 24.h),
             _SectionHeader(title: 'EDUCATION', icon: Icons.school_outlined),
             SizedBox(height: 12.h),
-            _EducationCard(state: state),
+            ...state.education.map(
+              (edu) => Padding(
+                padding: EdgeInsets.only(bottom: 14.h),
+                child: _EducationCard(item: edu),
+              ),
+            ),
           ],
           if (hasWorkStyle || hasCommunicationStyle) ...[
             SizedBox(height: 24.h),
@@ -427,40 +446,46 @@ class _PersonalTab extends StatelessWidget {
             Wrap(
               spacing: 8.w,
               runSpacing: 8.h,
-              children: state.skills.map((s) => _OutlineChip(label: s)).toList(),
+              children: state.skills
+                  .map((s) => _OutlineChip(label: s))
+                  .toList(),
             )
           else
             _NotAddedHint(label: 'No skills added yet'),
           SizedBox(height: 24.h),
           const _CapLabel('INTERESTS'),
           SizedBox(height: 12.h),
-          if (state.interests.isNotEmpty)
+          if (hasInterests)
             Wrap(
               spacing: 8.w,
               runSpacing: 8.h,
-              children: state.interests.map((i) => _OutlineChip(label: i)).toList(),
+              children: state.interests
+                  .map((i) => _OutlineChip(label: i))
+                  .toList(),
             )
           else
             _NotAddedHint(label: 'No interests added yet'),
           SizedBox(height: 24.h),
           const _CapLabel('HOBBIES'),
           SizedBox(height: 12.h),
-          if (state.hobbies.isNotEmpty)
+          if (hasHobbies)
             Wrap(
               spacing: 8.w,
               runSpacing: 8.h,
-              children: state.hobbies.map((h) => _OutlineChip(label: h)).toList(),
+              children: state.hobbies
+                  .map((h) => _OutlineChip(label: h))
+                  .toList(),
             )
           else
             _NotAddedHint(label: 'No hobbies added yet'),
-          if (state.links.isNotEmpty) ...[
+          if (hasLinks) ...[
             SizedBox(height: 24.h),
             const _CapLabel('EXTERNAL LINKS'),
             SizedBox(height: 12.h),
             ...state.links.map(
-              (l) => Padding(
+              (link) => Padding(
                 padding: EdgeInsets.only(bottom: 10.h),
-                child: _LinkRow(label: l.label, url: l.url),
+                child: _LinkRow(item: link),
               ),
             ),
           ],
@@ -483,71 +508,6 @@ class _ProfessionalTab extends StatefulWidget {
 class _ProfessionalTabState extends State<_ProfessionalTab> {
   ProfileEditState get _s => widget.state;
 
-  Future<void> _save() async {
-    final ok = await _s.saveProfile(null);
-    if (!mounted) return;
-    if (ok) {
-      Get.snackbar(
-        'Saved',
-        'Professional info updated.',
-        backgroundColor: kTeal,
-        colorText: kLight,
-        duration: const Duration(seconds: 3),
-      );
-    } else {
-      Get.snackbar(
-        'Error',
-        'Could not save changes.',
-        backgroundColor: kOrange,
-        colorText: kLight,
-      );
-    }
-  }
-
-  void _addExperience(ExperienceItem exp) {
-    setState(() => _s.experiences = [..._s.experiences, exp]);
-    _save();
-  }
-
-  void _removeExperience(int index) {
-    setState(() => _s.experiences = List.from(_s.experiences)..removeAt(index));
-    _save();
-  }
-
-  void _addProject(ProjectItem proj) {
-    setState(() => _s.projects = [..._s.projects, proj]);
-    _save();
-  }
-
-  void _removeProject(int index) {
-    setState(() => _s.projects = List.from(_s.projects)..removeAt(index));
-    _save();
-  }
-
-  void _addAchievement(AchievementItem ach) {
-    setState(() => _s.achievements = [..._s.achievements, ach]);
-    _save();
-  }
-
-  void _removeAchievement(int index) {
-    setState(
-      () => _s.achievements = List.from(_s.achievements)..removeAt(index),
-    );
-    _save();
-  }
-
-  void _showSheet(Widget sheet) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (_) => sheet,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -555,62 +515,42 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ProSectionHeader(
-            title: 'EXPERIENCE',
-            icon: Icons.work_outline,
-            onAdd: _s.isReadOnly
-                ? null
-                : () => _showSheet(_AddExperienceSheet(onAdd: _addExperience)),
-          ),
-          SizedBox(height: 18.h),
-          if (_s.experiences.isEmpty)
-            const _EmptyBox()
-          else
+          // --- EXPERIENCE SECTION ---
+          if (_s.experiences.isNotEmpty) ...[
+            _ProSectionHeader(title: 'EXPERIENCE', icon: Icons.work_outline),
+            SizedBox(height: 18.h),
             ..._s.experiences.asMap().entries.map(
-              (e) => _ExperienceRow(
-                data: e.value,
-                onDelete: _s.isReadOnly ? null : () => _removeExperience(e.key),
-              ),
+              (e) => _ExperienceRow(data: e.value),
             ),
-          SizedBox(height: 28.h),
-          _ProSectionHeader(
-            title: 'PROJECT SHOWCASE',
-            icon: Icons.star_border,
-            onAdd: _s.isReadOnly
-                ? null
-                : () => _showSheet(_AddProjectSheet(onAdd: _addProject)),
-          ),
-          SizedBox(height: 18.h),
-          if (_s.projects.isEmpty)
-            const _EmptyBox()
-          else
+            SizedBox(height: 28.h),
+          ],
+
+          // --- PROJECT SHOWCASE SECTION ---
+          if (_s.projects.isNotEmpty) ...[
+            _ProSectionHeader(
+              title: 'PROJECT SHOWCASE',
+              icon: Icons.star_border,
+            ),
+            SizedBox(height: 18.h),
             ..._s.projects.asMap().entries.map(
-              (p) => _ProjectCard(
-                data: p.value,
-                onDelete: _s.isReadOnly ? null : () => _removeProject(p.key),
-              ),
+              (p) => _ProjectCard(data: p.value),
             ),
-          SizedBox(height: 28.h),
-          _ProSectionHeader(
-            title: 'ACHIEVEMENTS',
-            icon: Icons.emoji_events_outlined,
-            onAdd: _s.isReadOnly
-                ? null
-                : () =>
-                      _showSheet(_AddAchievementSheet(onAdd: _addAchievement)),
-          ),
-          SizedBox(height: 18.h),
-          if (_s.achievements.isEmpty)
-            const _EmptyBox()
-          else
+            SizedBox(height: 28.h),
+          ],
+
+          // --- ACHIEVEMENTS SECTION ---
+          if (_s.achievements.isNotEmpty) ...[
+            _ProSectionHeader(
+              title: 'ACHIEVEMENTS',
+              icon: Icons.emoji_events_outlined,
+            ),
+            SizedBox(height: 18.h),
             ..._s.achievements.asMap().entries.map(
-              (a) => _AchievementRow(
-                data: a.value,
-                onDelete: _s.isReadOnly
-                    ? null
-                    : () => _removeAchievement(a.key),
-              ),
+              (a) => _AchievementRow(data: a.value),
             ),
+            // No bottom spacing needed for the final item unless required by design
+            SizedBox(height: 28.h),
+          ],
         ],
       ),
     );
@@ -623,11 +563,9 @@ class _ProSectionHeader extends StatelessWidget {
   const _ProSectionHeader({
     required this.title,
     required this.icon,
-    this.onAdd,
   });
   final String title;
   final IconData icon;
-  final VoidCallback? onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -658,9 +596,8 @@ class _ProSectionHeader extends StatelessWidget {
 // ── Experience row ─────────────────────────────────────────────────────────
 
 class _ExperienceRow extends StatelessWidget {
-  const _ExperienceRow({required this.data, this.onDelete});
+  const _ExperienceRow({required this.data});
   final ExperienceItem data;
-  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -742,17 +679,6 @@ class _ExperienceRow extends StatelessWidget {
               ],
             ),
           ),
-          if (onDelete != null) ...[
-            SizedBox(width: 8.w),
-            GestureDetector(
-              onTap: onDelete,
-              child: Icon(
-                Icons.delete_outline,
-                size: 18.sp,
-                color: Colors.redAccent,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -762,9 +688,8 @@ class _ExperienceRow extends StatelessWidget {
 // ── Project card ───────────────────────────────────────────────────────────
 
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.data, this.onDelete});
+  const _ProjectCard({required this.data});
   final ProjectItem data;
-  final VoidCallback? onDelete;
 
   String _truncateWords(String text, int maxWords) {
     final words = text.trim().split(RegExp(r'\s+'));
@@ -819,7 +744,9 @@ class _ProjectCard extends StatelessWidget {
                     width: double.infinity,
                     color: kThemeColor,
                     padding: EdgeInsets.symmetric(
-                        horizontal: 16.w, vertical: 14.h),
+                      horizontal: 16.w,
+                      vertical: 14.h,
+                    ),
                     child: Text(
                       data.name,
                       style: TextStyle(
@@ -863,8 +790,9 @@ class _ProjectCard extends StatelessWidget {
                           Wrap(
                             spacing: 6.w,
                             runSpacing: 6.h,
-                            children:
-                                techs.map((t) => _CardTechChip(label: t)).toList(),
+                            children: techs
+                                .map((t) => _CardTechChip(label: t))
+                                .toList(),
                           ),
                           SizedBox(height: 14.h),
                         ],
@@ -874,8 +802,11 @@ class _ProjectCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(_linkIcon(),
-                                    size: 14.sp, color: kThemeColor),
+                                Icon(
+                                  _linkIcon(),
+                                  size: 14.sp,
+                                  color: kThemeColor,
+                                ),
                                 SizedBox(width: 5.w),
                                 Text(
                                   'Visit Project',
@@ -887,8 +818,11 @@ class _ProjectCard extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(width: 3.w),
-                                Icon(Icons.arrow_outward_rounded,
-                                    size: 12.sp, color: kThemeColor),
+                                Icon(
+                                  Icons.arrow_outward_rounded,
+                                  size: 12.sp,
+                                  color: kThemeColor,
+                                ),
                               ],
                             ),
                           ),
@@ -899,23 +833,6 @@ class _ProjectCard extends StatelessWidget {
               ),
             ),
           ),
-          if (onDelete != null)
-            Positioned(
-              top: 8.h,
-              right: 10.w,
-              child: GestureDetector(
-                onTap: onDelete,
-                child: Container(
-                  padding: EdgeInsets.all(4.w),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.delete_outline,
-                      size: 16.sp, color: kLight),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -948,13 +865,11 @@ class _CardTechChip extends StatelessWidget {
   }
 }
 
-
 // ── Achievement row ────────────────────────────────────────────────────────
 
 class _AchievementRow extends StatelessWidget {
-  const _AchievementRow({required this.data, this.onDelete});
+  const _AchievementRow({required this.data});
   final AchievementItem data;
-  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -994,15 +909,6 @@ class _AchievementRow extends StatelessWidget {
               ],
             ),
           ),
-          if (onDelete != null)
-            GestureDetector(
-              onTap: onDelete,
-              child: Icon(
-                Icons.delete_outline,
-                size: 18.sp,
-                color: Colors.redAccent,
-              ),
-            ),
         ],
       ),
     );
@@ -1010,377 +916,6 @@ class _AchievementRow extends StatelessWidget {
 }
 
 // ── Empty section placeholder ──────────────────────────────────────────────
-
-class _EmptyBox extends StatelessWidget {
-  const _EmptyBox();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 56.h,
-      decoration: BoxDecoration(
-        color: kLight,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Shared sheet text field ────────────────────────────────────────────────
-
-class _SheetField extends StatelessWidget {
-  const _SheetField({
-    required this.label,
-    required this.controller,
-    this.hint,
-    this.maxLines = 1,
-    this.keyboard,
-  });
-  final String label;
-  final TextEditingController controller;
-  final String? hint;
-  final int maxLines;
-  final TextInputType? keyboard;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboard,
-      style: TextStyle(fontFamily: 'DMSans', fontSize: 14.sp, color: kDark),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: TextStyle(
-          fontFamily: 'DMSans',
-          fontSize: 13.sp,
-          color: kDarkGrey,
-        ),
-        hintStyle: TextStyle(
-          fontFamily: 'DMSans',
-          fontSize: 13.sp,
-          color: const Color(0xFFBBBBBB),
-        ),
-        filled: true,
-        fillColor: kBackgroundColor,
-        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.r),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.r),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.r),
-          borderSide: const BorderSide(color: kThemeColor, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Add Experience sheet ───────────────────────────────────────────────────
-
-class _AddExperienceSheet extends StatefulWidget {
-  const _AddExperienceSheet({required this.onAdd});
-  final void Function(ExperienceItem) onAdd;
-
-  @override
-  State<_AddExperienceSheet> createState() => _AddExperienceSheetState();
-}
-
-class _AddExperienceSheetState extends State<_AddExperienceSheet> {
-  final _company = TextEditingController();
-  final _position = TextEditingController();
-  final _description = TextEditingController();
-  final _dateRange = TextEditingController();
-
-  @override
-  void dispose() {
-    _company.dispose();
-    _position.dispose();
-    _description.dispose();
-    _dateRange.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (_company.text.trim().isEmpty || _position.text.trim().isEmpty) return;
-    widget.onAdd(
-      ExperienceItem(
-        company: _company.text.trim(),
-        position: _position.text.trim(),
-        description: _description.text.trim(),
-        dateRange: _dateRange.text.trim(),
-      ),
-    );
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 24.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Add Experience',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: kDark,
-            ),
-          ),
-          SizedBox(height: 20.h),
-          _SheetField(label: 'Company *', controller: _company),
-          SizedBox(height: 12.h),
-          _SheetField(label: 'Position / Role *', controller: _position),
-          SizedBox(height: 12.h),
-          _SheetField(
-            label: 'Description',
-            controller: _description,
-            maxLines: 2,
-          ),
-          SizedBox(height: 12.h),
-          _SheetField(
-            label: 'Date Range',
-            controller: _dateRange,
-            hint: '2022 – 2024',
-          ),
-          SizedBox(height: 20.h),
-          _SheetAddButton(onPressed: _submit),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Add Project sheet ──────────────────────────────────────────────────────
-
-class _AddProjectSheet extends StatefulWidget {
-  const _AddProjectSheet({required this.onAdd});
-  final void Function(ProjectItem) onAdd;
-
-  @override
-  State<_AddProjectSheet> createState() => _AddProjectSheetState();
-}
-
-class _AddProjectSheetState extends State<_AddProjectSheet> {
-  final _name = TextEditingController();
-  final _domain = TextEditingController();
-  final _description = TextEditingController();
-  final _techs = TextEditingController();
-  final _url = TextEditingController();
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _domain.dispose();
-    _description.dispose();
-    _techs.dispose();
-    _url.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (_name.text.trim().isEmpty) return;
-    final techList = _techs.text
-        .split(',')
-        .map((t) => t.trim().toUpperCase())
-        .where((t) => t.isNotEmpty)
-        .toList();
-    widget.onAdd(
-      ProjectItem(
-        name: _name.text.trim(),
-        domain: _domain.text.trim(),
-        description: _description.text.trim(),
-        technologies: techList,
-        sourceUrl: _url.text.trim(),
-      ),
-    );
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 24.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Add Project',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: kDark,
-            ),
-          ),
-          SizedBox(height: 20.h),
-          _SheetField(label: 'Project Name *', controller: _name),
-          SizedBox(height: 12.h),
-          _SheetField(
-            label: 'Domain / Category',
-            controller: _domain,
-            hint: 'e.g. App Development',
-          ),
-          SizedBox(height: 12.h),
-          _SheetField(
-            label: 'Description (1-2 lines)',
-            controller: _description,
-            maxLines: 2,
-          ),
-          SizedBox(height: 12.h),
-          _SheetField(
-            label: 'Skills / Technologies (comma-separated)',
-            controller: _techs,
-            hint: 'Flutter, Firebase, Node.js',
-          ),
-          SizedBox(height: 12.h),
-          _SheetField(
-            label: 'Project Link / URL',
-            controller: _url,
-            keyboard: TextInputType.url,
-          ),
-          SizedBox(height: 20.h),
-          _SheetAddButton(onPressed: _submit),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Add Achievement sheet ──────────────────────────────────────────────────
-
-class _AddAchievementSheet extends StatefulWidget {
-  const _AddAchievementSheet({required this.onAdd});
-  final void Function(AchievementItem) onAdd;
-
-  @override
-  State<_AddAchievementSheet> createState() => _AddAchievementSheetState();
-}
-
-class _AddAchievementSheetState extends State<_AddAchievementSheet> {
-  final _title = TextEditingController();
-  final _subtitle = TextEditingController();
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _subtitle.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (_title.text.trim().isEmpty) return;
-    widget.onAdd(
-      AchievementItem(
-        title: _title.text.trim(),
-        subtitle: _subtitle.text.trim(),
-      ),
-    );
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 24.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Add Achievement',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: kDark,
-            ),
-          ),
-          SizedBox(height: 20.h),
-          _SheetField(label: 'Title *', controller: _title),
-          SizedBox(height: 12.h),
-          _SheetField(
-            label: 'Subtitle',
-            controller: _subtitle,
-            hint: 'CERT LEVEL • 2025',
-          ),
-          SizedBox(height: 20.h),
-          _SheetAddButton(onPressed: _submit),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Shared ADD button for sheets ───────────────────────────────────────────
-
-class _SheetAddButton extends StatelessWidget {
-  const _SheetAddButton({required this.onPressed});
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50.h,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: kThemeColor,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-        ),
-        child: Text(
-          'ADD',
-          style: TextStyle(
-            fontFamily: 'DMSans',
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w700,
-            color: kLight,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _EmptyStateText extends StatelessWidget {
   const _EmptyStateText();
@@ -1437,12 +972,25 @@ class _ErrorView extends StatelessWidget {
 // ── Confidential card ──────────────────────────────────────────────────────
 
 class _ConfidentialCard extends StatelessWidget {
-  const _ConfidentialCard({required this.email, required this.phone});
+  const _ConfidentialCard({
+    required this.email,
+    required this.phone,
+    required this.isReadOnly,
+    required this.isPrivateInfoVisible,
+    this.onToggleVisibility,
+  });
+
   final String email;
   final String phone;
+  final bool isReadOnly;
+  final bool isPrivateInfoVisible;
+  final ValueChanged<bool>? onToggleVisibility;
 
   @override
   Widget build(BuildContext context) {
+    // Determine if data should be masked or shown
+    final shouldHideData = isReadOnly && !isPrivateInfoVisible;
+
     return Container(
       decoration: BoxDecoration(
         color: kDarkBlue,
@@ -1481,42 +1029,75 @@ class _ConfidentialCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Container(
-                width: 38.w,
-                height: 38.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
+              // Render Toggle Switch for self, or Lock Icon for external users
+              if (!isReadOnly)
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: isPrivateInfoVisible,
+                    onChanged: onToggleVisibility,
+                    activeColor: kTeal,
+                    activeTrackColor: Colors.white24,
+                    inactiveThumbColor: Colors.white60,
+                    inactiveTrackColor: Colors.white12,
+                  ),
+                )
+              else
+                Container(
+                  width: 38.w,
+                  height: 38.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                  child: Icon(
+                    shouldHideData
+                        ? Icons.lock_outline
+                        : Icons.lock_open_outlined,
+                    color: Colors.white60,
+                    size: 18.sp,
+                  ),
                 ),
-                child: Icon(
-                  Icons.lock_outline,
-                  color: Colors.white60,
-                  size: 18.sp,
-                ),
-              ),
             ],
           ),
           SizedBox(height: 20.h),
+
+          // Contact Details Or Privacy Status Mask
           _ContactRow(
             icon: Icons.email_outlined,
             label: 'EMAIL',
-            value: email.isEmpty ? 'Not provided' : email,
+            value: shouldHideData
+                ? 'Information is private'
+                : (email.isEmpty ? 'Not provided' : email),
+            isMasked: shouldHideData,
           ),
           SizedBox(height: 14.h),
           _ContactRow(
             icon: Icons.phone_outlined,
             label: 'PHONE NO.',
-            value: phone.isEmpty ? 'Not provided' : phone,
+            value: shouldHideData
+                ? 'Information is private'
+                : (phone.isEmpty ? 'Not provided' : phone),
+            isMasked: shouldHideData,
           ),
+
           SizedBox(height: 18.h),
           Divider(color: Colors.white.withValues(alpha: 0.12), height: 1),
           SizedBox(height: 14.h),
           Row(
             children: [
-              Icon(Icons.shield_outlined, size: 12.sp, color: Colors.white38),
+              Icon(
+                shouldHideData
+                    ? Icons.shield_outlined
+                    : Icons.verified_user_outlined,
+                size: 12.sp,
+                color: Colors.white38,
+              ),
               SizedBox(width: 6.w),
               Text(
-                'PRIVATE ACCESS ONLY',
+                shouldHideData
+                    ? 'PRIVATE ACCESS ONLY'
+                    : 'PUBLICLY VISIBLE VIA SETTING',
                 style: TextStyle(
                   fontFamily: 'DMSans',
                   fontSize: 10.sp,
@@ -1538,10 +1119,12 @@ class _ContactRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.isMasked = false,
   });
   final IconData icon;
   final String label;
   final String value;
+  final bool isMasked;
 
   @override
   Widget build(BuildContext context) {
@@ -1577,7 +1160,8 @@ class _ContactRow extends StatelessWidget {
                 fontFamily: 'DMSans',
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
-                color: kLight,
+                color: isMasked ? Colors.white30 : kLight,
+                fontStyle: isMasked ? FontStyle.italic : FontStyle.normal,
               ),
             ),
           ],
@@ -1586,7 +1170,6 @@ class _ContactRow extends StatelessWidget {
     );
   }
 }
-
 // ── Gender / Age tile ──────────────────────────────────────────────────────
 
 class _InfoTile extends StatelessWidget {
@@ -1667,11 +1250,17 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _EducationCard extends StatelessWidget {
-  const _EducationCard({required this.state});
-  final ProfileEditState state;
+  const _EducationCard({required this.item});
+  final EducationItem item;
 
   @override
   Widget build(BuildContext context) {
+    final hasDegreeOrBranch = item.degree.isNotEmpty || item.branch.isNotEmpty;
+    final displayFieldOfStudy = [
+      item.degree,
+      item.branch,
+    ].where((s) => s.isNotEmpty).join(' in ');
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(18.w),
@@ -1691,37 +1280,42 @@ class _EducationCard extends StatelessWidget {
         children: [
           _EduField(
             label: 'INSTITUTION',
-            value: state.college.isEmpty ? '—' : state.college,
+            value: item.college.isEmpty ? '—' : item.college,
             valueFontSize: 18.sp,
           ),
-          SizedBox(height: 16.h),
-          _EduField(
-            label: 'FIELD OF STUDY',
-            value: state.branch.isEmpty ? '—' : state.branch,
-            valueFontSize: 15.sp,
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              Expanded(
-                child: _EduField(
-                  label: 'GRADUATION',
-                  value: state.classOf.isEmpty
-                      ? '—'
-                      : 'Class of ${state.classOf}',
-                  valueFontSize: 15.sp,
-                ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: _EduField(
-                  label: 'ACADEMIC RANK',
-                  value: state.cgpa.isEmpty ? '—' : '${state.cgpa} CGPA',
-                  valueFontSize: 15.sp,
-                ),
-              ),
-            ],
-          ),
+          if (hasDegreeOrBranch) ...[
+            SizedBox(height: 16.h),
+            _EduField(
+              label: 'FIELD OF STUDY',
+              value: displayFieldOfStudy,
+              valueFontSize: 14.sp,
+            ),
+          ],
+          if (item.classOf.isNotEmpty || item.cgpa.isNotEmpty) ...[
+            SizedBox(height: 16.h),
+            Row(
+              children: [
+                if (item.classOf.isNotEmpty)
+                  Expanded(
+                    child: _EduField(
+                      label: 'GRADUATION',
+                      value: 'Class of ${item.classOf}',
+                      valueFontSize: 14.sp,
+                    ),
+                  ),
+                if (item.classOf.isNotEmpty && item.cgpa.isNotEmpty)
+                  SizedBox(width: 16.w),
+                if (item.cgpa.isNotEmpty)
+                  Expanded(
+                    child: _EduField(
+                      label: 'ACADEMIC RANK',
+                      value: '${item.cgpa} CGPA',
+                      valueFontSize: 14.sp,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1767,7 +1361,6 @@ class _EduField extends StatelessWidget {
     );
   }
 }
-
 // ── Small caps label ───────────────────────────────────────────────────────
 
 class _CapLabel extends StatelessWidget {
@@ -1840,15 +1433,15 @@ class _OutlineChip extends StatelessWidget {
 // ── External links ─────────────────────────────────────────────────────────
 
 class _LinkRow extends StatelessWidget {
-  const _LinkRow({required this.label, required this.url});
-  final String label;
-  final String url;
+  const _LinkRow({required this.item});
+  final LinkItem item;
 
   IconData _icon() {
-    final u = url.toLowerCase();
+    final u = item.url.toLowerCase();
     if (u.contains('linkedin')) return Icons.work_outline;
     if (u.contains('github')) return Icons.code_rounded;
-    if (u.contains('twitter') || u.contains('x.com')) return Icons.alternate_email;
+    if (u.contains('twitter') || u.contains('x.com'))
+      return Icons.alternate_email;
     if (u.contains('instagram')) return Icons.camera_alt_outlined;
     if (u.contains('youtube')) return Icons.play_circle_outline;
     if (u.contains('behance')) return Icons.brush_outlined;
@@ -1860,14 +1453,18 @@ class _LinkRow extends StatelessWidget {
   }
 
   Future<void> _launch() async {
-    final uri = Uri.tryParse(url);
+    if (item.url.isEmpty) return;
+    final uri = Uri.tryParse(item.url);
     if (uri != null && await canLaunchUrl(uri)) {
-      launchUrl(uri, mode: LaunchMode.externalApplication);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Fallback if label is empty but url is present
+    final displayLabel = item.label.isEmpty ? item.url : item.label;
+
     return GestureDetector(
       onTap: _launch,
       child: Container(
@@ -1890,7 +1487,7 @@ class _LinkRow extends StatelessWidget {
             SizedBox(width: 12.w),
             Expanded(
               child: Text(
-                label,
+                displayLabel,
                 style: TextStyle(
                   fontFamily: 'DMSans',
                   fontSize: 13.sp,
@@ -1898,6 +1495,8 @@ class _LinkRow extends StatelessWidget {
                   color: kDark,
                   letterSpacing: 0.5,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Icon(Icons.open_in_new, size: 14.sp, color: kDarkGrey),

@@ -16,26 +16,25 @@ class ProfileEditState extends ChangeNotifier {
       city = '',
       state = '',
       country = '';
-  String college = '',
-      branch = '',
-      profileImageUrl = '',
-      dob = '',
-      userType = '';
+  String profileImageUrl = '', dob = '', userType = '';
   String linkedInUrl = '', gitHubUrl = '', twitterUrl = '', portfolioUrl = '';
-  String classOf = '', cgpa = '', workStyle = '', communicationStyle = '';
+  String workStyle = '', communicationStyle = '';
   double latitude = 0.0, longitude = 0.0;
+
   List<String> skills = [], interests = [], hobbies = [];
   List<ExperienceItem> experiences = [];
   List<ProjectItem> projects = [];
   List<AchievementItem> achievements = [];
   List<LinkItem> links = [];
+  List<EducationItem> education = []; // Updated to match UserResponse
   int queriesCreated = 0;
 
   bool showEmail = true,
       showPhone = true,
       showGender = true,
       showDob = true,
-      showCollege = true,
+      showCollege =
+          true, // Retained configuration flag for visibility UI
       showSkills = true,
       showLinkedIn = true,
       showGitHub = true,
@@ -45,6 +44,8 @@ class ProfileEditState extends ChangeNotifier {
   // Visibility Flags and Status
   bool isLoading = true;
   bool isSaving = false;
+  bool _isPrivateInfoVisible = false;
+  bool get isPrivateInfoVisible => _isPrivateInfoVisible;
   String? error;
 
   final String? _viewUserId;
@@ -54,8 +55,17 @@ class ProfileEditState extends ChangeNotifier {
     _init();
   }
 
+  void initialPrivacySetup(bool visibleFromServer) {
+    _isPrivateInfoVisible = visibleFromServer;
+    notifyListeners();
+  }
+
+  Future<void> updatePrivacyPreference(bool newValue) async {
+    _isPrivateInfoVisible = newValue;
+    notifyListeners(); // Updates the UI instantly
+  }
+
   // ── List Management Helpers ──────────────────────────────────────────────
-  // These are crucial for the UI to add/remove items dynamically
 
   void setLocation({
     required String city,
@@ -108,6 +118,23 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Education Helpers ──
+  void addEducation(EducationItem item) {
+    education.add(item);
+    notifyListeners();
+  }
+
+  void removeEducation(int index) {
+    education.removeAt(index);
+    notifyListeners();
+  }
+
+  void updateEducation(int index, EducationItem item) {
+    education[index] = item;
+    notifyListeners();
+  }
+
+  // ── Experience Helpers ──
   void addExperience(ExperienceItem item) {
     experiences.add(item);
     notifyListeners();
@@ -118,6 +145,12 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateExperience(int index, ExperienceItem item) {
+    experiences[index] = item;
+    notifyListeners();
+  }
+
+  // ── Project Helpers ──
   void addProject(ProjectItem item) {
     projects.add(item);
     notifyListeners();
@@ -128,6 +161,12 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateProject(int index, ProjectItem item) {
+    projects[index] = item;
+    notifyListeners();
+  }
+
+  // ── Achievement Helpers ──
   void addAchievement(AchievementItem item) {
     achievements.add(item);
     notifyListeners();
@@ -135,16 +174,6 @@ class ProfileEditState extends ChangeNotifier {
 
   void removeAchievement(int index) {
     achievements.removeAt(index);
-    notifyListeners();
-  }
-
-  void updateExperience(int index, ExperienceItem item) {
-    experiences[index] = item;
-    notifyListeners();
-  }
-
-  void updateProject(int index, ProjectItem item) {
-    projects[index] = item;
     notifyListeners();
   }
 
@@ -168,27 +197,39 @@ class ProfileEditState extends ChangeNotifier {
         // Viewing someone else
         final res = await UserHelper.fetchUserById(_viewUserId!);
         if (res.success && res.data != null) {
-          final UserResponse d = res.data!; // Explicit type
+          final UserResponse d = res.data!;
           _mapCommonFields(d);
-          // fetchUserById usually doesn't return professional lists,
-          // but we reset them to be safe
-          experiences = [];
-          projects = [];
-          achievements = [];
+
+          // UserResponse now explicitly populates professional and historical arrays natively
+          experiences = List<ExperienceItem>.from(d.experiences);
+          projects = List<ProjectItem>.from(d.projects);
+          achievements = List<AchievementItem>.from(d.achievements);
+          education = List<EducationItem>.from(d.education);
+          queriesCreated = d.queriesCreated;
         }
       } else {
         // Viewing self
         final res = await UserHelper.getProfile();
         if (res.success && res.data != null) {
-          final ProfileRes d = res.data!; // Explicit type
+          final ProfileRes d = res.data!;
           _mapCommonFields(d);
 
-          // These fields exist on ProfileRes
           experiences = List<ExperienceItem>.from(d.experiences);
           projects = List<ProjectItem>.from(d.projects);
           achievements = List<AchievementItem>.from(d.achievements);
           links = List<LinkItem>.from(d.links);
           queriesCreated = d.queriesCreated;
+
+          // Fallback parsing strategy in case ProfileRes schema uses map representation or direct type mapping
+          if (d.education != null) {
+            education = (d.education as List)
+                .map(
+                  (e) => e is EducationItem
+                      ? e
+                      : EducationItem.fromJson(e as Map<String, dynamic>),
+                )
+                .toList();
+          }
         }
       }
     } catch (e) {
@@ -199,7 +240,7 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Helper to map fields that exist in BOTH UserResponse and ProfileRes
+  // Maps fields shared safely between UserResponse and ProfileRes
   void _mapCommonFields(dynamic d) {
     username = d.username ?? '';
     bio = d.bio ?? '';
@@ -209,8 +250,6 @@ class ProfileEditState extends ChangeNotifier {
     city = d.city ?? '';
     state = d.state ?? '';
     country = d.country ?? '';
-    college = d.college ?? '';
-    branch = d.branch ?? '';
     profileImageUrl = d.profile ?? '';
     dob = d.dob ?? '';
     userType = d.userType ?? '';
@@ -218,8 +257,6 @@ class ProfileEditState extends ChangeNotifier {
     gitHubUrl = d.gitHubUrl ?? '';
     twitterUrl = d.twitterUrl ?? '';
     portfolioUrl = d.portfolioUrl ?? '';
-    classOf = d.classOf ?? '';
-    cgpa = d.cgpa ?? '';
     workStyle = d.workStyle ?? '';
     communicationStyle = d.communicationStyle ?? '';
     latitude = d.latitude ?? 0.0;
@@ -228,6 +265,7 @@ class ProfileEditState extends ChangeNotifier {
     skills = List<String>.from(d.skills ?? []);
     interests = List<String>.from(d.interests ?? []);
     hobbies = List<String>.from(d.hobbies ?? []);
+
     links =
         (d.links as List?)
             ?.map(
@@ -268,6 +306,8 @@ class ProfileEditState extends ChangeNotifier {
       projects: projects,
       achievements: achievements,
       links: links,
+      // Note: Ensure your backend's ProfileUpdateReq model supports this education parameter
+      education: education,
     );
 
     final res = await UserHelper.updateProfile(req, image);

@@ -167,36 +167,25 @@ class _EditFormState extends State<_EditForm> {
               SizedBox(height: 20.h),
               // Education sub-section
               _SubSectionTitle(title: 'Education'),
-              _DropdownField(
-                label: 'Graduation Year',
-                value: widget.state.classOf,
-                items: List.generate(
-                  DateTime.now().year - 1990 + 6,
-                  (i) => (DateTime.now().year + 5 - i).toString(),
-                ),
-                onChanged: (v) => widget.state.classOf = v ?? '',
-              ),
-              _ValidatedField(
-                label: 'Institution / College',
-                init: widget.state.college,
-                onChanged: (v) => widget.state.college = v,
-                hint: 'e.g. IIT Bombay',
-                maxLength: 100,
-              ),
-              _ValidatedField(
-                label: 'Field of Study / Branch',
-                init: widget.state.branch,
-                onChanged: (v) => widget.state.branch = v,
-                hint: 'e.g. Computer Science',
-                maxLength: 80,
-              ),
-              _ValidatedField(
-                label: 'Academic Score (CGPA)',
-                init: widget.state.cgpa,
-                onChanged: (v) => widget.state.cgpa = v,
-                hint: 'e.g. 8.5 or 3.9/4.0',
-                maxLength: 10,
-                keyboard: const TextInputType.numberWithOptions(decimal: true),
+              ...widget.state.education.asMap().entries.map((entry) {
+                final index = entry.key;
+                final edu = entry.value;
+                return _ExpandableCard(
+                  label: edu.college.isEmpty ? 'Institution ${index + 1}' : edu.college,
+                  icon: Icons.school_outlined,
+                  onEdit: () => _showEducationDialog(
+                    context,
+                    widget.state,
+                    index: index,
+                    existing: edu,
+                  ),
+                  onDelete: () => widget.state.removeEducation(index),
+                  subtitle: '${edu.degree}${edu.branch.isNotEmpty ? " • ${edu.branch}" : ""}',
+                );
+              }),
+              _AddButton(
+                label: 'ADD EDUCATION',
+                onPressed: () => _showEducationDialog(context, widget.state),
               ),
               SizedBox(height: 20.h),
               // Achievements sub-section
@@ -407,6 +396,21 @@ void _showAchievementDialog(
   );
 }
 
+void _showEducationDialog(
+  BuildContext context,
+  ProfileEditState state, {
+  int? index,
+  EducationItem? existing,
+}) {
+  showDialog(
+    context: context,
+    builder: (_) => _EducationDialog(
+      state: state,
+      index: index,
+      existing: existing,
+    ),
+  );
+}
 // ── Experience Dialog ─────────────────────────────────────────────────────────
 class _ExperienceDialog extends StatefulWidget {
   const _ExperienceDialog({required this.state, this.index, this.existing});
@@ -721,6 +725,156 @@ class _AchievementDialogState extends State<_AchievementDialog> {
               onChanged: (v) => _subtitle = v,
               hint: 'e.g. Secured 1st rank among 50 teams',
               maxLength: 300,
+              validator: (v) {
+                if (v != null && v.isNotEmpty && !_isValidText(v)) {
+                  return 'Invalid characters';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Education Dialog ─────────────────────────────────────────────────────────
+class _EducationDialog extends StatefulWidget {
+  const _EducationDialog({required this.state, this.index, this.existing});
+  final ProfileEditState state;
+  final int? index;
+  final EducationItem? existing;
+
+  @override
+  State<_EducationDialog> createState() => _EducationDialogState();
+}
+
+class _EducationDialogState extends State<_EducationDialog> {
+  late String _college;
+  late String _degree;
+  late String _branch;
+  late String _classOf;
+  late String _cgpa;
+  final _formKey = GlobalKey<FormState>();
+
+  // Predefined lists for academic drop-downs
+  static const List<String> _degreeOptions = [
+    'BTech / BE',
+    'MTech / ME',
+    'BSc',
+    'MSc',
+    'BCA',
+    'MCA',
+    'BBA',
+    'MBA',
+    'PhD',
+    'BDesign',
+    'MDesign',
+    'BArch',
+    'MArch',
+    'BCom',
+    'MCom',
+    'Other',
+  ];
+
+  static const List<String> _branchOptions = [
+    'Computer Science & Engineering',
+    'Data Science & Artificial Intelligence',
+    'Information Technology',
+    'Electronics & Communication Engineering',
+    'Electrical Engineering',
+    'Mechanical Engineering',
+    'Civil Engineering',
+    'Chemical Engineering',
+    'Aerospace Engineering',
+    'Biotechnology',
+    'Design (UI/UX, Product, Fashion, etc.)',
+    'Architecture',
+    'Business / Commerce',
+    'Other / General',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _college = widget.existing?.college ?? '';
+    _degree = widget.existing?.degree ?? '';
+    _branch = widget.existing?.branch ?? '';
+    _classOf = widget.existing?.classOf ?? '';
+    _cgpa = widget.existing?.cgpa ?? '';
+  }
+
+  void _save() {
+    if (!_formKey.currentState!.validate()) return;
+    final item = EducationItem(
+      college: _college.trim(),
+      degree: _degree.trim(),
+      branch: _branch.trim(),
+      classOf: _classOf,
+      cgpa: _cgpa.trim(),
+    );
+    if (widget.index != null) {
+      widget.state.updateEducation(widget.index!, item);
+    } else {
+      widget.state.addEducation(item);
+    }
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _BaseDialog(
+      title: widget.index != null ? 'Edit Education' : 'Add Education',
+      icon: Icons.school_outlined,
+      onSave: _save,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _DialogField(
+              label: 'Institution / College Name *',
+              init: _college,
+              onChanged: (v) => _college = v,
+              hint: 'e.g. IIT Bombay',
+              maxLength: 100,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Required';
+                if (!_isValidText(v)) return 'Invalid characters';
+                if (v.trim().length < 2) return 'Name too short';
+                return null;
+              },
+            ),
+            _DropdownDialogField(
+              label: 'Degree *',
+              value: _degreeOptions.contains(_degree) ? _degree : null,
+              items: _degreeOptions,
+              hint: 'Select Degree Type',
+              onChanged: (v) => setState(() => _degree = v ?? ''),
+            ),
+            _DropdownDialogField(
+              label: 'Field of Study / Branch',
+              value: _branchOptions.contains(_branch) ? _branch : null,
+              items: _branchOptions,
+              hint: 'Select Specialization',
+              onChanged: (v) => setState(() => _branch = v ?? ''),
+            ),
+            _DropdownDialogField(
+              label: 'Graduation Year',
+              value: _classOf.isEmpty ? null : _classOf,
+              items: List.generate(
+                DateTime.now().year - 1990 + 7,
+                (i) => (DateTime.now().year + 6 - i).toString(),
+              ),
+              hint: 'Select Year',
+              onChanged: (v) => setState(() => _classOf = v ?? ''),
+            ),
+            _DialogField(
+              label: 'Academic Score (CGPA)',
+              init: _cgpa,
+              onChanged: (v) => _cgpa = v,
+              hint: 'e.g. 8.5',
+              maxLength: 10,
               validator: (v) {
                 if (v != null && v.isNotEmpty && !_isValidText(v)) {
                   return 'Invalid characters';
