@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Config {
-  static const bool _isProd = false;
+  static const bool _isProd = true;
 
   static final String _devHost = kIsWeb
       ? const String.fromEnvironment('LOCAL', defaultValue: 'localhost:3000')
