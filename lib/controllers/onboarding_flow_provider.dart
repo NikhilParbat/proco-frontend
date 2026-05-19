@@ -44,8 +44,10 @@ class OnboardingFlowProvider extends ChangeNotifier {
   String country = '';
   String displayAddress = '';
   String institution = '';
+  String degree = '';
   String branch = '';
   String classOf = '';
+  String cgpa = '';
   List<String> skills = [];
 
   bool get hasLocation => latitude != 0.0 || longitude != 0.0;
@@ -122,6 +124,17 @@ class OnboardingFlowProvider extends ChangeNotifier {
         state: state,
         country: country,
         skills: skills,
+        education: institution.isEmpty && degree.isEmpty
+            ? []
+            : [
+                EducationItem(
+                  college: institution,
+                  degree: degree,
+                  branch: branch,
+                  classOf: classOf,
+                  cgpa: cgpa,
+                ),
+              ],
       );
 
       final error = await UserHelper.createProfile(req, profilePhoto);

@@ -153,6 +153,16 @@ class UserHelper {
       // 4 & 5. Attributes + Professional Lists
       _assignJsonListFields(request, model);
 
+      // Education
+      request.fields['education'] = jsonEncode(
+        model.education.map((e) => e.toJson()).toList(),
+      );
+
+      // Links
+      request.fields['links'] = jsonEncode(
+        model.links.map((l) => l.toJson()).toList(),
+      );
+
       // 6. Image
       if (image != null) {
         request.files.add(
