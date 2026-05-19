@@ -11,51 +11,57 @@ List<FilterResponse> filterResponseFromJson(String str) {
 }
 
 class FilterResponse {
+  final String id;
+  final String? agentId;
+  final List<String> selectedDomains;
+  final List<String> opportunityTypes;
+  final String? selectedLocationOption;
+  final String? selectedCity;
+  final String? selectedState;
+  final String? selectedCountry;
+  final int distanceKm;
+  final bool? sortByTime;
+  final String? postedWithin;
+  final List<String> skills;
+  final DateTime? updatedAt;
+
   FilterResponse({
     required this.id,
     this.agentId,
+    this.selectedDomains = const [],
+    this.opportunityTypes = const [],
     this.selectedLocationOption,
     this.selectedCity,
     this.selectedState,
     this.selectedCountry,
+    this.distanceKm = 0,
     this.sortByTime,
     this.postedWithin,
-    this.internship,
-    this.research,
-    this.freelance,
-    this.competition,
+    this.skills = const [],
     this.updatedAt,
   });
 
   factory FilterResponse.fromJson(Map<String, dynamic> json) => FilterResponse(
         id: json['id'] ?? '',
         agentId: json['agentId'],
+        selectedDomains: json['selectedDomains'] != null
+            ? List<String>.from(json['selectedDomains'])
+            : const [],
+        opportunityTypes: json['opportunityTypes'] != null
+            ? List<String>.from(json['opportunityTypes'])
+            : const [],
         selectedLocationOption: json['selectedLocationOption'],
         selectedCity: json['selectedCity'],
         selectedState: json['selectedState'],
         selectedCountry: json['selectedCountry'],
+        distanceKm: (json['distanceKm'] as num?)?.toInt() ?? 0,
         sortByTime: json['sortByTime'] as bool?,
         postedWithin: json['postedWithin'],
-        internship: json['internship'] as bool?,
-        research: json['research'] as bool?,
-        freelance: json['freelance'] as bool?,
-        competition: json['competition'] as bool?,
+        skills: json['skills'] != null
+            ? List<String>.from(json['skills'])
+            : const [],
         updatedAt: json['updatedAt'] != null
             ? DateTime.tryParse(json['updatedAt'])
             : null,
       );
-
-  final String id;
-  final String? agentId;
-  final String? selectedLocationOption;
-  final String? selectedCity;
-  final String? selectedState;
-  final String? selectedCountry;
-  final bool? sortByTime;
-  final String? postedWithin;
-  final bool? internship;
-  final bool? research;
-  final bool? freelance;
-  final bool? competition;
-  final DateTime? updatedAt;
 }
