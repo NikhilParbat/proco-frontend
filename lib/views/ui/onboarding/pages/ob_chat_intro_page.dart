@@ -36,13 +36,8 @@ const _kSkills = [
 ];
 
 const _kDegrees = [
-  'B.Tech / CSE',
-  'B.Tech / ECE',
-  'B.Tech / ME',
-  'B.Tech / Civil',
-  'B.Tech / IT',
-  'B.Tech / EEE',
-  'M.Tech',
+  'B.Tech / B.E.',
+  'M.Tech / M.E.',
   'MBA',
   'BBA',
   'B.Com',
@@ -53,6 +48,25 @@ const _kDegrees = [
   'B.Arch',
   'Ph.D',
   'Diploma',
+  'Other',
+];
+
+const _kBranches = [
+  'Computer Science & Engineering',
+  'Data Science & Artificial Intelligence',
+  'Information Technology',
+  'Electronics & Communication Engineering',
+  'Electrical Engineering',
+  'Mechanical Engineering',
+  'Civil Engineering',
+  'Business Administration',
+  'Finance',
+  'Marketing',
+  'Physics',
+  'Mathematics',
+  'Chemistry',
+  'Biology',
+  'Design / Architecture',
   'Other',
 ];
 
@@ -252,7 +266,10 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   // Step 1: Education
   String _degree = '';
+  String _branch = '';
   final _collegeCtrl = TextEditingController();
+  final _cgpaCtrl = TextEditingController();
+  String _cgpaScale = '10';
   String _gradYear = '';
 
   // Step 2: Skills
@@ -272,7 +289,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   static const List<String> _botQuestions = [
     "Welcome to Lagoon! 👋 Let's get the basics down.\nWhat's your Name, Gender, and Date of Birth?",
-    "Great. Now, tell me about your studies.\nWhat's your Degree / Branch, College, and when do you Graduate?",
+    "I have a few questions about your educational background!\nTell me your Institution, Degree, Field of Study, CGPA, and Graduation Year.",
     "What are you good at? Pick your top skills so we can match you with the right projects.",
     "Last step! We need your Location to show you students and opportunities in your area.",
   ];
@@ -311,6 +328,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     _scrollCtrl.dispose();
     _nameCtrl.dispose();
     _collegeCtrl.dispose();
+    _cgpaCtrl.dispose();
     _skillSearchCtrl.dispose();
     _customSkillCtrl.dispose();
     _locationSearchCtrl.dispose();
@@ -347,8 +365,12 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
       }
     } else if (_step == 1) {
       provider.institution = _collegeCtrl.text.trim();
-      provider.branch = _degree;
+      provider.degree = _degree;
+      provider.branch = _branch;
       provider.classOf = _gradYear;
+      provider.cgpa = _cgpaCtrl.text.trim().isEmpty
+          ? ''
+          : '${_cgpaCtrl.text.trim()}/$_cgpaScale';
     } else if (_step == 2) {
       provider.skills = List.from(_skills);
     }
@@ -421,23 +443,26 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         _advance(userSummary: '$name, $_gender, $dobStr');
 
       case 1:
-        if (_degree.isEmpty) {
-          _snack('Degree required', 'Please select your degree / branch.');
-          return;
-        }
         final college = _collegeCtrl.text.trim();
         if (college.isEmpty) {
-          _snack('College required', 'Please enter your college name.');
+          _snack('Institution required', 'Please enter your college / institution name.');
+          return;
+        }
+        if (_degree.isEmpty) {
+          _snack('Degree required', 'Please select your degree.');
+          return;
+        }
+        if (_branch.isEmpty) {
+          _snack('Field of study required', 'Please select your field of study.');
           return;
         }
         if (_gradYear.isEmpty) {
-          _snack(
-            'Graduation year required',
-            'Please select your graduation year.',
-          );
+          _snack('Graduation year required', 'Please select your graduation year.');
           return;
         }
-        _advance(userSummary: '$_degree, $college, $_gradYear');
+        final cgpaText = _cgpaCtrl.text.trim();
+        final cgpaSummary = cgpaText.isEmpty ? '' : ' • CGPA: $cgpaText/$_cgpaScale';
+        _advance(userSummary: '$college • $_degree • $_branch$cgpaSummary • $_gradYear');
 
       case 2:
         if (_customSkillCtrl.text.trim().isNotEmpty) {
@@ -812,18 +837,52 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _InputField(
+          controller: _collegeCtrl,
+          hint: 'Institution / College Name',
+          icon: Icons.account_balance_outlined,
+        ),
+        SizedBox(height: 10.h),
         _DropdownInput<String>(
-          hint: 'Degree / Branch',
+          hint: 'Degree',
           icon: Icons.school_outlined,
           value: _degree.isEmpty ? null : _degree,
           items: _kDegrees,
           onChanged: (v) => setState(() => _degree = v ?? ''),
         ),
         SizedBox(height: 10.h),
-        _InputField(
-          controller: _collegeCtrl,
-          hint: 'College Name',
-          icon: Icons.search,
+        _DropdownInput<String>(
+          hint: 'Field of Study / Branch',
+          icon: Icons.menu_book_outlined,
+          value: _branch.isEmpty ? null : _branch,
+          items: _kBranches,
+          onChanged: (v) => setState(() => _branch = v ?? ''),
+        ),
+        SizedBox(height: 10.h),
+        Row(
+          children: [
+            // "Out of" scale dropdown
+            Expanded(
+              flex: 2,
+              child: _DropdownInput<String>(
+                hint: 'Out of',
+                icon: Icons.bar_chart_outlined,
+                value: _cgpaScale,
+                items: const ['4', '10'],
+                onChanged: (v) => setState(() => _cgpaScale = v ?? '10'),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            // Current CGPA value
+            Expanded(
+              flex: 3,
+              child: _InputField(
+                controller: _cgpaCtrl,
+                hint: 'Current CGPA',
+                icon: Icons.edit_outlined,
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 10.h),
         _DropdownInput<String>(
