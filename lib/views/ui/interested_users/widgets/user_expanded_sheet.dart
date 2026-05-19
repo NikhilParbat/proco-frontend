@@ -39,7 +39,7 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
 
   bool _isLoading = true;
   bool _isMatching = false;
-  UserResponse? _profile;
+  SwipedRes? _profile;
 
   @override
   void initState() {
@@ -48,10 +48,10 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   }
 
   Future<void> _fetchProfile() async {
-    final res = await UserHelper.fetchUserById(widget.user.id);
+    final res = await ProfileNotifier().fetchUserById(widget.user.id);
     if (!mounted) return;
     setState(() {
-      _profile = res.data;
+      _profile = res;
       _isLoading = false;
     });
   }
@@ -118,7 +118,8 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
       final dob = DateTime.parse(dobString);
       final today = DateTime.now();
       int age = today.year - dob.year;
-      if (today.month < dob.month || (today.month == dob.month && today.day < dob.day)) {
+      if (today.month < dob.month ||
+          (today.month == dob.month && today.day < dob.day)) {
         age--;
       }
       return age;
@@ -130,15 +131,18 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   @override
   Widget build(BuildContext context) {
     final bio = _profile?.bio ?? widget.user.bio;
-    final skills = (_profile?.skills.isNotEmpty == true) ? _profile!.skills : widget.user.skills;
-    final location = (widget.user.city.isNotEmpty && widget.user.country.isNotEmpty)
+    final skills = (_profile?.skills.isNotEmpty == true)
+        ? _profile!.skills
+        : widget.user.skills;
+    final location =
+        (widget.user.city.isNotEmpty && widget.user.country.isNotEmpty)
         ? '${widget.user.city}, ${widget.user.country}'
         : '';
 
     // Calculate age
     final age = _calculateAge(widget.user.dob);
-    final genderStr = widget.user.gender.isNotEmpty 
-        ? '${widget.user.gender[0].toUpperCase()}${widget.user.gender.substring(1)}' 
+    final genderStr = widget.user.gender.isNotEmpty
+        ? '${widget.user.gender[0].toUpperCase()}${widget.user.gender.substring(1)}'
         : '';
     final quickFacts = [
       if (age > 0) '$age yrs',
@@ -150,7 +154,7 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
     sortedEducation.sort((a, b) {
       final yearA = int.tryParse(a.durationOrYear ?? '') ?? 0;
       final yearB = int.tryParse(b.durationOrYear ?? '') ?? 0;
-      return yearB.compareTo(yearA); 
+      return yearB.compareTo(yearA);
     });
 
     return Container(
@@ -204,7 +208,10 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                     top: 12.h,
                     right: 12.w,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 5.h,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -307,40 +314,46 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       ),
                     ),
                     SizedBox(height: 6.h),
-                    ...sortedEducation.map((edu) => Padding(
-                          padding: EdgeInsets.symmetric(vertical: 4.h),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.school_rounded, color: _teal, size: 16.sp),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${edu.degree ?? ''}${edu.degree != null && edu.fieldOfStudy != null ? " in " : ""}${edu.fieldOfStudy ?? ''}',
-                                      style: TextStyle(
-                                        fontFamily: kFontDMSans,
-                                        fontSize: 13.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: _navy,
-                                      ),
+                    ...sortedEducation.map(
+                      (edu) => Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.h),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.school_rounded,
+                              color: _teal,
+                              size: 16.sp,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${edu.degree ?? ''}${edu.degree != null && edu.fieldOfStudy != null ? " in " : ""}${edu.fieldOfStudy ?? ''}',
+                                    style: TextStyle(
+                                      fontFamily: kFontDMSans,
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: _navy,
                                     ),
-                                    Text(
-                                      '${edu.school ?? ''} ${edu.durationOrYear != null ? "(${edu.durationOrYear})" : ""}',
-                                      style: TextStyle(
-                                        fontFamily: kFontDMSans,
-                                        fontSize: 12.sp,
-                                        color: Colors.grey.shade600,
-                                      ),
+                                  ),
+                                  Text(
+                                    '${edu.school ?? ''} ${edu.durationOrYear != null ? "(${edu.durationOrYear})" : ""}',
+                                    style: TextStyle(
+                                      fontFamily: kFontDMSans,
+                                      fontSize: 12.sp,
+                                      color: Colors.grey.shade600,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        )),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
 
                   // ── Skills Section (Full Wrap) ────────────────────────────
@@ -384,7 +397,7 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       children: widget.user.links.map((link) {
                         final title = link.label;
                         IconData linkIcon = Icons.link_rounded;
-                        
+
                         if (title.toLowerCase().contains('github')) {
                           linkIcon = Icons.code_rounded;
                         } else if (title.toLowerCase().contains('linkedin')) {
@@ -396,7 +409,10 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                             if (link.url.isNotEmpty) {
                               final uri = Uri.parse(link.url);
                               if (await canLaunchUrl(uri)) {
-                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
                               }
                             }
                           },
@@ -412,7 +428,10 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                               ),
                             ),
                             backgroundColor: Colors.grey.shade100,
-                            side: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                            side: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 0.5,
+                            ),
                           ),
                         );
                       }).toList(),
@@ -591,11 +610,11 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   );
 
   Widget _shimmerLine({required double width}) => Container(
-        height: 12.h,
-        width: MediaQuery.of(context).size.width * width,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(6),
-        ),
-      );
+    height: 12.h,
+    width: MediaQuery.of(context).size.width * width,
+    decoration: BoxDecoration(
+      color: Colors.grey.shade200,
+      borderRadius: BorderRadius.circular(6),
+    ),
+  );
 }

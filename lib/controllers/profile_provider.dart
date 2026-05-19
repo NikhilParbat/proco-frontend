@@ -21,9 +21,19 @@ class ProfileNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void getSwipedUsers(dynamic agentId) async {
+  Future<List<SwipedRes>> getSwipedUsers(dynamic agentId) async {
     swipedUsers = UserHelper.getUserProfiles(agentId);
     notifyListeners();
+    return swipedUsers ?? [];
+  }
+
+  Future<SwipedRes> fetchUserById(String userId) async {
+    final response = await UserHelper.fetchUserById(userId);
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception('Failed to fetch user profile: ${response.message}');
+    }
   }
 
   void updateProfile(ProfileUpdateReq model, File? image) async {

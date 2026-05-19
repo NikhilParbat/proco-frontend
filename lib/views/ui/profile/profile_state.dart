@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
+import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/models/response/user/user_response.dart';
@@ -197,7 +198,7 @@ class ProfileEditState extends ChangeNotifier {
         // Viewing someone else
         final res = await UserHelper.fetchUserById(_viewUserId!);
         if (res.success && res.data != null) {
-          final UserResponse d = res.data!;
+          final SwipedRes d = res.data!; // Explicit type
           _mapCommonFields(d);
 
           // UserResponse now explicitly populates professional and historical arrays natively

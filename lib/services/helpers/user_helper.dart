@@ -238,7 +238,7 @@ class UserHelper {
   /// Backend contract: GET /api/users/:userId
   /// Response format: { "success": true, "data": { ...user fields... }
   /// Returns null when the user is not found or a network/parse error occurs.
-  static Future<ApiResponse<UserResponse>> fetchUserById(String userId) async {
+  static Future<ApiResponse<SwipedRes>> fetchUserById(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -249,6 +249,7 @@ class UserHelper {
       };
 
       final url = Config.url('${Config.getprofileUrl}$userId');
+      debugPrint('fetchUserById URL: $url');
       final response = await client.get(url, headers: headers);
 
       debugPrint('fetchUserById [$userId] status: ${response.statusCode}');
@@ -260,7 +261,7 @@ class UserHelper {
         return ApiResponse(
           success: true,
           message: decoded['message'] ?? 'Success',
-          data: UserResponse.fromJson(decoded['data']),
+          data: SwipedRes.fromJson(decoded['data']),
         );
       }
 
