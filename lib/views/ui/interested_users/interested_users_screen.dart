@@ -55,14 +55,13 @@ class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
   }
 
   void _openSwipePage(SwipedRes user) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => UserExpandedSheet(
-        user: user,
-        jobId: _jobId,
-        totalApplicants: _users.length,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UserExpandedSheet(
+          user: user,
+          jobId: _jobId,
+          totalApplicants: _users.length,
+        ),
       ),
     );
   }

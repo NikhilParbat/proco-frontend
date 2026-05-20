@@ -73,6 +73,20 @@ class EditProfilePage extends StatelessWidget {
                 onPressed: state.isSaving
                     ? null
                     : () async {
+                        final nameParts = state.username
+                            .trim()
+                            .split(' ')
+                            .where((p) => p.isNotEmpty)
+                            .toList();
+                        if (nameParts.length < 2) {
+                          Get.snackbar(
+                            'Full Name Required',
+                            'Please enter both your first and last name.',
+                            backgroundColor: kOrange,
+                            colorText: kLight,
+                          );
+                          return;
+                        }
                         final ok = await state.saveProfile(null);
                         if (ok && context.mounted) {
                           Get.snackbar(

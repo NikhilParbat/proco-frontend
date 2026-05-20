@@ -246,9 +246,8 @@ class UserHelper {
 
   /// Fetches a single user's full profile by their userId.
   /// Backend contract: GET /api/users/:userId
-  /// Response format: { "success": true, "data": { ...user fields... }
-  /// Returns null when the user is not found or a network/parse error occurs.
-  static Future<ApiResponse<SwipedRes>> fetchUserById(String userId) async {
+  /// Response format: { "success": true, "data": { ...user fields... } }
+  static Future<ApiResponse<UserResponse>> fetchUserById(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -271,7 +270,7 @@ class UserHelper {
         return ApiResponse(
           success: true,
           message: decoded['message'] ?? 'Success',
-          data: SwipedRes.fromJson(decoded['data']),
+          data: UserResponse.fromJson(decoded['data']),
         );
       }
 

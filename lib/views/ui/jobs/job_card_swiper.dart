@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/constants/app_constants.dart';
+import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/common/skill_chips_wrap.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
@@ -401,6 +402,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
   late AnimationController _ctrl;
   late Animation<double> _anim;
   bool _showingBack = false;
+  String? _ownerName;
 
   @override
   void initState() {
@@ -410,6 +412,22 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
       duration: const Duration(milliseconds: 450),
     );
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+    _fetchOwnerName();
+  }
+
+  Future<void> _fetchOwnerName() async {
+    if (widget.job.agentId.isEmpty) return;
+    final res = await UserHelper.fetchUserById(widget.job.agentId);
+    if (mounted && res.success && res.data != null) {
+      setState(() => _ownerName = res.data!.username);
+    }
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ').where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
   @override
@@ -544,11 +562,94 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                     Positioned(
                       right: 10.w,
                       top: 10.h,
-                      child: SvgPicture.asset(
-                        'assets/userbox.svg',
+                      child: SizedBox(
                         width: 82.w,
                         height: 50.h,
-                        fit: BoxFit.fill,
+                        child: Stack(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/userbox.svg',
+                              width: 82.w,
+                              height: 50.h,
+                              fit: BoxFit.fill,
+                            ),
+                            Positioned.fill(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w, vertical: 6.h),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: 20.w,
+                                      height: 20.w,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white.withValues(
+                                            alpha: 0.25),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        _ownerName != null
+                                            ? _initials(_ownerName!)
+                                            : '?',
+                                        style: TextStyle(
+                                          fontSize: 7.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Expanded(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Created by',
+                                            style: GoogleFonts.dmSans(
+                                              fontSize: 6.5.sp,
+                                              color: Colors.white.withValues(
+                                                  alpha: 0.7),
+                                              fontWeight: FontWeight.w400,
+                                              height: 1.0,
+                                            ),
+                                          ),
+                                          SizedBox(height: 1.h),
+                                          if (_ownerName != null)
+                                            Text(
+                                              _ownerName!,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.dmSans(
+                                                fontSize: 7.5.sp,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                                height: 1.2,
+                                              ),
+                                            )
+                                          else
+                                            Container(
+                                              height: 7.h,
+                                              width: 40.w,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white24,
+                                                borderRadius:
+                                                    BorderRadius.circular(3.r),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

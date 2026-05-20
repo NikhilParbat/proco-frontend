@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
-import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/models/response/user/user_response.dart';
@@ -195,13 +194,11 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
     try {
       if (isReadOnly) {
-        // Viewing someone else
+        // Viewing someone else — full profile via UserResponse
         final res = await UserHelper.fetchUserById(_viewUserId!);
         if (res.success && res.data != null) {
-          final SwipedRes d = res.data!; // Explicit type
+          final UserResponse d = res.data!;
           _mapCommonFields(d);
-
-          // UserResponse now explicitly populates professional and historical arrays natively
           experiences = List<ExperienceItem>.from(d.experiences);
           projects = List<ProjectItem>.from(d.projects);
           achievements = List<AchievementItem>.from(d.achievements);

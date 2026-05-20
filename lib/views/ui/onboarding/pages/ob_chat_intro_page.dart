@@ -430,6 +430,13 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
           _snack('Name required', 'Please enter your full name.');
           return;
         }
+        final nameParts =
+            name.split(' ').where((p) => p.isNotEmpty).toList();
+        if (nameParts.length < 2) {
+          _snack('Full name required',
+              'Please type your first and last name (e.g. "Arjun Sharma").');
+          return;
+        }
         if (_gender.isEmpty) {
           _snack('Gender required', 'Please select your gender.');
           return;
