@@ -39,14 +39,9 @@ class _HomePageState extends State<HomePage> {
 
   // ✅ Memoize filter check
   bool _isFilterActive(GetFilterRes f) {
-    return f.selectedOptions.isNotEmpty ||
-        f.customOptions.isNotEmpty ||
-        f.skills.isNotEmpty ||
-        f.internship ||
-        f.research ||
-        f.freelance ||
-        f.competition ||
-        f.collaborate ||
+    return f.skills.isNotEmpty ||
+        f.selectedDomains.isNotEmpty ||
+        f.opportunityTypes.isNotEmpty ||
         f.selectedLocationOption.isNotEmpty ||
         f.distanceKm > 0 ||
         f.sortByTime ||
@@ -215,7 +210,6 @@ class _FilterButton extends StatelessWidget {
     );
   }
 }
-
 
 // ✅ NEW: Isolated jobs list
 class _JobsList extends StatelessWidget {
