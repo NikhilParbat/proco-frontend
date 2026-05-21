@@ -98,6 +98,13 @@ flutter_native_splash:
     color: "#D85757"
     image: assets/WLagoon2.png
 
+fonts:
+  - family: CormorantGaramond
+    fonts:
+      - asset: assets/fonts/CormorantGaramond-Regular.ttf
+      - asset: assets/fonts/CormorantGaramond-Bold.ttf
+        weight: 700
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

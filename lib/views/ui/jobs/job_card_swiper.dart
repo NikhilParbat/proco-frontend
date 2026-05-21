@@ -34,7 +34,6 @@ class JobCardSwiper extends StatefulWidget {
 }
 
 class _JobCardSwiperState extends State<JobCardSwiper> {
-
   bool isExpanded(String id) => _expandedDesc[id] ?? false;
 
   void toggleExpanded(String id) {
@@ -576,7 +575,9 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                             Positioned.fill(
                               child: Padding(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: 6.w, vertical: 6.h),
+                                  horizontal: 6.w,
+                                  vertical: 6.h,
+                                ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
@@ -586,7 +587,8 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         color: Colors.white.withValues(
-                                            alpha: 0.25),
+                                          alpha: 0.25,
+                                        ),
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(
@@ -613,7 +615,8 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
                                             style: GoogleFonts.dmSans(
                                               fontSize: 6.5.sp,
                                               color: Colors.white.withValues(
-                                                  alpha: 0.7),
+                                                alpha: 0.7,
+                                              ),
                                               fontWeight: FontWeight.w400,
                                               height: 1.0,
                                             ),
@@ -913,12 +916,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
               // Main scrollable content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    cfx(14),
-                    16.h,
-                    cfx(14),
-                    80.h,
-                  ),
+                  padding: EdgeInsets.fromLTRB(cfx(14), 16.h, cfx(14), 80.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1000,22 +998,58 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
   Widget _buildInfoBoxGrid(JobsResponse job) {
     final items = <_InfoItem>[];
     if (job.period.isNotEmpty) {
-      items.add(_InfoItem(label: 'Duration', value: job.period, icon: Icons.calendar_today_outlined));
+      items.add(
+        _InfoItem(
+          label: 'Duration',
+          value: job.period,
+          icon: Icons.calendar_today_outlined,
+        ),
+      );
     }
     if (job.salary.isNotEmpty) {
-      items.add(_InfoItem(label: 'Stipend', value: job.salary, icon: Icons.attach_money_rounded));
+      items.add(
+        _InfoItem(
+          label: 'Stipend',
+          value: job.salary,
+          icon: Icons.attach_money_rounded,
+        ),
+      );
     }
     if (job.experienceLevel.isNotEmpty) {
-      items.add(_InfoItem(label: 'Experience', value: job.experienceLevel, icon: Icons.work_outline_rounded));
+      items.add(
+        _InfoItem(
+          label: 'Experience',
+          value: job.experienceLevel,
+          icon: Icons.work_outline_rounded,
+        ),
+      );
     }
     if (job.fieldDegree.isNotEmpty) {
-      items.add(_InfoItem(label: 'Field/Degree', value: job.fieldDegree, icon: Icons.school_outlined));
+      items.add(
+        _InfoItem(
+          label: 'Field/Degree',
+          value: job.fieldDegree,
+          icon: Icons.school_outlined,
+        ),
+      );
     }
     if (job.languagePreference.isNotEmpty) {
-      items.add(_InfoItem(label: 'Language Preferred', value: job.languagePreference, icon: Icons.language_outlined));
+      items.add(
+        _InfoItem(
+          label: 'Language Preferred',
+          value: job.languagePreference,
+          icon: Icons.language_outlined,
+        ),
+      );
     }
     if (job.contract.isNotEmpty) {
-      items.add(_InfoItem(label: 'Additional Info', value: job.contract, icon: Icons.info_outline_rounded));
+      items.add(
+        _InfoItem(
+          label: 'Additional Info',
+          value: job.contract,
+          icon: Icons.info_outline_rounded,
+        ),
+      );
     }
 
     if (items.isEmpty) return const SizedBox.shrink();
@@ -1045,7 +1079,7 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF5F3),
+        color: kBackgroundColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: const Color(0xFFEDE3DF)),
       ),

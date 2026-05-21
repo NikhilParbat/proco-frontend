@@ -112,10 +112,10 @@ class _SettingsTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(color: kThemeColor.withValues(alpha:0.06)),
+            border: Border.all(color: kThemeColor.withValues(alpha: 0.06)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha:0.035),
+                color: Colors.black.withValues(alpha: 0.035),
                 blurRadius: 14,
                 offset: const Offset(0, 6),
               ),
@@ -128,10 +128,10 @@ class _SettingsTile extends StatelessWidget {
                 width: 46.w,
                 height: 46.w,
                 decoration: BoxDecoration(
-                  color: kThemeColor.withValues(alpha:0.10),
+                  color: kThemeColor,
                   borderRadius: BorderRadius.circular(14.r),
                 ),
-                child: Icon(icon, color: kThemeColor, size: 22.sp),
+                child: Icon(icon, color: kBackgroundColor, size: 22.sp),
               ),
 
               SizedBox(width: 14.w),

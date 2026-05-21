@@ -119,7 +119,7 @@ class _JobListPageState extends State<JobListPage> {
     return Scaffold(
       drawer: const LagoonDrawer(),
       appBar: const LagoonAppBar(),
-      backgroundColor: Colors.white,
+      backgroundColor: kBackgroundColor,
 
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
@@ -299,7 +299,7 @@ class JobCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha:0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -318,7 +318,7 @@ class JobCard extends StatelessWidget {
                     job.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: kThemeColor.withValues(alpha:0.12),
+                      color: kThemeColor.withValues(alpha: 0.12),
                       child: const Icon(
                         Icons.business,
                         color: kThemeColor,
@@ -335,7 +335,7 @@ class JobCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withValues(alpha:0.75),
+                            Colors.black.withValues(alpha: 0.75),
                           ],
                         ),
                       ),

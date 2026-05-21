@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:proco/views/common/exports.dart'; // Ensure your constants are imported
+import 'package:flutter_svg/svg.dart';
+import 'package:proco/views/common/exports.dart';
 
 class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
   const LagoonAppBar({super.key, this.actions});
@@ -14,25 +14,29 @@ class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      // Changed background color to kThemeColor as requested
-      backgroundColor: kThemeColor,
+      backgroundColor: kBackgroundColor,
       elevation: 0,
       automaticallyImplyLeading: false,
       toolbarHeight: 50.h,
-      leadingWidth: 100.w,
+      leadingWidth: 170.w,
       leading: Builder(
         builder: (ctx) => GestureDetector(
           onTap: () => Scaffold.of(ctx).openDrawer(),
           child: Padding(
             padding: EdgeInsets.only(left: 12.w),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: SvgPicture.asset(
-                'assets/WLagoon.svg',
-                width: 80.w,
-                height: 26.h,
-                fit: BoxFit.contain,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Icon(Icons.waves_rounded, color: kThemeColor, size: 28.sp),
+
+                SizedBox(width: 8.w),
+                SvgPicture.asset(
+                  'assets/Lagoon.svg',
+                  width: 80.w,
+                  height: 26.h,
+                  fit: BoxFit.contain,
+                ),
+              ],
             ),
           ),
         ),

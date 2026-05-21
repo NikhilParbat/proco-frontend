@@ -560,10 +560,7 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
 // ── Professional section header ────────────────────────────────────────────
 
 class _ProSectionHeader extends StatelessWidget {
-  const _ProSectionHeader({
-    required this.title,
-    required this.icon,
-  });
+  const _ProSectionHeader({required this.title, required this.icon});
   final String title;
   final IconData icon;
 

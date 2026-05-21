@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
           clipBehavior: Clip.none,
           children: [
             Center(
-              child: Icon(icon, size: size, color: Colors.white),
+              child: Icon(icon, size: size, color: Colors.black),
             ),
 
             if (showDot)
@@ -215,7 +215,6 @@ class _FilterButton extends StatelessWidget {
     );
   }
 }
-
 
 // ✅ NEW: Isolated jobs list
 class _JobsList extends StatelessWidget {
