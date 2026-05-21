@@ -87,11 +87,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _refreshAfterFilter() async {
-    await Navigator.push(
+    final applied = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const FilterPage()),
     );
-    if (mounted) {
+    if (mounted && applied == true) {
       final bookmarkedIds = context.read<BookMarkNotifier>().jobs;
       context.read<JobsNotifier>().preloadJobs(
         widget.userId,

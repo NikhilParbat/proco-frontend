@@ -11,6 +11,7 @@ class CreateFilterRequest {
   final int distanceKm;
   final String postedWithin;
   final List<String> skills;
+  final bool sortByTime;
 
   CreateFilterRequest({
     required this.agentId,
@@ -23,6 +24,7 @@ class CreateFilterRequest {
     this.distanceKm = 0,
     this.postedWithin = '',
     this.skills = const [],
+    this.sortByTime = false,
   });
 
   // Convert the Flutter request object directly into a Map payload
@@ -38,6 +40,7 @@ class CreateFilterRequest {
       'distanceKm': distanceKm,
       'postedWithin': postedWithin,
       'skills': skills,
+      'sortByTime': sortByTime,
     };
   }
 

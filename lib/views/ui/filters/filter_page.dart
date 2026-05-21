@@ -805,7 +805,6 @@ class _FilterPageState extends State<FilterPage> {
         final prefs = await SharedPreferences.getInstance();
         final userId = prefs.getString('userId');
 
-        // REFACTORED: Map data directly into the clean native-array request body structure
         final filterData = CreateFilterRequest(
           agentId: userId ?? '',
           selectedDomains: List<String>.from(selectedDomains),
@@ -817,6 +816,7 @@ class _FilterPageState extends State<FilterPage> {
           distanceKm: _radiusKm.round(),
           skills: List<String>.from(selectedSkills),
           postedWithin: postedWithin,
+          sortByTime: sortByTime,
         );
 
         if (!mounted) return;
@@ -827,24 +827,8 @@ class _FilterPageState extends State<FilterPage> {
         if (!mounted) return;
         if (!success) return;
 
-        // Async safe local cache updates sync 
-        final savedFilter = filterNotifier.filter ?? GetFilterRes(
-          id: '',
-          agentId: userId ?? '',
-          selectedDomains: List<String>.from(selectedDomains),
-          opportunityTypes: List<String>.from(opportunityTypes),
-          selectedLocationOption: selectedLocationOption,
-          selectedCity: selectedCity,
-          selectedState: selectedState,
-          selectedCountry: selectedCountry,
-          distanceKm: _radiusKm.round(),
-          skills: List<String>.from(selectedSkills),
-          sortByTime: sortByTime,
-          postedWithin: postedWithin,
-        );
-
-        filterNotifier.setActiveFilter(savedFilter);
-        Navigator.pop(context, true); // Return true to let home page trigger a refresh
+        // activeFilter is already set from the server response inside createFilter()
+        Navigator.pop(context, true);
       },
       child: Container(
         width: double.infinity,
