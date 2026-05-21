@@ -91,12 +91,12 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/images/logo.png"
 
 flutter_native_splash:
-  color: "#D85757"
-  image: assets/WLagoon2.png
+  color: "#F4F6FA"
+  image: assets/Lagoon.png
 
   android_12:
-    color: "#D85757"
-    image: assets/WLagoon2.png
+    color: "#F4F6FA"
+    image: assets/Lagoon.png
 
 fonts:
   - family: CormorantGaramond
