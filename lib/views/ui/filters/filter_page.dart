@@ -151,7 +151,7 @@ class _FilterPageState extends State<FilterPage> {
     _cityController.text = existing.selectedCity;
     selectedState = existing.selectedState;
     selectedCountry = existing.selectedCountry;
-    _radiusKm = (existing.distanceKm > 0 ? existing.distanceKm : 25).toDouble();
+    _radiusKm = (existing.distanceKm > 0 ? existing.distanceKm.clamp(1, 60) : 25).toDouble();
 
     selectedSkills.clear();
     selectedSkills.addAll(existing.skills);
@@ -478,6 +478,9 @@ class _FilterPageState extends State<FilterPage> {
   }
 
   Widget _locationSection() {
+    final bool showDistanceSlider =
+        selectedLocationOption == '' || selectedLocationOption == 'City';
+
     return Column(
       children: [
         Container(
@@ -551,8 +554,10 @@ class _FilterPageState extends State<FilterPage> {
           SizedBox(height: 10.h),
           _countryDropdown(),
         ],
-        SizedBox(height: 10.h),
-        _kmSlider(),
+        if (showDistanceSlider) ...[
+          SizedBox(height: 10.h),
+          _kmSlider(),
+        ],
       ],
     );
   }
@@ -619,8 +624,8 @@ class _FilterPageState extends State<FilterPage> {
             child: Slider(
               value: _radiusKm,
               min: 1,
-              max: 200,
-              divisions: 40,
+              max: 60,
+              divisions: 12,
               onChanged: (v) => setState(() => _radiusKm = v),
             ),
           ),
@@ -628,7 +633,7 @@ class _FilterPageState extends State<FilterPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('1 km', style: TextStyle(fontFamily: kFontDMSans, color: _grey, fontSize: 11.sp)),
-              Text('200 km', style: TextStyle(fontFamily: kFontDMSans, color: _grey, fontSize: 11.sp)),
+              Text('60 km', style: TextStyle(fontFamily: kFontDMSans, color: _grey, fontSize: 11.sp)),
             ],
           ),
         ],
@@ -747,9 +752,15 @@ class _FilterPageState extends State<FilterPage> {
 
   void _addSkill(String val) {
     val = val.trim();
-    if (val.isNotEmpty && !selectedSkills.contains(val)) {
+    if (val.isEmpty) return;
+    // Normalize to title case so "react" and "React" are treated as the same skill
+    final normalized = val[0].toUpperCase() + val.substring(1).toLowerCase();
+    final alreadyAdded = selectedSkills.any(
+      (s) => s.toLowerCase() == normalized.toLowerCase(),
+    );
+    if (!alreadyAdded) {
       setState(() {
-        selectedSkills.add(val);
+        selectedSkills.add(normalized);
         _skillInputController.clear();
       });
     }
@@ -813,7 +824,10 @@ class _FilterPageState extends State<FilterPage> {
           selectedCity: selectedCity,
           selectedState: selectedState,
           selectedCountry: selectedCountry,
-          distanceKm: _radiusKm.round(),
+          // Distance slider only applies for City or no-location mode; zero it out otherwise
+          distanceKm: (selectedLocationOption == 'City' || selectedLocationOption.isEmpty)
+              ? _radiusKm.round()
+              : 0,
           skills: List<String>.from(selectedSkills),
           postedWithin: postedWithin,
           sortByTime: sortByTime,

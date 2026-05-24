@@ -101,6 +101,17 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _clearFilter() async {
+    await context.read<FilterNotifier>().clearFilter(widget.userId);
+    if (mounted) {
+      context.read<JobsNotifier>().preloadJobs(
+        widget.userId,
+        bookmarkedIds: context.read<BookMarkNotifier>().jobs,
+        forceRefresh: true,
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -137,14 +148,28 @@ class _HomePageState extends State<HomePage> {
       drawer: const LagoonDrawer(),
       appBar: LagoonAppBar(
         actions: [
-          _buildAppBarAction(
-            icon: CupertinoIcons.slider_horizontal_3,
-            size: 24.w,
-            onTap: _refreshAfterFilter,
-            showDot:
-                context.watch<FilterNotifier>().activeFilter != null &&
-                _isFilterActive(context.watch<FilterNotifier>().activeFilter!),
-          ),
+          Builder(builder: (context) {
+            final filterNotifier = context.watch<FilterNotifier>();
+            final filterActive = filterNotifier.activeFilter != null &&
+                _isFilterActive(filterNotifier.activeFilter!);
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (filterActive)
+                  _buildAppBarAction(
+                    icon: CupertinoIcons.xmark,
+                    size: 18.w,
+                    onTap: _clearFilter,
+                  ),
+                _buildAppBarAction(
+                  icon: CupertinoIcons.slider_horizontal_3,
+                  size: 24.w,
+                  onTap: _refreshAfterFilter,
+                  showDot: filterActive,
+                ),
+              ],
+            );
+          }),
 
           _buildAppBarAction(
             icon: CupertinoIcons.bell,
