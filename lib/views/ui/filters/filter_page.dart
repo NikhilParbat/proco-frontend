@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/filter_provider.dart';
+import 'package:proco/views/common/skill_search_field.dart';
 import 'package:proco/models/request/filters/create_filter.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/helpers/filter_helper.dart';
@@ -37,13 +40,6 @@ class _FilterPageState extends State<FilterPage> {
   final List<String> opportunityTypes = [];
   final List<String> selectedSkills = [];
   
-  List<TextEditingController> customControllers = List.generate(
-    10,
-    (index) => TextEditingController(),
-  );
-  final TextEditingController _skillInputController = TextEditingController();
-
-  bool showCustomInput = false;
   bool sortByTime = false;
   String postedWithin = '';
   String selectedLocationOption = '';
@@ -56,6 +52,8 @@ class _FilterPageState extends State<FilterPage> {
 
   // ─── 1. Location Data Collections ─────────────────────────────────────────
   final TextEditingController _cityController = TextEditingController();
+  List<Map<String, dynamic>> _citySuggestions = [];
+  bool _isSearchingCity = false;
 
   final List<String> states = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -110,10 +108,6 @@ class _FilterPageState extends State<FilterPage> {
   @override
   void dispose() {
     _cityController.dispose();
-    _skillInputController.dispose();
-    for (final c in customControllers) {
-      c.dispose();
-    }
     super.dispose();
   }
 
@@ -126,22 +120,17 @@ class _FilterPageState extends State<FilterPage> {
       selectedCity = '';
       selectedState = '';
       selectedCountry = '';
+      _citySuggestions.clear();
       selectedSkills.clear();
       sortByTime = false;
       postedWithin = '';
       _radiusKm = 25;
-      showCustomInput = false;
     });
   }
 
   void _applyFilterToState(GetFilterRes existing) {
     selectedDomains.clear();
     selectedDomains.addAll(existing.selectedDomains);
-
-    // Sync domain chip items list representation
-    for (final domain in existing.selectedDomains) {
-      if (!options.contains(domain)) options.add(domain);
-    }
 
     opportunityTypes.clear();
     opportunityTypes.addAll(existing.opportunityTypes);
@@ -265,10 +254,6 @@ class _FilterPageState extends State<FilterPage> {
                   _fieldLabel('Domain'),
                   SizedBox(height: 8.h),
                   _domainChips(),
-                  if (showCustomInput) ...[
-                    SizedBox(height: 10.h),
-                    _customDomainInput(),
-                  ],
                   SizedBox(height: 20.h),
                   _fieldLabel('Location'),
                   SizedBox(height: 8.h),
@@ -410,55 +395,9 @@ class _FilterPageState extends State<FilterPage> {
               child: _chip(option, isSelected),
             );
           }),
-          GestureDetector(
-            onTap: () => setState(() => showCustomInput = !showCustomInput),
-            child: _chip('Other', showCustomInput),
-          ),
         ],
       ),
     );
-  }
-
-  Widget _customDomainInput() {
-    return Row(
-      children: [
-        Expanded(
-          child: _styledTextField(
-            controller: customControllers[0],
-            hint: 'Type your domain and press ✓',
-            icon: Icons.edit_outlined,
-            onChanged: (_) => setState(() {}),
-            onSubmitted: (_) => _submitCustomDomain(),
-          ),
-        ),
-        SizedBox(width: 10.w),
-        GestureDetector(
-          onTap: _submitCustomDomain,
-          child: Container(
-            height: 52.h,
-            width: 52.h,
-            decoration: BoxDecoration(
-              color: customControllers[0].text.trim().isNotEmpty
-                  ? _theme
-                  : _border,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.check_rounded, color: Colors.white, size: 22),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _submitCustomDomain() {
-    final text = customControllers[0].text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      if (!options.contains(text)) options.add(text);
-      if (!selectedDomains.contains(text)) selectedDomains.add(text);
-      customControllers[0].clear();
-      showCustomInput = false;
-    });
   }
 
   Widget _opportunityChips() {
@@ -475,6 +414,49 @@ class _FilterPageState extends State<FilterPage> {
         );
       }).toList(),
     );
+  }
+
+  Future<void> _onCityChanged(String query) async {
+    selectedCity = query.trim();
+    if (query.trim().length < 3) {
+      if (mounted) setState(() => _citySuggestions.clear());
+      return;
+    }
+    setState(() => _isSearchingCity = true);
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query.trim())}&format=json&limit=5&addressdetails=1',
+      );
+      final response = await http.get(uri, headers: {'User-Agent': 'proco_app'});
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _citySuggestions = data.map((item) {
+            final addr = item['address'] as Map<String, dynamic>? ?? {};
+            final city = addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '';
+            return {
+              'display': '$city, ${addr['state'] ?? ''}, ${addr['country'] ?? ''}',
+              'city': city.toString(),
+              'state': (addr['state'] ?? '').toString(),
+              'country': (addr['country'] ?? '').toString(),
+            };
+          }).where((s) => (s['city'] as String).isNotEmpty).toList();
+        });
+      }
+    } catch (_) {} finally {
+      if (mounted) setState(() => _isSearchingCity = false);
+    }
+  }
+
+  void _selectCitySuggestion(Map<String, dynamic> suggestion) {
+    setState(() {
+      selectedCity = suggestion['city'] as String;
+      selectedState = suggestion['state'] as String;
+      selectedCountry = suggestion['country'] as String;
+      _cityController.text = selectedCity;
+      _citySuggestions.clear();
+    });
   }
 
   Widget _locationSection() {
@@ -543,8 +525,64 @@ class _FilterPageState extends State<FilterPage> {
             controller: _cityController,
             hint: 'Enter your target city...',
             icon: Icons.location_city_outlined,
-            onChanged: (val) => selectedCity = val.trim(),
+            onChanged: _onCityChanged,
           ),
+          if (_isSearchingCity) ...[
+            SizedBox(height: 6.h),
+            const LinearProgressIndicator(color: _theme, minHeight: 2),
+          ],
+          if (_citySuggestions.isNotEmpty) ...[
+            SizedBox(height: 4.h),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _border),
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+              ),
+              child: Column(
+                children: _citySuggestions.map((s) {
+                  final display = s['display'] as String;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _selectCitySuggestion(s),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on_outlined, size: 16, color: _grey),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              display,
+                              style: TextStyle(fontFamily: kFontDMSans, fontSize: 13.sp, color: _dark),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+          if (selectedState.isNotEmpty || selectedCountry.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline, size: 14, color: _theme),
+                SizedBox(width: 5.w),
+                Expanded(
+                  child: Text(
+                    [if (selectedState.isNotEmpty) selectedState, if (selectedCountry.isNotEmpty) selectedCountry].join(', '),
+                    style: TextStyle(fontFamily: kFontDMSans, fontSize: 12.sp, color: _theme),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
         if (selectedLocationOption == 'State') ...[
           SizedBox(height: 10.h),
@@ -723,47 +761,20 @@ class _FilterPageState extends State<FilterPage> {
             ),
             SizedBox(height: 10.h),
           ],
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _skillInputController,
-                  style: TextStyle(color: _dark, fontSize: 14.sp),
-                  decoration: InputDecoration(
-                    hintText: 'Add another skill...',
-                    hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onSubmitted: _addSkill,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _addSkill(_skillInputController.text),
-                child: const Icon(Icons.add_circle_outline, color: _theme, size: 22),
-              ),
-            ],
+          SkillSearchField(
+            onSelected: _addSkill,
+            alreadySelected: selectedSkills,
+            hint: selectedSkills.isEmpty ? 'Search and add a skill...' : 'Add another skill...',
+            fillColor: Colors.white,
           ),
         ],
       ),
     );
   }
 
-  void _addSkill(String val) {
-    val = val.trim();
-    if (val.isEmpty) return;
-    // Normalize to title case so "react" and "React" are treated as the same skill
-    final normalized = val[0].toUpperCase() + val.substring(1).toLowerCase();
-    final alreadyAdded = selectedSkills.any(
-      (s) => s.toLowerCase() == normalized.toLowerCase(),
-    );
-    if (!alreadyAdded) {
-      setState(() {
-        selectedSkills.add(normalized);
-        _skillInputController.clear();
-      });
-    }
+  void _addSkill(String skill) {
+    if (skill.isEmpty || selectedSkills.contains(skill)) return;
+    setState(() => selectedSkills.add(skill));
   }
 
   Widget _postedWithinChips() {

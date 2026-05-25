@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/exports.dart';
+import 'package:proco/views/common/skill_search_field.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:provider/provider.dart';
@@ -34,8 +35,6 @@ class _AddJobPageState extends State<AddJobPage> {
   final _salaryController = TextEditingController();
   final _durationValueController = TextEditingController();
   final _contractController = TextEditingController();
-  final _customDomainController = TextEditingController();
-  final _skillInputController = TextEditingController();
   final List<TextEditingController> _reqControllers = [];
 
   // ─── Location state ────────────────────────────────────────────────────────
@@ -110,11 +109,6 @@ class _AddJobPageState extends State<AddJobPage> {
         for (final d in splitDomains) {
           if (kDomains.contains(d)) selectedDomains.add(d);
         }
-        final customDomains = splitDomains.where((d) => !kDomains.contains(d));
-        if (customDomains.isNotEmpty) {
-          selectedDomains.add('Other');
-          _customDomainController.text = customDomains.join(', ');
-        }
       }
 
       if (kOpportunityTypes.contains(j.opportunityType)) {
@@ -134,8 +128,6 @@ class _AddJobPageState extends State<AddJobPage> {
     _salaryController.dispose();
     _durationValueController.dispose();
     _contractController.dispose();
-    _customDomainController.dispose();
-    _skillInputController.dispose();
     for (final c in _reqControllers) {
       c.dispose();
     }
@@ -160,16 +152,12 @@ class _AddJobPageState extends State<AddJobPage> {
 
   // ─── Skills ───────────────────────────────────────────────────────────────
   void _addSkill(String skill) {
-    final s = skill.trim();
-    if (s.isEmpty || _skills.contains(s)) return;
+    if (skill.isEmpty || _skills.contains(skill)) return;
     if (_skills.length >= 9) {
       _snack('Maximum 9 skills allowed.');
       return;
     }
-    setState(() {
-      _skills.add(s);
-      _skillInputController.clear();
-    });
+    setState(() => _skills.add(skill));
   }
 
   void _removeSkill(int i) => setState(() => _skills.removeAt(i));
@@ -302,18 +290,7 @@ class _AddJobPageState extends State<AddJobPage> {
       return;
     }
 
-    final domains = [...selectedDomains];
-    if (domains.contains('Other')) {
-      domains.remove('Other');
-      if (_customDomainController.text.trim().isNotEmpty) {
-        domains.add(_customDomainController.text.trim());
-      }
-    }
-    final effectiveDomain = domains.join(', ');
-    if (effectiveDomain.isEmpty) {
-      _snack('Please enter a custom domain.');
-      return;
-    }
+    final effectiveDomain = selectedDomains.join(', ');
 
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId') ?? '';
@@ -501,10 +478,6 @@ class _AddJobPageState extends State<AddJobPage> {
               Text('Domain', style: _labelStyle()),
               SizedBox(height: 8.h),
               _domainChips(),
-              if (selectedDomains.contains('Other')) ...[
-                SizedBox(height: 8.h),
-                _field(_customDomainController, hint: 'Type your domain...'),
-              ],
               SizedBox(height: 14.h),
               Text('Opportunity Type', style: _labelStyle()),
               SizedBox(height: 8.h),
@@ -1139,7 +1112,7 @@ class _AddJobPageState extends State<AddJobPage> {
 
   // ─── Domain chips ─────────────────────────────────────────────────────────
   Widget _domainChips() {
-    final domains = [...kDomains, 'Other'];
+    final domains = List<String>.from(kDomains);
     return Wrap(
       spacing: 8.w,
       runSpacing: 8.h,
@@ -1150,10 +1123,10 @@ class _AddJobPageState extends State<AddJobPage> {
             setState(() {
               if (selected) {
                 selectedDomains.remove(d);
-              } else if (selectedDomains.length < 3) {
-                selectedDomains.add(d);
               } else {
-                _snack('Maximum 3 domains allowed.');
+                selectedDomains
+                  ..clear()
+                  ..add(d);
               }
             });
           },
@@ -1257,10 +1230,7 @@ class _AddJobPageState extends State<AddJobPage> {
               runSpacing: 6.h,
               children: _skills.asMap().entries.map((e) {
                 return Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 5.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F2F5),
                     borderRadius: BorderRadius.circular(24.r),
@@ -1281,11 +1251,7 @@ class _AddJobPageState extends State<AddJobPage> {
                       SizedBox(width: 6.w),
                       GestureDetector(
                         onTap: () => _removeSkill(e.key),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white70,
-                          size: 14,
-                        ),
+                        child: Icon(Icons.close, color: Colors.grey.shade500, size: 14),
                       ),
                     ],
                   ),
@@ -1295,35 +1261,8 @@ class _AddJobPageState extends State<AddJobPage> {
             SizedBox(height: 8.h),
           ],
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _skillInputController,
-                  enabled: _skills.length < 9,
-                  style: TextStyle(
-                    fontFamily: kFontDMSans,
-                    fontSize: 14.sp,
-                    color: _textDark,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: _skills.length >= 9
-                        ? 'Max 9 skills reached'
-                        : _skills.isEmpty
-                        ? 'Add a skill...'
-                        : 'Add another skill...',
-                    hintStyle: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 13.sp,
-                      color: _textGrey,
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onSubmitted: _addSkill,
-                ),
-              ),
-              SizedBox(width: 8.w),
               Text(
                 '${_skills.length}/9',
                 style: TextStyle(
@@ -1333,35 +1272,27 @@ class _AddJobPageState extends State<AddJobPage> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(width: 8.w),
-              GestureDetector(
-                onTap: _skills.length < 9
-                    ? () => _addSkill(_skillInputController.text)
-                    : null,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 5.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _skills.length < 9
-                        ? kThemeColor
-                        : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Text(
-                    'Add',
-                    style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 12.sp,
-                      color: _skills.length < 9 ? Colors.white : Colors.grey,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
+          if (_skills.length < 9) ...[
+            SizedBox(height: 6.h),
+            SkillSearchField(
+              onSelected: _addSkill,
+              alreadySelected: _skills,
+              hint: _skills.isEmpty ? 'Search and add a skill...' : 'Add another skill...',
+            ),
+          ] else ...[
+            SizedBox(height: 4.h),
+            Text(
+              'Maximum 9 skills reached.',
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 12.sp,
+                color: _textGrey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
         ],
       ),
     );
