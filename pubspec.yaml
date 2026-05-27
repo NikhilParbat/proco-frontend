@@ -84,11 +84,11 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: "ic_launcher"
   ios: true
-  image_path: "assets/images/logo.png"
-  adaptive_icon_background: "#040326" # Your dark theme color
-  adaptive_icon_foreground: "assets/images/logo.png"
+  image_path: "assets/logo.png"
+  adaptive_icon_background: "#040326"
+  adaptive_icon_foreground: "assets/logo.png"
 
 flutter_native_splash:
   color: "#D85757"
