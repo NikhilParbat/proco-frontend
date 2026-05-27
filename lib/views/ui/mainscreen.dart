@@ -37,28 +37,47 @@ class _MainScreenState extends State<MainScreen> {
     _userId = _prefs?.getString('userId') ?? '';
     final token = _prefs?.getString('token') ?? '';
 
-    if (_userId.isNotEmpty && token.isNotEmpty) {
-      await NotificationHelper.initialize(_userId, token);
-    }
-
+    // LOAD UI IMMEDIATELY
     if (mounted) {
       setState(() => _isInitialized = true);
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Run heavy work AFTER first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+
       context.read<LoginNotifier>().getPrefs();
 
-      // Wire up live tab switching (background notification taps)
+      // Initialize notifications in background
+      if (_userId.isNotEmpty && token.isNotEmpty) {
+        Future.microtask(() async {
+          try {
+            await NotificationHelper.initialize(_userId, token);
+            debugPrint("✅ NotificationHelper initialized");
+          } catch (e) {
+            debugPrint("❌ Notification init failed: $e");
+          }
+        });
+      }
+
+      // Register navigator callback
       NotificationHelper.registerTabNavigator((tab) {
-        if (mounted) context.read<ZoomNotifier>().currentIndex = tab;
+        if (mounted) {
+          context.read<ZoomNotifier>().currentIndex = tab;
+        }
       });
 
-      // Navigate to the correct tab if the app was opened from a notification
+      // Handle pending notification navigation
       final pendingTab = NotificationHelper.pendingTabIndex;
+
       if (pendingTab != null) {
         NotificationHelper.pendingTabIndex = null;
-        context.read<ZoomNotifier>().currentIndex = pendingTab;
+
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            context.read<ZoomNotifier>().currentIndex = pendingTab;
+          }
+        });
       }
     });
   }

@@ -179,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                                   'Login',
                                   style: kSubTextStyle.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                    color: Colors.white,
                                   ),
                                 ),
                         ),
