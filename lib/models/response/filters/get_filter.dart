@@ -11,83 +11,67 @@ GetFilterRes getFilterResFromJson(String str) {
 String getFilterResToJson(GetFilterRes data) => json.encode(data.toJson());
 
 class GetFilterRes {
-  GetFilterRes({
-    required this.id,
-    required this.selectedOptions,
-    required this.selectedLocationOption,
-    required this.selectedCity,
-    required this.selectedState,
-    required this.selectedCountry,
-    required this.distanceKm,
-    required this.customOptions,
-    required this.skills,
-    required this.sortByTime,
-    required this.postedWithin,
-    required this.internship,
-    required this.research,
-    required this.freelance,
-    required this.competition,
-    required this.collaborate,
-  });
-
-  factory GetFilterRes.fromJson(Map<String, dynamic> json) => GetFilterRes(
-        id: json['id'] ?? '',
-        selectedOptions: json['selectedOptions'] != null
-            ? List<String>.from(json['selectedOptions'])
-            : [],
-        selectedLocationOption: json['selectedLocationOption'] ?? '',
-        selectedCity: json['selectedCity'] ?? '',
-        selectedState: json['selectedState'] ?? '',
-        selectedCountry: json['selectedCountry'] ?? '',
-        distanceKm: (json['distanceKm'] as num?)?.toInt() ?? 0,
-        customOptions: json['customOptions'] != null
-            ? List<String>.from(json['customOptions'])
-            : [],
-        skills: json['skills'] != null
-            ? List<String>.from(json['skills'])
-            : [],
-        sortByTime: json['sortByTime'] == true,
-        postedWithin: json['postedWithin'] as String? ?? '',
-        internship: json['internship'] == true,
-        research: json['research'] == true,
-        freelance: json['freelance'] == true,
-        competition: json['competition'] == true,
-        collaborate: json['collaborate'] == true,
-      );
-
   final String id;
-  final List<String> selectedOptions;
+  final String agentId;
+  final List<String> selectedDomains;
+  final List<String> opportunityTypes;
   final String selectedLocationOption;
   final String selectedCity;
   final String selectedState;
   final String selectedCountry;
   final int distanceKm;
-  final List<String> customOptions;
   final List<String> skills;
   final bool sortByTime;
   final String postedWithin;
-  final bool internship;
-  final bool research;
-  final bool freelance;
-  final bool competition;
-  final bool collaborate;
+
+  GetFilterRes({
+    required this.id,
+    required this.agentId,
+    required this.selectedDomains,
+    required this.opportunityTypes,
+    required this.selectedLocationOption,
+    required this.selectedCity,
+    required this.selectedState,
+    required this.selectedCountry,
+    required this.distanceKm,
+    required this.skills,
+    required this.sortByTime,
+    required this.postedWithin,
+  });
+
+  factory GetFilterRes.fromJson(Map<String, dynamic> json) => GetFilterRes(
+        id: json['id'] ?? '',
+        agentId: json['agentId'] ?? '',
+        selectedDomains: json['selectedDomains'] != null
+            ? List<String>.from(json['selectedDomains'])
+            : const [],
+        opportunityTypes: json['opportunityTypes'] != null
+            ? List<String>.from(json['opportunityTypes'])
+            : const [],
+        selectedLocationOption: json['selectedLocationOption'] ?? '',
+        selectedCity: json['selectedCity'] ?? '',
+        selectedState: json['selectedState'] ?? '',
+        selectedCountry: json['selectedCountry'] ?? '',
+        distanceKm: (json['distanceKm'] as num?)?.toInt() ?? 0,
+        skills: json['skills'] != null
+            ? List<String>.from(json['skills'])
+            : const [],
+        sortByTime: json['sortByTime'] == true,
+        postedWithin: json['postedWithin'] as String? ?? '',
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'selectedOptions': List<dynamic>.from(selectedOptions),
+        'agentId': agentId,
+        'selectedDomains': List<dynamic>.from(selectedDomains),
+        'opportunityTypes': List<dynamic>.from(opportunityTypes),
         'selectedLocationOption': selectedLocationOption,
         'selectedCity': selectedCity,
         'selectedState': selectedState,
         'selectedCountry': selectedCountry,
         'distanceKm': distanceKm,
-        'customOptions': List<dynamic>.from(customOptions),
         'skills': List<dynamic>.from(skills),
         'sortByTime': sortByTime,
         'postedWithin': postedWithin,
-        'internship': internship,
-        'research': research,
-        'freelance': freelance,
-        'competition': competition,
-        'collaborate': collaborate,
       };
 }

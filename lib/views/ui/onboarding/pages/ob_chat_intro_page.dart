@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/skills_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
@@ -18,22 +19,6 @@ const _kUserBubble = Color.fromARGB(200, 216, 87, 87);
 
 // ── Static data ────────────────────────────────────────────────────────────────
 
-const _kSkills = [
-  'Flutter',
-  'Python',
-  'Java',
-  'JavaScript',
-  'Node.js',
-  'React',
-  'Firebase',
-  'SQL',
-  'Product Mgmt',
-  'Marketing',
-  'UI/UX',
-  'Machine Learning',
-  'Kotlin',
-  'Swift',
-];
 
 const _kDegrees = [
   'B.Tech / B.E.',
@@ -275,9 +260,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   // Step 2: Skills
   final Set<String> _skills = {};
   final _skillSearchCtrl = TextEditingController();
-  final _customSkillCtrl = TextEditingController();
   String _skillQuery = '';
-  bool _showCustomSkill = false;
 
   // Step 3: Location
   final _locationSearchCtrl = TextEditingController();
@@ -330,7 +313,6 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     _collegeCtrl.dispose();
     _cgpaCtrl.dispose();
     _skillSearchCtrl.dispose();
-    _customSkillCtrl.dispose();
     _locationSearchCtrl.dispose();
     super.dispose();
   }
@@ -472,9 +454,6 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         _advance(userSummary: '$college • $_degree • $_branch$cgpaSummary • $_gradYear');
 
       case 2:
-        if (_customSkillCtrl.text.trim().isNotEmpty) {
-          _addCustomSkill();
-        }
         if (_skills.isEmpty) {
           _snack('Select skills', 'Pick at least one skill.');
           return;
@@ -596,15 +575,6 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         setState(() => _isFetchingCurrentLocation = false);
       }
     }
-  }
-
-  void _addCustomSkill() {
-    final value = _customSkillCtrl.text.trim();
-    if (value.isEmpty) return;
-    setState(() {
-      _skills.add(value);
-      _customSkillCtrl.clear();
-    });
   }
 
   // ── DOB picker ─────────────────────────────────────────────────────────────
@@ -906,7 +876,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   // ── Step 2: Skills ─────────────────────────────────────────────────────────
 
   Widget _buildStep2() {
-    final filtered = _kSkills
+    final filtered = kAllSkills
         .where((s) => s.toLowerCase().contains(_skillQuery))
         .toList();
 
@@ -922,34 +892,17 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         Wrap(
           spacing: 8.w,
           runSpacing: 8.h,
-          children: [
-            ...filtered.map((s) {
-              final selected = _skills.contains(s);
-              return _ChoiceChipButton(
-                label: s,
-                selected: selected,
-                onTap: () => setState(() {
-                  selected ? _skills.remove(s) : _skills.add(s);
-                }),
-              );
-            }),
-            _ChoiceChipButton(
-              label: 'Custom',
-              icon: Icons.add,
-              selected: _showCustomSkill,
-              onTap: () => setState(() => _showCustomSkill = !_showCustomSkill),
-            ),
-          ],
+          children: filtered.map((s) {
+            final selected = _skills.contains(s);
+            return _ChoiceChipButton(
+              label: s,
+              selected: selected,
+              onTap: () => setState(() {
+                selected ? _skills.remove(s) : _skills.add(s);
+              }),
+            );
+          }).toList(),
         ),
-        if (_showCustomSkill) ...[
-          SizedBox(height: 10.h),
-          _CustomOptionInput(
-            controller: _customSkillCtrl,
-            hint: 'Type a skill',
-            onSubmitted: (_) => _addCustomSkill(),
-            onAdd: _addCustomSkill,
-          ),
-        ],
         if (_skills.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(top: 8.h),
@@ -1337,80 +1290,6 @@ class _ChoiceChipButton extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _CustomOptionInput extends StatelessWidget {
-  const _CustomOptionInput({
-    required this.controller,
-    required this.hint,
-    required this.onSubmitted,
-    required this.onAdd,
-  });
-
-  final TextEditingController controller;
-  final String hint;
-  final ValueChanged<String> onSubmitted;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'You can type it in the chat box and send. After you are done, click Continue.',
-          style: TextStyle(
-            color: Colors.black54,
-            fontSize: 12.sp,
-            height: 1.35,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          padding: EdgeInsets.only(left: 12.w, right: 6.w),
-          child: Row(
-            children: [
-              Icon(Icons.add, size: 16.sp, color: kThemeColor),
-              SizedBox(width: 6.w),
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  textInputAction: TextInputAction.send,
-                  style: TextStyle(fontSize: 13.sp, color: Colors.black87),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.grey.shade400,
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                  onSubmitted: onSubmitted,
-                ),
-              ),
-              TextButton(
-                onPressed: onAdd,
-                child: Text(
-                  'Send',
-                  style: TextStyle(
-                    color: kThemeColor,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

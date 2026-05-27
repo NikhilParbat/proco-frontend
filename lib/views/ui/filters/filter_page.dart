@@ -1,12 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/controllers/filter_provider.dart';
+import 'package:proco/views/common/skill_search_field.dart';
 import 'package:proco/models/request/filters/create_filter.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/helpers/filter_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
-
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,24 +25,21 @@ class _FilterPageState extends State<FilterPage> {
   static const Color _grey = Color(0xFF9E9E9E);
   static const Color _border = Color(0xFFE0E0E0);
 
-  // ─── Data ──────────────────────────────────────────────────────────────────
+  // ─── Static UI Options ─────────────────────────────────────────────────────
   final List<String> options = List.from(kDomains);
+  final List<String> availableOpportunityTypes = [
+    "Competition",
+    "Collaborate",
+    "Research",
+    "Freelance",
+    "Internship"
+  ];
 
-  bool _internship = false;
-  bool _research = false;
-  bool _freelance = false;
-  bool _competition = false;
-  bool _collaborate = false;
-
-  List<TextEditingController> customControllers = List.generate(
-    10,
-    (index) => TextEditingController(),
-  );
-  final TextEditingController _skillInputController = TextEditingController();
-
-  final List<String> selectedOptions = [];
+  // ─── State Management Data Structures ──────────────────────────────────────
+  final List<String> selectedDomains = [];
+  final List<String> opportunityTypes = [];
   final List<String> selectedSkills = [];
-  bool showCustomInput = false;
+  
   bool sortByTime = false;
   String postedWithin = '';
   String selectedLocationOption = '';
@@ -51,43 +50,53 @@ class _FilterPageState extends State<FilterPage> {
   String _profileLocationLabel = 'Your profile location';
   bool _isLoading = true;
 
-  final List<String> cities = [
-    "New York",
-    "Los Angeles",
-    "Chicago",
-    "Houston",
-    "Phoenix",
-    "San Francisco",
-    "Boston",
-    "Seattle",
-    "Austin",
-    "Miami",
-  ];
+  // ─── 1. Location Data Collections ─────────────────────────────────────────
+  final TextEditingController _cityController = TextEditingController();
+  List<Map<String, dynamic>> _citySuggestions = [];
+  bool _isSearchingCity = false;
 
   final List<String> states = [
-    "California",
-    "Texas",
-    "Florida",
-    "New York",
-    "Illinois",
-    "Pennsylvania",
-    "Ohio",
-    "Georgia",
-    "North Carolina",
-    "Michigan",
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
+    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
+    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
+    "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
   ];
 
   final List<String> countries = [
-    "United States",
-    "Canada",
-    "United Kingdom",
-    "India",
-    "Australia",
-    "Germany",
-    "France",
-    "Singapore",
-    "UAE",
-    "Japan",
+    "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", 
+    "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", 
+    "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", 
+    "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", 
+    "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", 
+    "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", 
+    "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba", "Cyprus", 
+    "Czechia (Czech Republic)", "Denmark", "Djibouti", "Dominica", "Dominican Republic", 
+    "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", 
+    "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", 
+    "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", 
+    "Guyana", "Haiti", "Holy See", "Honduras", "Hungary", "Iceland", "India", 
+    "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", 
+    "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", 
+    "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", 
+    "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", 
+    "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", 
+    "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)", 
+    "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", 
+    "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", 
+    "Palau", "Palestine State", "Panama", "Papua New Guinea", "Paraguay", "Peru", 
+    "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", 
+    "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", 
+    "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", 
+    "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", 
+    "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", 
+    "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", 
+    "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", 
+    "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", 
+    "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America", 
+    "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
   ];
 
   @override
@@ -98,56 +107,40 @@ class _FilterPageState extends State<FilterPage> {
 
   @override
   void dispose() {
-    for (final c in customControllers) {
-      c.dispose();
-    }
-    _skillInputController.dispose();
+    _cityController.dispose();
     super.dispose();
   }
 
   void _resetAll() {
     setState(() {
-      selectedOptions.clear();
-      _internship = false;
-      _research = false;
-      _freelance = false;
-      _competition = false;
-      _collaborate = false;
+      selectedDomains.clear();
+      opportunityTypes.clear();
       selectedLocationOption = '';
+      _cityController.clear();
       selectedCity = '';
       selectedState = '';
       selectedCountry = '';
+      _citySuggestions.clear();
       selectedSkills.clear();
       sortByTime = false;
       postedWithin = '';
       _radiusKm = 25;
-      showCustomInput = false;
     });
   }
 
   void _applyFilterToState(GetFilterRes existing) {
-    selectedOptions.clear();
-    selectedOptions.addAll(existing.selectedOptions);
+    selectedDomains.clear();
+    selectedDomains.addAll(existing.selectedDomains);
 
-    for (final selected in existing.selectedOptions) {
-      if (!options.contains(selected)) options.add(selected);
-    }
-    for (final custom in existing.customOptions) {
-      if (!options.contains(custom)) options.add(custom);
-      if (!selectedOptions.contains(custom)) selectedOptions.add(custom);
-    }
-
-    _internship = existing.internship;
-    _research = existing.research;
-    _freelance = existing.freelance;
-    _competition = existing.competition;
-    _collaborate = existing.collaborate;
+    opportunityTypes.clear();
+    opportunityTypes.addAll(existing.opportunityTypes);
 
     selectedLocationOption = existing.selectedLocationOption;
     selectedCity = existing.selectedCity;
+    _cityController.text = existing.selectedCity;
     selectedState = existing.selectedState;
     selectedCountry = existing.selectedCountry;
-    _radiusKm = (existing.distanceKm > 0 ? existing.distanceKm : 25).toDouble();
+    _radiusKm = (existing.distanceKm > 0 ? existing.distanceKm.clamp(1, 60) : 25).toDouble();
 
     selectedSkills.clear();
     selectedSkills.addAll(existing.skills);
@@ -161,7 +154,6 @@ class _FilterPageState extends State<FilterPage> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
 
-    // Load from local cache immediately so the page renders fast
     final activeJson = prefs.getString('activeFilter');
     if (activeJson != null) {
       try {
@@ -178,7 +170,6 @@ class _FilterPageState extends State<FilterPage> {
 
     await _loadProfileLocation();
 
-    // Always refresh from backend to stay in sync across sessions
     final userId = prefs.getString('userId') ?? '';
     if (userId.isNotEmpty) {
       final response = await FilterHelper.getFilter(userId);
@@ -210,7 +201,6 @@ class _FilterPageState extends State<FilterPage> {
     }
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -253,41 +243,33 @@ class _FilterPageState extends State<FilterPage> {
         ),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: _theme))
+          ? const Center(child: CircularProgressIndicator(color: _theme))
           : SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── CORE FILTERS ──────────────────────────────────────────
                   _sectionLabel('Core Filters'),
                   SizedBox(height: 14.h),
                   _fieldLabel('Domain'),
                   SizedBox(height: 8.h),
                   _domainChips(),
-                  if (showCustomInput) ...[
-                    SizedBox(height: 10.h),
-                    _customDomainInput(),
-                  ],
                   SizedBox(height: 20.h),
                   _fieldLabel('Location'),
                   SizedBox(height: 8.h),
                   _locationSection(),
                   SizedBox(height: 24.h),
 
-                  // ── OPPORTUNITY TYPE ──────────────────────────────────────
                   _sectionLabel('Opportunity Type'),
                   SizedBox(height: 14.h),
                   _opportunityChips(),
                   SizedBox(height: 24.h),
 
-                  // ── UPLOAD TIME ───────────────────────────────────────────
                   _sectionLabel('Upload Time'),
                   SizedBox(height: 14.h),
                   _postedWithinChips(),
                   SizedBox(height: 24.h),
 
-                  // ── TECHNICAL & REWARDS ───────────────────────────────────
                   _sectionLabel('Technical & Rewards'),
                   SizedBox(height: 14.h),
                   _fieldLabel('Skills'),
@@ -297,8 +279,7 @@ class _FilterPageState extends State<FilterPage> {
                   _sortByLatestRow(),
                   SizedBox(height: 32.h),
 
-                  // ── Apply ─────────────────────────────────────────────────
-                  _applyButton(),
+                  _applyButtonWidget(),
                   SizedBox(height: 30.h),
                 ],
               ),
@@ -306,7 +287,6 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // ─── Section / field labels ───────────────────────────────────────────────
   Widget _sectionLabel(String text) {
     return Text(
       text.toUpperCase(),
@@ -332,7 +312,6 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // ─── Shared chip widget ───────────────────────────────────────────────────
   Widget _chip(String label, bool isSelected) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
@@ -357,7 +336,6 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // ─── Styled text field ────────────────────────────────────────────────────
   Widget _styledTextField({
     required TextEditingController controller,
     required String hint,
@@ -393,7 +371,6 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // ─── Domain chips ─────────────────────────────────────────────────────────
   Widget _domainChips() {
     return Container(
       width: double.infinity,
@@ -408,93 +385,84 @@ class _FilterPageState extends State<FilterPage> {
         runSpacing: 8,
         children: [
           ...options.map((option) {
-            final isSelected = selectedOptions.contains(option);
+            final isSelected = selectedDomains.contains(option);
             return GestureDetector(
               onTap: () => setState(() {
                 isSelected
-                    ? selectedOptions.remove(option)
-                    : selectedOptions.add(option);
+                    ? selectedDomains.remove(option)
+                    : selectedDomains.add(option);
               }),
               child: _chip(option, isSelected),
             );
           }),
-          // "Other" chip — toggles the custom-input row
-          GestureDetector(
-            onTap: () => setState(() => showCustomInput = !showCustomInput),
-            child: _chip('Other', showCustomInput),
-          ),
         ],
       ),
     );
   }
 
-  Widget _customDomainInput() {
-    return Row(
-      children: [
-        Expanded(
-          child: _styledTextField(
-            controller: customControllers[0],
-            hint: 'Type your domain and press ✓',
-            icon: Icons.edit_outlined,
-            onChanged: (_) => setState(() {}),
-            onSubmitted: (_) => _submitCustomDomain(),
-          ),
-        ),
-        SizedBox(width: 10.w),
-        GestureDetector(
-          onTap: _submitCustomDomain,
-          child: Container(
-            height: 52.h,
-            width: 52.h,
-            decoration: BoxDecoration(
-              color: customControllers[0].text.trim().isNotEmpty
-                  ? _theme
-                  : _border,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.check_rounded, color: Colors.white, size: 22),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _submitCustomDomain() {
-    final text = customControllers[0].text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      if (!options.contains(text)) options.add(text);
-      if (!selectedOptions.contains(text)) selectedOptions.add(text);
-      customControllers[0].clear();
-      showCustomInput = false;
-    });
-  }
-
-  // ─── Opportunity type chips ────────────────────────────────────────────────
   Widget _opportunityChips() {
-    final entries = [
-      ('Competition', _competition, (bool v) => setState(() => _competition = v)),
-      ('Collaboration', _collaborate, (bool v) => setState(() => _collaborate = v)),
-      ('Research', _research, (bool v) => setState(() => _research = v)),
-      ('Freelance', _freelance, (bool v) => setState(() => _freelance = v)),
-      ('Internship', _internship, (bool v) => setState(() => _internship = v)),
-    ];
-
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: entries.map((e) {
-        final (label, isSelected, setter) = e;
+      children: availableOpportunityTypes.map((type) {
+        final isSelected = opportunityTypes.contains(type);
         return GestureDetector(
-          onTap: () => setter(!isSelected),
-          child: _chip(label, isSelected),
+          onTap: () => setState(() {
+            isSelected ? opportunityTypes.remove(type) : opportunityTypes.add(type);
+          }),
+          child: _chip(type, isSelected),
         );
       }).toList(),
     );
   }
 
-  // ─── Location section ─────────────────────────────────────────────────────
+  Future<void> _onCityChanged(String query) async {
+    selectedCity = query.trim();
+    if (query.trim().length < 3) {
+      if (mounted) setState(() => _citySuggestions.clear());
+      return;
+    }
+    setState(() => _isSearchingCity = true);
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query.trim())}&format=json&limit=5&addressdetails=1',
+      );
+      final response = await http.get(uri, headers: {'User-Agent': 'proco_app'});
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _citySuggestions = data.map((item) {
+            final addr = item['address'] as Map<String, dynamic>? ?? {};
+            final city = addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '';
+            return {
+              'display': '$city, ${addr['state'] ?? ''}, ${addr['country'] ?? ''}',
+              'city': city.toString(),
+              'state': (addr['state'] ?? '').toString(),
+              'country': (addr['country'] ?? '').toString(),
+            };
+          }).where((s) => (s['city'] as String).isNotEmpty).toList();
+        });
+      }
+    } catch (_) {} finally {
+      if (mounted) setState(() => _isSearchingCity = false);
+    }
+  }
+
+  void _selectCitySuggestion(Map<String, dynamic> suggestion) {
+    setState(() {
+      selectedCity = suggestion['city'] as String;
+      selectedState = suggestion['state'] as String;
+      selectedCountry = suggestion['country'] as String;
+      _cityController.text = selectedCity;
+      _citySuggestions.clear();
+    });
+  }
+
   Widget _locationSection() {
+    final bool showDistanceSlider =
+        selectedLocationOption == '' || selectedLocationOption == 'City';
+
     return Column(
       children: [
         Container(
@@ -517,12 +485,8 @@ class _FilterPageState extends State<FilterPage> {
                     decoration: BoxDecoration(
                       color: isActive ? _theme : Colors.transparent,
                       borderRadius: BorderRadius.horizontal(
-                        left: opt == 'City'
-                            ? const Radius.circular(11)
-                            : Radius.zero,
-                        right: opt == 'Country'
-                            ? const Radius.circular(11)
-                            : Radius.zero,
+                        left: opt == 'City' ? const Radius.circular(11) : Radius.zero,
+                        right: opt == 'Country' ? const Radius.circular(11) : Radius.zero,
                       ),
                     ),
                     child: Row(
@@ -532,8 +496,8 @@ class _FilterPageState extends State<FilterPage> {
                           opt == 'City'
                               ? Icons.location_city_outlined
                               : opt == 'State'
-                              ? Icons.map_outlined
-                              : Icons.flag_outlined,
+                                  ? Icons.map_outlined
+                                  : Icons.flag_outlined,
                           size: 15,
                           color: isActive ? Colors.white : _grey,
                         ),
@@ -544,9 +508,7 @@ class _FilterPageState extends State<FilterPage> {
                             fontFamily: kFontDMSans,
                             color: isActive ? Colors.white : _grey,
                             fontSize: 13.sp,
-                            fontWeight: isActive
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -559,7 +521,68 @@ class _FilterPageState extends State<FilterPage> {
         ),
         if (selectedLocationOption == 'City') ...[
           SizedBox(height: 10.h),
-          _cityDropdown(),
+          _styledTextField(
+            controller: _cityController,
+            hint: 'Enter your target city...',
+            icon: Icons.location_city_outlined,
+            onChanged: _onCityChanged,
+          ),
+          if (_isSearchingCity) ...[
+            SizedBox(height: 6.h),
+            const LinearProgressIndicator(color: _theme, minHeight: 2),
+          ],
+          if (_citySuggestions.isNotEmpty) ...[
+            SizedBox(height: 4.h),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _border),
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+              ),
+              child: Column(
+                children: _citySuggestions.map((s) {
+                  final display = s['display'] as String;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _selectCitySuggestion(s),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on_outlined, size: 16, color: _grey),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              display,
+                              style: TextStyle(fontFamily: kFontDMSans, fontSize: 13.sp, color: _dark),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+          if (selectedState.isNotEmpty || selectedCountry.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline, size: 14, color: _theme),
+                SizedBox(width: 5.w),
+                Expanded(
+                  child: Text(
+                    [if (selectedState.isNotEmpty) selectedState, if (selectedCountry.isNotEmpty) selectedCountry].join(', '),
+                    style: TextStyle(fontFamily: kFontDMSans, fontSize: 12.sp, color: _theme),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
         if (selectedLocationOption == 'State') ...[
           SizedBox(height: 10.h),
@@ -569,8 +592,10 @@ class _FilterPageState extends State<FilterPage> {
           SizedBox(height: 10.h),
           _countryDropdown(),
         ],
-        SizedBox(height: 10.h),
-        _kmSlider(),
+        if (showDistanceSlider) ...[
+          SizedBox(height: 10.h),
+          _kmSlider(),
+        ],
       ],
     );
   }
@@ -637,30 +662,16 @@ class _FilterPageState extends State<FilterPage> {
             child: Slider(
               value: _radiusKm,
               min: 1,
-              max: 200,
-              divisions: 40,
+              max: 60,
+              divisions: 12,
               onChanged: (v) => setState(() => _radiusKm = v),
             ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '1 km',
-                style: TextStyle(
-                  fontFamily: kFontDMSans,
-                  color: _grey,
-                  fontSize: 11.sp,
-                ),
-              ),
-              Text(
-                '200 km',
-                style: TextStyle(
-                  fontFamily: kFontDMSans,
-                  color: _grey,
-                  fontSize: 11.sp,
-                ),
-              ),
+              Text('1 km', style: TextStyle(fontFamily: kFontDMSans, color: _grey, fontSize: 11.sp)),
+              Text('60 km', style: TextStyle(fontFamily: kFontDMSans, color: _grey, fontSize: 11.sp)),
             ],
           ),
         ],
@@ -670,122 +681,50 @@ class _FilterPageState extends State<FilterPage> {
 
   Widget _stateDropdown() {
     return DropdownButtonFormField<String>(
-      initialValue: selectedState.isEmpty ? null : selectedState,
+      value: selectedState.isEmpty ? null : selectedState,
       dropdownColor: Colors.white,
-      icon: Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
       style: TextStyle(color: _dark, fontSize: 14.sp),
       borderRadius: BorderRadius.circular(12),
       decoration: InputDecoration(
         hintText: 'Choose a state',
         hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
-        prefixIcon: Icon(Icons.map_outlined, color: _grey, size: 20),
+        prefixIcon: const Icon(Icons.map_outlined, color: _grey, size: 20),
         filled: true,
         fillColor: Colors.white,
         contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _theme, width: 1.5),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _theme, width: 1.5)),
       ),
-      items: states
-          .map(
-            (s) => DropdownMenuItem(
-              value: s,
-              child: Text(s, style: TextStyle(color: _dark, fontSize: 14.sp)),
-            ),
-          )
-          .toList(),
-      onChanged: (v) => setState(() => selectedState = v!),
-    );
-  }
-
-  Widget _cityDropdown() {
-    return DropdownButtonFormField<String>(
-      initialValue: selectedCity.isEmpty ? null : selectedCity,
-      dropdownColor: Colors.white,
-      icon: Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
-      style: TextStyle(color: _dark, fontSize: 14.sp),
-      borderRadius: BorderRadius.circular(12),
-      decoration: InputDecoration(
-        hintText: 'Choose a city',
-        hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
-        prefixIcon: Icon(Icons.location_city_outlined, color: _grey, size: 20),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _theme, width: 1.5),
-        ),
-      ),
-      items: cities
-          .map(
-            (c) => DropdownMenuItem(
-              value: c,
-              child: Text(c, style: TextStyle(color: _dark, fontSize: 14.sp)),
-            ),
-          )
-          .toList(),
-      onChanged: (v) => setState(() => selectedCity = v ?? ''),
+      items: states.map((s) => DropdownMenuItem(value: s, child: Text(s, style: TextStyle(color: _dark, fontSize: 14.sp)))).toList(),
+      onChanged: (v) => setState(() => selectedState = v ?? ''),
     );
   }
 
   Widget _countryDropdown() {
     return DropdownButtonFormField<String>(
-      initialValue: selectedCountry.isEmpty ? null : selectedCountry,
+      value: selectedCountry.isEmpty ? null : selectedCountry,
       dropdownColor: Colors.white,
-      icon: Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
       style: TextStyle(color: _dark, fontSize: 14.sp),
       borderRadius: BorderRadius.circular(12),
       decoration: InputDecoration(
         hintText: 'Choose a country',
         hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
-        prefixIcon: Icon(Icons.flag_outlined, color: _grey, size: 20),
+        prefixIcon: const Icon(Icons.flag_outlined, color: _grey, size: 20),
         filled: true,
         fillColor: Colors.white,
         contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _theme, width: 1.5),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _theme, width: 1.5)),
       ),
-      items: countries
-          .map(
-            (c) => DropdownMenuItem(
-              value: c,
-              child: Text(c, style: TextStyle(color: _dark, fontSize: 14.sp)),
-            ),
-          )
-          .toList(),
+      items: countries.map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(color: _dark, fontSize: 14.sp)))).toList(),
       onChanged: (v) => setState(() => selectedCountry = v ?? ''),
     );
   }
 
-  // ─── Skills ───────────────────────────────────────────────────────────────
   Widget _skillsSection() {
     return Container(
       width: double.infinity,
@@ -804,33 +743,16 @@ class _FilterPageState extends State<FilterPage> {
               runSpacing: 8,
               children: selectedSkills.map((skill) {
                 return Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: _theme,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(color: _theme, borderRadius: BorderRadius.circular(20)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        skill,
-                        style: TextStyle(
-                          fontFamily: kFontDMSans,
-                          color: Colors.white,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      Text(skill, style: TextStyle(fontFamily: kFontDMSans, color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w500)),
                       SizedBox(width: 6.w),
                       GestureDetector(
-                        onTap: () =>
-                            setState(() => selectedSkills.remove(skill)),
-                        child: const Icon(
-                          Icons.close_rounded,
-                          size: 14,
-                          color: Colors.white70,
-                        ),
+                        onTap: () => setState(() => selectedSkills.remove(skill)),
+                        child: const Icon(Icons.close_rounded, size: 14, color: Colors.white70),
                       ),
                     ],
                   ),
@@ -839,48 +761,26 @@ class _FilterPageState extends State<FilterPage> {
             ),
             SizedBox(height: 10.h),
           ],
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _skillInputController,
-                  style: TextStyle(color: _dark, fontSize: 14.sp),
-                  decoration: InputDecoration(
-                    hintText: 'Add another skill...',
-                    hintStyle: TextStyle(color: _grey, fontSize: 14.sp),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onSubmitted: _addSkill,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _addSkill(_skillInputController.text),
-                child: Icon(Icons.add_circle_outline, color: _theme, size: 22),
-              ),
-            ],
+          SkillSearchField(
+            onSelected: _addSkill,
+            alreadySelected: selectedSkills,
+            hint: selectedSkills.isEmpty ? 'Search and add a skill...' : 'Add another skill...',
+            fillColor: Colors.white,
           ),
         ],
       ),
     );
   }
 
-  void _addSkill(String val) {
-    val = val.trim();
-    if (val.isNotEmpty && !selectedSkills.contains(val)) {
-      setState(() {
-        selectedSkills.add(val);
-        _skillInputController.clear();
-      });
-    }
+  void _addSkill(String skill) {
+    if (skill.isEmpty || selectedSkills.contains(skill)) return;
+    setState(() => selectedSkills.add(skill));
   }
 
-  // ─── Posted within chips ──────────────────────────────────────────────────
   Widget _postedWithinChips() {
     const entries = [
+      ('24h', 'Past 24h'),
       ('7d', 'Past Week'),
-      ('15d', '15 Days'),
       ('30d', '1 Month'),
       ('90d', '3 Months'),
     ];
@@ -890,15 +790,13 @@ class _FilterPageState extends State<FilterPage> {
       children: entries.map((entry) {
         final isSelected = postedWithin == entry.$1;
         return GestureDetector(
-          onTap: () =>
-              setState(() => postedWithin = isSelected ? '' : entry.$1),
+          onTap: () => setState(() => postedWithin = isSelected ? '' : entry.$1),
           child: _chip(entry.$2, isSelected),
         );
       }).toList(),
     );
   }
 
-  // ─── Sort by Latest ───────────────────────────────────────────────────────
   Widget _sortByLatestRow() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
@@ -910,15 +808,7 @@ class _FilterPageState extends State<FilterPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Sort by Latest',
-            style: TextStyle(
-              fontFamily: kFontDMSans,
-              color: _dark,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text('Sort by Latest', style: TextStyle(fontFamily: kFontDMSans, color: _dark, fontSize: 14.sp, fontWeight: FontWeight.w500)),
           Switch(
             value: sortByTime,
             activeThumbColor: _theme,
@@ -931,92 +821,48 @@ class _FilterPageState extends State<FilterPage> {
     );
   }
 
-  // ─── Apply button ─────────────────────────────────────────────────────────
-  Widget _applyButton() {
+  Widget _applyButtonWidget() {
     return GestureDetector(
       onTap: () async {
         final prefs = await SharedPreferences.getInstance();
         final userId = prefs.getString('userId');
 
-        final customInput = customControllers
-            .map((c) => c.text)
-            .where((t) => t.isNotEmpty)
-            .toList();
-
         final filterData = CreateFilterRequest(
           agentId: userId ?? '',
-          selectedOptions: selectedOptions,
+          selectedDomains: List<String>.from(selectedDomains),
+          opportunityTypes: List<String>.from(opportunityTypes),
           selectedLocationOption: selectedLocationOption,
           selectedCity: selectedCity,
           selectedState: selectedState,
           selectedCountry: selectedCountry,
-          distanceKm: _radiusKm.round(),
-          customOptions: customInput,
-          skills: List.from(selectedSkills),
-          sortByTime: sortByTime,
+          // Distance slider only applies for City or no-location mode; zero it out otherwise
+          distanceKm: (selectedLocationOption == 'City' || selectedLocationOption.isEmpty)
+              ? _radiusKm.round()
+              : 0,
+          skills: List<String>.from(selectedSkills),
           postedWithin: postedWithin,
-          internship: _internship,
-          research: _research,
-          freelance: _freelance,
-          competition: _competition,
-          collaborate: _collaborate,
+          sortByTime: sortByTime,
         );
 
-        if (!context.mounted) return;
+        if (!mounted) return;
+        final filterNotifier = Provider.of<FilterNotifier>(context, listen: false);
 
-        final filterNotifier = Provider.of<FilterNotifier>(
-          // ignore: use_build_context_synchronously
-          context,
-          listen: false,
-        );
+        final success = await filterNotifier.createFilter(userId ?? '', filterData);
 
-        final success = await filterNotifier.createFilter(userId!, filterData);
-
-        if (!context.mounted) return;
+        if (!mounted) return;
         if (!success) return;
 
-        final savedFilter =
-            filterNotifier.filter ??
-            GetFilterRes(
-              id: '',
-              selectedOptions: List.from(selectedOptions),
-              selectedLocationOption: selectedLocationOption,
-              selectedCity: selectedCity,
-              selectedState: selectedState,
-              selectedCountry: selectedCountry,
-              distanceKm: _radiusKm.round(),
-              customOptions: customInput,
-              skills: List.from(selectedSkills),
-              sortByTime: sortByTime,
-              postedWithin: postedWithin,
-              internship: _internship,
-              research: _research,
-              freelance: _freelance,
-              competition: _competition,
-              collaborate: _collaborate,
-            );
-
-        filterNotifier.setActiveFilter(savedFilter);
-
-        // ignore: use_build_context_synchronously
-        Navigator.pop(context);
+        // activeFilter is already set from the server response inside createFilter()
+        Navigator.pop(context, true);
       },
       child: Container(
         width: double.infinity,
         height: 54.h,
-        decoration: BoxDecoration(
-          color: _theme,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: _theme, borderRadius: BorderRadius.circular(16)),
         child: Center(
           child: Text(
             'Apply Filters',
-            style: TextStyle(
-              fontFamily: kFontDMSans,
-              color: Colors.white,
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontFamily: kFontDMSans, color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600),
           ),
         ),
       ),

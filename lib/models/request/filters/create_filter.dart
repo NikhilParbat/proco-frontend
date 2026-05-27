@@ -1,60 +1,49 @@
 import 'dart:convert';
 
-String createFilterRequestToJson(CreateFilterRequest data) => json.encode(data.toJson());
-
 class CreateFilterRequest {
+  final String agentId;
+  final List<String> selectedDomains;
+  final List<String> opportunityTypes;
+  final String selectedLocationOption;
+  final String selectedCity;
+  final String selectedState;
+  final String selectedCountry;
+  final int distanceKm;
+  final String postedWithin;
+  final List<String> skills;
+  final bool sortByTime;
+
   CreateFilterRequest({
     required this.agentId,
-    this.selectedOptions,
-    this.selectedLocationOption,
-    this.selectedCity,
-    this.selectedState,
-    this.selectedCountry,
-    this.distanceKm,
-    this.customOptions,
-    this.skills,
-    this.sortByTime,
-    this.postedWithin,
-    this.internship,
-    this.research,
-    this.freelance,
-    this.competition,
-    this.collaborate,
+    this.selectedDomains = const [],
+    this.opportunityTypes = const [],
+    this.selectedLocationOption = '',
+    this.selectedCity = '',
+    this.selectedState = '',
+    this.selectedCountry = '',
+    this.distanceKm = 0,
+    this.postedWithin = '',
+    this.skills = const [],
+    this.sortByTime = false,
   });
 
-  final String agentId;
-  final List<String>? selectedOptions;
-  final String? selectedLocationOption;
-  final String? selectedCity;
-  final String? selectedState;
-  final String? selectedCountry;
-  final int? distanceKm;
-  final List<String>? customOptions;
-  final List<String>? skills;
-  final bool? sortByTime;
-  final String? postedWithin;
-  final bool? internship;
-  final bool? research;
-  final bool? freelance;
-  final bool? competition;
-  final bool? collaborate;
+  // Convert the Flutter request object directly into a Map payload
+  Map<String, dynamic> toJson() {
+    return {
+      'agentId': agentId,
+      'selectedDomains': selectedDomains,
+      'opportunityTypes': opportunityTypes,
+      'selectedLocationOption': selectedLocationOption,
+      'selectedCity': selectedCity,
+      'selectedState': selectedState,
+      'selectedCountry': selectedCountry,
+      'distanceKm': distanceKm,
+      'postedWithin': postedWithin,
+      'skills': skills,
+      'sortByTime': sortByTime,
+    };
+  }
 
-  Map<String, dynamic> toJson() => {
-        'agentId': agentId,
-        'selectedOptions': selectedOptions ?? [],
-        'selectedLocationOption': selectedLocationOption,
-        'selectedCity': selectedCity,
-        'selectedState': selectedState,
-        'selectedCountry': selectedCountry,
-        'distanceKm': distanceKm,
-        'customOptions': customOptions ?? [],
-        'skills': skills ?? [],
-        'sortByTime': sortByTime,
-        'postedWithin': postedWithin,
-        'internship': internship,
-        'research': research,
-        'freelance': freelance,
-        'competition': competition,
-        'collaborate': collaborate,
-      };
+  // Helper string serializer to streamline debugging/logging network calls
+  String toRawJson() => json.encode(toJson());
 }

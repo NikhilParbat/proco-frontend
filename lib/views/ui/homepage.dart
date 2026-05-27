@@ -39,14 +39,9 @@ class _HomePageState extends State<HomePage> {
 
   // ✅ Memoize filter check
   bool _isFilterActive(GetFilterRes f) {
-    return f.selectedOptions.isNotEmpty ||
-        f.customOptions.isNotEmpty ||
-        f.skills.isNotEmpty ||
-        f.internship ||
-        f.research ||
-        f.freelance ||
-        f.competition ||
-        f.collaborate ||
+    return f.skills.isNotEmpty ||
+        f.selectedDomains.isNotEmpty ||
+        f.opportunityTypes.isNotEmpty ||
         f.selectedLocationOption.isNotEmpty ||
         f.distanceKm > 0 ||
         f.sortByTime ||
@@ -92,15 +87,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _refreshAfterFilter() async {
-    await Navigator.push(
+    final applied = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const FilterPage()),
     );
-    if (mounted) {
+    if (mounted && applied == true) {
       final bookmarkedIds = context.read<BookMarkNotifier>().jobs;
       context.read<JobsNotifier>().preloadJobs(
         widget.userId,
         bookmarkedIds: bookmarkedIds,
+        forceRefresh: true,
+      );
+    }
+  }
+
+  Future<void> _clearFilter() async {
+    await context.read<FilterNotifier>().clearFilter(widget.userId);
+    if (mounted) {
+      context.read<JobsNotifier>().preloadJobs(
+        widget.userId,
+        bookmarkedIds: context.read<BookMarkNotifier>().jobs,
         forceRefresh: true,
       );
     }
@@ -142,14 +148,28 @@ class _HomePageState extends State<HomePage> {
       drawer: const LagoonDrawer(),
       appBar: LagoonAppBar(
         actions: [
-          _buildAppBarAction(
-            icon: CupertinoIcons.slider_horizontal_3,
-            size: 24.w,
-            onTap: _refreshAfterFilter,
-            showDot:
-                context.watch<FilterNotifier>().activeFilter != null &&
-                _isFilterActive(context.watch<FilterNotifier>().activeFilter!),
-          ),
+          Builder(builder: (context) {
+            final filterNotifier = context.watch<FilterNotifier>();
+            final filterActive = filterNotifier.activeFilter != null &&
+                _isFilterActive(filterNotifier.activeFilter!);
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (filterActive)
+                  _buildAppBarAction(
+                    icon: CupertinoIcons.xmark,
+                    size: 18.w,
+                    onTap: _clearFilter,
+                  ),
+                _buildAppBarAction(
+                  icon: CupertinoIcons.slider_horizontal_3,
+                  size: 24.w,
+                  onTap: _refreshAfterFilter,
+                  showDot: filterActive,
+                ),
+              ],
+            );
+          }),
 
           _buildAppBarAction(
             icon: CupertinoIcons.bell,

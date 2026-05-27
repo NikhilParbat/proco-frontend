@@ -40,24 +40,19 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
   }
 
   Future<void> clearFilter(String agentId) async {
+    // REFACTORED: Send clean default fields matching your new CreateFilterRequest array structures
     final response = await FilterHelper.createFilter(
       CreateFilterRequest(
         agentId: agentId,
-        selectedOptions: [],
+        selectedDomains: const [],
+        opportunityTypes: const [],
         selectedLocationOption: '',
         selectedCity: '',
         selectedState: '',
         selectedCountry: '',
         distanceKm: 0,
-        customOptions: [],
-        skills: [],
-        sortByTime: false,
+        skills: const [],
         postedWithin: '',
-        internship: false,
-        research: false,
-        freelance: false,
-        competition: false,
-        collaborate: false,
       ),
     );
 
@@ -73,7 +68,6 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
 
   /// Fetches the saved filter for [userId] from the backend and updates
   /// [activeFilter] + the local SharedPreferences cache.
-  /// Call this on app start / after login so the chip bar is always in sync.
   Future<void> loadFilterForUser(String userId) async {
     if (userId.isEmpty) return;
     final response = await FilterHelper.getFilter(userId);
@@ -117,7 +111,8 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
       );
       if (response.data != null) {
         filter = response.data;
-        notifyListeners();
+        // Synchronize your active visual filters state immediately on success
+        setActiveFilter(response.data!);
       }
       return true;
     } else {

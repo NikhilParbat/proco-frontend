@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/skill_search_field.dart';
 import 'package:proco/views/common/phone_field.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:provider/provider.dart';
@@ -338,6 +339,7 @@ class _EditFormState extends State<_EditForm> {
                 values: widget.state.skills,
                 onAdded: (v) => widget.state.addSkill(v),
                 onRemoved: (v) => widget.state.removeSkill(v),
+                enableAutocomplete: true,
               ),
               SizedBox(height: 20.h),
               _ChipInputSection(
@@ -1810,12 +1812,14 @@ class _ChipInputSection extends StatefulWidget {
     required this.values,
     required this.onAdded,
     required this.onRemoved,
+    this.enableAutocomplete = false,
   });
 
   final String label;
   final List<String> values;
   final ValueChanged<String> onAdded;
   final ValueChanged<String> onRemoved;
+  final bool enableAutocomplete;
 
   @override
   State<_ChipInputSection> createState() => _ChipInputSectionState();
@@ -1908,86 +1912,98 @@ class _ChipInputSectionState extends State<_ChipInputSection> {
           ),
         SizedBox(height: 8.h),
         if (!atMax) ...[
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _controller,
-                  maxLength: 40,
-                  style: TextStyle(
-                      fontFamily: kFontDMSans, fontSize: 13.sp, color: kDark),
-                  decoration: InputDecoration(
-                    hintText: 'Add ${widget.label.toLowerCase()}…',
-                    counterText: '',
-                    hintStyle: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 13.sp,
-                      color: const Color(0xFFBBBBBB),
-                    ),
-                    filled: true,
-                    fillColor: kLight,
-                    contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12.w, vertical: 12.h),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10.r),
-                        bottomLeft: Radius.circular(10.r),
-                      ),
-                      borderSide: const BorderSide(color: kLightGrey),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10.r),
-                        bottomLeft: Radius.circular(10.r),
-                      ),
-                      borderSide: const BorderSide(color: kLightGrey),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10.r),
-                        bottomLeft: Radius.circular(10.r),
-                      ),
-                      borderSide: const BorderSide(
-                          color: kThemeColor, width: 1.5),
-                    ),
-                  ),
-                  onFieldSubmitted: (_) => _add(),
-                ),
-              ),
-              InkWell(
-                onTap: _add,
-                child: Container(
-                  height: 46.h,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  decoration: BoxDecoration(
-                    color: kDark,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(10.r),
-                      bottomRight: Radius.circular(10.r),
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Add',
+          if (widget.enableAutocomplete)
+            SkillSearchField(
+              onSelected: (skill) {
+                if (!widget.values.contains(skill)) widget.onAdded(skill);
+              },
+              alreadySelected: List<String>.from(widget.values),
+              hint: 'Search and add a skill...',
+              fillColor: kLight,
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _controller,
+                    maxLength: 40,
                     style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: kLight,
+                        fontFamily: kFontDMSans, fontSize: 13.sp, color: kDark),
+                    decoration: InputDecoration(
+                      hintText: 'Add ${widget.label.toLowerCase()}…',
+                      counterText: '',
+                      hintStyle: TextStyle(
+                        fontFamily: kFontDMSans,
+                        fontSize: 13.sp,
+                        color: const Color(0xFFBBBBBB),
+                      ),
+                      filled: true,
+                      fillColor: kLight,
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w, vertical: 12.h),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(10.r),
+                          bottomLeft: Radius.circular(10.r),
+                        ),
+                        borderSide: const BorderSide(color: kLightGrey),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(10.r),
+                          bottomLeft: Radius.circular(10.r),
+                        ),
+                        borderSide: const BorderSide(color: kLightGrey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(10.r),
+                          bottomLeft: Radius.circular(10.r),
+                        ),
+                        borderSide: const BorderSide(
+                            color: kThemeColor, width: 1.5),
+                      ),
+                    ),
+                    onFieldSubmitted: (_) => _add(),
+                  ),
+                ),
+                InkWell(
+                  onTap: _add,
+                  child: Container(
+                    height: 46.h,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    decoration: BoxDecoration(
+                      color: kDark,
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(10.r),
+                        bottomRight: Radius.circular(10.r),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Add',
+                      style: TextStyle(
+                        fontFamily: kFontDMSans,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: kLight,
+                      ),
                     ),
                   ),
                 ),
+              ],
+            ),
+            if (_error != null) ...[
+              SizedBox(height: 4.h),
+              Text(
+                _error!,
+                style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.redAccent,
+                    fontFamily: kFontDMSans),
               ),
             ],
-          ),
-          if (_error != null) ...[
-            SizedBox(height: 4.h),
-            Text(
-              _error!,
-              style: TextStyle(
-                  fontSize: 11.sp, color: Colors.redAccent,
-                  fontFamily: kFontDMSans),
-            ),
           ],
         ] else
           Padding(
