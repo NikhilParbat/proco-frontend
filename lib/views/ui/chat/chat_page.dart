@@ -13,8 +13,8 @@ import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 // Same palette as the onboarding chat
-const _kSentBubble = kThemeColor;
-const _kRecvBubble = Color.fromARGB(200, 216, 87, 87);
+const _kSentBubble = kSend;
+const _kRecvBubble = kReceive;
 
 class ChatPage extends StatefulWidget {
   const ChatPage({
@@ -37,7 +37,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  static const Color _bgChat = Color(0xFFF4F6FA);
+  static const Color _bgChat = kBackgroundColor;
 
   int offset = 1;
   io.Socket? socket;
@@ -237,7 +237,10 @@ class _ChatPageState extends State<ChatPage> {
 
             // Pin / Unpin
             ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 20.w,
+                vertical: 4.h,
+              ),
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -259,8 +262,13 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ),
               subtitle: Text(
-                pinned ? 'Remove from pinned conversations' : 'Keep this chat at the top',
-                style: GoogleFonts.dmSans(fontSize: 12, color: Colors.grey.shade400),
+                pinned
+                    ? 'Remove from pinned conversations'
+                    : 'Keep this chat at the top',
+                style: GoogleFonts.dmSans(
+                  fontSize: 12,
+                  color: Colors.grey.shade400,
+                ),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -270,22 +278,36 @@ class _ChatPageState extends State<ChatPage> {
 
             // Clear Chat
             ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 20.w,
+                vertical: 4.h,
+              ),
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.orange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.cleaning_services_rounded, color: Colors.orange, size: 20),
+                child: const Icon(
+                  Icons.cleaning_services_rounded,
+                  color: Colors.orange,
+                  size: 20,
+                ),
               ),
               title: Text(
                 'Clear Chat',
-                style: GoogleFonts.dmSans(fontWeight: FontWeight.w600, color: Colors.orange, fontSize: 15),
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.orange,
+                  fontSize: 15,
+                ),
               ),
               subtitle: Text(
                 'Delete all messages for both users',
-                style: GoogleFonts.dmSans(fontSize: 12, color: Colors.grey.shade400),
+                style: GoogleFonts.dmSans(
+                  fontSize: 12,
+                  color: Colors.grey.shade400,
+                ),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -295,22 +317,36 @@ class _ChatPageState extends State<ChatPage> {
 
             // Unmatch
             ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 20.w,
+                vertical: 4.h,
+              ),
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.red.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.person_remove_outlined, color: Colors.redAccent, size: 20),
+                child: const Icon(
+                  Icons.person_remove_outlined,
+                  color: Colors.redAccent,
+                  size: 20,
+                ),
               ),
               title: Text(
                 'Unmatch',
-                style: GoogleFonts.dmSans(fontWeight: FontWeight.w600, color: Colors.redAccent, fontSize: 15),
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.redAccent,
+                  fontSize: 15,
+                ),
               ),
               subtitle: Text(
                 'Remove this match and block messaging',
-                style: GoogleFonts.dmSans(fontSize: 12, color: Colors.grey.shade400),
+                style: GoogleFonts.dmSans(
+                  fontSize: 12,
+                  color: Colors.grey.shade400,
+                ),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -329,7 +365,10 @@ class _ChatPageState extends State<ChatPage> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Clear Chat', style: GoogleFonts.dmSans(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Clear Chat',
+          style: GoogleFonts.dmSans(fontWeight: FontWeight.w700),
+        ),
         content: Text(
           'All messages will be permanently deleted for both users. This cannot be undone.',
           style: GoogleFonts.dmSans(fontSize: 14),
@@ -337,7 +376,10 @@ class _ChatPageState extends State<ChatPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.dmSans(color: Colors.grey.shade500)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.dmSans(color: Colors.grey.shade500),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -345,7 +387,13 @@ class _ChatPageState extends State<ChatPage> {
               await context.read<ChatNotifier>().clearChat(widget.id);
               setState(() => messages.clear());
             },
-            child: Text('Clear', style: GoogleFonts.dmSans(color: Colors.orange, fontWeight: FontWeight.w600)),
+            child: Text(
+              'Clear',
+              style: GoogleFonts.dmSans(
+                color: Colors.orange,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -357,7 +405,10 @@ class _ChatPageState extends State<ChatPage> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Unmatch', style: GoogleFonts.dmSans(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Unmatch',
+          style: GoogleFonts.dmSans(fontWeight: FontWeight.w700),
+        ),
         content: Text(
           'This will remove your match. They will no longer be able to message you.',
           style: GoogleFonts.dmSans(fontSize: 14),
@@ -365,7 +416,10 @@ class _ChatPageState extends State<ChatPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.dmSans(color: Colors.grey.shade500)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.dmSans(color: Colors.grey.shade500),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -373,7 +427,13 @@ class _ChatPageState extends State<ChatPage> {
               Navigator.pop(context);
               await context.read<ChatNotifier>().unmatchChat(widget.id);
             },
-            child: Text('Unmatch', style: GoogleFonts.dmSans(color: Colors.redAccent, fontWeight: FontWeight.w600)),
+            child: Text(
+              'Unmatch',
+              style: GoogleFonts.dmSans(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -407,7 +467,10 @@ class _ChatPageState extends State<ChatPage> {
                         return Center(
                           child: Text(
                             'Error ${snapshot.error}',
-                            style: GoogleFonts.dmSans(color: Colors.redAccent, fontSize: 14.sp),
+                            style: GoogleFonts.dmSans(
+                              color: Colors.redAccent,
+                              fontSize: 14.sp,
+                            ),
                           ),
                         );
                       } else {
@@ -433,11 +496,17 @@ class _ChatPageState extends State<ChatPage> {
                                 SizedBox(height: 12.h),
                                 Text(
                                   'No messages yet',
-                                  style: GoogleFonts.dmSans(fontSize: 15.sp, color: Colors.grey),
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 15.sp,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                                 Text(
                                   'Say hello 👋',
-                                  style: GoogleFonts.dmSans(fontSize: 13.sp, color: Colors.grey.shade400),
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13.sp,
+                                    color: Colors.grey.shade400,
+                                  ),
                                 ),
                               ],
                             ),
@@ -453,7 +522,8 @@ class _ChatPageState extends State<ChatPage> {
                             if (messages.isEmpty) return const SizedBox();
 
                             final reversedIndex = messages.length - 1 - index;
-                            if (reversedIndex < 0 || reversedIndex >= messages.length) {
+                            if (reversedIndex < 0 ||
+                                reversedIndex >= messages.length) {
                               return const SizedBox();
                             }
 
@@ -462,11 +532,22 @@ class _ChatPageState extends State<ChatPage> {
 
                             bool showTime = index == messages.length - 1;
                             if (!showTime && index < messages.length - 1) {
-                              final prev = messages[messages.length - 2 - index];
-                              showTime = data.createdAt.difference(prev.createdAt).inMinutes.abs() > 5;
+                              final prev =
+                                  messages[messages.length - 2 - index];
+                              showTime =
+                                  data.createdAt
+                                      .difference(prev.createdAt)
+                                      .inMinutes
+                                      .abs() >
+                                  5;
                             }
 
-                            return _buildBubble(data, isMine, chatNotifier, showTime);
+                            return _buildBubble(
+                              data,
+                              isMine,
+                              chatNotifier,
+                              showTime,
+                            );
                           },
                         );
                       }
@@ -478,15 +559,24 @@ class _ChatPageState extends State<ChatPage> {
                 if (widget.isUnmatched)
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 14.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
-                      border: Border(top: BorderSide(color: Colors.red.shade100)),
+                      border: Border(
+                        top: BorderSide(color: Colors.red.shade100),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.block_rounded, size: 16, color: Colors.red.shade400),
+                        Icon(
+                          Icons.block_rounded,
+                          size: 16,
+                          color: Colors.red.shade400,
+                        ),
                         SizedBox(width: 8.w),
                         Text(
                           'You cannot message this person anymore',
@@ -527,68 +617,128 @@ class _ChatPageState extends State<ChatPage> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => ProfilePage(viewUserId: userId),
-      ),
+      MaterialPageRoute(builder: (_) => ProfilePage(viewUserId: userId)),
     );
   }
 
   // ─── AppBar ───────────────────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar(ChatNotifier chatNotifier, bool isOnline) {
     return PreferredSize(
-      preferredSize: Size.fromHeight(64.h),
+      preferredSize: Size.fromHeight(66.h),
       child: AppBar(
-        backgroundColor: kThemeColor,
+        backgroundColor: kBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
+
+        // Subtle divider line
+        shape: Border(
+          bottom: BorderSide(
+            color: Colors.black.withValues(alpha: 0.08),
+            width: 2,
+          ),
+        ),
+
         flexibleSpace: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
             child: Row(
               children: [
                 // Back button
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 36.w,
-                    height: 36.w,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 38.w,
+                    height: 38.w,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(10),
+                      color: kBackgroundColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.04),
+                      ),
                     ),
-                    child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: kThemeColor,
+                      size: 16,
+                    ),
                   ),
                 ),
-                SizedBox(width: 10.w),
 
-                // Avatar + name — tappable to view profile
+                SizedBox(width: 12.w),
+
+                // Avatar + Name
                 Expanded(
                   child: GestureDetector(
                     onTap: _openProfile,
+                    behavior: HitTestBehavior.opaque,
                     child: Row(
                       children: [
-                        // Avatar with online dot
+                        // Avatar
                         Stack(
+                          clipBehavior: Clip.none,
                           children: [
-                            CircleAvatar(radius: 20.r, backgroundImage: NetworkImage(widget.profile)),
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                  width: 1,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 21.r,
+                                backgroundColor: const Color.fromARGB(
+                                  26,
+                                  0,
+                                  0,
+                                  0,
+                                ),
+
+                                // default image if null/empty
+                                backgroundImage: (widget.profile.isNotEmpty)
+                                    ? NetworkImage(widget.profile)
+                                    : const NetworkImage(
+                                        'https://ui-avatars.com/api/?name=User',
+                                      ),
+
+                                onBackgroundImageError: (_, _) {},
+                                child: widget.profile.isEmpty
+                                    ? Icon(
+                                        Icons.person_rounded,
+                                        color: Colors.white70,
+                                        size: 20.sp,
+                                      )
+                                    : null,
+                              ),
+                            ),
+
+                            // online indicator
                             Positioned(
-                              right: 0,
-                              bottom: 0,
+                              right: 1,
+                              bottom: 1,
                               child: Container(
                                 width: 11,
                                 height: 11,
                                 decoration: BoxDecoration(
-                                  color: isOnline ? const Color(0xFF4ADE80) : Colors.white38,
+                                  color: isOnline
+                                      ? const Color(0xFF4ADE80)
+                                      : Colors.grey.shade500,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: kThemeColor, width: 2),
+                                  border: Border.all(
+                                    color: kBackgroundColor,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(width: 10.w),
 
-                        // Name + typing / online status
+                        SizedBox(width: 12.w),
+
+                        // Name + Status
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,18 +749,39 @@ class _ChatPageState extends State<ChatPage> {
                                 style: GoogleFonts.dmSans(
                                   fontSize: 15.sp,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                                  color: kThemeColor,
+                                  letterSpacing: -0.2,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              Text(
-                                chatNotifier.typing ? 'typing...' : (isOnline ? 'Online' : 'Offline'),
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 11.sp,
-                                  color: chatNotifier.typing
-                                      ? Colors.white70
-                                      : (isOnline ? const Color(0xFF4ADE80) : Colors.white54),
+
+                              SizedBox(height: 1.h),
+
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 180),
+                                child: Text(
+                                  chatNotifier.typing
+                                      ? 'typing...'
+                                      : (isOnline ? 'Online' : 'Offline'),
+                                  key: ValueKey(
+                                    chatNotifier.typing.toString() +
+                                        isOnline.toString(),
+                                  ),
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: chatNotifier.typing
+                                        ? kThemeColor.withValues(alpha: 0.9)
+                                        : (isOnline
+                                              ? const Color(0xFF4ADE80)
+                                              : const Color.fromARGB(
+                                                  137,
+                                                  78,
+                                                  78,
+                                                  78,
+                                                )),
+                                  ),
                                 ),
                               ),
                             ],
@@ -621,10 +792,20 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
 
-                // Three-dot menu
-                IconButton(
-                  icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
-                  onPressed: () => _showOptions(context),
+                // More button
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withValues(alpha: 0.03),
+                  ),
+                  child: IconButton(
+                    splashRadius: 20,
+                    icon: const Icon(
+                      Icons.more_vert_rounded,
+                      color: kThemeColor,
+                    ),
+                    onPressed: () => _showOptions(context),
+                  ),
                 ),
               ],
             ),
@@ -654,14 +835,19 @@ class _ChatPageState extends State<ChatPage> {
               ),
               child: Text(
                 chatNotifier.msgTime(data.createdAt.toString()),
-                style: GoogleFonts.dmSans(fontSize: 11.sp, color: Colors.grey.shade600),
+                style: GoogleFonts.dmSans(
+                  fontSize: 11.sp,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ),
           ),
         Padding(
           padding: EdgeInsets.only(bottom: 4.h),
           child: Row(
-            mainAxisAlignment: isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isMine
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (!isMine) ...[
@@ -673,7 +859,9 @@ class _ChatPageState extends State<ChatPage> {
               ],
 
               Container(
-                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.70),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.70,
+                ),
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: isMine ? _kSentBubble : _kRecvBubble,
@@ -695,7 +883,7 @@ class _ChatPageState extends State<ChatPage> {
                   data.content,
                   style: GoogleFonts.dmSans(
                     fontSize: 14.sp,
-                    color: Colors.white,
+                    color: const Color.fromARGB(255, 0, 0, 0),
                     height: 1.4,
                   ),
                 ),
@@ -709,82 +897,157 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // ─── Input bar ────────────────────────────────────────────────────────────
+  // ─── Input Bar ────────────────────────────────────────────────────────────
   Widget _buildInputBar() {
     return Container(
       padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 14.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: _bgChat,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: kThemeColor.withValues(alpha: 0.25), width: 1),
-              ),
-              child: TextField(
-                controller: _messageController,
-                style: GoogleFonts.dmSans(fontSize: 14.sp, color: const Color(0xFF040326)),
-                maxLines: null,
-                maxLength: 1000,
-                inputFormatters: [noEmojiFormatter],
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _sendMessage(_messageController.text, widget.id, receiver),
-                onChanged: (_) => _sendTyping(),
-                onTapOutside: (_) => _stopTyping(),
-                decoration: InputDecoration(
-                  hintText: 'Type a message…',
-                  hintStyle: GoogleFonts.dmSans(fontSize: 14.sp, color: Colors.grey.shade400),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-                  border: InputBorder.none,
-                  counterText: '',
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: 10.w),
+        color: kBackgroundColor,
 
-          ValueListenableBuilder<bool>(
-            valueListenable: _sendingNotifier,
-            builder: (context, sending, child) => GestureDetector(
-              onTap: sending
-                  ? null
-                  : () => _sendMessage(_messageController.text, widget.id, receiver),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 44.w,
-                height: 44.w,
+        // top divider
+        border: Border(
+          top: BorderSide(
+            color: Colors.white.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+      ),
+
+      child: SafeArea(
+        top: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // ─── Textbox ───────────────────────────────
+            Expanded(
+              child: Container(
+                constraints: BoxConstraints(minHeight: 50.h, maxHeight: 130.h),
+
                 decoration: BoxDecoration(
-                  color: sending ? kThemeColor.withValues(alpha: 0.5) : kThemeColor,
-                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(26),
+
+                  border: Border.all(
+                    color: Colors.black.withValues(alpha: 0.05),
+                  ),
+
                   boxShadow: [
                     BoxShadow(
-                      color: kThemeColor.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: sending
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+
+                child: TextField(
+                  controller: _messageController,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+
+                  cursorColor: kThemeColor,
+                  maxLines: null,
+                  maxLength: 1000,
+                  inputFormatters: [noEmojiFormatter],
+                  textInputAction: TextInputAction.send,
+                  textCapitalization: TextCapitalization.sentences,
+
+                  onSubmitted: (_) => _sendMessage(
+                    _messageController.text,
+                    widget.id,
+                    receiver,
+                  ),
+
+                  onChanged: (_) => _sendTyping(),
+                  onTapOutside: (_) => _stopTyping(),
+
+                  decoration: InputDecoration(
+                    hintText: 'Type a message...',
+                    hintStyle: GoogleFonts.dmSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black38,
+                    ),
+
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 18.w,
+                      vertical: 14.h,
+                    ),
+
+                    border: InputBorder.none,
+                    counterText: '',
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+
+            SizedBox(width: 10.w),
+
+            // ─── Send Button ──────────────────────────
+            ValueListenableBuilder<bool>(
+              valueListenable: _sendingNotifier,
+              builder: (context, sending, child) {
+                return GestureDetector(
+                  onTap: sending
+                      ? null
+                      : () => _sendMessage(
+                          _messageController.text,
+                          widget.id,
+                          receiver,
+                        ),
+
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+
+                    width: 50.w,
+                    height: 50.w,
+
+                    decoration: BoxDecoration(
+                      color: sending
+                          ? kThemeColor.withValues(alpha: 0.6)
+                          : kThemeColor,
+
+                      shape: BoxShape.circle,
+
+                      boxShadow: [
+                        BoxShadow(
+                          color: kThemeColor.withValues(alpha: 0.22),
+                          blurRadius: 14,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+
+                    child: Center(
+                      child: sending
+                          ? SizedBox(
+                              width: 18.w,
+                              height: 18.w,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Transform.translate(
+                              offset: const Offset(1, -1),
+                              child: Icon(
+                                Icons.send_rounded,
+                                color: Colors.white,
+                                size: 21.sp,
+                              ),
+                            ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

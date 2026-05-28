@@ -22,12 +22,14 @@ const kDarkPurple = Color(0xff6352c5);
 const kTealLight = Color(0xFF0BBFCA);
 const kTeal = Color(0xFF08979F);
 const kThemeColor = Color.fromARGB(255, 0, 0, 0);
-// const kAccentColor = Color.fromARGB(255, 0, 0, 0);
+const kAccentColor = Color.fromARGB(199, 152, 87, 216);
 const kBackgroundColor = Color(0xFFF4F6FA);
 const kCross = Color.fromARGB(234, 14, 15, 15);
 const kBookmark = Color.fromARGB(234, 14, 15, 15);
 const krevert = Color.fromARGB(234, 14, 15, 15);
 const kNavy = Color(0xFF040326);
+const kSend = Color.fromARGB(248, 163, 196, 243);
+const kReceive = Color.fromARGB(255, 245, 237, 143);
 
 double height = 825.h;
 double width = 375.w;

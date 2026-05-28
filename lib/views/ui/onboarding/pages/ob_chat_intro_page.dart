@@ -14,11 +14,10 @@ import 'package:proco/views/common/lagoon_app_bar.dart';
 
 // ── Colors ────────────────────────────────────────────────────────────────────
 
-const _kBotBubble = kThemeColor;
-const _kUserBubble = Color.fromARGB(200, 216, 87, 87);
+const _kBotBubble = kReceive;
+const _kUserBubble = kSend;
 
 // ── Static data ────────────────────────────────────────────────────────────────
-
 
 const _kDegrees = [
   'B.Tech / B.E.',
@@ -412,11 +411,12 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
           _snack('Name required', 'Please enter your full name.');
           return;
         }
-        final nameParts =
-            name.split(' ').where((p) => p.isNotEmpty).toList();
+        final nameParts = name.split(' ').where((p) => p.isNotEmpty).toList();
         if (nameParts.length < 2) {
-          _snack('Full name required',
-              'Please type your first and last name (e.g. "Arjun Sharma").');
+          _snack(
+            'Full name required',
+            'Please type your first and last name (e.g. "Arjun Sharma").',
+          );
           return;
         }
         if (_gender.isEmpty) {
@@ -434,7 +434,10 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
       case 1:
         final college = _collegeCtrl.text.trim();
         if (college.isEmpty) {
-          _snack('Institution required', 'Please enter your college / institution name.');
+          _snack(
+            'Institution required',
+            'Please enter your college / institution name.',
+          );
           return;
         }
         if (_degree.isEmpty) {
@@ -442,16 +445,27 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
           return;
         }
         if (_branch.isEmpty) {
-          _snack('Field of study required', 'Please select your field of study.');
+          _snack(
+            'Field of study required',
+            'Please select your field of study.',
+          );
           return;
         }
         if (_gradYear.isEmpty) {
-          _snack('Graduation year required', 'Please select your graduation year.');
+          _snack(
+            'Graduation year required',
+            'Please select your graduation year.',
+          );
           return;
         }
         final cgpaText = _cgpaCtrl.text.trim();
-        final cgpaSummary = cgpaText.isEmpty ? '' : ' • CGPA: $cgpaText/$_cgpaScale';
-        _advance(userSummary: '$college • $_degree • $_branch$cgpaSummary • $_gradYear');
+        final cgpaSummary = cgpaText.isEmpty
+            ? ''
+            : ' • CGPA: $cgpaText/$_cgpaScale';
+        _advance(
+          userSummary:
+              '$college • $_degree • $_branch$cgpaSummary • $_gradYear',
+        );
 
       case 2:
         if (_skills.isEmpty) {
@@ -459,7 +473,6 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
           return;
         }
         _advance(userSummary: _skills.join(', '));
-
 
       case 3:
         _finishLocationStep();
@@ -471,7 +484,10 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   void _finishLocationStep() {
     final label = _selectedLocationLabel?.trim() ?? '';
     if (label.isEmpty) {
-      _snack('Location required', 'Please select your location before continuing.');
+      _snack(
+        'Location required',
+        'Please select your location before continuing.',
+      );
       return;
     }
     _advance(userSummary: label);
@@ -502,17 +518,24 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         setState(() {
           _locationResults
             ..clear()
-            ..addAll(data.map((item) {
-              final addr = item['address'] as Map<String, dynamic>? ?? {};
-              return {
-                'display_name': item['display_name'],
-                'lat': double.parse(item['lat']),
-                'lon': double.parse(item['lon']),
-                'city': addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['county'] ?? '',
-                'state': addr['state'] ?? '',
-                'country': addr['country'] ?? '',
-              };
-            }));
+            ..addAll(
+              data.map((item) {
+                final addr = item['address'] as Map<String, dynamic>? ?? {};
+                return {
+                  'display_name': item['display_name'],
+                  'lat': double.parse(item['lat']),
+                  'lon': double.parse(item['lon']),
+                  'city':
+                      addr['city'] ??
+                      addr['town'] ??
+                      addr['village'] ??
+                      addr['county'] ??
+                      '',
+                  'state': addr['state'] ?? '',
+                  'country': addr['country'] ?? '',
+                };
+              }),
+            );
         });
       }
     } catch (e) {
@@ -733,7 +756,8 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
                             SizedBox(height: 6.h),
                             GestureDetector(
                               onTap: () {
-                                context.read<OnboardingFlowProvider>().skills = [];
+                                context.read<OnboardingFlowProvider>().skills =
+                                    [];
                                 _advance(userSummary: 'Skipped');
                               },
                               child: Padding(

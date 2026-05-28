@@ -309,7 +309,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
           buildBtn(
             icon: PhosphorIcon(
               PhosphorIcons.heartStraight(),
-              color: const Color(0xFFE6B8A2),
+              color: kSend,
               size: 34.sp,
             ),
             bgColor: Colors.white,
