@@ -191,7 +191,10 @@ class _AboutTab extends StatelessWidget {
               ),
               SizedBox(width: 14.w),
               Expanded(
-                child: _StatCard(value: '0', label: 'SUCCESSFUL\nMATCHES'),
+                child: _StatCard(
+                  value: '${state.successfulMatches}',
+                  label: 'SUCCESSFUL\nMATCHES',
+                ),
               ),
             ],
           ),
@@ -363,6 +366,16 @@ class _PersonalTab extends StatelessWidget {
     final hasHobbies = state.hobbies.isNotEmpty;
     final hasInterests = state.interests.isNotEmpty;
 
+    final hasAnyOptionalData = hasGender ||
+        hasAge ||
+        hasEducation ||
+        hasWorkStyle ||
+        hasCommunicationStyle ||
+        hasSkills ||
+        hasLinks ||
+        hasHobbies ||
+        hasInterests;
+
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 32.h),
       child: Column(
@@ -372,122 +385,115 @@ class _PersonalTab extends StatelessWidget {
             email: state.email,
             phone: state.phone,
             isReadOnly: state.isReadOnly,
-            isPrivateInfoVisible:
-                state.isPrivateInfoVisible, // Add this field to your state
+            isPrivateInfoVisible: state.isPrivateInfoVisible,
             onToggleVisibility: (newValue) {
-              state.updatePrivacyPreference(
-                newValue,
-              ); // Add this backend sync function
+              state.updatePrivacyPreference(newValue);
             },
           ),
-          if (hasGender || hasAge) ...[
-            SizedBox(height: 16.h),
-            Row(
-              children: [
-                if (hasGender)
-                  Expanded(
-                    child: _InfoTile(label: 'GENDER', value: state.gender),
-                  ),
-                if (hasGender && hasAge) SizedBox(width: 12.w),
-                if (hasAge)
-                  Expanded(
-                    child: _InfoTile(label: 'AGE', value: '$age'),
-                  ),
-              ],
-            ),
-          ],
-          if (hasEducation) ...[
-            SizedBox(height: 24.h),
-            _SectionHeader(title: 'EDUCATION', icon: Icons.school_outlined),
-            SizedBox(height: 12.h),
-            ...state.education.map(
-              (edu) => Padding(
-                padding: EdgeInsets.only(bottom: 14.h),
-                child: _EducationCard(item: edu),
-              ),
-            ),
-          ],
-          if (hasWorkStyle || hasCommunicationStyle) ...[
-            SizedBox(height: 24.h),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (hasWorkStyle)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _CapLabel('WORK STYLE'),
-                        SizedBox(height: 8.h),
-                        _OutlineChip(label: state.workStyle),
-                      ],
+          if (!hasAnyOptionalData) ...[
+            SizedBox(height: 32.h),
+            const _NoDataText(),
+          ] else ...[
+            if (hasGender || hasAge) ...[
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  if (hasGender)
+                    Expanded(
+                      child: _InfoTile(label: 'GENDER', value: state.gender),
                     ),
-                  ),
-                if (hasWorkStyle && hasCommunicationStyle)
-                  SizedBox(width: 16.w),
-                if (hasCommunicationStyle)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _CapLabel('COMMUNICATION'),
-                        SizedBox(height: 8.h),
-                        _OutlineChip(label: state.communicationStyle),
-                      ],
+                  if (hasGender && hasAge) SizedBox(width: 12.w),
+                  if (hasAge)
+                    Expanded(
+                      child: _InfoTile(label: 'AGE', value: '$age'),
                     ),
-                  ),
-              ],
-            ),
-          ],
-          SizedBox(height: 24.h),
-          const _CapLabel('SKILLS'),
-          SizedBox(height: 12.h),
-          if (hasSkills)
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
-              children: state.skills
-                  .map((s) => _OutlineChip(label: s))
-                  .toList(),
-            )
-          else
-            _NotAddedHint(label: 'No skills added yet'),
-          SizedBox(height: 24.h),
-          const _CapLabel('INTERESTS'),
-          SizedBox(height: 12.h),
-          if (hasInterests)
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
-              children: state.interests
-                  .map((i) => _OutlineChip(label: i))
-                  .toList(),
-            )
-          else
-            _NotAddedHint(label: 'No interests added yet'),
-          SizedBox(height: 24.h),
-          const _CapLabel('HOBBIES'),
-          SizedBox(height: 12.h),
-          if (hasHobbies)
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
-              children: state.hobbies
-                  .map((h) => _OutlineChip(label: h))
-                  .toList(),
-            )
-          else
-            _NotAddedHint(label: 'No hobbies added yet'),
-          if (hasLinks) ...[
-            SizedBox(height: 24.h),
-            const _CapLabel('EXTERNAL LINKS'),
-            SizedBox(height: 12.h),
-            ...state.links.map(
-              (link) => Padding(
-                padding: EdgeInsets.only(bottom: 10.h),
-                child: _LinkRow(item: link),
+                ],
               ),
-            ),
+            ],
+            if (hasEducation) ...[
+              SizedBox(height: 24.h),
+              _SectionHeader(title: 'EDUCATION', icon: Icons.school_outlined),
+              SizedBox(height: 12.h),
+              ...state.education.map(
+                (edu) => Padding(
+                  padding: EdgeInsets.only(bottom: 14.h),
+                  child: _EducationCard(item: edu),
+                ),
+              ),
+            ],
+            if (hasWorkStyle || hasCommunicationStyle) ...[
+              SizedBox(height: 24.h),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasWorkStyle)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _CapLabel('WORK STYLE'),
+                          SizedBox(height: 8.h),
+                          _OutlineChip(label: state.workStyle),
+                        ],
+                      ),
+                    ),
+                  if (hasWorkStyle && hasCommunicationStyle)
+                    SizedBox(width: 16.w),
+                  if (hasCommunicationStyle)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _CapLabel('COMMUNICATION'),
+                          SizedBox(height: 8.h),
+                          _OutlineChip(label: state.communicationStyle),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+            if (hasSkills) ...[
+              SizedBox(height: 24.h),
+              const _CapLabel('SKILLS'),
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: state.skills.map((s) => _OutlineChip(label: s)).toList(),
+              ),
+            ],
+            if (hasInterests) ...[
+              SizedBox(height: 24.h),
+              const _CapLabel('INTERESTS'),
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: state.interests.map((i) => _OutlineChip(label: i)).toList(),
+              ),
+            ],
+            if (hasHobbies) ...[
+              SizedBox(height: 24.h),
+              const _CapLabel('HOBBIES'),
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: state.hobbies.map((h) => _OutlineChip(label: h)).toList(),
+              ),
+            ],
+            if (hasLinks) ...[
+              SizedBox(height: 24.h),
+              const _CapLabel('EXTERNAL LINKS'),
+              SizedBox(height: 12.h),
+              ...state.links.map(
+                (link) => Padding(
+                  padding: EdgeInsets.only(bottom: 10.h),
+                  child: _LinkRow(item: link),
+                ),
+              ),
+            ],
           ],
         ],
       ),
@@ -510,49 +516,49 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
 
   @override
   Widget build(BuildContext context) {
+    final hasAnyData = _s.experiences.isNotEmpty ||
+        _s.projects.isNotEmpty ||
+        _s.achievements.isNotEmpty;
+
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 32.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // --- EXPERIENCE SECTION ---
-          if (_s.experiences.isNotEmpty) ...[
-            _ProSectionHeader(title: 'EXPERIENCE', icon: Icons.work_outline),
-            SizedBox(height: 18.h),
-            ..._s.experiences.asMap().entries.map(
-              (e) => _ExperienceRow(data: e.value),
-            ),
-            SizedBox(height: 28.h),
-          ],
-
-          // --- PROJECT SHOWCASE SECTION ---
-          if (_s.projects.isNotEmpty) ...[
-            _ProSectionHeader(
-              title: 'PROJECT SHOWCASE',
-              icon: Icons.star_border,
-            ),
-            SizedBox(height: 18.h),
-            ..._s.projects.asMap().entries.map(
-              (p) => _ProjectCard(data: p.value),
-            ),
-            SizedBox(height: 28.h),
-          ],
-
-          // --- ACHIEVEMENTS SECTION ---
-          if (_s.achievements.isNotEmpty) ...[
-            _ProSectionHeader(
-              title: 'ACHIEVEMENTS',
-              icon: Icons.emoji_events_outlined,
-            ),
-            SizedBox(height: 18.h),
-            ..._s.achievements.asMap().entries.map(
-              (a) => _AchievementRow(data: a.value),
-            ),
-            // No bottom spacing needed for the final item unless required by design
-            SizedBox(height: 28.h),
-          ],
-        ],
-      ),
+      child: hasAnyData
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_s.experiences.isNotEmpty) ...[
+                  _ProSectionHeader(title: 'EXPERIENCE', icon: Icons.work_outline),
+                  SizedBox(height: 18.h),
+                  ..._s.experiences.asMap().entries.map(
+                    (e) => _ExperienceRow(data: e.value),
+                  ),
+                  SizedBox(height: 28.h),
+                ],
+                if (_s.projects.isNotEmpty) ...[
+                  _ProSectionHeader(
+                    title: 'PROJECT SHOWCASE',
+                    icon: Icons.star_border,
+                  ),
+                  SizedBox(height: 18.h),
+                  ..._s.projects.asMap().entries.map(
+                    (p) => _ProjectCard(data: p.value),
+                  ),
+                  SizedBox(height: 28.h),
+                ],
+                if (_s.achievements.isNotEmpty) ...[
+                  _ProSectionHeader(
+                    title: 'ACHIEVEMENTS',
+                    icon: Icons.emoji_events_outlined,
+                  ),
+                  SizedBox(height: 18.h),
+                  ..._s.achievements.asMap().entries.map(
+                    (a) => _AchievementRow(data: a.value),
+                  ),
+                  SizedBox(height: 28.h),
+                ],
+              ],
+            )
+          : const _NoDataText(),
     );
   }
 }
@@ -907,6 +913,30 @@ class _AchievementRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── No data placeholder ────────────────────────────────────────────────────
+
+class _NoDataText extends StatelessWidget {
+  const _NoDataText();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: Text(
+          'No data to display',
+          style: TextStyle(
+            fontFamily: 'DMSans',
+            fontSize: 13.sp,
+            fontStyle: FontStyle.italic,
+            color: kDarkGrey,
+          ),
+        ),
       ),
     );
   }
@@ -1374,26 +1404,6 @@ class _CapLabel extends StatelessWidget {
         fontWeight: FontWeight.w600,
         color: kDarkGrey,
         letterSpacing: 0.8,
-      ),
-    );
-  }
-}
-
-// ── Not-added hint ─────────────────────────────────────────────────────────
-
-class _NotAddedHint extends StatelessWidget {
-  const _NotAddedHint({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontFamily: kFontDMSans,
-        fontSize: 13.sp,
-        fontStyle: FontStyle.italic,
-        color: const Color(0xFFBBBBBB),
       ),
     );
   }
