@@ -95,32 +95,52 @@ List<String> skills = [
 ];
 
 List<String> profile = [];
-// --- Font Families ---
+
+// Font Families
 const String kFontMontserrat = 'Montserrat';
 const String kFontDMSans = 'DMSans';
 
-// --- Typography Styles ---
-
-// Heading Font: Montserrat
-final kHeadingStyle = TextStyle(
+// Heading
+TextStyle get kHeadingStyle => TextStyle(
   fontFamily: kFontMontserrat,
   fontSize: 25.sp,
-  fontWeight: FontWeight.bold,
+  fontWeight: FontWeight.w700,
   color: kDark,
 );
 
-// Sub-Heading/Sub-text: DM Sans
-final kSubTextStyle = TextStyle(
+// Sub Heading
+TextStyle get kSubTextStyle => TextStyle(
   fontFamily: kFontDMSans,
   fontSize: 16.sp,
   fontWeight: FontWeight.w500,
-  color: const Color.fromARGB(255, 20, 20, 20),
+  color: const Color(0xFF141414),
 );
 
-// Small Sub-text/Body: DM Sans
-final kSmallTextStyle = TextStyle(
+// Body Text
+TextStyle get kSmallTextStyle => TextStyle(
   fontFamily: kFontDMSans,
   fontSize: 14.sp,
-  fontWeight: FontWeight.normal,
+  fontWeight: FontWeight.w400,
+  color: kDarkGrey,
+);
+
+TextStyle get kTitleStyle => TextStyle(
+  fontFamily: kFontMontserrat,
+  fontSize: 20.sp,
+  fontWeight: FontWeight.w700,
+  color: kDark,
+);
+
+TextStyle get kBodyStyle => TextStyle(
+  fontFamily: kFontDMSans,
+  fontSize: 15.sp,
+  fontWeight: FontWeight.w400,
+  color: kDark,
+);
+
+TextStyle get kCaptionStyle => TextStyle(
+  fontFamily: kFontDMSans,
+  fontSize: 12.sp,
+  fontWeight: FontWeight.w500,
   color: kDarkGrey,
 );

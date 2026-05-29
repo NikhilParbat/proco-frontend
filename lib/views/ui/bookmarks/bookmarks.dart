@@ -56,271 +56,177 @@ class _BookMarkPageState extends State<BookMarkPage> {
             _selectedIndex = 0;
           }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 16.h),
+          // Replace everything inside your Consumer<BookMarkNotifier> success state with this
 
-              // ── Horizontal Bookmark Bars ─────────────────
-              SizedBox(
-                height: 52.h,
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Saved Opportunities',
+                        style: TextStyle(
+                          fontFamily: kFontMontserrat,
+                          fontSize: 26.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
 
-                child: ListView.separated(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      SizedBox(height: 6.h),
 
-                  scrollDirection: Axis.horizontal,
+                      Text(
+                        '${bookMarkNotifier.bookmarks.length} opportunities saved for later',
+                        style: TextStyle(
+                          fontFamily: kFontDMSans,
+                          fontSize: 13.sp,
+                          color: Colors.black54,
+                        ),
+                      ),
 
-                  itemBuilder: (context, index) {
-                    final bookmark = bookmarks[index];
-                    final active = bookmark.job.isActive;
-                    final selected = index == _selectedIndex;
+                      SizedBox(height: 20.h),
 
-                    final chipColor = active
-                        ? (selected ? kThemeColor : Colors.white)
-                        : (selected
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade100);
-                    final chipBorder = active
-                        ? (selected
-                            ? kThemeColor
-                            : kThemeColor.withValues(alpha: 0.08))
-                        : Colors.grey.shade300;
-                    final iconColor = active
-                        ? (selected ? Colors.white : kThemeColor)
-                        : Colors.grey.shade400;
-                    final textColor = active
-                        ? (selected ? Colors.white : Colors.black87)
-                        : Colors.grey.shade400;
+                      _buildStatsCard(bookMarkNotifier.bookmarks),
+
+                      SizedBox(height: 20.h),
+
+                      // _buildFeaturedCard(
+                      //   context,
+                      //   bookMarkNotifier.bookmarks.first,
+                      //   bookMarkNotifier,
+                      // ),
+                      // SizedBox(height: 28.h),
+
+                      // Text(
+                      //   'All Saved',
+                      //   style: TextStyle(
+                      //     fontFamily: kFontMontserrat,
+                      //     fontSize: 18.sp,
+                      //     fontWeight: FontWeight.w700,
+                      //     color: Colors.black87,
+                      //   ),
+                      // ),
+                      SizedBox(height: 14.h),
+                    ],
+                  ),
+                ),
+              ),
+
+              SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final bookmark = bookMarkNotifier.bookmarks[index];
+                    final job = bookmark.job;
+                    final active = job.isActive;
 
                     return GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _selectedIndex = index;
-                        });
+                        if (!active) {
+                          Get.snackbar(
+                            'Temporarily Unavailable',
+                            'This opportunity is currently paused.',
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                          return;
+                        }
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => Scaffold(
+                              backgroundColor: kBackgroundColor,
+                              appBar: AppBar(
+                                backgroundColor: kBackgroundColor,
+                                elevation: 0,
+                                iconTheme: const IconThemeData(
+                                  color: kThemeColor,
+                                ),
+                                title: Text(
+                                  job.title,
+                                  style: TextStyle(
+                                    fontFamily: kFontMontserrat,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18.sp,
+                                    color: kThemeColor,
+                                  ),
+                                ),
+                              ),
+                              body: SafeArea(
+                                child: BookmarkCardSwiper(
+                                  bookmarks: [bookmark],
+                                  bookmarkNotifier: bookMarkNotifier,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
                       },
-
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 10.h,
-                        ),
-
+                      child: Container(
+                        margin: EdgeInsets.only(bottom: 14.h),
+                        padding: EdgeInsets.all(16.w),
                         decoration: BoxDecoration(
-                          color: chipColor,
-
-                          borderRadius: BorderRadius.circular(16.r),
-
-                          border: Border.all(color: chipBorder),
-
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(22.r),
+                          border: Border.all(
+                            color: active
+                                ? kThemeColor.withValues(alpha: 0.08)
+                                : Colors.grey.shade300,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-
-                              blurRadius: 10,
-
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-
-                          children: [
-                            Icon(
-                              Icons.bookmark_outline_rounded,
-                              size: 16.sp,
-                              color: iconColor,
-                            ),
-
-                            SizedBox(width: 8.w),
-
-                            ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: 130.w),
-
-                              child: Text(
-                                bookmark.job.title,
-
-                                overflow: TextOverflow.ellipsis,
-
-                                style: TextStyle(
-                                  fontFamily: kFontDMSans,
-
-                                  fontSize: 13.sp,
-
-                                  fontWeight: FontWeight.w700,
-
-                                  color: textColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-
-                  separatorBuilder: (_, __) => SizedBox(width: 10.w),
-
-                  itemCount: bookmarks.length,
-                ),
-              ),
-
-              SizedBox(height: 18.h),
-
-              // ── Selected Card Swiper ───────────────────
-              // ── Bookmark Tiles ────────────────────────
-              Expanded(
-                child: ListView.builder(
-                  padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 24.h),
-
-                  itemCount: bookmarks.length,
-
-                  itemBuilder: (context, index) {
-                    final bookmark = bookmarks[index];
-                    final job = bookmark.job;
-                    final active = job.isActive;
-
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: 14.h),
-
-                      child: GestureDetector(
-                        onTap: () {
-                          if (!active) {
-                            Get.snackbar(
-                              'Temporarily Unavailable',
-                              'This opportunity is currently paused. Check back later.',
-                              backgroundColor: Colors.grey.shade700,
-                              colorText: Colors.white,
-                              snackPosition: SnackPosition.BOTTOM,
-                              borderRadius: 12,
-                              margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
-                              duration: const Duration(seconds: 3),
-                              icon: const Icon(Icons.pause_circle_outline,
-                                  color: Colors.white),
-                            );
-                            return;
-                          }
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => Scaffold(
-                                backgroundColor: kBackgroundColor,
-
-                                appBar: AppBar(
-                                  backgroundColor: kThemeColor,
-                                  elevation: 0,
-
-                                  iconTheme: const IconThemeData(
-                                    color: Colors.white,
-                                  ),
-
-                                  title: Text(
-                                    bookmark.job.title,
-                                    style: TextStyle(
-                                      fontFamily: kFontMontserrat,
-                                      fontSize: 18.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-
-                                body: SafeArea(
-                                  child: BookmarkCardSwiper(
-                                    bookmarks: [bookmark],
-                                    bookmarkNotifier: bookMarkNotifier,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-
                         child: Opacity(
-                          opacity: active ? 1.0 : 0.55,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-
-                              borderRadius: BorderRadius.circular(22.r),
-
-                              border: Border.all(
-                                color: active
-                                    ? kThemeColor.withValues(alpha: 0.06)
-                                    : Colors.grey.shade300,
-                                width: active ? 1.0 : 1.5,
-                              ),
-
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withValues(alpha: 0.12),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-
-                            child: Row(
-                              children: [
-                                // ── Image ────────────────────
-                                ClipRRect(
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(22.r),
-                                    bottomLeft: Radius.circular(22.r),
-                                  ),
-
-                                  child: SizedBox(
-                                    width: 105.w,
-                                    height: 96.h,
-
+                          opacity: active ? 1 : 0.55,
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 58.w,
+                                    height: 58.w,
+                                    decoration: BoxDecoration(
+                                      color: kThemeColor.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16.r),
+                                    ),
                                     child: job.hasImage
-                                        ? Image.network(
-                                            job.imageUrl,
-                                            fit: BoxFit.cover,
-                                            color: active
-                                                ? null
-                                                : Colors.grey,
-                                            colorBlendMode: active
-                                                ? null
-                                                : BlendMode.saturation,
-                                          )
-                                        : Container(
-                                            color: active
-                                                ? kThemeColor
-                                                    .withValues(alpha: 0.08)
-                                                : Colors.grey.shade100,
-
-                                            child: Icon(
-                                              Icons.work_outline_rounded,
-                                              color: active
-                                                  ? kThemeColor
-                                                  : Colors.grey.shade400,
-                                              size: 34.sp,
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              16.r,
                                             ),
+                                            child: Image.network(
+                                              job.imageUrl,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                        : Icon(
+                                            Icons.work_outline_rounded,
+                                            color: kThemeColor,
+                                            size: 28.sp,
                                           ),
                                   ),
-                                ),
 
-                                // ── Content ──────────────────
-                                Expanded(
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 14.w,
-                                      vertical: 12.h,
-                                    ),
+                                  SizedBox(width: 14.w),
 
+                                  Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
-
                                       children: [
-                                        // ── Title ───────────
                                         Text(
                                           job.title,
-                                          maxLines: 1,
+                                          maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontFamily: kFontDMSans,
@@ -330,9 +236,8 @@ class _BookMarkPageState extends State<BookMarkPage> {
                                           ),
                                         ),
 
-                                        SizedBox(height: 5.h),
+                                        SizedBox(height: 4.h),
 
-                                        // ── Company ─────────
                                         Text(
                                           job.companyText,
                                           maxLines: 1,
@@ -343,92 +248,68 @@ class _BookMarkPageState extends State<BookMarkPage> {
                                             color: Colors.grey.shade600,
                                           ),
                                         ),
-
-                                        SizedBox(height: 9.h),
-
-                                        // ── Location ──────
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.location_on_outlined,
-                                              size: 15.sp,
-                                              color: active
-                                                  ? kThemeColor
-                                                  : Colors.grey.shade400,
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Expanded(
-                                              child: Text(
-                                                job.location,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontFamily: kFontDMSans,
-                                                  fontSize: 11.5.sp,
-                                                  color: Colors.grey.shade700,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-
-                                        SizedBox(height: 10.h),
-
-                                        // ── Type Chip / Paused badge ──
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 10.w,
-                                            vertical: 5.h,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: active
-                                                ? kThemeColor
-                                                    .withValues(alpha: 0.08)
-                                                : Colors.grey.shade200,
-                                            borderRadius:
-                                                BorderRadius.circular(14.r),
-                                          ),
-                                          child: Text(
-                                            active
-                                                ? job.opportunityType
-                                                : 'PAUSED',
-                                            style: TextStyle(
-                                              fontFamily: kFontDMSans,
-                                              fontSize: 10.5.sp,
-                                              fontWeight: FontWeight.w700,
-                                              color: active
-                                                  ? kThemeColor
-                                                  : Colors.grey.shade500,
-                                            ),
-                                          ),
-                                        ),
                                       ],
                                     ),
                                   ),
-                                ),
 
-                                // ── Arrow ───────────────────
-                                Padding(
-                                  padding: EdgeInsets.only(right: 14.w),
-                                  child: Icon(
-                                    active
-                                        ? Icons.arrow_forward_ios_rounded
-                                        : Icons.pause_circle_outline_rounded,
-                                    size: 15.sp,
-                                    color: active
-                                        ? Colors.black26
-                                        : Colors.grey.shade400,
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 16.sp,
+                                    color: Colors.black26,
                                   ),
-                                ),
+                                ],
+                              ),
+
+                              SizedBox(height: 14.h),
+
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _infoChip(
+                                      Icons.location_on_outlined,
+                                      job.location,
+                                    ),
+                                  ),
+
+                                  SizedBox(width: 8.w),
+
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12.w,
+                                      vertical: 8.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: active
+                                          ? kThemeColor.withValues(alpha: 0.08)
+                                          : Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(
+                                        100.r,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      active ? job.opportunityType : 'PAUSED',
+                                      style: TextStyle(
+                                        fontFamily: kFontDMSans,
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: active
+                                            ? kThemeColor
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  }, childCount: bookMarkNotifier.bookmarks.length),
                 ),
               ),
+
+              SliverToBoxAdapter(child: SizedBox(height: 24.h)),
             ],
           );
         },
@@ -440,7 +321,203 @@ class _BookMarkPageState extends State<BookMarkPage> {
     return const EmptyStateWidget(
       icon: Icons.bookmark_outline_rounded,
       title: 'No saved opportunities',
-      subtitle: 'Swipe up on an opportunity card to save it and access it later here.',
+      subtitle:
+          'Swipe up on an opportunity card to save it and access it later here.',
     );
   }
+}
+
+// Widget _buildFeaturedCard(
+//   BuildContext context,
+//   dynamic bookmark,
+//   BookMarkNotifier notifier,
+// ) {
+//   final job = bookmark.job;
+
+//   return GestureDetector(
+//     onTap: () {
+//       Navigator.push(
+//         context,
+//         MaterialPageRoute(
+//           builder: (_) => Scaffold(
+//             backgroundColor: kBackgroundColor,
+//             appBar: AppBar(
+//               backgroundColor: kThemeColor,
+//               title: Text(job.title),
+//             ),
+//             body: SafeArea(
+//               child: BookmarkCardSwiper(
+//                 bookmarks: [bookmark],
+//                 bookmarkNotifier: notifier,
+//               ),
+//             ),
+//           ),
+//         ),
+//       );
+//     },
+//     child: Container(
+//       height: 220.h,
+//       decoration: BoxDecoration(
+//         borderRadius: BorderRadius.circular(26.r),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withValues(alpha: 0.12),
+//             blurRadius: 18,
+//             offset: const Offset(0, 8),
+//           ),
+//         ],
+//       ),
+//       child: ClipRRect(
+//         borderRadius: BorderRadius.circular(26.r),
+//         child: Stack(
+//           fit: StackFit.expand,
+//           children: [
+//             job.hasImage
+//                 ? Image.network(job.imageUrl, fit: BoxFit.cover)
+//                 : Container(color: kThemeColor),
+
+//             Container(
+//               decoration: BoxDecoration(
+//                 gradient: LinearGradient(
+//                   begin: Alignment.bottomCenter,
+//                   end: Alignment.topCenter,
+//                   colors: [
+//                     Colors.black.withValues(alpha: 0.85),
+//                     Colors.transparent,
+//                   ],
+//                 ),
+//               ),
+//             ),
+
+//             Positioned(
+//               left: 18.w,
+//               right: 18.w,
+//               bottom: 18.h,
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     'FEATURED',
+//                     style: TextStyle(
+//                       color: Colors.white70,
+//                       fontSize: 11.sp,
+//                       fontWeight: FontWeight.w700,
+//                     ),
+//                   ),
+
+//                   SizedBox(height: 6.h),
+
+//                   Text(
+//                     job.title,
+//                     maxLines: 2,
+//                     overflow: TextOverflow.ellipsis,
+//                     style: TextStyle(
+//                       fontFamily: kFontMontserrat,
+//                       color: Colors.white,
+//                       fontSize: 22.sp,
+//                       fontWeight: FontWeight.w800,
+//                     ),
+//                   ),
+
+//                   SizedBox(height: 6.h),
+
+//                   Text(
+//                     job.companyText,
+//                     style: TextStyle(
+//                       fontFamily: kFontDMSans,
+//                       color: Colors.white70,
+//                       fontSize: 13.sp,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     ),
+//   );
+// }
+
+Widget _buildStatsCard(List bookmarks) {
+  final activeCount = bookmarks.where((e) => e.job.isActive).length;
+
+  final pausedCount = bookmarks.length - activeCount;
+
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 18.h),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20.r),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.04),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _statItem(bookmarks.length.toString(), 'Saved'),
+        _statItem(activeCount.toString(), 'Active'),
+        _statItem(pausedCount.toString(), 'Paused'),
+      ],
+    ),
+  );
+}
+
+Widget _statItem(String value, String label) {
+  return Column(
+    children: [
+      Text(
+        value,
+        style: TextStyle(
+          fontFamily: kFontMontserrat,
+          fontSize: 22.sp,
+          fontWeight: FontWeight.w800,
+          color: kThemeColor,
+        ),
+      ),
+      SizedBox(height: 4.h),
+      Text(
+        label,
+        style: TextStyle(
+          fontFamily: kFontDMSans,
+          fontSize: 12.sp,
+          color: Colors.black54,
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _infoChip(IconData icon, String text) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+    decoration: BoxDecoration(
+      color: kThemeColor.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(100.r),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14.sp, color: kThemeColor),
+        SizedBox(width: 4.w),
+        Expanded(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: kFontDMSans,
+              fontSize: 11.sp,
+              color: kThemeColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
