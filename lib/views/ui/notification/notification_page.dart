@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
-import 'package:proco/constants/app_constants.dart';
 import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';

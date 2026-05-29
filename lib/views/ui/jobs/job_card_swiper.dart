@@ -10,7 +10,6 @@ import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
-import 'package:proco/constants/app_constants.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/common/skill_chips_wrap.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
