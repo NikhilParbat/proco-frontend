@@ -280,6 +280,8 @@ class _FilterPageState extends State<FilterPage> {
                   SizedBox(height: 32.h),
 
                   _applyButtonWidget(),
+                  SizedBox(height: 12.h),
+                  _resetFiltersButtonWidget(),
                   SizedBox(height: 30.h),
                 ],
               ),
@@ -817,6 +819,41 @@ class _FilterPageState extends State<FilterPage> {
             onChanged: (val) => setState(() => sortByTime = val),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _resetFiltersButtonWidget() {
+    return GestureDetector(
+      onTap: () async {
+        final prefs = await SharedPreferences.getInstance();
+        final userId = prefs.getString('userId') ?? '';
+        if (!mounted) return;
+        final filterNotifier = Provider.of<FilterNotifier>(context, listen: false);
+        await filterNotifier.clearFilter(userId);
+        _resetAll();
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      },
+      child: Container(
+        width: double.infinity,
+        height: 54.h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _border, width: 1.5),
+        ),
+        child: Center(
+          child: Text(
+            'Reset Filters',
+            style: TextStyle(
+              fontFamily: kFontDMSans,
+              color: _dark,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }

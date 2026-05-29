@@ -28,6 +28,7 @@ class ProfileEditState extends ChangeNotifier {
   List<LinkItem> links = [];
   List<EducationItem> education = []; // Updated to match UserResponse
   int queriesCreated = 0;
+  int successfulMatches = 0;
 
   bool showEmail = true,
       showPhone = true,
@@ -204,6 +205,7 @@ class ProfileEditState extends ChangeNotifier {
           achievements = List<AchievementItem>.from(d.achievements);
           education = List<EducationItem>.from(d.education);
           queriesCreated = d.queriesCreated;
+          successfulMatches = d.successfulMatches;
         }
       } else {
         // Viewing self
@@ -218,6 +220,7 @@ class ProfileEditState extends ChangeNotifier {
           achievements = List<AchievementItem>.from(d.achievements);
           links = List<LinkItem>.from(d.links);
           queriesCreated = d.queriesCreated;
+          successfulMatches = d.successfulMatches;
 
           // Fallback parsing strategy in case ProfileRes schema uses map representation or direct type mapping
           if (d.education != null) {

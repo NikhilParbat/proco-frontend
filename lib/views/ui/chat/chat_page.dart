@@ -628,6 +628,7 @@ class _ChatPageState extends State<ChatPage> {
       child: AppBar(
         backgroundColor: kBackgroundColor,
         elevation: 0,
+        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
 
         // Subtle divider line

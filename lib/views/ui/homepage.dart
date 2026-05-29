@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
                   width: 8.w,
                   height: 8.w,
                   decoration: BoxDecoration(
-                    color: kThemeColor,
+                    color: kSend,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -96,17 +96,6 @@ class _HomePageState extends State<HomePage> {
       context.read<JobsNotifier>().preloadJobs(
         widget.userId,
         bookmarkedIds: bookmarkedIds,
-        forceRefresh: true,
-      );
-    }
-  }
-
-  Future<void> _clearFilter() async {
-    await context.read<FilterNotifier>().clearFilter(widget.userId);
-    if (mounted) {
-      context.read<JobsNotifier>().preloadJobs(
-        widget.userId,
-        bookmarkedIds: context.read<BookMarkNotifier>().jobs,
         forceRefresh: true,
       );
     }
@@ -157,12 +146,6 @@ class _HomePageState extends State<HomePage> {
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (filterActive)
-                    _buildAppBarAction(
-                      icon: CupertinoIcons.xmark,
-                      size: 18.w,
-                      onTap: _clearFilter,
-                    ),
                   _buildAppBarAction(
                     icon: CupertinoIcons.slider_horizontal_3,
                     size: 24.w,

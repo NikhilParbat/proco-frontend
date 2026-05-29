@@ -6,7 +6,6 @@ import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
-import 'package:proco/views/common/status_filter_chip.dart';
 import 'package:proco/views/ui/jobs/add_job.dart';
 import 'package:proco/views/ui/jobs/matched_users.dart';
 import 'package:provider/provider.dart';
@@ -19,17 +18,67 @@ class JobListPage extends StatefulWidget {
   State<JobListPage> createState() => _JobListPageState();
 }
 
-class _JobListPageState extends State<JobListPage> {
-  late List<JobsResponse> jobs = [];
-  late List<JobsResponse> filteredJobs = [];
+class _JobListPageState extends State<JobListPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  List<JobsResponse> jobs = [];
 
-  String selectedStatus = 'all';
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) setState(() {});
+    });
+    Future.delayed(const Duration(milliseconds: 500), loadJobs);
+  }
 
-  final List<Map<String, String>> filters = [
-    {'value': 'all', 'label': 'All'},
-    {'value': 'active', 'label': 'Active'},
-    {'value': 'closed', 'label': 'Inactive'},
-  ];
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<JobsResponse> get _filteredJobs {
+    if (_tabController.index == 0) {
+      return jobs.where((j) => j.isActive).toList();
+    } else {
+      return jobs.where((j) => !j.isActive).toList();
+    }
+  }
+
+  void loadJobs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId') ?? '';
+    if (userId.isEmpty || !mounted) return;
+    final notifier = context.read<JobsNotifier>();
+    await notifier.loadCachedUserJobs(userId);
+    if (mounted) notifier.getUserJobs(userId);
+  }
+
+  Future<void> setCurrentJobId(String jobId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('currentJobId', jobId);
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays >= 365) {
+      final y = (diff.inDays / 365).floor();
+      return '$y year${y > 1 ? 's' : ''} ago';
+    }
+    if (diff.inDays >= 30) {
+      final m = (diff.inDays / 30).floor();
+      return '$m month${m > 1 ? 's' : ''} ago';
+    }
+    if (diff.inDays > 0) {
+      return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+    }
+    if (diff.inHours > 0) {
+      return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+    }
+    return 'Just now';
+  }
 
   Widget _buildEmptyState() {
     return Center(
@@ -76,116 +125,101 @@ class _JobListPageState extends State<JobListPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      loadJobs();
-    });
-  }
-
-  void filterJobs() {
-    if (selectedStatus == 'all') {
-      filteredJobs = jobs;
-    } else if (selectedStatus == 'active') {
-      filteredJobs = jobs.where((job) => job.isActive).toList();
-    } else {
-      filteredJobs = jobs.where((job) => !job.isActive).toList();
-    }
-  }
-
-  void loadJobs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? '';
-
-    if (userId.isEmpty || !mounted) return;
-
-    final notifier = context.read<JobsNotifier>();
-
-    await notifier.loadCachedUserJobs(userId);
-
-    if (mounted) {
-      notifier.getUserJobs(userId);
-    }
-  }
-
-  Future<void> setCurrentJobId(String jobId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('currentJobId', jobId);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const LagoonDrawer(),
       appBar: const LagoonAppBar(),
       backgroundColor: kBackgroundColor,
-
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const AddJobPage()),
         ).then((_) => loadJobs()),
-        backgroundColor: kThemeColor,
+        backgroundColor: Colors.black,
+        shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white),
       ),
-
       body: Consumer<JobsNotifier>(
         builder: (context, jobsNotifier, child) {
-          if (jobsNotifier.isLoadingUserJobs) {
+          if (jobsNotifier.isLoadingUserJobs && jobsNotifier.userJobs.isEmpty) {
             return const Center(
               child: CircularProgressIndicator(color: kThemeColor),
             );
           }
 
-          if (jobsNotifier.userJobs.isEmpty) {
-            return _buildEmptyState();
-          }
-
           jobs = jobsNotifier.userJobs;
-          filterJobs();
+
+          if (jobs.isEmpty) return _buildEmptyState();
+
+          final filteredJobs = _filteredJobs;
+          final totalApplicants = jobs.fold<int>(0, (sum, j) => sum + j.applicantsCount);
 
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// FILTERS
+              /// Tabs: Active / Closed
+              Container(
+                color: Colors.white,
+                child: TabBar(
+                  controller: _tabController,
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.black,
+                  indicatorWeight: 2.5,
+                  labelStyle: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: kFontDMSans,
+                  ),
+                  unselectedLabelStyle: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: kFontDMSans,
+                  ),
+                  tabs: const [Tab(text: 'Active'), Tab(text: 'Closed')],
+                ),
+              ),
+
+              /// Stat boxes
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
                 child: Row(
                   children: [
-                    Text(
-                      '${filteredJobs.length} opportunities',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.grey,
-                        fontFamily: kFontDMSans,
-                      ),
+                    _StatBox(
+                      label: 'Total\nQueries',
+                      value: '${jobs.length}',
                     ),
-
-                    const Spacer(),
-
-                    Row(
-                      children: filters.map((f) {
-                        return StatusFilterChip(
-                          label: f['label']!,
-                          isSelected: selectedStatus == f['value'],
-                          selectedColor: kThemeColor,
-                          onTap: () => setState(() {
-                            selectedStatus = f['value']!;
-                            filterJobs();
-                          }),
-                        );
-                      }).toList(),
+                    SizedBox(width: 12.w),
+                    _StatBox(
+                      label: 'Total\nApplicants',
+                      value: '$totalApplicants',
                     ),
                   ],
                 ),
               ),
 
-              /// JOB LIST
+              /// Section header
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 0),
+                child: Text(
+                  'All Opportunities',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: kFontDMSans,
+                    color: kDark,
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 10.h),
+
+              /// Opportunity list
               Expanded(
                 child: filteredJobs.isEmpty
                     ? Center(
                         child: Text(
-                          'No opportunities match this filter',
+                          'No opportunities here',
                           style: TextStyle(
                             color: Colors.grey,
                             fontSize: 14.sp,
@@ -193,74 +227,57 @@ class _JobListPageState extends State<JobListPage> {
                           ),
                         ),
                       )
-                    : GridView.builder(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 6.h,
-                        ),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12.w,
-                          mainAxisSpacing: 12.h,
-                          childAspectRatio: 0.82,
-                        ),
+                    : ListView.builder(
+                        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 80.h),
                         itemCount: filteredJobs.length,
                         itemBuilder: (context, index) {
                           final job = filteredJobs[index];
-
-                          return JobCard(
-                            job: job,
-
-                            onViewMatches: () async {
-                              await setCurrentJobId(job.id);
-
-                              if (context.mounted) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const MatchedUsers(),
-                                  ),
-                                );
-                              }
-                            },
-
-                            onEdit: () {
-                              Navigator.push(
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 14.h),
+                            child: JobCard(
+                              job: job,
+                              timeAgo: _timeAgo(job.createdAt),
+                              onViewMatches: () async {
+                                await setCurrentJobId(job.id);
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const MatchedUsers(),
+                                    ),
+                                  );
+                                }
+                              },
+                              onEdit: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => AddJobPage(job: job),
                                 ),
-                              ).then((_) => loadJobs());
-                            },
-
-                            onDelete: () {
-                              Get.defaultDialog(
-                                title: "Delete Opportunity",
-                                middleText:
-                                    "Are you sure you want to delete this opportunity?",
-                                textConfirm: "Delete",
-                                confirmTextColor: Colors.white,
-                                buttonColor: Colors.red,
-                                onConfirm: () async {
-                                  await context.read<JobsNotifier>().deleteJob(
-                                    job.id,
-                                  );
-
-                                  Get.back();
-
-                                  setState(() {
-                                    filteredJobs.removeAt(index);
-                                  });
-
-                                  Get.snackbar(
-                                    "Deleted",
-                                    "Opportunity removed successfully",
-                                    backgroundColor: Colors.red,
-                                    colorText: Colors.white,
-                                  );
-                                },
-                              );
-                            },
+                              ).then((_) => loadJobs()),
+                              onDelete: () {
+                                Get.defaultDialog(
+                                  title: "Delete Opportunity",
+                                  middleText:
+                                      "Are you sure you want to delete this opportunity?",
+                                  textConfirm: "Delete",
+                                  confirmTextColor: Colors.white,
+                                  buttonColor: Colors.red,
+                                  onConfirm: () async {
+                                    await context
+                                        .read<JobsNotifier>()
+                                        .deleteJob(job.id);
+                                    Get.back();
+                                    loadJobs();
+                                    Get.snackbar(
+                                      "Deleted",
+                                      "Opportunity removed successfully",
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           );
                         },
                       ),
@@ -273,11 +290,63 @@ class _JobListPageState extends State<JobListPage> {
   }
 }
 
+class _StatBox extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatBox({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22.sp,
+                fontWeight: FontWeight.w700,
+                fontFamily: kFontDMSans,
+                color: kDark,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: Colors.grey,
+                fontFamily: kFontDMSans,
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class JobCard extends StatelessWidget {
   final JobsResponse job;
   final VoidCallback onViewMatches;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final String timeAgo;
 
   const JobCard({
     super.key,
@@ -285,190 +354,200 @@ class JobCard extends StatelessWidget {
     required this.onViewMatches,
     required this.onDelete,
     required this.onEdit,
+    required this.timeAgo,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isActive = job.isActive;
-
     return GestureDetector(
       onTap: onViewMatches,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF040326),
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 16,
-              offset: const Offset(0, 6),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        clipBehavior: Clip.antiAlias,
+        padding: EdgeInsets.all(16.w),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 130,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    job.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: kThemeColor.withValues(alpha: 0.12),
-                      child: const Icon(
-                        Icons.business,
-                        color: kThemeColor,
-                        size: 36,
-                      ),
-                    ),
+            /// Header: thumbnail + title + edit icon
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10.r),
+                  child: SizedBox(
+                    width: 46.w,
+                    height: 46.w,
+                    child: job.imageUrl.isNotEmpty
+                        ? Image.network(
+                            job.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, e, stack) => _placeholderIcon(),
+                          )
+                        : _placeholderIcon(),
                   ),
-
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.75),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isActive ? Colors.green : Colors.red,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        isActive ? 'Active' : 'Inactive',
-                        style: TextStyle(
-                          fontSize: 9.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: kFontDMSans,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: kThemeColor,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.people_outline,
-                            color: Colors.white,
-                            size: 10,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${job.matchedUsers.length}',
-                            style: TextStyle(
-                              fontSize: 9.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: kFontDMSans,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    job.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: kFontDMSans,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isActive ? 'Active' : 'Inactive',
+                        job.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.sp,
-                          color: isActive
-                              ? Colors.green.shade400
-                              : Colors.red.shade400,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
                           fontFamily: kFontDMSans,
+                          color: kDark,
                         ),
                       ),
-
+                      SizedBox(height: 4.h),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          GestureDetector(
-                            onTap: onEdit,
-                            child: const Icon(
-                              Icons.edit_outlined,
-                              color: kThemeColor,
-                              size: 18,
-                            ),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 11.sp,
+                            color: Colors.grey,
                           ),
-
-                          SizedBox(width: 10.w),
-
-                          GestureDetector(
-                            onTap: onDelete,
-                            child: const Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.redAccent,
-                              size: 18,
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: Text(
+                              '${job.location} • $timeAgo',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Colors.grey,
+                                fontFamily: kFontDMSans,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                ],
+                ),
+                GestureDetector(
+                  onTap: onEdit,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 8.w),
+                    child: const Icon(
+                      Icons.edit_outlined,
+                      size: 20,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 14.h),
+
+            /// Stat boxes: APPLICANTS | MATCHES
+            Row(
+              children: [
+                Expanded(
+                  child: _CardStatBox(
+                    label: 'APPLICANTS',
+                    value: '${job.applicantsCount}',
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: _CardStatBox(
+                    label: 'MATCHES',
+                    value: '${job.matchesCount}',
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12.h),
+
+            /// Review Applicants button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onViewMatches,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kThemeColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Review Applicants',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: kFontDMSans,
+                  ),
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _placeholderIcon() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: const Icon(Icons.business, color: Colors.grey, size: 22),
+    );
+  }
+}
+
+class _CardStatBox extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _CardStatBox({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10.h),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              fontFamily: kFontDMSans,
+              color: kDark,
+            ),
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: Colors.grey,
+              fontFamily: kFontDMSans,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

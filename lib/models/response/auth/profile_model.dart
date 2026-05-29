@@ -32,6 +32,7 @@ class ProfileRes {
   final List<String> hobbies;
   final List<EducationItem> education;
   final int queriesCreated;
+  final int successfulMatches;
   final List<ExperienceItem> experiences;
   final List<ProjectItem> projects;
   final List<AchievementItem> achievements;
@@ -69,6 +70,7 @@ class ProfileRes {
     this.hobbies = const [],
     this.education = const [],
     this.queriesCreated = 0,
+    this.successfulMatches = 0,
     this.experiences = const [],
     this.projects = const [],
     this.achievements = const [],
@@ -120,6 +122,7 @@ class ProfileRes {
               .toList()
           : [],
       queriesCreated: (json['queriesCreated'] as num?)?.toInt() ?? 0,
+      successfulMatches: (json['successfulMatches'] as num?)?.toInt() ?? 0,
       experiences:
           (json['experiences'] as List<dynamic>?)
               ?.map((e) => ExperienceItem.fromJson(e as Map<String, dynamic>))
@@ -176,6 +179,7 @@ class ProfileRes {
       'hobbies': hobbies,
       'education': education,
       'queriesCreated': queriesCreated,
+      'successfulMatches': successfulMatches,
       'experiences': experiences.map((e) => e.toJson()).toList(),
       'projects': projects.map((p) => p.toJson()).toList(),
       'achievements': achievements.map((a) => a.toJson()).toList(),
