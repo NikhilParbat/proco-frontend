@@ -5,7 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_lists.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/skill_search_field.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
@@ -1230,7 +1233,10 @@ class _AddJobPageState extends State<AddJobPage> {
               runSpacing: 6.h,
               children: _skills.asMap().entries.map((e) {
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F2F5),
                     borderRadius: BorderRadius.circular(24.r),
@@ -1251,7 +1257,11 @@ class _AddJobPageState extends State<AddJobPage> {
                       SizedBox(width: 6.w),
                       GestureDetector(
                         onTap: () => _removeSkill(e.key),
-                        child: Icon(Icons.close, color: Colors.grey.shade500, size: 14),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.grey.shade500,
+                          size: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -1279,7 +1289,9 @@ class _AddJobPageState extends State<AddJobPage> {
             SkillSearchField(
               onSelected: _addSkill,
               alreadySelected: _skills,
-              hint: _skills.isEmpty ? 'Search and add a skill...' : 'Add another skill...',
+              hint: _skills.isEmpty
+                  ? 'Search and add a skill...'
+                  : 'Add another skill...',
             ),
           ] else ...[
             SizedBox(height: 4.h),

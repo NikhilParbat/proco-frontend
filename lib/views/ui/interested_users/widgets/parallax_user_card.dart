@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
-import 'package:proco/constants/app_constants.dart';
 
 /// Parallax preview card used inside the PageView carousel.
 /// Tapping anywhere on the card calls [onTap] to open the swipe page.
@@ -112,8 +112,11 @@ class ParallaxUserCard extends StatelessWidget {
                         SizedBox(height: 6.h),
                         Row(
                           children: [
-                            const Icon(Icons.location_on_rounded,
-                                color: kThemeColor, size: 14),
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: kThemeColor,
+                              size: 14,
+                            ),
                             SizedBox(width: 4.w),
                             Expanded(
                               child: Text(
@@ -154,7 +157,10 @@ class ParallaxUserCard extends StatelessWidget {
                         Wrap(
                           spacing: 8,
                           runSpacing: 6,
-                          children: user.skills.take(3).map(_skillChip).toList(),
+                          children: user.skills
+                              .take(3)
+                              .map(_skillChip)
+                              .toList(),
                         ),
 
                       const Spacer(),
@@ -164,8 +170,11 @@ class ParallaxUserCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.touch_app_rounded,
-                                size: 14, color: kTeal.withValues(alpha: 0.5)),
+                            Icon(
+                              Icons.touch_app_rounded,
+                              size: 14,
+                              color: kTeal.withValues(alpha: 0.5),
+                            ),
                             SizedBox(width: 4.w),
                             Text(
                               'Tap to view',
@@ -191,27 +200,27 @@ class ParallaxUserCard extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        color: kTeal.withValues(alpha: 0.10),
-        child: const Center(
-          child: Icon(Icons.person_rounded, color: kTeal, size: 64),
-        ),
-      );
+    color: kTeal.withValues(alpha: 0.10),
+    child: const Center(
+      child: Icon(Icons.person_rounded, color: kTeal, size: 64),
+    ),
+  );
 
   Widget _skillChip(String skill) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: kTeal.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kTeal.withValues(alpha: 0.20)),
-        ),
-        child: Text(
-          skill,
-          style: TextStyle(
-            fontSize: 11.sp,
-            color: kTeal,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Poppins',
-          ),
-        ),
-      );
+    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+    decoration: BoxDecoration(
+      color: kTeal.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: kTeal.withValues(alpha: 0.20)),
+    ),
+    child: Text(
+      skill,
+      style: TextStyle(
+        fontSize: 11.sp,
+        color: kTeal,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Poppins',
+      ),
+    ),
+  );
 }

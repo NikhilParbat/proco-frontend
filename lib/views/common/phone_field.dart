@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
 
 class CountryCode {
   final String name;
   final String dialCode;
   final String flag;
-  const CountryCode({required this.name, required this.dialCode, required this.flag});
+  const CountryCode({
+    required this.name,
+    required this.dialCode,
+    required this.flag,
+  });
 }
 
 const List<CountryCode> kCountryCodes = [
@@ -184,7 +188,11 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                   style: const TextStyle(color: Colors.white, fontSize: 20),
                 ),
                 SizedBox(width: 2.w),
-                const Icon(Icons.arrow_drop_down, color: Colors.white54, size: 22),
+                const Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.white54,
+                  size: 22,
+                ),
               ],
             ),
           ),
@@ -273,8 +281,10 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
                 ),
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 14.h,
+                  ),
                   hintText: 'Phone number',
                   hintStyle: TextStyle(
                     fontFamily: 'DMSans',
@@ -310,8 +320,9 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
     if (_query.isEmpty) return kCountryCodes;
     final q = _query.toLowerCase();
     return kCountryCodes
-        .where((c) =>
-            c.name.toLowerCase().contains(q) || c.dialCode.contains(q))
+        .where(
+          (c) => c.name.toLowerCase().contains(q) || c.dialCode.contains(q),
+        )
         .toList();
   }
 
@@ -362,12 +373,17 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                   fontSize: 13.sp,
                   color: Colors.black38,
                 ),
-                prefixIcon:
-                    Icon(Icons.search_rounded, color: Colors.black38, size: 20.sp),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: Colors.black38,
+                  size: 20.sp,
+                ),
                 filled: true,
                 fillColor: const Color(0xFFF4F6FA),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 14.w,
+                  vertical: 10.h,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.r),
                   borderSide: BorderSide.none,
@@ -390,8 +406,9 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                       fontFamily: 'DMSans',
                       fontSize: 14.sp,
                       color: kDark,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w400,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                     ),
                   ),
                   trailing: Text(
@@ -400,8 +417,9 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                       fontFamily: 'DMSans',
                       fontSize: 13.sp,
                       color: isSelected ? kThemeColor : Colors.black45,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w400,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                     ),
                   ),
                   tileColor: isSelected

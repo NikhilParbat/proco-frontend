@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/jobs/get_job.dart';
@@ -74,7 +74,13 @@ class JobsNotifier extends ChangeNotifier {
     }
 
     // ✅ Debounce rapid calls
-    _preloadDebouncer.run(() => _executePreloadJobs(userId, bookmarkedIds, skipDiskCache: forceRefresh));
+    _preloadDebouncer.run(
+      () => _executePreloadJobs(
+        userId,
+        bookmarkedIds,
+        skipDiskCache: forceRefresh,
+      ),
+    );
   }
 
   Future<void> _executePreloadJobs(

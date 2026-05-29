@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/constants/skills_constants.dart';
 
 /// Text field that shows live autocomplete suggestions from [kAllSkills].
@@ -38,9 +39,10 @@ class _SkillSearchFieldState extends State<SkillSearchField> {
 
   void _onChanged(String query) {
     setState(() {
-      _suggestions = suggestSkills(query, limit: 8)
-          .where((s) => !widget.alreadySelected.contains(s))
-          .toList();
+      _suggestions = suggestSkills(
+        query,
+        limit: 8,
+      ).where((s) => !widget.alreadySelected.contains(s)).toList();
     });
   }
 

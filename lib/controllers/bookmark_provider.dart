@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/loading_mixin.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
@@ -116,7 +116,10 @@ class BookMarkNotifier extends ChangeNotifier with LoadingMixin {
           await prefs.setStringList('jobId', _jobs);
         } else {
           bookmarks = [];
-          showErrorSnackbar(response.message, title: 'Failed to Load Bookmarks');
+          showErrorSnackbar(
+            response.message,
+            title: 'Failed to Load Bookmarks',
+          );
         }
       } catch (e) {
         bookmarks = [];

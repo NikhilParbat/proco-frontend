@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/models/request/chat/create_chat.dart';
@@ -61,8 +61,10 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   Future<void> _onMatch() async {
     setState(() => _isMatching = true);
 
-    Provider.of<JobsNotifier>(context, listen: false)
-        .addMatchedUsers(widget.jobId, widget.user.id);
+    Provider.of<JobsNotifier>(
+      context,
+      listen: false,
+    ).addMatchedUsers(widget.jobId, widget.user.id);
 
     final response = await ChatHelper.createChat(
       CreateChat(userId: widget.user.id),
@@ -119,7 +121,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
       final today = DateTime.now();
       int age = today.year - dob.year;
       if (today.month < dob.month ||
-         
           (today.month == dob.month && today.day < dob.day)) {
         age--;
       }
@@ -180,7 +181,10 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
     final twitter = _profile?.twitterUrl ?? '';
     final portfolio = _profile?.portfolioUrl ?? '';
     final hasSocials =
-        linkedIn.isNotEmpty || github.isNotEmpty || twitter.isNotEmpty || portfolio.isNotEmpty;
+        linkedIn.isNotEmpty ||
+        github.isNotEmpty ||
+        twitter.isNotEmpty ||
+        portfolio.isNotEmpty;
 
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -222,9 +226,8 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       ? CachedNetworkImage(
                           imageUrl: widget.user.profile,
                           fit: BoxFit.cover,
-                          placeholder: (ctx, url) => Container(
-                            color: _teal.withValues(alpha: 0.10),
-                          ),
+                          placeholder: (ctx, url) =>
+                              Container(color: _teal.withValues(alpha: 0.10)),
                           errorWidget: (ctx, url, err) => _placeholder(),
                         )
                       : _placeholder(),
@@ -420,24 +423,28 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       children: [
                         if (linkedIn.isNotEmpty)
                           _socialButton(
-                              label: 'LinkedIn',
-                              icon: Icons.work_history_rounded,
-                              url: linkedIn),
+                            label: 'LinkedIn',
+                            icon: Icons.work_history_rounded,
+                            url: linkedIn,
+                          ),
                         if (github.isNotEmpty)
                           _socialButton(
-                              label: 'GitHub',
-                              icon: Icons.code_rounded,
-                              url: github),
+                            label: 'GitHub',
+                            icon: Icons.code_rounded,
+                            url: github,
+                          ),
                         if (twitter.isNotEmpty)
                           _socialButton(
-                              label: 'Twitter',
-                              icon: Icons.alternate_email_rounded,
-                              url: twitter),
+                            label: 'Twitter',
+                            icon: Icons.alternate_email_rounded,
+                            url: twitter,
+                          ),
                         if (portfolio.isNotEmpty)
                           _socialButton(
-                              label: 'Portfolio',
-                              icon: Icons.open_in_new_rounded,
-                              url: portfolio),
+                            label: 'Portfolio',
+                            icon: Icons.open_in_new_rounded,
+                            url: portfolio,
+                          ),
                       ],
                     ),
                   ],
@@ -668,333 +675,337 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   }
 
   Widget _sectionLabel(String label) => Text(
-        label,
-        style: TextStyle(
-          fontFamily: kFontDMSans,
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey,
-          letterSpacing: 1.2,
-        ),
-      );
+    label,
+    style: TextStyle(
+      fontFamily: kFontDMSans,
+      fontSize: 11.sp,
+      fontWeight: FontWeight.w600,
+      color: Colors.grey,
+      letterSpacing: 1.2,
+    ),
+  );
 
   Widget _placeholder() => Container(
-        color: _teal.withValues(alpha: 0.08),
-        child: Center(
-          child: Icon(Icons.person_rounded, color: _teal, size: 80),
-        ),
-      );
+    color: _teal.withValues(alpha: 0.08),
+    child: Center(child: Icon(Icons.person_rounded, color: _teal, size: 80)),
+  );
 
   Widget _infoRow({
     required IconData icon,
     required Color iconColor,
     required String text,
-  }) =>
-      Row(
-        children: [
-          Icon(icon, color: iconColor, size: 16),
-          SizedBox(width: 5.w),
-          Expanded(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ),
-        ],
-      );
-
-  Widget _skillChip(String skill) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: _navy,
-          borderRadius: BorderRadius.circular(20),
-        ),
+  }) => Row(
+    children: [
+      Icon(icon, color: iconColor, size: 16),
+      SizedBox(width: 5.w),
+      Expanded(
         child: Text(
-          skill.toUpperCase(),
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: kFontDMSans,
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-            letterSpacing: 0.5,
+            fontSize: 13.sp,
+            color: Colors.grey.shade600,
           ),
         ),
-      );
+      ),
+    ],
+  );
+
+  Widget _skillChip(String skill) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+    decoration: BoxDecoration(
+      color: _navy,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      skill.toUpperCase(),
+      style: TextStyle(
+        fontFamily: kFontDMSans,
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+        letterSpacing: 0.5,
+      ),
+    ),
+  );
 
   Widget _experienceRow(ExperienceItem exp) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 6.h),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: _orange.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(10),
+    padding: EdgeInsets.symmetric(vertical: 6.h),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _orange.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(Icons.work_outline_rounded, color: _orange, size: 18.sp),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                exp.position,
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _navy,
+                ),
               ),
-              child: Icon(Icons.work_outline_rounded, color: _orange, size: 18.sp),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exp.position,
-                    style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: _navy,
-                    ),
+              Text(
+                exp.company,
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              if (exp.dateRange.isNotEmpty)
+                Text(
+                  exp.dateRange,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 11.sp,
+                    color: _teal,
                   ),
-                  Text(
-                    exp.company,
+                ),
+              if (exp.description.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 4.h),
+                  child: Text(
+                    exp.description,
                     style: TextStyle(
                       fontFamily: kFontDMSans,
                       fontSize: 12.sp,
                       color: Colors.grey.shade600,
+                      height: 1.5,
                     ),
                   ),
-                  if (exp.dateRange.isNotEmpty)
-                    Text(
-                      exp.dateRange,
-                      style: TextStyle(
-                        fontFamily: kFontDMSans,
-                        fontSize: 11.sp,
-                        color: _teal,
-                      ),
-                    ),
-                  if (exp.description.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(top: 4.h),
-                      child: Text(
-                        exp.description,
-                        style: TextStyle(
-                          fontFamily: kFontDMSans,
-                          fontSize: 12.sp,
-                          color: Colors.grey.shade600,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _projectRow(ProjectItem proj) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 6.h),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: _teal.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.code_rounded, color: _teal, size: 18.sp),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    proj.name,
-                    style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: _navy,
-                    ),
-                  ),
-                  if (proj.domain.isNotEmpty)
-                    Text(
-                      proj.domain,
-                      style: TextStyle(
-                        fontFamily: kFontDMSans,
-                        fontSize: 12.sp,
-                        color: _teal,
-                      ),
-                    ),
-                  if (proj.description.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(top: 4.h),
-                      child: Text(
-                        proj.description,
-                        style: TextStyle(
-                          fontFamily: kFontDMSans,
-                          fontSize: 12.sp,
-                          color: Colors.grey.shade600,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  if (proj.technologies.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(top: 6.h),
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: proj.technologies
-                            .map((t) => _tagChip(t, _navy))
-                            .toList(),
-                      ),
-                    ),
-                  if (proj.sourceUrl.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.only(top: 6.h),
-                      child: GestureDetector(
-                        onTap: () async {
-                          final uri = Uri.parse(proj.sourceUrl);
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri,
-                                mode: LaunchMode.externalApplication);
-                          }
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.open_in_new_rounded,
-                                size: 12.sp, color: _teal),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'View source',
-                              style: TextStyle(
-                                fontFamily: kFontDMSans,
-                                fontSize: 12.sp,
-                                color: _teal,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _achievementRow(AchievementItem ach) => Padding(
-        padding: EdgeInsets.symmetric(vertical: 6.h),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.emoji_events_rounded,
-                  color: Colors.amber.shade700, size: 18.sp),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ach.title,
-                    style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: _navy,
-                    ),
-                  ),
-                  if (ach.subtitle.isNotEmpty)
-                    Text(
-                      ach.subtitle,
-                      style: TextStyle(
-                        fontFamily: kFontDMSans,
-                        fontSize: 12.sp,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _tagChip(String label, Color color) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.25)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: kFontDMSans,
-            fontSize: 11.sp,
-            color: color,
-            fontWeight: FontWeight.w500,
+                ),
+            ],
           ),
         ),
-      );
+      ],
+    ),
+  );
+
+  Widget _projectRow(ProjectItem proj) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 6.h),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _teal.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(Icons.code_rounded, color: _teal, size: 18.sp),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                proj.name,
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _navy,
+                ),
+              ),
+              if (proj.domain.isNotEmpty)
+                Text(
+                  proj.domain,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 12.sp,
+                    color: _teal,
+                  ),
+                ),
+              if (proj.description.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 4.h),
+                  child: Text(
+                    proj.description,
+                    style: TextStyle(
+                      fontFamily: kFontDMSans,
+                      fontSize: 12.sp,
+                      color: Colors.grey.shade600,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              if (proj.technologies.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 6.h),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: proj.technologies
+                        .map((t) => _tagChip(t, _navy))
+                        .toList(),
+                  ),
+                ),
+              if (proj.sourceUrl.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 6.h),
+                  child: GestureDetector(
+                    onTap: () async {
+                      final uri = Uri.parse(proj.sourceUrl);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.open_in_new_rounded,
+                          size: 12.sp,
+                          color: _teal,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          'View source',
+                          style: TextStyle(
+                            fontFamily: kFontDMSans,
+                            fontSize: 12.sp,
+                            color: _teal,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _achievementRow(AchievementItem ach) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 6.h),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.emoji_events_rounded,
+            color: Colors.amber.shade700,
+            size: 18.sp,
+          ),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ach.title,
+                style: TextStyle(
+                  fontFamily: kFontDMSans,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _navy,
+                ),
+              ),
+              if (ach.subtitle.isNotEmpty)
+                Text(
+                  ach.subtitle,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 12.sp,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _tagChip(String label, Color color) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color.withValues(alpha: 0.25)),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontFamily: kFontDMSans,
+        fontSize: 11.sp,
+        color: color,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 
   Widget _socialButton({
     required String label,
     required IconData icon,
     required String url,
-  }) =>
-      InkWell(
-        onTap: () async {
-          final uri = Uri.parse(url);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
-        },
+  }) => InkWell(
+    onTap: () async {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    },
+    borderRadius: BorderRadius.circular(20),
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: _navy.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: _navy.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _navy.withValues(alpha: 0.15)),
+        border: Border.all(color: _navy.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14.sp, color: _navy),
+          SizedBox(width: 6.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: kFontDMSans,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: _navy,
+            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14.sp, color: _navy),
-              SizedBox(width: 6.w),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: kFontDMSans,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: _navy,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   Widget _shimmerLine({required double width}) => Container(
-        height: 14.h,
-        width: MediaQuery.of(context).size.width * width,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(6),
-        ),
-      );
+    height: 14.h,
+    width: MediaQuery.of(context).size.width * width,
+    decoration: BoxDecoration(
+      color: Colors.grey.shade200,
+      borderRadius: BorderRadius.circular(6),
+    ),
+  );
 }

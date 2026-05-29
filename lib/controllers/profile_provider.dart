@@ -1,13 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/profile_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 

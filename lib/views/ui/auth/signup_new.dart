@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/signup_provider.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
@@ -170,7 +172,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         }
                         provider.signupModel.email = email;
                         provider.signupModel.username = email.split('@').first;
-                        provider.signupModel.password = _passwordController.text;
+                        provider.signupModel.password =
+                            _passwordController.text;
                         provider.submitEmailSignup();
                       },
                       child: Container(
@@ -213,7 +216,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               // Sign up with Google
               GestureDetector(
-                onTap: provider.isLoading ? null : () => provider.googleSignUp(),
+                onTap: provider.isLoading
+                    ? null
+                    : () => provider.googleSignUp(),
                 child: Container(
                   width: double.infinity,
                   height: 55.h,

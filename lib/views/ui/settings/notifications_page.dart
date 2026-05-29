@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/settings_page_header.dart';
@@ -100,7 +101,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
                   // ── Footer Info ────────────────────
                   SettingsInfoFooter(
-                    message: 'You can update these preferences anytime from settings.',
+                    message:
+                        'You can update these preferences anytime from settings.',
                   ),
 
                   SizedBox(height: 24.h),
@@ -133,10 +135,10 @@ class _NotifTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: kThemeColor.withValues(alpha:0.05)),
+        border: Border.all(color: kThemeColor.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -150,7 +152,7 @@ class _NotifTile extends StatelessWidget {
             width: 46.w,
             height: 46.w,
             decoration: BoxDecoration(
-              color: kThemeColor.withValues(alpha:0.10),
+              color: kThemeColor.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14.r),
             ),
             child: Icon(icon, size: 22.sp, color: kThemeColor),
@@ -195,7 +197,7 @@ class _NotifTile extends StatelessWidget {
               value: value,
               onChanged: onChanged,
               activeThumbColor: kThemeColor,
-              activeTrackColor: kThemeColor.withValues(alpha:0.35),
+              activeTrackColor: kThemeColor.withValues(alpha: 0.35),
               inactiveThumbColor: Colors.white,
               inactiveTrackColor: Colors.black12,
             ),

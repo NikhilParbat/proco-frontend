@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/views/common/custom_outline_btn.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/common/height_spacer.dart';
@@ -69,8 +70,8 @@ class DevicesInfo extends StatelessWidget {
                 child: CustomOutlineBtn(
                   text: 'Sign Out',
                   color: kTeal,
-                  height: height * 0.05,
-                  width: width * 0.3,
+                  height: 42.h,
+                  width: 120.w,
                 ),
               ),
             ],

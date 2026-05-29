@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/login_provider.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +41,9 @@ class _DeviceManagementState extends State<DeviceManagement> {
       return Icons.phone_iphone;
     } else if (p.contains('android')) {
       return Icons.phone_android;
-    } else if (p.contains('mac') || p.contains('windows') || p.contains('linux')) {
+    } else if (p.contains('mac') ||
+        p.contains('windows') ||
+        p.contains('linux')) {
       return Icons.computer;
     } else if (p.contains('web')) {
       return Icons.language;
@@ -68,10 +70,15 @@ class _DeviceManagementState extends State<DeviceManagement> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
         title: Text(
           'Log Out Device?',
-          style: GoogleFonts.dmSans(fontWeight: FontWeight.w700, fontSize: 16.sp),
+          style: GoogleFonts.dmSans(
+            fontWeight: FontWeight.w700,
+            fontSize: 16.sp,
+          ),
         ),
         content: Text(
           'This device will be signed out of your account.',
@@ -108,10 +115,15 @@ class _DeviceManagementState extends State<DeviceManagement> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
         title: Text(
           'Log Out of All Devices?',
-          style: GoogleFonts.dmSans(fontWeight: FontWeight.w700, fontSize: 16.sp),
+          style: GoogleFonts.dmSans(
+            fontWeight: FontWeight.w700,
+            fontSize: 16.sp,
+          ),
         ),
         content: Text(
           'This will sign you out of all sessions, including this one.',
@@ -159,7 +171,8 @@ class _DeviceManagementState extends State<DeviceManagement> {
             List<int> inactiveIndices = [];
 
             for (int i = 0; i < sessions.length; i++) {
-              if (sessions[i].sessionId == _currentSessionId && activeSession == null) {
+              if (sessions[i].sessionId == _currentSessionId &&
+                  activeSession == null) {
                 activeSession = sessions[i];
               } else {
                 inactiveSessions.add(sessions[i]);
@@ -171,7 +184,10 @@ class _DeviceManagementState extends State<DeviceManagement> {
             if (activeSession == null && sessions.isNotEmpty) {
               activeSession = sessions.first;
               inactiveSessions = sessions.skip(1).toList();
-              inactiveIndices = List.generate(inactiveSessions.length, (i) => i + 1);
+              inactiveIndices = List.generate(
+                inactiveSessions.length,
+                (i) => i + 1,
+              );
             }
 
             return Column(
@@ -188,7 +204,10 @@ class _DeviceManagementState extends State<DeviceManagement> {
                         child: GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14.w,
+                              vertical: 8.h,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20.r),
@@ -203,7 +222,11 @@ class _DeviceManagementState extends State<DeviceManagement> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.chevron_left, size: 18.sp, color: Colors.black87),
+                                Icon(
+                                  Icons.chevron_left,
+                                  size: 18.sp,
+                                  color: Colors.black87,
+                                ),
                                 SizedBox(width: 2.w),
                                 Text(
                                   'Back',
@@ -245,19 +268,21 @@ class _DeviceManagementState extends State<DeviceManagement> {
                       if (activeSession != null) ...[
                         _sectionLabel('ACTIVE SESSION'),
                         SizedBox(height: 10.h),
-                        Builder(builder: (context) {
-                          final active = activeSession!;
-                          return _SessionCard(
-                            session: active,
-                            isActive: true,
-                            lastActiveText: '',
-                            deviceIcon: _deviceIcon(active.platform),
-                            onLogOut: () => _showLogoutConfirm(
-                              notifier,
-                              sessions.indexOf(active),
-                            ),
-                          );
-                        }),
+                        Builder(
+                          builder: (context) {
+                            final active = activeSession!;
+                            return _SessionCard(
+                              session: active,
+                              isActive: true,
+                              lastActiveText: '',
+                              deviceIcon: _deviceIcon(active.platform),
+                              onLogOut: () => _showLogoutConfirm(
+                                notifier,
+                                sessions.indexOf(active),
+                              ),
+                            );
+                          },
+                        ),
                         SizedBox(height: 24.h),
                       ],
 
@@ -302,7 +327,11 @@ class _DeviceManagementState extends State<DeviceManagement> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.info_outline_rounded, size: 14.sp, color: Colors.black38),
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 14.sp,
+                            color: Colors.black38,
+                          ),
                           SizedBox(width: 6.w),
                           Expanded(
                             child: Text(
@@ -330,7 +359,11 @@ class _DeviceManagementState extends State<DeviceManagement> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () => _showLogoutAllConfirm(notifier),
-                          icon: Icon(Icons.logout_rounded, color: Colors.white, size: 18.sp),
+                          icon: Icon(
+                            Icons.logout_rounded,
+                            color: Colors.white,
+                            size: 18.sp,
+                          ),
                           label: Text(
                             'Log Out of All Devices',
                             style: GoogleFonts.dmSans(

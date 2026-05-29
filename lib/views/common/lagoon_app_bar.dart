@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:proco/views/common/exports.dart';
+import 'package:proco/constants/app_colors.dart';
 
 class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
   const LagoonAppBar({super.key, this.actions});

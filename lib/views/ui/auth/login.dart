@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/login_provider.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
-import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/auth/signup_new.dart';
 import 'package:provider/provider.dart';
 
@@ -75,10 +76,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       SizedBox(height: 0.04.sh),
 
-                      Text(
-                        'Login',
-                        style: kHeadingStyle.copyWith(fontSize: 30.sp),
-                      ),
+                      Text('Login', style: kHeadingStyle),
 
                       SizedBox(height: 0.05.sh),
 

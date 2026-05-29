@@ -2,6 +2,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
@@ -12,7 +13,6 @@ import 'package:proco/services/location_service.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proco/constants/app_constants.dart';
 import 'package:uuid/uuid.dart';
 
 class SignUpNotifier extends ChangeNotifier {

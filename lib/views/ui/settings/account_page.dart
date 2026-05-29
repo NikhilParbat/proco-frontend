@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
@@ -134,11 +134,11 @@ class _AccountPageState extends State<AccountPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18.r),
 
-                  border: Border.all(color: _red.withValues(alpha:0.12)),
+                  border: Border.all(color: _red.withValues(alpha: 0.12)),
 
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha:0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -152,7 +152,7 @@ class _AccountPageState extends State<AccountPage> {
                       width: 46.w,
                       height: 46.w,
                       decoration: BoxDecoration(
-                        color: _red.withValues(alpha:0.10),
+                        color: _red.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(14.r),
                       ),
 
@@ -203,7 +203,7 @@ class _AccountPageState extends State<AccountPage> {
 
                     Icon(
                       Icons.arrow_forward_ios_rounded,
-                      color: _red.withValues(alpha:0.4),
+                      color: _red.withValues(alpha: 0.4),
                       size: 15.sp,
                     ),
                   ],
@@ -215,7 +215,8 @@ class _AccountPageState extends State<AccountPage> {
 
             // ── Footer Info ────────────────────
             SettingsInfoFooter(
-              message: 'Deleting your account is permanent and cannot be undone.',
+              message:
+                  'Deleting your account is permanent and cannot be undone.',
             ),
 
             SizedBox(height: 24.h),

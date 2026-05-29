@@ -6,6 +6,8 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/constants/app_constants.dart';

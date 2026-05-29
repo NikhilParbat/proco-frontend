@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:get/get.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/views/common/exports.dart';

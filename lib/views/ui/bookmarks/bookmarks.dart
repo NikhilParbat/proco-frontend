@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/empty_state_widget.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final IconData icon;

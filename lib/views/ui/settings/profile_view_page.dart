@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_constants.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
@@ -73,7 +74,8 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
                   SizedBox(height: 24.h),
 
                   SettingsInfoFooter(
-                    message: 'Changes apply immediately. The other person can only '
+                    message:
+                        'Changes apply immediately. The other person can only '
                         'view your profile from chat if you have this enabled.',
                   ),
                 ],
@@ -106,8 +108,7 @@ class _ToggleTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: value
-            ? Border.all(
-                color: kThemeColor.withValues(alpha: 0.4), width: 1.2)
+            ? Border.all(color: kThemeColor.withValues(alpha: 0.4), width: 1.2)
             : null,
         boxShadow: [
           BoxShadow(

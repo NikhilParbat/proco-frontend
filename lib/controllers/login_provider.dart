@@ -1,7 +1,7 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/services/snackbar_service.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
@@ -186,7 +186,10 @@ class LoginNotifier extends ChangeNotifier {
       if (firebaseUser == null) {
         _isLoading = false;
         notifyListeners();
-        showErrorSnackbar('Could not retrieve user information', title: 'Authentication Error');
+        showErrorSnackbar(
+          'Could not retrieve user information',
+          title: 'Authentication Error',
+        );
         return;
       }
 
@@ -194,7 +197,10 @@ class LoginNotifier extends ChangeNotifier {
       if (idToken == null) {
         _isLoading = false;
         notifyListeners();
-        showErrorSnackbar('Could not retrieve authentication token', title: 'Authentication Error');
+        showErrorSnackbar(
+          'Could not retrieve authentication token',
+          title: 'Authentication Error',
+        );
         return;
       }
 

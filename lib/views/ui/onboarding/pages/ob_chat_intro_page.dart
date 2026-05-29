@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:proco/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 
-import 'package:proco/constants/app_constants.dart';
 import 'package:proco/constants/skills_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/services/location_service.dart';

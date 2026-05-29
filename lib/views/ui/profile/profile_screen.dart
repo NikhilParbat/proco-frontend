@@ -1,7 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:provider/provider.dart';
@@ -366,7 +367,8 @@ class _PersonalTab extends StatelessWidget {
     final hasHobbies = state.hobbies.isNotEmpty;
     final hasInterests = state.interests.isNotEmpty;
 
-    final hasAnyOptionalData = hasGender ||
+    final hasAnyOptionalData =
+        hasGender ||
         hasAge ||
         hasEducation ||
         hasWorkStyle ||
@@ -460,7 +462,9 @@ class _PersonalTab extends StatelessWidget {
               Wrap(
                 spacing: 8.w,
                 runSpacing: 8.h,
-                children: state.skills.map((s) => _OutlineChip(label: s)).toList(),
+                children: state.skills
+                    .map((s) => _OutlineChip(label: s))
+                    .toList(),
               ),
             ],
             if (hasInterests) ...[
@@ -470,7 +474,9 @@ class _PersonalTab extends StatelessWidget {
               Wrap(
                 spacing: 8.w,
                 runSpacing: 8.h,
-                children: state.interests.map((i) => _OutlineChip(label: i)).toList(),
+                children: state.interests
+                    .map((i) => _OutlineChip(label: i))
+                    .toList(),
               ),
             ],
             if (hasHobbies) ...[
@@ -480,7 +486,9 @@ class _PersonalTab extends StatelessWidget {
               Wrap(
                 spacing: 8.w,
                 runSpacing: 8.h,
-                children: state.hobbies.map((h) => _OutlineChip(label: h)).toList(),
+                children: state.hobbies
+                    .map((h) => _OutlineChip(label: h))
+                    .toList(),
               ),
             ],
             if (hasLinks) ...[
@@ -516,7 +524,8 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
 
   @override
   Widget build(BuildContext context) {
-    final hasAnyData = _s.experiences.isNotEmpty ||
+    final hasAnyData =
+        _s.experiences.isNotEmpty ||
         _s.projects.isNotEmpty ||
         _s.achievements.isNotEmpty;
 
@@ -527,7 +536,10 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (_s.experiences.isNotEmpty) ...[
-                  _ProSectionHeader(title: 'EXPERIENCE', icon: Icons.work_outline),
+                  _ProSectionHeader(
+                    title: 'EXPERIENCE',
+                    icon: Icons.work_outline,
+                  ),
                   SizedBox(height: 18.h),
                   ..._s.experiences.asMap().entries.map(
                     (e) => _ExperienceRow(data: e.value),

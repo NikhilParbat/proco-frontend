@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_assets.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
@@ -161,12 +163,12 @@ class _ChatsListState extends State<ChatsList> {
                           borderRadius: BorderRadius.circular(24.r),
 
                           border: Border.all(
-                            color: kThemeColor.withValues(alpha:0.06),
+                            color: kThemeColor.withValues(alpha: 0.06),
                           ),
 
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha:0.035),
+                              color: Colors.black.withValues(alpha: 0.035),
                               blurRadius: 18,
                               offset: const Offset(0, 8),
                             ),
@@ -187,8 +189,8 @@ class _ChatsListState extends State<ChatsList> {
 
                                     gradient: LinearGradient(
                                       colors: [
-                                        kThemeColor.withValues(alpha:0.14),
-                                        kThemeColor.withValues(alpha:0.06),
+                                        kThemeColor.withValues(alpha: 0.14),
+                                        kThemeColor.withValues(alpha: 0.06),
                                       ],
                                     ),
                                   ),
@@ -336,7 +338,9 @@ class _ChatsListState extends State<ChatsList> {
                                     padding: EdgeInsets.all(7.w),
 
                                     decoration: BoxDecoration(
-                                      color: kThemeColor.withValues(alpha:0.10),
+                                      color: kThemeColor.withValues(
+                                        alpha: 0.10,
+                                      ),
 
                                       shape: BoxShape.circle,
                                     ),
@@ -385,7 +389,7 @@ class _ChatsListState extends State<ChatsList> {
               height: 92.w,
 
               decoration: BoxDecoration(
-                color: kThemeColor.withValues(alpha:0.10),
+                color: kThemeColor.withValues(alpha: 0.10),
 
                 shape: BoxShape.circle,
               ),

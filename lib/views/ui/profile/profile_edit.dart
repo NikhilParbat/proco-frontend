@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/common/skill_search_field.dart';
@@ -17,7 +18,9 @@ const int _kMaxLinks = 6;
 const int _kMaxChips = 12;
 
 // ── Validation helpers ────────────────────────────────────────────────────────
-final _gibberishRegExp = RegExp(r'''^[a-zA-Z0-9 .,\-\'\"@#&()/:\\+!?%\n\r]+$''');
+final _gibberishRegExp = RegExp(
+  r'''^[a-zA-Z0-9 .,\-\'\"@#&()/:\\+!?%\n\r]+$''',
+);
 
 bool _isValidText(String text) {
   if (text.trim().isEmpty) return true;
@@ -186,7 +189,9 @@ class _EditFormState extends State<_EditForm> {
                 final index = entry.key;
                 final edu = entry.value;
                 return _ExpandableCard(
-                  label: edu.college.isEmpty ? 'Institution ${index + 1}' : edu.college,
+                  label: edu.college.isEmpty
+                      ? 'Institution ${index + 1}'
+                      : edu.college,
                   icon: Icons.school_outlined,
                   onEdit: () => _showEducationDialog(
                     context,
@@ -195,7 +200,8 @@ class _EditFormState extends State<_EditForm> {
                     existing: edu,
                   ),
                   onDelete: () => widget.state.removeEducation(index),
-                  subtitle: '${edu.degree}${edu.branch.isNotEmpty ? " • ${edu.branch}" : ""}',
+                  subtitle:
+                      '${edu.degree}${edu.branch.isNotEmpty ? " • ${edu.branch}" : ""}',
                 );
               }),
               _AddButton(
@@ -209,7 +215,9 @@ class _EditFormState extends State<_EditForm> {
                 final index = entry.key;
                 final ach = entry.value;
                 return _ExpandableCard(
-                  label: ach.title.isEmpty ? 'Achievement ${index + 1}' : ach.title,
+                  label: ach.title.isEmpty
+                      ? 'Achievement ${index + 1}'
+                      : ach.title,
                   icon: Icons.emoji_events_outlined,
                   onEdit: () => _showAchievementDialog(
                     context,
@@ -223,10 +231,7 @@ class _EditFormState extends State<_EditForm> {
               }),
               _AddButton(
                 label: 'ADD ACHIEVEMENT',
-                onPressed: () => _showAchievementDialog(
-                  context,
-                  widget.state,
-                ),
+                onPressed: () => _showAchievementDialog(context, widget.state),
               ),
               SizedBox(height: 20.h),
 
@@ -235,7 +240,12 @@ class _EditFormState extends State<_EditForm> {
               _OptionSelector(
                 label: 'Work Style',
                 value: widget.state.workStyle,
-                options: const ['Remote-first', 'Hybrid', 'In-office', 'Flexible'],
+                options: const [
+                  'Remote-first',
+                  'Hybrid',
+                  'In-office',
+                  'Flexible',
+                ],
                 onChanged: (v) => widget.state.workStyle = v,
               ),
               SizedBox(height: 14.h),
@@ -251,7 +261,9 @@ class _EditFormState extends State<_EditForm> {
                 final index = entry.key;
                 final exp = entry.value;
                 return _ExpandableCard(
-                  label: exp.company.isEmpty ? 'Experience ${index + 1}' : exp.company,
+                  label: exp.company.isEmpty
+                      ? 'Experience ${index + 1}'
+                      : exp.company,
                   icon: Icons.work_outline,
                   subtitle: exp.position,
                   onEdit: () => _showExperienceDialog(
@@ -372,11 +384,8 @@ void _showExperienceDialog(
 }) {
   showDialog(
     context: context,
-    builder: (_) => _ExperienceDialog(
-      state: state,
-      index: index,
-      existing: existing,
-    ),
+    builder: (_) =>
+        _ExperienceDialog(state: state, index: index, existing: existing),
   );
 }
 
@@ -388,11 +397,8 @@ void _showProjectDialog(
 }) {
   showDialog(
     context: context,
-    builder: (_) => _ProjectDialog(
-      state: state,
-      index: index,
-      existing: existing,
-    ),
+    builder: (_) =>
+        _ProjectDialog(state: state, index: index, existing: existing),
   );
 }
 
@@ -404,11 +410,8 @@ void _showAchievementDialog(
 }) {
   showDialog(
     context: context,
-    builder: (_) => _AchievementDialog(
-      state: state,
-      index: index,
-      existing: existing,
-    ),
+    builder: (_) =>
+        _AchievementDialog(state: state, index: index, existing: existing),
   );
 }
 
@@ -420,13 +423,11 @@ void _showEducationDialog(
 }) {
   showDialog(
     context: context,
-    builder: (_) => _EducationDialog(
-      state: state,
-      index: index,
-      existing: existing,
-    ),
+    builder: (_) =>
+        _EducationDialog(state: state, index: index, existing: existing),
   );
 }
+
 // ── Experience Dialog ─────────────────────────────────────────────────────────
 class _ExperienceDialog extends StatefulWidget {
   const _ExperienceDialog({required this.state, this.index, this.existing});
@@ -1046,15 +1047,20 @@ class _DialogField extends StatelessWidget {
           labelText: label,
           hintText: hint,
           counterText: '',
-          labelStyle: kSmallTextStyle.copyWith(color: kDarkGrey, fontSize: 13.sp),
+          labelStyle: kSmallTextStyle.copyWith(
+            color: kDarkGrey,
+            fontSize: 13.sp,
+          ),
           hintStyle: kSmallTextStyle.copyWith(
             color: const Color(0xFFBBBBBB),
             fontSize: 13.sp,
           ),
           filled: true,
           fillColor: kBackgroundColor,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 14.w,
+            vertical: 14.h,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.r),
             borderSide: const BorderSide(color: kLightGrey),
@@ -1115,11 +1121,16 @@ class _DropdownDialogField extends StatelessWidget {
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: kSmallTextStyle.copyWith(color: kDarkGrey, fontSize: 13.sp),
+          labelStyle: kSmallTextStyle.copyWith(
+            color: kDarkGrey,
+            fontSize: 13.sp,
+          ),
           filled: true,
           fillColor: kBackgroundColor,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 14.w,
+            vertical: 14.h,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.r),
             borderSide: const BorderSide(color: kLightGrey),
@@ -1134,20 +1145,26 @@ class _DropdownDialogField extends StatelessWidget {
           ),
         ),
         items: items
-            .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    e,
-                    style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 13.sp,
-                      color: kDark,
-                    ),
+            .map(
+              (e) => DropdownMenuItem(
+                value: e,
+                child: Text(
+                  e,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 13.sp,
+                    color: kDark,
                   ),
-                ))
+                ),
+              ),
+            )
             .toList(),
         onChanged: onChanged,
-        icon: Icon(Icons.keyboard_arrow_down_rounded, color: kDarkGrey, size: 20.sp),
+        icon: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: kDarkGrey,
+          size: 20.sp,
+        ),
         dropdownColor: kLight,
         isExpanded: true,
         style: TextStyle(
@@ -1275,16 +1292,20 @@ class _ValidatedFieldState extends State<_ValidatedField> {
           hintText: widget.hint,
           errorText: _error,
           counterStyle: TextStyle(fontSize: 10.sp, color: kDarkGrey),
-          labelStyle:
-              kSmallTextStyle.copyWith(color: kDarkGrey, fontSize: 13.sp),
+          labelStyle: kSmallTextStyle.copyWith(
+            color: kDarkGrey,
+            fontSize: 13.sp,
+          ),
           hintStyle: kSmallTextStyle.copyWith(
             color: const Color(0xFFBBBBBB),
             fontSize: 13.sp,
           ),
           filled: true,
           fillColor: kLight,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 14.w,
+            vertical: 14.h,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.r),
             borderSide: const BorderSide(color: kLightGrey),
@@ -1303,8 +1324,7 @@ class _ValidatedFieldState extends State<_ValidatedField> {
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.r),
-            borderSide:
-                const BorderSide(color: Colors.redAccent, width: 1.5),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
           ),
         ),
       ),
@@ -1344,12 +1364,16 @@ class _DropdownField extends StatelessWidget {
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle:
-              kSmallTextStyle.copyWith(color: kDarkGrey, fontSize: 13.sp),
+          labelStyle: kSmallTextStyle.copyWith(
+            color: kDarkGrey,
+            fontSize: 13.sp,
+          ),
           filled: true,
           fillColor: kLight,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 14.w,
+            vertical: 14.h,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.r),
             borderSide: const BorderSide(color: kLightGrey),
@@ -1364,21 +1388,26 @@ class _DropdownField extends StatelessWidget {
           ),
         ),
         items: items
-            .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    e,
-                    style: TextStyle(
-                      fontFamily: kFontDMSans,
-                      fontSize: 13.sp,
-                      color: kDark,
-                    ),
+            .map(
+              (e) => DropdownMenuItem(
+                value: e,
+                child: Text(
+                  e,
+                  style: TextStyle(
+                    fontFamily: kFontDMSans,
+                    fontSize: 13.sp,
+                    color: kDark,
                   ),
-                ))
+                ),
+              ),
+            )
             .toList(),
         onChanged: onChanged,
-        icon: Icon(Icons.keyboard_arrow_down_rounded,
-            color: kDarkGrey, size: 20.sp),
+        icon: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: kDarkGrey,
+          size: 20.sp,
+        ),
         dropdownColor: kLight,
         isExpanded: true,
         style: TextStyle(
@@ -1417,8 +1446,7 @@ class _ExpandableCard extends StatelessWidget {
         border: Border.all(color: kLightGrey),
       ),
       child: ListTile(
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
         leading: Icon(icon, size: 20.r, color: kThemeColor),
         title: Text(
           label,
@@ -1451,7 +1479,11 @@ class _ExpandableCard extends StatelessWidget {
               visualDensity: VisualDensity.compact,
             ),
             IconButton(
-              icon: Icon(Icons.delete_outline, size: 18.r, color: Colors.redAccent),
+              icon: Icon(
+                Icons.delete_outline,
+                size: 18.r,
+                color: Colors.redAccent,
+              ),
               onPressed: onDelete,
               tooltip: 'Delete',
               visualDensity: VisualDensity.compact,
@@ -1519,21 +1551,24 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
         setState(() {
           _locationResults
             ..clear()
-            ..addAll(data.map((item) {
-              final addr = item['address'] as Map<String, dynamic>? ?? {};
-              return {
-                'display_name': item['display_name'],
-                'lat': double.parse(item['lat']),
-                'lon': double.parse(item['lon']),
-                'city': addr['city'] ??
-                    addr['town'] ??
-                    addr['village'] ??
-                    addr['county'] ??
-                    '',
-                'state': addr['state'] ?? '',
-                'country': addr['country'] ?? '',
-              };
-            }));
+            ..addAll(
+              data.map((item) {
+                final addr = item['address'] as Map<String, dynamic>? ?? {};
+                return {
+                  'display_name': item['display_name'],
+                  'lat': double.parse(item['lat']),
+                  'lon': double.parse(item['lon']),
+                  'city':
+                      addr['city'] ??
+                      addr['town'] ??
+                      addr['village'] ??
+                      addr['county'] ??
+                      '',
+                  'state': addr['state'] ?? '',
+                  'country': addr['country'] ?? '',
+                };
+              }),
+            );
         });
       }
     } catch (e) {
@@ -1582,8 +1617,12 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
       );
       setState(() => _selectedLocationLabel = display);
     } catch (e) {
-      Get.snackbar('Location Error', e.toString(),
-          backgroundColor: kOrange, colorText: kLight);
+      Get.snackbar(
+        'Location Error',
+        e.toString(),
+        backgroundColor: kOrange,
+        colorText: kLight,
+      );
     } finally {
       if (mounted) setState(() => _isFetchingCurrentLocation = false);
     }
@@ -1621,14 +1660,17 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
               width: double.infinity,
               height: 46.h,
               child: ElevatedButton.icon(
-                onPressed:
-                    _isFetchingCurrentLocation ? null : _useCurrentLocation,
+                onPressed: _isFetchingCurrentLocation
+                    ? null
+                    : _useCurrentLocation,
                 icon: _isFetchingCurrentLocation
                     ? SizedBox(
                         width: 16.w,
                         height: 16.w,
                         child: const CircularProgressIndicator(
-                            strokeWidth: 2, color: kLight),
+                          strokeWidth: 2,
+                          color: kLight,
+                        ),
                       )
                     : const Icon(Icons.my_location_rounded, size: 18),
                 label: Text(
@@ -1663,24 +1705,31 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
                   padding: EdgeInsets.symmetric(horizontal: 12.w),
                   child: Row(
                     children: [
-                      Icon(Icons.search,
-                          size: 18.sp, color: Colors.grey.shade400),
+                      Icon(
+                        Icons.search,
+                        size: 18.sp,
+                        color: Colors.grey.shade400,
+                      ),
                       SizedBox(width: 8.w),
                       Expanded(
                         child: TextField(
                           controller: _locationSearchCtrl,
                           onChanged: _onLocationSearchChanged,
                           style: TextStyle(
-                              fontSize: 14.sp, color: Colors.black87),
+                            fontSize: 14.sp,
+                            color: Colors.black87,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Search city / area',
                             hintStyle: TextStyle(
-                                fontSize: 14.sp,
-                                color: Colors.grey.shade400),
+                              fontSize: 14.sp,
+                              color: Colors.grey.shade400,
+                            ),
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding:
-                                EdgeInsets.symmetric(vertical: 12.h),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 12.h,
+                            ),
                           ),
                         ),
                       ),
@@ -1690,7 +1739,9 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
                 if (_isSearchingLocation) ...[
                   SizedBox(height: 4.h),
                   const LinearProgressIndicator(
-                      minHeight: 2, color: kThemeColor),
+                    minHeight: 2,
+                    color: kThemeColor,
+                  ),
                 ],
                 if (_locationResults.isNotEmpty) ...[
                   SizedBox(height: 8.h),
@@ -1711,14 +1762,19 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
                         final item = _locationResults[index];
                         return ListTile(
                           dense: true,
-                          leading: Icon(Icons.location_on_outlined,
-                              color: Colors.grey.shade600, size: 18.sp),
+                          leading: Icon(
+                            Icons.location_on_outlined,
+                            color: Colors.grey.shade600,
+                            size: 18.sp,
+                          ),
                           title: Text(
                             item['display_name'] ?? '',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                fontSize: 12.sp, color: Colors.black87),
+                              fontSize: 12.sp,
+                              color: Colors.black87,
+                            ),
                           ),
                           onTap: () => _selectLocationResult(item),
                         );
@@ -1736,13 +1792,11 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
               decoration: BoxDecoration(
                 color: kThemeColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(
-                    color: kThemeColor.withValues(alpha: 0.35)),
+                border: Border.all(color: kThemeColor.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle,
-                      color: kThemeColor, size: 16),
+                  const Icon(Icons.check_circle, color: kThemeColor, size: 16),
                   SizedBox(width: 6.w),
                   Expanded(
                     child: Text(
@@ -1786,16 +1840,14 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 14.sp, color: selected ? kLight : Colors.black54),
+            Icon(icon, size: 14.sp, color: selected ? kLight : Colors.black54),
             SizedBox(width: 4.w),
             Text(
               label,
               style: TextStyle(
                 color: selected ? kLight : Colors.black87,
                 fontSize: 13.sp,
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ],
@@ -1839,7 +1891,10 @@ class _ChipInputSectionState extends State<_ChipInputSection> {
     final val = _controller.text.trim();
     if (val.isEmpty) return;
     if (widget.values.length >= _kMaxChips) {
-      setState(() => _error = 'Maximum $_kMaxChips ${widget.label.toLowerCase()} reached');
+      setState(
+        () => _error =
+            'Maximum $_kMaxChips ${widget.label.toLowerCase()} reached',
+      );
       return;
     }
     if (!_isValidText(val)) {
@@ -1894,15 +1949,17 @@ class _ChipInputSectionState extends State<_ChipInputSection> {
                 label: Text(
                   v,
                   style: TextStyle(
-                      fontFamily: kFontDMSans, fontSize: 12.sp, color: kDark),
+                    fontFamily: kFontDMSans,
+                    fontSize: 12.sp,
+                    color: kDark,
+                  ),
                 ),
                 backgroundColor: kLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20.r),
                   side: const BorderSide(color: kLightGrey),
                 ),
-                deleteIcon:
-                    Icon(Icons.close, size: 14.r, color: kDarkGrey),
+                deleteIcon: Icon(Icons.close, size: 14.r, color: kDarkGrey),
                 onDeleted: () => widget.onRemoved(v),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
@@ -1929,7 +1986,10 @@ class _ChipInputSectionState extends State<_ChipInputSection> {
                     controller: _controller,
                     maxLength: 40,
                     style: TextStyle(
-                        fontFamily: kFontDMSans, fontSize: 13.sp, color: kDark),
+                      fontFamily: kFontDMSans,
+                      fontSize: 13.sp,
+                      color: kDark,
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Add ${widget.label.toLowerCase()}…',
                       counterText: '',
@@ -1941,7 +2001,9 @@ class _ChipInputSectionState extends State<_ChipInputSection> {
                       filled: true,
                       fillColor: kLight,
                       contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12.w, vertical: 12.h),
+                        horizontal: 12.w,
+                        vertical: 12.h,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(10.r),
@@ -1962,7 +2024,9 @@ class _ChipInputSectionState extends State<_ChipInputSection> {
                           bottomLeft: Radius.circular(10.r),
                         ),
                         borderSide: const BorderSide(
-                            color: kThemeColor, width: 1.5),
+                          color: kThemeColor,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                     onFieldSubmitted: (_) => _add(),
@@ -1999,9 +2063,10 @@ class _ChipInputSectionState extends State<_ChipInputSection> {
               Text(
                 _error!,
                 style: TextStyle(
-                    fontSize: 11.sp,
-                    color: Colors.redAccent,
-                    fontFamily: kFontDMSans),
+                  fontSize: 11.sp,
+                  color: Colors.redAccent,
+                  fontFamily: kFontDMSans,
+                ),
               ),
             ],
           ],
@@ -2126,16 +2191,20 @@ class _BioFieldState extends State<_BioField> {
             decoration: InputDecoration(
               labelText: 'Bio',
               hintText: 'Tell the world about yourself…',
-              labelStyle:
-                  kSmallTextStyle.copyWith(color: kDarkGrey, fontSize: 13.sp),
+              labelStyle: kSmallTextStyle.copyWith(
+                color: kDarkGrey,
+                fontSize: 13.sp,
+              ),
               hintStyle: kSmallTextStyle.copyWith(
                 color: const Color(0xFFBBBBBB),
                 fontSize: 13.sp,
               ),
               filled: true,
               fillColor: kLight,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+                vertical: 14.h,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.r),
                 borderSide: const BorderSide(color: kLightGrey),
@@ -2264,8 +2333,7 @@ class _LinksEditorState extends State<_LinksEditor> {
           final link = entry.value;
           return Container(
             margin: EdgeInsets.only(bottom: 8.h),
-            padding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
             decoration: BoxDecoration(
               color: kLight,
               borderRadius: BorderRadius.circular(10.r),
@@ -2302,8 +2370,11 @@ class _LinksEditorState extends State<_LinksEditor> {
                 ),
                 GestureDetector(
                   onTap: () => _remove(i),
-                  child: Icon(Icons.delete_outline,
-                      size: 18.sp, color: Colors.redAccent),
+                  child: Icon(
+                    Icons.delete_outline,
+                    size: 18.sp,
+                    color: Colors.redAccent,
+                  ),
                 ),
               ],
             ),
@@ -2317,31 +2388,41 @@ class _LinksEditorState extends State<_LinksEditor> {
               controller: _labelCtrl,
               maxLength: 50,
               style: TextStyle(
-                  fontFamily: kFontDMSans, fontSize: 14.sp, color: kDark),
+                fontFamily: kFontDMSans,
+                fontSize: 14.sp,
+                color: kDark,
+              ),
               decoration: InputDecoration(
                 labelText: 'Label',
                 hintText: 'e.g. GitHub, Portfolio',
                 errorText: _labelError,
-                counterStyle:
-                    TextStyle(fontSize: 10.sp, color: kDarkGrey),
+                counterStyle: TextStyle(fontSize: 10.sp, color: kDarkGrey),
                 labelStyle: kSmallTextStyle.copyWith(
-                    color: kDarkGrey, fontSize: 13.sp),
+                  color: kDarkGrey,
+                  fontSize: 13.sp,
+                ),
                 hintStyle: kSmallTextStyle.copyWith(
-                    color: const Color(0xFFBBBBBB), fontSize: 13.sp),
+                  color: const Color(0xFFBBBBBB),
+                  fontSize: 13.sp,
+                ),
                 filled: true,
                 fillColor: kLight,
                 contentPadding: EdgeInsets.symmetric(
-                    horizontal: 14.w, vertical: 14.h),
+                  horizontal: 14.w,
+                  vertical: 14.h,
+                ),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(color: kLightGrey)),
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: kLightGrey),
+                ),
                 enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(color: kLightGrey)),
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: kLightGrey),
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(
-                        color: kThemeColor, width: 1.5)),
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: kThemeColor, width: 1.5),
+                ),
               ),
             ),
           ),
@@ -2352,31 +2433,41 @@ class _LinksEditorState extends State<_LinksEditor> {
               keyboardType: TextInputType.url,
               maxLength: 200,
               style: TextStyle(
-                  fontFamily: kFontDMSans, fontSize: 14.sp, color: kDark),
+                fontFamily: kFontDMSans,
+                fontSize: 14.sp,
+                color: kDark,
+              ),
               decoration: InputDecoration(
                 labelText: 'URL',
                 hintText: 'https://',
                 errorText: _urlError,
-                counterStyle:
-                    TextStyle(fontSize: 10.sp, color: kDarkGrey),
+                counterStyle: TextStyle(fontSize: 10.sp, color: kDarkGrey),
                 labelStyle: kSmallTextStyle.copyWith(
-                    color: kDarkGrey, fontSize: 13.sp),
+                  color: kDarkGrey,
+                  fontSize: 13.sp,
+                ),
                 hintStyle: kSmallTextStyle.copyWith(
-                    color: const Color(0xFFBBBBBB), fontSize: 13.sp),
+                  color: const Color(0xFFBBBBBB),
+                  fontSize: 13.sp,
+                ),
                 filled: true,
                 fillColor: kLight,
                 contentPadding: EdgeInsets.symmetric(
-                    horizontal: 14.w, vertical: 14.h),
+                  horizontal: 14.w,
+                  vertical: 14.h,
+                ),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(color: kLightGrey)),
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: kLightGrey),
+                ),
                 enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(color: kLightGrey)),
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: kLightGrey),
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(
-                        color: kThemeColor, width: 1.5)),
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: kThemeColor, width: 1.5),
+                ),
               ),
             ),
           ),
@@ -2461,12 +2552,7 @@ class _GenderSelector extends StatefulWidget {
 
 class _GenderSelectorState extends State<_GenderSelector> {
   late String _selected;
-  static const _options = [
-    'Male',
-    'Female',
-    'Non-binary',
-    'Prefer not to say'
-  ];
+  static const _options = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
   @override
   void initState() {
@@ -2502,8 +2588,7 @@ class _GenderSelectorState extends State<_GenderSelector> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding:
-                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
                 decoration: BoxDecoration(
                   color: active ? kThemeColor : kLight,
                   borderRadius: BorderRadius.circular(20.r),
@@ -2516,8 +2601,7 @@ class _GenderSelectorState extends State<_GenderSelector> {
                   style: TextStyle(
                     fontFamily: kFontDMSans,
                     fontSize: 13.sp,
-                    fontWeight:
-                        active ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                     color: active ? kLight : kDark,
                   ),
                 ),
@@ -2554,8 +2638,18 @@ class _DOBPickerState extends State<_DOBPicker> {
     try {
       final d = DateTime.parse(iso);
       const m = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${d.day} ${m[d.month - 1]} ${d.year}';
     } catch (_) {
@@ -2608,14 +2702,11 @@ class _DOBPickerState extends State<_DOBPicker> {
                 style: TextStyle(
                   fontFamily: kFontDMSans,
                   fontSize: 14.sp,
-                  color: _display.isEmpty
-                      ? const Color(0xFFBBBBBB)
-                      : kDark,
+                  color: _display.isEmpty ? const Color(0xFFBBBBBB) : kDark,
                 ),
               ),
             ),
-            Icon(Icons.calendar_today_outlined,
-                size: 16.sp, color: kDarkGrey),
+            Icon(Icons.calendar_today_outlined, size: 16.sp, color: kDarkGrey),
           ],
         ),
       ),
@@ -2677,8 +2768,7 @@ class _OptionSelectorState extends State<_OptionSelector> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding:
-                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
                 decoration: BoxDecoration(
                   color: active ? kThemeColor : kLight,
                   borderRadius: BorderRadius.circular(20.r),
@@ -2691,8 +2781,7 @@ class _OptionSelectorState extends State<_OptionSelector> {
                   style: TextStyle(
                     fontFamily: kFontDMSans,
                     fontSize: 13.sp,
-                    fontWeight:
-                        active ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                     color: active ? kLight : kDark,
                   ),
                 ),
@@ -2745,8 +2834,18 @@ class _DateRangePickerState extends State<_DateRangePicker> {
 
   static String _fmt(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[d.month - 1]} ${d.year}';
   }
@@ -2811,8 +2910,7 @@ class _DateRangePickerState extends State<_DateRangePicker> {
           Row(
             children: [
               Expanded(
-                child: _dateTile(
-                    label: 'From', value: _from, onTap: _pickFrom),
+                child: _dateTile(label: 'From', value: _from, onTap: _pickFrom),
               ),
               SizedBox(width: 10.w),
               Expanded(
@@ -2883,9 +2981,7 @@ class _DateRangePickerState extends State<_DateRangePicker> {
           color: isPresent ? kBackgroundColor : kLight,
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(
-            color: isPresent
-                ? kThemeColor.withValues(alpha: 0.5)
-                : kLightGrey,
+            color: isPresent ? kThemeColor.withValues(alpha: 0.5) : kLightGrey,
           ),
         ),
         child: Column(
@@ -2917,9 +3013,7 @@ class _DateRangePickerState extends State<_DateRangePicker> {
                     color: isPresent
                         ? kThemeColor
                         : (hasValue ? kDark : const Color(0xFFBBBBBB)),
-                    fontWeight: isPresent
-                        ? FontWeight.w600
-                        : FontWeight.w400,
+                    fontWeight: isPresent ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ],

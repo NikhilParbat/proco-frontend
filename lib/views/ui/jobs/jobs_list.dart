@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_constants.dart';
+import 'package:proco/constants/app_colors.dart';
+import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
@@ -152,7 +153,10 @@ class _JobListPageState extends State<JobListPage>
           if (jobs.isEmpty) return _buildEmptyState();
 
           final filteredJobs = _filteredJobs;
-          final totalApplicants = jobs.fold<int>(0, (sum, j) => sum + j.applicantsCount);
+          final totalApplicants = jobs.fold<int>(
+            0,
+            (sum, j) => sum + j.applicantsCount,
+          );
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +180,10 @@ class _JobListPageState extends State<JobListPage>
                     fontWeight: FontWeight.w500,
                     fontFamily: kFontDMSans,
                   ),
-                  tabs: const [Tab(text: 'Active'), Tab(text: 'Closed')],
+                  tabs: const [
+                    Tab(text: 'Active'),
+                    Tab(text: 'Closed'),
+                  ],
                 ),
               ),
 
@@ -185,10 +192,7 @@ class _JobListPageState extends State<JobListPage>
                 padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
                 child: Row(
                   children: [
-                    _StatBox(
-                      label: 'Total\nQueries',
-                      value: '${jobs.length}',
-                    ),
+                    _StatBox(label: 'Total\nQueries', value: '${jobs.length}'),
                     SizedBox(width: 12.w),
                     _StatBox(
                       label: 'Total\nApplicants',
