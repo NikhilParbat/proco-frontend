@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -279,7 +279,7 @@ class ProfileEditState extends ChangeNotifier {
         [];
   }
 
-  Future<bool> saveProfile(File? image) async {
+  Future<bool> saveProfile(XFile? image) async {
     isSaving = true;
     notifyListeners();
 

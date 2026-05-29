@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -12,9 +13,14 @@ class AuthService {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Try silent sign-in first; if it fails or returns null, show the picker.
-      // Each call is independent so a PlatformException in signInSilently
-      // doesn't suppress signIn().
+      if (kIsWeb) {
+        // Web: use Firebase popup flow — no google_sign_in package needed
+        final googleProvider = GoogleAuthProvider();
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
+        return await _auth.signInWithPopup(googleProvider);
+      }
+
+      // Native (Android / iOS): use google_sign_in package
       GoogleSignInAccount? googleUser;
       try {
         googleUser = await _googleSignIn.signInSilently();
@@ -25,17 +31,14 @@ class AuthService {
 
       if (googleUser == null) return null;
 
-      // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Create a new credential using the updated field names
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google credential
       return await _auth.signInWithCredential(credential);
     } catch (e) {
       debugPrint("Google Sign-In Error: $e");
@@ -52,7 +55,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
+    if (!kIsWeb) await _googleSignIn.signOut();
     await _auth.signOut();
   }
 }

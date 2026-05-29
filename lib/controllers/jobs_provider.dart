@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
@@ -354,7 +354,7 @@ class JobsNotifier extends ChangeNotifier {
   Future<void> createJob(
     CreateJobsRequest model,
     BuildContext context, {
-    File? imageFile,
+    XFile? imageFile,
   }) async {
     if (isCreatingJob) return;
 
@@ -408,7 +408,7 @@ class JobsNotifier extends ChangeNotifier {
     String jobId,
     CreateJobsRequest model,
     BuildContext context, {
-    File? imageFile,
+    XFile? imageFile,
   }) async {
     if (isCreatingJob) return;
 

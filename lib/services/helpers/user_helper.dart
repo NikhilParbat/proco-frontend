@@ -1,10 +1,10 @@
 // ignore_for_file: dead_code
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as https;
+import 'package:image_picker/image_picker.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/profile_model.dart';
@@ -19,7 +19,7 @@ class UserHelper {
   /// Returns null on success, or an error description on failure.
   static Future<ApiResponse<UserResponse>> updateProfile(
     ProfileUpdateReq model,
-    File? image,
+    XFile? image,
   ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -85,8 +85,13 @@ class UserHelper {
 
       // 6. Image Upload
       if (image != null) {
+        final bytes = await image.readAsBytes();
         request.files.add(
-          await https.MultipartFile.fromPath('profile', image.path),
+          https.MultipartFile.fromBytes(
+            'profile',
+            bytes,
+            filename: image.name.isNotEmpty ? image.name : 'profile.jpg',
+          ),
         );
       }
 
@@ -114,7 +119,7 @@ class UserHelper {
   /// Returns null on success, or an error message string on failure.
   static Future<String?> createProfile(
     ProfileUpdateReq model,
-    File? image,
+    XFile? image,
   ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -165,8 +170,13 @@ class UserHelper {
 
       // 6. Image
       if (image != null) {
+        final bytes = await image.readAsBytes();
         request.files.add(
-          await https.MultipartFile.fromPath('profile', image.path),
+          https.MultipartFile.fromBytes(
+            'profile',
+            bytes,
+            filename: image.name.isNotEmpty ? image.name : 'profile.jpg',
+          ),
         );
       }
 

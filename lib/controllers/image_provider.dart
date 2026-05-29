@@ -1,4 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,19 +9,25 @@ import 'package:permission_handler/permission_handler.dart';
 class ImageNotifier extends ChangeNotifier {
   final ImagePicker _picker = ImagePicker();
 
-  File? selectedImage;
+  /// The picked/cropped file. Use [imageBytes] to display it in the UI
+  /// (works on both web and native — avoids dart:io dependency in widgets).
+  XFile? selectedImage;
+
+  /// Raw bytes of [selectedImage]. Populated whenever [selectedImage] is set.
+  Uint8List? imageBytes;
+
   bool isLoading = false;
   String? errorMessage;
 
-  // Modern Purple Theme Colors (to be used in UI)
-  static const Color primaryPurple = Color(0xFF6C63FF); // Modern vibrant purple
+  static const Color primaryPurple = Color(0xFF6C63FF);
   static const Color lightPurple = Color(0xFFF3F2FF);
 
   Future<bool> _requestPermission(ImageSource source) async {
-    final permission = source == ImageSource.camera
-        ? Permission.camera
-        : (Platform.isAndroid ? Permission.photos : Permission.photos);
+    // Browsers handle permissions natively through their own prompts
+    if (kIsWeb) return true;
 
+    final permission =
+        source == ImageSource.camera ? Permission.camera : Permission.photos;
     final status = await permission.request();
     if (status.isGranted || status.isLimited) return true;
     if (status.isPermanentlyDenied) await openAppSettings();
@@ -51,14 +59,21 @@ class ImageNotifier extends ChangeNotifier {
         return;
       }
 
-      final XFile? croppedFile = await _cropImage(pickedFile);
-
-      if (croppedFile == null) {
-        _setLoading(false);
-        return;
+      XFile result;
+      if (kIsWeb) {
+        // image_cropper has no web implementation — use the picked file as-is
+        result = pickedFile;
+      } else {
+        final XFile? cropped = await _cropImage(pickedFile);
+        if (cropped == null) {
+          _setLoading(false);
+          return;
+        }
+        result = cropped;
       }
 
-      selectedImage = File(croppedFile.path);
+      selectedImage = result;
+      imageBytes = await result.readAsBytes();
       notifyListeners();
     } catch (e) {
       _setError('Something went wrong. Try again!');
@@ -78,9 +93,9 @@ class ImageNotifier extends ChangeNotifier {
           AndroidUiSettings(
             toolbarTitle: 'Adjust your photo',
             toolbarColor: Colors.white,
-            toolbarWidgetColor: primaryPurple, // Purple text/icons on white bar
+            toolbarWidgetColor: primaryPurple,
             activeControlsWidgetColor: primaryPurple,
-            statusBarColor: Colors.white,
+            statusBarLight: true,
             backgroundColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.ratio5x4,
             lockAspectRatio: true,
@@ -102,11 +117,11 @@ class ImageNotifier extends ChangeNotifier {
 
   void clearImage() {
     selectedImage = null;
+    imageBytes = null;
     notifyListeners();
   }
 
   bool get hasImage => selectedImage != null;
-  File? get imageFile => selectedImage;
 
   void _setLoading(bool value) {
     isLoading = value;

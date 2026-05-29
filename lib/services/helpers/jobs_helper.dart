@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as https;
 import 'package:proco/models/request/jobs/create_job.dart';
 import 'package:proco/models/response/api_response.dart';
@@ -336,7 +337,7 @@ class JobsHelper {
 
   static Future<ApiResponse<JobsResponse>> createJob(
     CreateJobsRequest model, {
-    File? imageFile,
+    XFile? imageFile,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -371,8 +372,13 @@ class JobsHelper {
       request.fields['skills'] = jsonEncode(model.skills);
 
       if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
         request.files.add(
-          await https.MultipartFile.fromPath('image', imageFile.path),
+          https.MultipartFile.fromBytes(
+            'image',
+            bytes,
+            filename: imageFile.name.isNotEmpty ? imageFile.name : 'image.jpg',
+          ),
         );
       }
 
@@ -411,7 +417,7 @@ class JobsHelper {
   static Future<ApiResponse<void>> updateJob(
     String jobId,
     CreateJobsRequest model, {
-    File? imageFile,
+    XFile? imageFile,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -447,10 +453,15 @@ class JobsHelper {
       request.fields['requirements'] = jsonEncode(model.requirements);
       request.fields['skills'] = jsonEncode(model.skills);
 
-      // ─── Image (key fix) ───
+      // ─── Image ───
       if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
         request.files.add(
-          await https.MultipartFile.fromPath('image', imageFile.path),
+          https.MultipartFile.fromBytes(
+            'image',
+            bytes,
+            filename: imageFile.name.isNotEmpty ? imageFile.name : 'image.jpg',
+          ),
         );
       }
 

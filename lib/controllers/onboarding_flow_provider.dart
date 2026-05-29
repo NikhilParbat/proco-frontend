@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
@@ -36,7 +36,7 @@ class OnboardingFlowProvider extends ChangeNotifier {
   String phone = '';
 
   /// Profile photo picked during onboarding.
-  File? profilePhoto;
+  XFile? profilePhoto;
   double latitude = 0.0;
   double longitude = 0.0;
   String city = '';

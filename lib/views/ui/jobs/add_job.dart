@@ -713,11 +713,11 @@ class _AddJobPageState extends State<AddJobPage> {
                       width: 1.2,
                     ),
                   ),
-                  child: imageNotifier.selectedImage != null
+                  child: imageNotifier.imageBytes != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(18.r),
-                          child: Image.file(
-                            imageNotifier.selectedImage!,
+                          child: Image.memory(
+                            imageNotifier.imageBytes!,
                             fit: BoxFit.cover,
                             width: double.infinity,
                           ),

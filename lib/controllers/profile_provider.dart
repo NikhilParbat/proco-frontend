@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/profile_model.dart';
@@ -37,7 +36,7 @@ class ProfileNotifier extends ChangeNotifier {
     }
   }
 
-  void updateProfile(ProfileUpdateReq model, File? image) async {
+  void updateProfile(ProfileUpdateReq model, XFile? image) async {
     final response = await UserHelper.updateProfile(model, image);
 
     if (response.success) {
