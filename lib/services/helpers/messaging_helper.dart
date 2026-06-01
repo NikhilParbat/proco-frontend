@@ -5,7 +5,7 @@ import 'package:http/http.dart' as https;
 import 'package:proco/models/request/messaging/send_message.dart';
 import 'package:proco/models/response/messaging/messaging_res.dart';
 import 'package:proco/services/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/services/token_store.dart';
 
 class MesssagingHelper {
   static https.Client client = https.Client();
@@ -13,8 +13,7 @@ class MesssagingHelper {
   /// ================= SEND MESSAGE =================
   static Future<Map<String, dynamic>> sendMessage(SendMessage model) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       if (token == null) {
         return {"success": false, "message": "User not authenticated"};
@@ -30,8 +29,6 @@ class MesssagingHelper {
         },
         body: jsonEncode(model.toJson()),
       );
-
-      debugPrint("SEND MESSAGE RESPONSE: ${response.body}");
 
       final decoded = json.decode(response.body);
 
@@ -61,8 +58,7 @@ class MesssagingHelper {
     try {
       debugPrint('----------FETCHING MESSAGES-------------');
 
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       if (token == null) {
         throw Exception("User not authenticated");
@@ -76,8 +72,6 @@ class MesssagingHelper {
         url,
         headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
       );
-
-      debugPrint("GET MESSAGES RESPONSE: ${response.body}");
 
       final decoded = json.decode(response.body);
 

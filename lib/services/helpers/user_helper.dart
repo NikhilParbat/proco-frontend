@@ -11,7 +11,7 @@ import 'package:proco/models/response/auth/profile_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/services/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/services/token_store.dart';
 
 class UserHelper {
   static https.Client client = https.Client();
@@ -22,8 +22,7 @@ class UserHelper {
     File? image,
   ) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       if (token == null || token.isEmpty) {
         return ApiResponse(success: false, message: 'Not authenticated.');
@@ -117,8 +116,7 @@ class UserHelper {
     File? image,
   ) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       if (token == null || token.isEmpty) {
         return 'Not authenticated — please log in again.';
@@ -206,8 +204,7 @@ class UserHelper {
 
   static Future<ApiResponse<ProfileRes>> getProfile() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       if (token == null || token.isEmpty) {
         return ApiResponse(success: false, message: 'Not authenticated');
@@ -249,8 +246,7 @@ class UserHelper {
   /// Response format: { "success": true, "data": { ...user fields... } }
   static Future<ApiResponse<UserResponse>> fetchUserById(String userId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       final headers = <String, String>{
         'Content-Type': 'application/json',
@@ -258,11 +254,7 @@ class UserHelper {
       };
 
       final url = Config.url('${Config.getprofileUrl}$userId');
-      debugPrint('fetchUserById URL: $url');
       final response = await client.get(url, headers: headers);
-
-      debugPrint('fetchUserById [$userId] status: ${response.statusCode}');
-      debugPrint('fetchUserById body: ${response.body}');
 
       final decoded = jsonDecode(response.body);
 
@@ -306,8 +298,7 @@ class UserHelper {
 
   static Future<ApiResponse<void>> deleteAccount() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
       final url = Config.url('/api/users');
       final response = await client.delete(
         url,

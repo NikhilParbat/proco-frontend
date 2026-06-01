@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
+import 'package:proco/services/token_store.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -33,9 +33,8 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _initializeNotifications() async {
     if (_initialized) return;
     await Future.delayed(const Duration(milliseconds: 500));
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId') ?? '';
-    final token = prefs.getString('token') ?? '';
+    final userId = await TokenStore.getUserId() ?? '';
+    final token = await TokenStore.getToken() ?? '';
     if (userId.isNotEmpty && token.isNotEmpty) {
       await NotificationHelper.initialize(userId, token);
       _initialized = true;

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as client;
 import 'package:proco/services/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/services/token_store.dart';
 
 class DeviceHelper {
   static Future<bool> registerDeviceSession({
@@ -13,8 +13,7 @@ class DeviceHelper {
     required String date,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
       if (token == null) return false;
 
       final url = Config.url(Config.deviceSessionUrl);
@@ -37,8 +36,7 @@ class DeviceHelper {
 
   static Future<bool> removeDeviceSession(String sessionId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
       if (token == null) return false;
 
       final url = Config.url('${Config.deviceSessionUrl}/$sessionId');
@@ -55,8 +53,7 @@ class DeviceHelper {
 
   static Future<bool> removeAllDeviceSessions() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
       if (token == null) return false;
 
       final url = Config.url(Config.deviceSessionsUrl);
@@ -73,8 +70,7 @@ class DeviceHelper {
 
   static Future<List<Map<String, dynamic>>> fetchDeviceSessions() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
       if (token == null) return [];
 
       final url = Config.url(Config.deviceSessionsUrl);

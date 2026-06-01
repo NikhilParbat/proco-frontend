@@ -10,6 +10,7 @@ import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/login_res_model.dart';
 import 'package:proco/models/response/auth/signup_res_model.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/services/token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthHelper {
@@ -42,9 +43,9 @@ class AuthHelper {
       final user = LoginResponseModel.fromJson(body['data']);
 
       // ✅ Save session
+      await TokenStore.saveToken(user.userToken);
+      await TokenStore.saveUserId(user.id);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', user.userToken);
-      await prefs.setString('userId', user.id);
       await prefs.setBool('onboardingComplete', !(user.isFirstTimeUser));
 
       return ApiResponse(
@@ -73,8 +74,6 @@ class AuthHelper {
         headers: requestHeaders,
         body: jsonEncode(model.toJson()), // ✅ FIXED
       );
-
-      debugPrint('Signup Response: ${response.body}');
 
       // ✅ Handle empty response
       if (response.body.isEmpty) {
@@ -133,16 +132,10 @@ class AuthHelper {
       if (response.statusCode == 200 && body['success'] == true) {
         final user = AuthUserModel.fromJson(body['data']);
 
+        if (user.userToken != null) await TokenStore.saveToken(user.userToken!);
+        if (user.id != null) await TokenStore.saveUserId(user.id!);
+
         final prefs = await SharedPreferences.getInstance();
-
-        if (user.userToken != null) {
-          await prefs.setString('token', user.userToken!);
-        }
-
-        if (user.id != null) {
-          await prefs.setString('userId', user.id!);
-        }
-
         if (body['data']?['profile'] != null) {
           await prefs.setString('profile', body['data']['profile']);
         }
@@ -195,8 +188,6 @@ class AuthHelper {
         }),
       );
 
-      debugPrint('Email Signup Response: ${response.body}');
-
       // ✅ Handle empty response
       if (response.body.isEmpty) {
         return ApiResponse(
@@ -211,16 +202,9 @@ class AuthHelper {
         final user = AuthUserModel.fromJson(body['data']);
 
         // ✅ Save session
+        if (user.userToken != null) await TokenStore.saveToken(user.userToken!);
+        if (user.id != null) await TokenStore.saveUserId(user.id!);
         final prefs = await SharedPreferences.getInstance();
-
-        if (user.userToken != null) {
-          await prefs.setString('token', user.userToken!);
-        }
-
-        if (user.id != null) {
-          await prefs.setString('userId', user.id!);
-        }
-
         await prefs.setBool('loggedIn', true);
 
         return ApiResponse(
@@ -261,13 +245,8 @@ class AuthHelper {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final user = AuthUserModel.fromJson(data['data']);
 
-        final prefs = await SharedPreferences.getInstance();
-        if (user.userToken != null) {
-          await prefs.setString('token', user.userToken!);
-        }
-        if (user.id != null) {
-          await prefs.setString('userId', user.id!);
-        }
+        if (user.userToken != null) await TokenStore.saveToken(user.userToken!);
+        if (user.id != null) await TokenStore.saveUserId(user.id!);
 
         return ApiResponse(
           success: true,

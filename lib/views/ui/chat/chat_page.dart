@@ -11,6 +11,7 @@ import 'package:proco/services/helpers/messaging_helper.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 // Same palette as the onboarding chat
@@ -116,10 +117,17 @@ class _ChatPageState extends State<ChatPage> {
 
     final chatNotifier = context.read<ChatNotifier>();
 
+    // Authenticate the handshake with the JWT. The server validates this token
+    // in a connection middleware and derives the user identity from it — the
+    // client never asserts its own userId.
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
     socket = io.io(
       cfg.Config.socketUrl(),
       io.OptionBuilder()
           .setTransports(['websocket'])
+          .setAuth({'token': token})
           .disableAutoConnect()
           .enableForceNewConnection()
           .build(),
@@ -129,7 +137,7 @@ class _ChatPageState extends State<ChatPage> {
 
     socket!.onConnect((_) {
       _socketNotifier.value = true;
-      socket!.emit('setup', chatNotifier.userId);
+      socket!.emit('setup');
       socket!.on(
         'online-users',
         (users) => chatNotifier.onlineUsers = List<String>.from(users),

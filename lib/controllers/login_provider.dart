@@ -8,6 +8,7 @@ import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/helpers/device_helper.dart';
+import 'package:proco/services/token_store.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
@@ -73,7 +74,7 @@ class LoginNotifier extends ChangeNotifier {
   void getPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     entrypoint = prefs.getBool('entrypoint') ?? false;
-    final token = prefs.getString('token');
+    final token = await TokenStore.getToken();
     loggedIn = token != null;
     await loadDeviceSessions();
   }
@@ -366,12 +367,11 @@ class LoginNotifier extends ChangeNotifier {
     // Best-effort: clear all sessions on the backend before wiping local state.
     await DeviceHelper.removeAllDeviceSessions();
 
+    await TokenStore.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('loggedIn', false);
     await prefs.setBool('entrypoint', false);
-    await prefs.remove('token');
     await prefs.remove('profile');
-    await prefs.remove('userId');
     await prefs.remove('deviceSessionId');
     await prefs.remove('onboardingComplete');
     await prefs.remove('onboardingPage');
