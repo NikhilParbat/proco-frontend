@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
-import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/empty_state_widget.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
@@ -70,8 +70,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
                     children: [
                       Text(
                         'Saved Opportunities',
-                        style: TextStyle(
-                          fontFamily: kFontMontserrat,
+                        style: GoogleFonts.montserrat(
                           fontSize: 26.sp,
                           fontWeight: FontWeight.w800,
                           color: Colors.black87,
@@ -82,8 +81,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
 
                       Text(
                         '${bookMarkNotifier.bookmarks.length} opportunities saved for later',
-                        style: TextStyle(
-                          fontFamily: kFontDMSans,
+                        style: GoogleFonts.dmSans(
                           fontSize: 13.sp,
                           color: Colors.black54,
                         ),
@@ -149,8 +147,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
                                 ),
                                 title: Text(
                                   job.title,
-                                  style: TextStyle(
-                                    fontFamily: kFontMontserrat,
+                                  style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 18.sp,
                                     color: kThemeColor,
@@ -229,8 +226,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
                                           job.title,
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontFamily: kFontDMSans,
+                                          style: GoogleFonts.dmSans(
                                             fontSize: 15.sp,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.black87,
@@ -243,8 +239,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
                                           job.companyText,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontFamily: kFontDMSans,
+                                          style: GoogleFonts.dmSans(
                                             fontSize: 12.sp,
                                             color: Colors.grey.shade600,
                                           ),
@@ -289,8 +284,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
                                     ),
                                     child: Text(
                                       active ? job.opportunityType : 'PAUSED',
-                                      style: TextStyle(
-                                        fontFamily: kFontDMSans,
+                                      style: GoogleFonts.dmSans(
                                         fontSize: 11.sp,
                                         fontWeight: FontWeight.w700,
                                         color: active
@@ -474,8 +468,7 @@ Widget _statItem(String value, String label) {
     children: [
       Text(
         value,
-        style: TextStyle(
-          fontFamily: kFontMontserrat,
+        style: GoogleFonts.dmSans(
           fontSize: 22.sp,
           fontWeight: FontWeight.w800,
           color: kThemeColor,
@@ -484,8 +477,7 @@ Widget _statItem(String value, String label) {
       SizedBox(height: 4.h),
       Text(
         label,
-        style: TextStyle(
-          fontFamily: kFontDMSans,
+        style: GoogleFonts.dmSans(
           fontSize: 12.sp,
           color: Colors.black54,
         ),
@@ -510,8 +502,7 @@ Widget _infoChip(IconData icon, String text) {
           child: Text(
             text,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: kFontDMSans,
+            style: GoogleFonts.dmSans(
               fontSize: 11.sp,
               color: kThemeColor,
               fontWeight: FontWeight.w600,

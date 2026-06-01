@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
-import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
@@ -102,21 +102,19 @@ class _JobListPageState extends State<JobListPage>
           SizedBox(height: 18.h),
           Text(
             'No opportunities yet',
-            style: TextStyle(
+            style: GoogleFonts.dmSans(
               fontSize: 18.sp,
               color: Colors.black87,
               fontWeight: FontWeight.w600,
-              fontFamily: kFontDMSans,
             ),
           ),
           SizedBox(height: 6.h),
           Text(
             'Tap the + button to create your first opportunity',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: GoogleFonts.dmSans(
               fontSize: 13.sp,
               color: Colors.grey,
-              fontFamily: kFontDMSans,
               height: 1.5,
             ),
           ),
@@ -170,15 +168,13 @@ class _JobListPageState extends State<JobListPage>
                   unselectedLabelColor: Colors.grey,
                   indicatorColor: Colors.black,
                   indicatorWeight: 2.5,
-                  labelStyle: TextStyle(
+                  labelStyle: GoogleFonts.dmSans(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    fontFamily: kFontDMSans,
                   ),
-                  unselectedLabelStyle: TextStyle(
+                  unselectedLabelStyle: GoogleFonts.dmSans(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
-                    fontFamily: kFontDMSans,
                   ),
                   tabs: const [
                     Tab(text: 'Active'),
@@ -207,10 +203,9 @@ class _JobListPageState extends State<JobListPage>
                 padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 0),
                 child: Text(
                   'All Opportunities',
-                  style: TextStyle(
+                  style: GoogleFonts.montserrat(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
-                    fontFamily: kFontDMSans,
                     color: kDark,
                   ),
                 ),
@@ -224,10 +219,9 @@ class _JobListPageState extends State<JobListPage>
                     ? Center(
                         child: Text(
                           'No opportunities here',
-                          style: TextStyle(
+                          style: GoogleFonts.dmSans(
                             color: Colors.grey,
                             fontSize: 14.sp,
-                            fontFamily: kFontDMSans,
                           ),
                         ),
                       )
@@ -321,20 +315,18 @@ class _StatBox extends StatelessWidget {
           children: [
             Text(
               value,
-              style: TextStyle(
+              style: GoogleFonts.dmSans(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w700,
-                fontFamily: kFontDMSans,
                 color: kDark,
               ),
             ),
             SizedBox(height: 4.h),
             Text(
               label,
-              style: TextStyle(
+              style: GoogleFonts.dmSans(
                 fontSize: 11.sp,
                 color: Colors.grey,
-                fontFamily: kFontDMSans,
                 height: 1.3,
               ),
             ),
@@ -408,10 +400,9 @@ class JobCard extends StatelessWidget {
                         job.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: GoogleFonts.dmSans(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
-                          fontFamily: kFontDMSans,
                           color: kDark,
                         ),
                       ),
@@ -428,10 +419,9 @@ class JobCard extends StatelessWidget {
                             child: Text(
                               '${job.location} • $timeAgo',
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: GoogleFonts.dmSans(
                                 fontSize: 11.sp,
                                 color: Colors.grey,
-                                fontFamily: kFontDMSans,
                               ),
                             ),
                           ),
@@ -494,10 +484,9 @@ class JobCard extends StatelessWidget {
                 ),
                 child: Text(
                   'Review Applicants',
-                  style: TextStyle(
+                  style: GoogleFonts.dmSans(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    fontFamily: kFontDMSans,
                   ),
                 ),
               ),
@@ -534,20 +523,18 @@ class _CardStatBox extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(
+            style: GoogleFonts.dmSans(
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
-              fontFamily: kFontDMSans,
               color: kDark,
             ),
           ),
           SizedBox(height: 2.h),
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.dmSans(
               fontSize: 10.sp,
               color: Colors.grey,
-              fontFamily: kFontDMSans,
               fontWeight: FontWeight.w600,
             ),
           ),
