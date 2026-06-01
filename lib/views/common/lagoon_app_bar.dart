@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -33,20 +32,12 @@ class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
                   Icon(Icons.waves_rounded, color: kThemeColor, size: 28.sp),
                   SizedBox(width: 8.w),
                 ],
-                if (kIsWeb)
-                  Image.asset(
-                    'assets/Lagoon.png',
-                    width: 80.w,
-                    height: 26.h,
-                    fit: BoxFit.contain,
-                  )
-                else
-                  SvgPicture.asset(
-                    'assets/Lagoon.svg',
-                    width: 80.w,
-                    height: 26.h,
-                    fit: BoxFit.contain,
-                  ),
+                SvgPicture.asset(
+                  'assets/Lagoon.svg',
+                  width: 80.w,
+                  height: 26.h,
+                  fit: BoxFit.contain,
+                ),
               ],
             ),
           ),

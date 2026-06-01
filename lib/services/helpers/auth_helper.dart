@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as https;
 import 'package:proco/models/request/auth/auth_user_model.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
@@ -41,11 +42,14 @@ class AuthHelper {
       // ✅ Parse ONLY data
       final user = LoginResponseModel.fromJson(body['data']);
 
-      // ✅ Save session
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', user.userToken);
-      await prefs.setString('userId', user.id);
-      await prefs.setBool('onboardingComplete', !(user.isFirstTimeUser));
+      // On mobile, save session to SharedPreferences
+      // On web, HttpOnly cookies are handled automatically by the browser
+      if (!kIsWeb) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', user.userToken);
+        await prefs.setString('userId', user.id);
+        await prefs.setBool('onboardingComplete', !(user.isFirstTimeUser));
+      }
 
       return ApiResponse(
         success: true,
@@ -73,8 +77,6 @@ class AuthHelper {
         headers: requestHeaders,
         body: jsonEncode(model.toJson()), // ✅ FIXED
       );
-
-      debugPrint('Signup Response: ${response.body}');
 
       // ✅ Handle empty response
       if (response.body.isEmpty) {
@@ -133,24 +135,28 @@ class AuthHelper {
       if (response.statusCode == 200 && body['success'] == true) {
         final user = AuthUserModel.fromJson(body['data']);
 
-        final prefs = await SharedPreferences.getInstance();
+        // On mobile, save session to SharedPreferences
+        // On web, HttpOnly cookies are handled automatically by the browser
+        if (!kIsWeb) {
+          final prefs = await SharedPreferences.getInstance();
 
-        if (user.userToken != null) {
-          await prefs.setString('token', user.userToken!);
+          if (user.userToken != null) {
+            await prefs.setString('token', user.userToken!);
+          }
+
+          if (user.id != null) {
+            await prefs.setString('userId', user.id!);
+          }
+
+          if (body['data']?['profile'] != null) {
+            await prefs.setString('profile', body['data']['profile']);
+          }
+
+          await prefs.setBool(
+            'onboardingComplete',
+            !(user.isFirstTimeUser ?? false),
+          );
         }
-
-        if (user.id != null) {
-          await prefs.setString('userId', user.id!);
-        }
-
-        if (body['data']?['profile'] != null) {
-          await prefs.setString('profile', body['data']['profile']);
-        }
-
-        await prefs.setBool(
-          'onboardingComplete',
-          !(user.isFirstTimeUser ?? false),
-        );
 
         return ApiResponse(
           success: true,
@@ -195,8 +201,6 @@ class AuthHelper {
         }),
       );
 
-      debugPrint('Email Signup Response: ${response.body}');
-
       // ✅ Handle empty response
       if (response.body.isEmpty) {
         return ApiResponse(
@@ -210,18 +214,21 @@ class AuthHelper {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final user = AuthUserModel.fromJson(body['data']);
 
-        // ✅ Save session
-        final prefs = await SharedPreferences.getInstance();
+        // On mobile, save session to SharedPreferences
+        // On web, HttpOnly cookies are handled automatically by the browser
+        if (!kIsWeb) {
+          final prefs = await SharedPreferences.getInstance();
 
-        if (user.userToken != null) {
-          await prefs.setString('token', user.userToken!);
+          if (user.userToken != null) {
+            await prefs.setString('token', user.userToken!);
+          }
+
+          if (user.id != null) {
+            await prefs.setString('userId', user.id!);
+          }
+
+          await prefs.setBool('loggedIn', true);
         }
-
-        if (user.id != null) {
-          await prefs.setString('userId', user.id!);
-        }
-
-        await prefs.setBool('loggedIn', true);
 
         return ApiResponse(
           success: true,
@@ -261,12 +268,16 @@ class AuthHelper {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final user = AuthUserModel.fromJson(data['data']);
 
-        final prefs = await SharedPreferences.getInstance();
-        if (user.userToken != null) {
-          await prefs.setString('token', user.userToken!);
-        }
-        if (user.id != null) {
-          await prefs.setString('userId', user.id!);
+        // On mobile, save session to SharedPreferences
+        // On web, HttpOnly cookies are handled automatically by the browser
+        if (!kIsWeb) {
+          final prefs = await SharedPreferences.getInstance();
+          if (user.userToken != null) {
+            await prefs.setString('token', user.userToken!);
+          }
+          if (user.id != null) {
+            await prefs.setString('userId', user.id!);
+          }
         }
 
         return ApiResponse(

@@ -271,9 +271,6 @@ class UserHelper {
       debugPrint('fetchUserById URL: $url');
       final response = await client.get(url, headers: headers);
 
-      debugPrint('fetchUserById [$userId] status: ${response.statusCode}');
-      debugPrint('fetchUserById body: ${response.body}');
-
       final decoded = jsonDecode(response.body);
 
       if (response.statusCode == 200) {

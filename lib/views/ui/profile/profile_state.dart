@@ -210,7 +210,6 @@ class ProfileEditState extends ChangeNotifier {
       } else {
         // Viewing self
         final res = await UserHelper.getProfile();
-        debugPrint("Profile Fetch Response: ${res.success}, Data: ${res.data}");
         if (res.success && res.data != null) {
           final ProfileRes d = res.data!;
           _mapCommonFields(d);

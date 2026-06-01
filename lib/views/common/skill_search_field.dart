@@ -137,32 +137,42 @@ class _SkillSearchFieldState extends State<SkillSearchField> {
                 ),
               ],
             ),
-            child: ListView.separated(
-              shrinkWrap: true,
+            child: SingleChildScrollView(
               padding: EdgeInsets.zero,
-              itemCount: _suggestions.length,
-              separatorBuilder: (_, _) =>
-                  Divider(height: 1, color: Colors.grey.shade200),
-              itemBuilder: (context, i) {
-                final skill = _suggestions[i];
-                return InkWell(
-                  onTap: () => _select(skill),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 10.h,
-                    ),
-                    child: Text(
-                      skill,
-                      style: TextStyle(
-                        fontFamily: kFontDMSans,
-                        fontSize: 13.sp,
-                        color: kDark,
-                      ),
-                    ),
-                  ),
-                );
-              },
+              child: Column(
+                children: List.generate(
+                  _suggestions.length,
+                  (i) {
+                    final skill = _suggestions[i];
+                    return Column(
+                      children: [
+                        InkWell(
+                          onTap: () => _select(skill),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14.w,
+                              vertical: 10.h,
+                            ),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Text(
+                                skill,
+                                style: TextStyle(
+                                  fontFamily: kFontDMSans,
+                                  fontSize: 13.sp,
+                                  color: kDark,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (i < _suggestions.length - 1)
+                          Divider(height: 1, color: Colors.grey.shade200),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ],

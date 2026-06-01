@@ -120,4 +120,3 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/json/
-    - .env

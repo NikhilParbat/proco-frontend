@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:proco/brand_splash_screen.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
@@ -39,8 +40,17 @@ class _AppInitializerState extends State<AppInitializer> {
     try {
       // ✅ FAST: Read from local storage only
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      final isLoggedIn = token != null && token.isNotEmpty;
+
+      // On mobile, check for token in SharedPreferences
+      // On web, check Firebase auth state (HttpOnly cookies handled by browser)
+      bool isLoggedIn = false;
+      if (kIsWeb) {
+        isLoggedIn = FirebaseAuth.instance.currentUser != null;
+      } else {
+        final token = prefs.getString('token');
+        isLoggedIn = token != null && token.isNotEmpty;
+      }
+
       final onboardingComplete = prefs.getBool('onboardingComplete') ?? false;
       final onboardingPage = prefs.getInt('onboardingPage') ?? 0;
 

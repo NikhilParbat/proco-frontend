@@ -31,8 +31,6 @@ class MesssagingHelper {
         body: jsonEncode(model.toJson()),
       );
 
-      debugPrint("SEND MESSAGE RESPONSE: ${response.body}");
-
       final decoded = json.decode(response.body);
 
       if (response.statusCode == 201 && decoded['success'] == true) {
@@ -76,8 +74,6 @@ class MesssagingHelper {
         url,
         headers: {'Content-Type': 'application/json', 'token': 'Bearer $token'},
       );
-
-      debugPrint("GET MESSAGES RESPONSE: ${response.body}");
 
       final decoded = json.decode(response.body);
 
