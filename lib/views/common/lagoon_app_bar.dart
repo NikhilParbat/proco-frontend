@@ -37,10 +37,6 @@ class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
                   width: 80.w,
                   height: 26.h,
                   fit: BoxFit.contain,
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xFF0C0D13),
-                    BlendMode.srcIn,
-                  ),
                 ),
               ],
             ),
