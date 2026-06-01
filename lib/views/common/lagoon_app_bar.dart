@@ -4,9 +4,10 @@ import 'package:flutter_svg/svg.dart';
 import 'package:proco/constants/app_colors.dart';
 
 class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const LagoonAppBar({super.key, this.actions});
+  const LagoonAppBar({super.key, this.actions, this.showDrawer = true});
 
   final List<Widget>? actions;
+  final bool showDrawer;
 
   @override
   Size get preferredSize => Size.fromHeight(50.h);
@@ -21,20 +22,25 @@ class LagoonAppBar extends StatelessWidget implements PreferredSizeWidget {
       leadingWidth: 170.w,
       leading: Builder(
         builder: (ctx) => GestureDetector(
-          onTap: () => Scaffold.of(ctx).openDrawer(),
+          onTap: showDrawer ? () => Scaffold.of(ctx).openDrawer() : null,
           child: Padding(
             padding: EdgeInsets.only(left: 12.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Icon(Icons.waves_rounded, color: kThemeColor, size: 28.sp),
-
-                SizedBox(width: 8.w),
+                if (showDrawer) ...[
+                  Icon(Icons.waves_rounded, color: kThemeColor, size: 28.sp),
+                  SizedBox(width: 8.w),
+                ],
                 SvgPicture.asset(
                   'assets/Lagoon.svg',
                   width: 80.w,
                   height: 26.h,
                   fit: BoxFit.contain,
+                  colorFilter: const ColorFilter.mode(
+                    Color(0xFF0C0D13),
+                    BlendMode.srcIn,
+                  ),
                 ),
               ],
             ),

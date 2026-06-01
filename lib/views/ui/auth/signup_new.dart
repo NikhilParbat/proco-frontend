@@ -64,7 +64,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           return Scaffold(
             resizeToAvoidBottomInset: true,
             backgroundColor: kBackgroundColor,
-            appBar: const LagoonAppBar(),
+            appBar: const LagoonAppBar(showDrawer: false),
             body: provider.activeIndex == 3
                 ? _verifyEmailPage(provider)
                 : _signupPage(provider),

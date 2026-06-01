@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
           resizeToAvoidBottomInset: true,
           // Page background set to kbackgroundColor
           backgroundColor: kBackgroundColor,
-          appBar: const LagoonAppBar(),
+          appBar: const LagoonAppBar(showDrawer: false),
           body: SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
