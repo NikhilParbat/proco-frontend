@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
+import 'package:proco/services/token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
@@ -23,7 +24,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   String _userId = '';
   bool _isInitialized = false;
-  SharedPreferences? _prefs;
 
   @override
   void initState() {
@@ -32,10 +32,9 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializePrefs() async {
-    _prefs = widget.prefs ?? await SharedPreferences.getInstance();
-
-    _userId = _prefs?.getString('userId') ?? '';
-    final token = _prefs?.getString('token') ?? '';
+    // Credentials via TokenStore (in-memory on web, prefs on mobile).
+    _userId = await TokenStore.getUserId() ?? '';
+    final token = await TokenStore.getToken() ?? '';
 
     // LOAD UI IMMEDIATELY
     if (mounted) {

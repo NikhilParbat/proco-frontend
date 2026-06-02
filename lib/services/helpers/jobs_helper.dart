@@ -10,6 +10,7 @@ import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/models/response/jobs/match_res_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/services/token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class JobsHelper {
@@ -28,8 +29,7 @@ class JobsHelper {
   }
 
   static Future<Map<String, String>> _authHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = await TokenStore.getToken();
     return {
       'Content-Type': 'application/json',
       if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
@@ -340,8 +340,7 @@ class JobsHelper {
     XFile? imageFile,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       final url = Config.url(Config.jobs);
       final request = https.MultipartRequest('POST', url);
@@ -420,8 +419,7 @@ class JobsHelper {
     XFile? imageFile,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStore.getToken();
 
       final url = Config.url('${Config.jobs}/$jobId');
 
@@ -525,8 +523,6 @@ class JobsHelper {
       final url = Config.url('${Config.swipe}/$jobId');
       final response = await client.get(url, headers: headers);
 
-      debugPrint('getSwipedUsers [$jobId] body: ${response.body}');
-
       if (response.body.isEmpty) {
         return ApiResponse(
           success: false,
@@ -622,8 +618,6 @@ class JobsHelper {
       final url = Config.url('${Config.matches}/$jobId');
       final response = await client.get(url, headers: headers);
 
-      debugPrint('getMatchedUsers [$jobId] body: ${response.body}');
-
       if (response.body.isEmpty) {
         return ApiResponse(
           success: false,
@@ -665,8 +659,6 @@ class JobsHelper {
         headers: headers,
         body: jsonEncode({'jobId': jobId, 'userId': userId, 'action': 'right'}),
       );
-
-      debugPrint('addMatchedUsers response: ${response.body}');
 
       if (response.statusCode == 200) {
         return ApiResponse(success: true, message: 'Match recorded');

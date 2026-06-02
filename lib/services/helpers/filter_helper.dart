@@ -6,14 +6,13 @@ import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/filters/filter_response.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/services/token_store.dart';
 
 class FilterHelper {
   static https.Client client = https.Client();
 
   static Future<Map<String, String>> _authHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = await TokenStore.getToken();
     return {
       'Content-Type': 'application/json',
       if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
@@ -58,10 +57,6 @@ class FilterHelper {
       final headers = await _authHeaders();
       final url = Config.url('${Config.filters}/$agentId');
       final response = await client.get(url, headers: headers);
-
-      debugPrint('getFilter url: $url');
-      debugPrint('getFilter status: ${response.statusCode}');
-      debugPrint('getFilter body: ${response.body}');
 
       if (response.body.isEmpty) {
         return ApiResponse(

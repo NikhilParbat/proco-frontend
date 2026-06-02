@@ -6,14 +6,13 @@ import 'package:proco/models/request/chat/create_chat.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/chat/get_chat.dart';
 import 'package:proco/services/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/services/token_store.dart';
 
 class ChatHelper {
   static https.Client client = https.Client();
 
   static Future<Map<String, String>> _authHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = await TokenStore.getToken();
     return {
       'Content-Type': 'application/json',
       if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
@@ -34,9 +33,6 @@ class ChatHelper {
         headers: headers,
         body: jsonEncode(model.toJson()),
       );
-
-      debugPrint('createChat status: ${response.statusCode}');
-      debugPrint('createChat body:   ${response.body}');
 
       if (response.body.isEmpty) {
         return ApiResponse(success: false, message: 'Server is starting up, please try again');
@@ -66,9 +62,6 @@ class ChatHelper {
 
       final url = Config.url(Config.chatsUrl);
       final response = await client.get(url, headers: headers);
-
-      debugPrint('getConversations status: ${response.statusCode}');
-      debugPrint('getConversations body:   ${response.body}');
 
       if (response.body.isEmpty) {
         return ApiResponse(success: false, message: 'Server is starting up, please try again');

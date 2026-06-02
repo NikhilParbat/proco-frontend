@@ -6,14 +6,13 @@ import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/services/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proco/services/token_store.dart';
 
 class BookMarkHelper {
   static https.Client client = https.Client();
 
   static Future<Map<String, String>> _authHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = await TokenStore.getToken();
     return {
       'Content-Type': 'application/json',
       if (token != null && token.isNotEmpty) 'token': 'Bearer $token',
@@ -41,9 +40,6 @@ class BookMarkHelper {
         headers: headers,
         body: jsonEncode(model.toJson()),
       );
-
-      debugPrint('addBookmarks status: ${response.statusCode}');
-      debugPrint('addBookmarks body:   ${response.body}');
 
       if (response.body.isEmpty) {
         return ApiResponse(
@@ -88,9 +84,6 @@ class BookMarkHelper {
 
       final response = await client.delete(url, headers: headers);
 
-      debugPrint('deleteBookmarks status: ${response.statusCode}');
-      debugPrint('deleteBookmarks body:   ${response.body}');
-
       if (response.body.isEmpty) {
         return ApiResponse(
           success: false,
@@ -132,9 +125,6 @@ class BookMarkHelper {
       final url = Config.url(Config.bookmarkUrl);
 
       final response = await client.get(url, headers: headers);
-
-      debugPrint('getBookmarks status: ${response.statusCode}');
-      debugPrint('getBookmarks body:   ${response.body}');
 
       if (response.body.isEmpty) {
         return ApiResponse(
