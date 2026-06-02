@@ -15,6 +15,7 @@ import 'package:proco/controllers/signup_provider.dart';
 import 'package:proco/controllers/zoom_provider.dart';
 import 'package:proco/my_app.dart';
 import 'package:proco/services/firebase_service.dart';
+import 'package:proco/services/token_store.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -46,12 +47,12 @@ class _AppInitializerState extends State<AppInitializer> {
       // On web, check Firebase auth state (HttpOnly cookies handled by browser)
       bool isLoggedIn = false;
       if (kIsWeb) {
-        // The web JWT lives in an HttpOnly cookie that JavaScript cannot read,
-        // so we ask the backend whether the cookie is still valid. A logged-in
-        // user therefore stays logged in across refreshes until they explicitly
-        // log out (or the 21-day token expires).
-        final sessionUserId = await AuthHelper.fetchSessionUserId();
-        isLoggedIn = sessionUserId != null;
+        // Decide INSTANTLY from a non-sensitive local flag — never block the
+        // splash on the network. The real credential is the HttpOnly cookie;
+        // it is validated lazily by the first authenticated API call. A
+        // logged-in user therefore stays logged in across refreshes until they
+        // explicitly log out (or the 21-day cookie expires).
+        isLoggedIn = await TokenStore.hasWebSession();
       } else {
         final token = prefs.getString('token');
         isLoggedIn = token != null && token.isNotEmpty;
@@ -184,6 +185,16 @@ class _AppInitializerState extends State<AppInitializer> {
       try {
         // Initialize Firebase services
         await FirebaseService.initializeAsync();
+
+        // Web only: the JWT/userId aren't readable from the cookie, so after the
+        // UI is up we ask the backend who we are to repopulate the in-memory
+        // userId (used by jobs/chat/socket). Non-fatal and never blocks the
+        // splash. We deliberately DON'T clear the session flag on failure here —
+        // a transient/cold-start error must not log a valid user out; an
+        // actually-invalid cookie is caught when the first API call returns 401.
+        if (kIsWeb && await TokenStore.hasWebSession()) {
+          await AuthHelper.fetchSessionUserId();
+        }
 
         debugPrint('✅ Background initialization complete');
       } catch (e) {
