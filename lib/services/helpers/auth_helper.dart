@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -9,12 +10,14 @@ import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/login_res_model.dart';
 import 'package:proco/models/response/auth/signup_res_model.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:proco/services/config.dart';
+import 'package:proco/services/http_client.dart';
 import 'package:proco/services/token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthHelper {
-  static https.Client client = https.Client();
+  static https.Client client = createHttpClient();
 
   static Future<ApiResponse<LoginResponseModel>> login(
     LoginRequestModel model,
@@ -266,6 +269,66 @@ class AuthHelper {
       }
     } catch (e) {
       return ApiResponse(success: false, message: e.toString());
+    }
+  }
+
+  /// Web session check at startup.
+  ///
+  /// The web JWT lives only in the HttpOnly cookie, which JavaScript cannot
+  /// read — so we can't tell "am I logged in?" from local state. Instead we ask
+  /// the backend who we are: `GET /api/users` runs through verifyToken, which
+  /// reads the cookie. A 200 means the cookie is still valid (user is logged in
+  /// until they explicitly log out, or the 21-day token expires).
+  ///
+  /// On success the user id is cached in the in-memory [TokenStore] and the
+  /// onboarding flag is refreshed. Returns the user id, or null if not logged in.
+  static Future<String?> fetchSessionUserId() async {
+    try {
+      final headers = <String, String>{'Content-Type': 'application/json'};
+      // Mobile already has the token locally; web relies on the cookie.
+      if (!kIsWeb) {
+        final token = await TokenStore.getToken();
+        if (token == null || token.isEmpty) return null;
+        headers['token'] = 'Bearer $token';
+      }
+
+      final url = Config.url('/api/users');
+      final response = await client
+          .get(url, headers: headers)
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode != 200 || response.body.isEmpty) return null;
+
+      final body = jsonDecode(response.body);
+      final data = body['data'] as Map<String, dynamic>?;
+      final id = data?['id']?.toString();
+      if (id == null || id.isEmpty) return null;
+
+      await TokenStore.saveUserId(id);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboardingComplete', data?['isFirstTimeUser'] != true);
+
+      return id;
+    } catch (e) {
+      debugPrint('fetchSessionUserId error: $e');
+      return null;
+    }
+  }
+
+  /// Clears the server-side session. On web this tells the backend to expire the
+  /// HttpOnly cookie (the only way to remove it, since JS can't touch it). On
+  /// mobile it's a harmless no-op — the app clears its own stored token.
+  static Future<void> logout() async {
+    try {
+      await client
+          .post(
+            Config.url('/api/logout'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 8));
+    } catch (e) {
+      debugPrint('logout request failed: $e');
     }
   }
 }

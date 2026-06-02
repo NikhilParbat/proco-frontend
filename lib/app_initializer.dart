@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/brand_splash_screen.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/chat_provider.dart';
@@ -46,9 +46,14 @@ class _AppInitializerState extends State<AppInitializer> {
       // On web, check Firebase auth state (HttpOnly cookies handled by browser)
       bool isLoggedIn = false;
       if (kIsWeb) {
-        isLoggedIn = FirebaseAuth.instance.currentUser != null;
+        // The web JWT lives in an HttpOnly cookie that JavaScript cannot read,
+        // so we ask the backend whether the cookie is still valid. A logged-in
+        // user therefore stays logged in across refreshes until they explicitly
+        // log out (or the 21-day token expires).
+        final sessionUserId = await AuthHelper.fetchSessionUserId();
+        isLoggedIn = sessionUserId != null;
       } else {
-        final token = kIsWeb ? null : prefs.getString('token');
+        final token = prefs.getString('token');
         isLoggedIn = token != null && token.isNotEmpty;
       }
 

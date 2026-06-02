@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as https;
 import 'package:image_picker/image_picker.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
@@ -22,9 +23,11 @@ class UserHelper {
     XFile? image,
   ) async {
     try {
-      final token = await TokenStore.getToken();
+      // Web authenticates via the HttpOnly cookie; the in-memory token is empty
+      // there, so only mobile requires a token to be present.
+      final token = await TokenStore.getToken() ?? '';
 
-      if (token == null || token.isEmpty) {
+      if (!kIsWeb && token.isEmpty) {
         return ApiResponse(success: false, message: 'Not authenticated.');
       }
 
@@ -94,7 +97,9 @@ class UserHelper {
         );
       }
 
-      final streamedResponse = await request.send();
+      // Send via the shared client so web requests carry the HttpOnly cookie
+      // (MultipartRequest.send() would otherwise use a fresh non-credentialed client).
+      final streamedResponse = await client.send(request);
       final responseBody = await streamedResponse.stream.bytesToString();
       final decoded = jsonDecode(responseBody);
 
@@ -121,9 +126,9 @@ class UserHelper {
     XFile? image,
   ) async {
     try {
-      final token = await TokenStore.getToken();
+      final token = await TokenStore.getToken() ?? '';
 
-      if (token == null || token.isEmpty) {
+      if (!kIsWeb && token.isEmpty) {
         return 'Not authenticated — please log in again.';
       }
 
@@ -178,7 +183,8 @@ class UserHelper {
         );
       }
 
-      final streamedResponse = await request.send();
+      // Send via the shared client so web requests carry the HttpOnly cookie.
+      final streamedResponse = await client.send(request);
       final responseBody = await streamedResponse.stream.bytesToString();
 
       if (streamedResponse.statusCode == 200 ||
@@ -214,15 +220,15 @@ class UserHelper {
 
   static Future<ApiResponse<ProfileRes>> getProfile() async {
     try {
-      final token = await TokenStore.getToken();
+      final token = await TokenStore.getToken() ?? '';
 
-      if (token == null || token.isEmpty) {
+      if (!kIsWeb && token.isEmpty) {
         return ApiResponse(success: false, message: 'Not authenticated');
       }
 
       final requestHeaders = <String, String>{
         'Content-Type': 'application/json',
-        'token': 'Bearer $token',
+        if (token.isNotEmpty) 'token': 'Bearer $token',
       };
 
       final url = Config.url('/api/users');

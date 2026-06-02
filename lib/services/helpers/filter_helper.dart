@@ -6,10 +6,11 @@ import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/filters/filter_response.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/services/http_client.dart';
 import 'package:proco/services/token_store.dart';
 
 class FilterHelper {
-  static https.Client client = https.Client();
+  static https.Client client = createHttpClient();
 
   static Future<Map<String, String>> _authHeaders() async {
     final token = await TokenStore.getToken();

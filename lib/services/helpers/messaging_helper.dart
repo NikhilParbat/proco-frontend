@@ -5,17 +5,20 @@ import 'package:http/http.dart' as https;
 import 'package:proco/models/request/messaging/send_message.dart';
 import 'package:proco/models/response/messaging/messaging_res.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/services/http_client.dart';
 import 'package:proco/services/token_store.dart';
 
 class MesssagingHelper {
-  static https.Client client = https.Client();
+  static https.Client client = createHttpClient();
 
   /// ================= SEND MESSAGE =================
   static Future<Map<String, dynamic>> sendMessage(SendMessage model) async {
     try {
-      final token = await TokenStore.getToken();
+      // Web authenticates via the HttpOnly cookie, so an empty in-memory token
+      // is expected there; only mobile requires a token to be present.
+      final token = await TokenStore.getToken() ?? '';
 
-      if (token == null) {
+      if (!kIsWeb && token.isEmpty) {
         return {"success": false, "message": "User not authenticated"};
       }
 
@@ -58,9 +61,9 @@ class MesssagingHelper {
     try {
       debugPrint('----------FETCHING MESSAGES-------------');
 
-      final token = await TokenStore.getToken();
+      final token = await TokenStore.getToken() ?? '';
 
-      if (token == null) {
+      if (!kIsWeb && token.isEmpty) {
         throw Exception("User not authenticated");
       }
 

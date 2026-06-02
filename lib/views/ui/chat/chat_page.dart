@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_constants.dart';
@@ -122,15 +123,21 @@ class _ChatPageState extends State<ChatPage> {
     // client never asserts its own userId.
     final token = await TokenStore.getToken() ?? '';
 
-    socket = io.io(
-      cfg.Config.socketUrl(),
-      io.OptionBuilder()
-          .setTransports(['websocket'])
-          .setAuth({'token': token})
-          .disableAutoConnect()
-          .enableForceNewConnection()
-          .build(),
-    );
+    final socketOptions = io.OptionBuilder()
+        .setTransports(['websocket'])
+        .setAuth({'token': token})
+        .disableAutoConnect()
+        .enableForceNewConnection()
+        .build();
+
+    // On web the in-memory token is empty after a refresh; the JWT lives in the
+    // HttpOnly cookie. withCredentials lets the browser attach that cookie to the
+    // socket handshake so the server can authenticate the connection.
+    if (kIsWeb) {
+      socketOptions['withCredentials'] = true;
+    }
+
+    socket = io.io(cfg.Config.socketUrl(), socketOptions);
 
     socket!.connect();
 

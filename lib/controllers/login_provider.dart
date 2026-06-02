@@ -367,6 +367,10 @@ class LoginNotifier extends ChangeNotifier {
     // Best-effort: clear all sessions on the backend before wiping local state.
     await DeviceHelper.removeAllDeviceSessions();
 
+    // Expire the HttpOnly auth cookie server-side. This is the only way to
+    // remove it on web (JavaScript can't touch it); a no-op for mobile.
+    await AuthHelper.logout();
+
     await TokenStore.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('loggedIn', false);

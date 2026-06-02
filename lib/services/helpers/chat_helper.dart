@@ -6,10 +6,11 @@ import 'package:proco/models/request/chat/create_chat.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/chat/get_chat.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/services/http_client.dart';
 import 'package:proco/services/token_store.dart';
 
 class ChatHelper {
-  static https.Client client = https.Client();
+  static https.Client client = createHttpClient();
 
   static Future<Map<String, String>> _authHeaders() async {
     final token = await TokenStore.getToken();
@@ -23,7 +24,9 @@ class ChatHelper {
   static Future<ApiResponse<String>> createChat(CreateChat model) async {
     try {
       final headers = await _authHeaders();
-      if (!headers.containsKey('token')) {
+      // On web the JWT lives only in the HttpOnly cookie (not readable here), so
+      // an absent header is expected — the browser attaches the cookie itself.
+      if (!kIsWeb && !headers.containsKey('token')) {
         return ApiResponse(success: false, message: 'Not authenticated');
       }
 
@@ -56,7 +59,9 @@ class ChatHelper {
   static Future<ApiResponse<List<GetChats>>> getConversations() async {
     try {
       final headers = await _authHeaders();
-      if (!headers.containsKey('token')) {
+      // On web the JWT lives only in the HttpOnly cookie (not readable here), so
+      // an absent header is expected — the browser attaches the cookie itself.
+      if (!kIsWeb && !headers.containsKey('token')) {
         return ApiResponse(success: false, message: 'Not authenticated');
       }
 

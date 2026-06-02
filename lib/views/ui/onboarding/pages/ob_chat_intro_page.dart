@@ -1206,7 +1206,7 @@ class _BotBubble extends StatelessWidget {
               child: Text(
                 text,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: const Color.fromARGB(255, 0, 0, 0),
                   fontSize: 13.sp,
                   height: 1.45,
                 ),
@@ -1246,7 +1246,7 @@ class _UserBubble extends StatelessWidget {
               child: Text(
                 text,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: const Color.fromARGB(255, 0, 0, 0),
                   fontSize: 13.sp,
                   height: 1.4,
                 ),

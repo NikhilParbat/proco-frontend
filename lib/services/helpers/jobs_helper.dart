@@ -10,11 +10,12 @@ import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/models/response/jobs/match_res_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/services/http_client.dart';
 import 'package:proco/services/token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class JobsHelper {
-  static https.Client client = https.Client();
+  static https.Client client = createHttpClient();
 
   // Returns the error message from a non-200 response without crashing on HTML.
   static String _errorMessage(https.Response response, String fallback) {
@@ -381,7 +382,8 @@ class JobsHelper {
         );
       }
 
-      final streamedResponse = await request.send();
+      // Send via the shared client so web requests carry the HttpOnly cookie.
+      final streamedResponse = await client.send(request);
       final response = await https.Response.fromStream(streamedResponse);
 
       if (response.body.isEmpty) {
@@ -463,7 +465,8 @@ class JobsHelper {
         );
       }
 
-      final streamedResponse = await request.send();
+      // Send via the shared client so web requests carry the HttpOnly cookie.
+      final streamedResponse = await client.send(request);
       final response = await https.Response.fromStream(streamedResponse);
 
       if (response.body.isEmpty) {
