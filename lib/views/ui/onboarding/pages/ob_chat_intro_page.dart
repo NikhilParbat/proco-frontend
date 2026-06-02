@@ -7,10 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 
-import 'package:proco/constants/skills_constants.dart';
 import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/skill_search_field.dart';
 
 // ── Colors ────────────────────────────────────────────────────────────────────
 
@@ -58,9 +58,15 @@ const _kGenders = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
 // ── Message model ──────────────────────────────────────────────────────────────
 
+enum _MsgKind { bot, user, skill }
+
 class _Msg {
-  const _Msg({required this.isBot, required this.text});
-  final bool isBot;
+  const _Msg({required this.id, required this.kind, required this.text});
+
+  /// Stable id so [ListView] keeps each bubble's animation state when other
+  /// bubbles are inserted or removed (e.g. removing a selected skill).
+  final int id;
+  final _MsgKind kind;
   final String text;
 }
 
@@ -237,6 +243,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   final _scrollCtrl = ScrollController();
   final List<_Msg> _msgs = [];
   int _step = 0; // 0-4; 5 = done
+  int _msgSeq = 0; // monotonic id source for _Msg keys
 
   // Animation state
   bool _showTyping = false;
@@ -258,8 +265,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   // Step 2: Skills
   final Set<String> _skills = {};
-  final _skillSearchCtrl = TextEditingController();
-  String _skillQuery = '';
+  static const int _kMinSkills = 4;
 
   // Step 3: Location
   final _locationSearchCtrl = TextEditingController();
@@ -279,30 +285,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   @override
   void initState() {
     super.initState();
-    _skillSearchCtrl.addListener(
-      () => setState(
-        () => _skillQuery = _skillSearchCtrl.text.trim().toLowerCase(),
-      ),
-    );
-    // Delay first question so page transition finishes first.
-    Future.delayed(const Duration(milliseconds: 550), () {
-      if (mounted) {
-        setState(() {
-          _msgs.add(const _Msg(isBot: true, text: ''));
-          _ready = true;
-        });
-      }
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final provider = context.read<OnboardingFlowProvider>();
-      if (provider.displayAddress.isNotEmpty) {
-        setState(() {
-          _selectedLocationLabel = provider.displayAddress;
-          _locationSearchCtrl.text = provider.displayAddress;
-        });
-      }
-    });
+    _restore();
   }
 
   @override
@@ -311,9 +294,146 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     _nameCtrl.dispose();
     _collegeCtrl.dispose();
     _cgpaCtrl.dispose();
-    _skillSearchCtrl.dispose();
     _locationSearchCtrl.dispose();
     super.dispose();
+  }
+
+  // ── Restore / resume ─────────────────────────────────────────────────────
+
+  Future<void> _restore() async {
+    final provider = context.read<OnboardingFlowProvider>();
+    await provider.loadDraft();
+    if (!mounted) return;
+    _hydrateFromProvider(provider);
+    // Delay first paint so the page transition finishes before bubbles appear.
+    Future.delayed(const Duration(milliseconds: 450), () {
+      if (!mounted) return;
+      setState(() {
+        _rebuildHistory();
+        _ready = true;
+      });
+      _scrollToBottom();
+    });
+  }
+
+  /// Copy the saved draft from the provider into local widget state, guarding
+  /// each dropdown value against options that no longer exist.
+  void _hydrateFromProvider(OnboardingFlowProvider p) {
+    _step = p.chatStep.clamp(0, _botQuestions.length);
+
+    _nameCtrl.text = p.name;
+    if (_kGenders.contains(p.gender)) _gender = p.gender;
+    if (p.dob.isNotEmpty) _dob = DateTime.tryParse(p.dob);
+
+    _collegeCtrl.text = p.institution;
+    if (_kDegrees.contains(p.degree)) _degree = p.degree;
+    if (_kBranches.contains(p.branch)) _branch = p.branch;
+    if (_gradYears.contains(p.classOf)) _gradYear = p.classOf;
+    if (p.cgpa.contains('/')) {
+      final parts = p.cgpa.split('/');
+      _cgpaCtrl.text = parts[0];
+      if (parts.length > 1 && const ['4', '10'].contains(parts[1])) {
+        _cgpaScale = parts[1];
+      }
+    } else {
+      _cgpaCtrl.text = p.cgpa;
+    }
+
+    _skills
+      ..clear()
+      ..addAll(p.skills);
+
+    if (p.displayAddress.isNotEmpty) {
+      _selectedLocationLabel = p.displayAddress;
+      _locationSearchCtrl.text = p.displayAddress;
+    }
+  }
+
+  /// Rebuild the chat transcript from the restored step + answers: each
+  /// completed step contributes its question and the user's reply.
+  void _rebuildHistory() {
+    _msgs.clear();
+    for (var k = 0; k <= _step && k < _botQuestions.length; k++) {
+      _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.bot, text: _botQuestions[k]));
+      final completed = k < _step;
+      if (k == 2) {
+        // Skills render as individual bubbles whether the step is done or live.
+        for (final s in _skills) {
+          _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.skill, text: s));
+        }
+      } else if (completed) {
+        final summary = _summaryForStep(k);
+        if (summary.isNotEmpty) {
+          _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.user, text: summary));
+        }
+      }
+    }
+  }
+
+  // ── Persistence helpers ────────────────────────────────────────────────────
+
+  String _isoDob(DateTime d) {
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$m-$day';
+  }
+
+  /// Mirror current local state into the provider (location is written
+  /// separately via [OnboardingFlowProvider.setLocation]).
+  void _commitToProvider(OnboardingFlowProvider p) {
+    p.name = _nameCtrl.text.trim();
+    p.gender = _gender;
+    p.dob = _dob == null ? '' : _isoDob(_dob!);
+    p.institution = _collegeCtrl.text.trim();
+    p.degree = _degree;
+    p.branch = _branch;
+    p.classOf = _gradYear;
+    p.cgpa = _cgpaCtrl.text.trim().isEmpty
+        ? ''
+        : '${_cgpaCtrl.text.trim()}/$_cgpaScale';
+    p.skills = List.from(_skills);
+  }
+
+  // ── Skill selection (step 2) ───────────────────────────────────────────────
+  // NB: selections are intentionally NOT persisted here. Like every other
+  // step, skills are only saved at the step-completion checkpoint in _advance.
+
+  void _addSkill(String skill) {
+    if (_skills.contains(skill)) return;
+    setState(() {
+      _skills.add(skill);
+      _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.skill, text: skill));
+    });
+    _scrollToBottom();
+  }
+
+  void _removeSkill(String skill) {
+    setState(() {
+      _skills.remove(skill);
+      _msgs.removeWhere(
+        (m) => m.kind == _MsgKind.skill && m.text == skill,
+      );
+    });
+  }
+
+  String _summaryForStep(int step) {
+    switch (step) {
+      case 0:
+        if (_nameCtrl.text.trim().isEmpty) return '';
+        final dobStr = _dob == null
+            ? ''
+            : '${_dob!.day.toString().padLeft(2, '0')}/${_dob!.month.toString().padLeft(2, '0')}/${_dob!.year}';
+        return '${_nameCtrl.text.trim()}, $_gender, $dobStr';
+      case 1:
+        final college = _collegeCtrl.text.trim();
+        final cgpaText = _cgpaCtrl.text.trim();
+        final cgpaSummary = cgpaText.isEmpty
+            ? ''
+            : ' • CGPA: $cgpaText/$_cgpaScale';
+        return '$college • $_degree • $_branch$cgpaSummary • $_gradYear';
+      default:
+        return '';
+    }
   }
 
   // ── Scroll ─────────────────────────────────────────────────────────────────
@@ -332,35 +452,24 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   // ── Advance ────────────────────────────────────────────────────────────────
 
-  void _advance({required String userSummary}) {
+  /// Advances to the next step. Pass [userSummary] to append a user reply
+  /// bubble; omit it for steps (like skills) that already render their own
+  /// bubbles in the transcript.
+  void _advance({String? userSummary}) {
     final provider = context.read<OnboardingFlowProvider>();
-
-    // Persist data for current step
-    if (_step == 0) {
-      provider.name = _nameCtrl.text.trim();
-      provider.gender = _gender;
-      if (_dob != null) {
-        final m = _dob!.month.toString().padLeft(2, '0');
-        final d = _dob!.day.toString().padLeft(2, '0');
-        provider.dob = '${_dob!.year}-$m-$d';
-      }
-    } else if (_step == 1) {
-      provider.institution = _collegeCtrl.text.trim();
-      provider.degree = _degree;
-      provider.branch = _branch;
-      provider.classOf = _gradYear;
-      provider.cgpa = _cgpaCtrl.text.trim().isEmpty
-          ? ''
-          : '${_cgpaCtrl.text.trim()}/$_cgpaScale';
-    } else if (_step == 2) {
-      provider.skills = List.from(_skills);
-    }
+    _commitToProvider(provider);
 
     final nextStep = _step + 1;
+    provider.chatStep = nextStep;
+    provider.saveDraft();
 
     // 1. User answer bubble slides in; block input.
     setState(() {
-      _msgs.add(_Msg(isBot: false, text: userSummary));
+      if (userSummary != null && userSummary.isNotEmpty) {
+        _msgs.add(
+          _Msg(id: _msgSeq++, kind: _MsgKind.user, text: userSummary),
+        );
+      }
       _transitioning = true;
     });
     _scrollToBottom();
@@ -392,7 +501,13 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
       if (!mounted) return;
       setState(() {
         _showTyping = false;
-        _msgs.add(const _Msg(isBot: true, text: ''));
+        _msgs.add(
+          _Msg(
+            id: _msgSeq++,
+            kind: _MsgKind.bot,
+            text: _botQuestions[nextStep],
+          ),
+        );
         _step = nextStep;
         _transitioning = false;
       });
@@ -468,11 +583,15 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
         );
 
       case 2:
-        if (_skills.isEmpty) {
-          _snack('Select skills', 'Pick at least one skill.');
+        if (_skills.length < _kMinSkills) {
+          _snack(
+            'More skills needed',
+            'Please select at least $_kMinSkills skills.',
+          );
           return;
         }
-        _advance(userSummary: _skills.join(', '));
+        // Skills already appear as their own bubbles — no summary reply.
+        _advance();
 
       case 3:
         _finishLocationStep();
@@ -681,13 +800,22 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
           );
         }
         final msg = _msgs[i];
-        final content = msg.isBot
-            ? _BotBubble(text: _botQuestions[i ~/ 2])
-            : _UserBubble(text: msg.text);
-        // ValueKey(i) ensures Flutter reuses existing states and only
-        // creates a new _ChatMessageState (and triggers the animation) for
-        // items appended at the end.
-        return _ChatMessage(key: ValueKey(i), child: content);
+        final Widget content;
+        switch (msg.kind) {
+          case _MsgKind.bot:
+            content = _BotBubble(text: msg.text);
+          case _MsgKind.user:
+            content = _UserBubble(text: msg.text);
+          case _MsgKind.skill:
+            content = _SkillBubble(
+              label: msg.text,
+              onRemove: () => _removeSkill(msg.text),
+            );
+        }
+        // The stable msg.id key ensures Flutter reuses existing states and
+        // only animates newly-appended bubbles — and keeps animations correct
+        // when a skill bubble is removed from the middle of the list.
+        return _ChatMessage(key: ValueKey(msg.id), child: content);
       },
     );
   }
@@ -748,32 +876,9 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
                 opacity: _transitioning ? 0.45 : 1.0,
                 child: _step == 3
                     ? const SizedBox.shrink()
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildContinueButton(),
-                          if (_step == 2) ...[
-                            SizedBox(height: 6.h),
-                            GestureDetector(
-                              onTap: () {
-                                context.read<OnboardingFlowProvider>().skills =
-                                    [];
-                                _advance(userSummary: 'Skipped');
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 6.h),
-                                child: Text(
-                                  'Skip for now',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                    : _buildContinueButton(
+                        // Skills step is gated on a minimum selection.
+                        enabled: _step != 2 || _skills.length >= _kMinSkills,
                       ),
               ),
             ],
@@ -900,45 +1005,38 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   // ── Step 2: Skills ─────────────────────────────────────────────────────────
 
   Widget _buildStep2() {
-    final filtered = kAllSkills
-        .where((s) => s.toLowerCase().contains(_skillQuery))
-        .toList();
-
+    final remaining = _kMinSkills - _skills.length;
+    final met = remaining <= 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InputField(
-          controller: _skillSearchCtrl,
-          hint: 'Search Skills',
-          icon: Icons.search,
+        // Search instead of a wall of chips — each pick becomes a chat bubble.
+        SkillSearchField(
+          onSelected: _addSkill,
+          alreadySelected: _skills.toList(),
+          hint: 'Search and add a skill...',
         ),
-        SizedBox(height: 10.h),
-        Wrap(
-          spacing: 8.w,
-          runSpacing: 8.h,
-          children: filtered.map((s) {
-            final selected = _skills.contains(s);
-            return _ChoiceChipButton(
-              label: s,
-              selected: selected,
-              onTap: () => setState(() {
-                selected ? _skills.remove(s) : _skills.add(s);
-              }),
-            );
-          }).toList(),
-        ),
-        if (_skills.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(top: 8.h),
-            child: Text(
-              '${_skills.length} selected',
+        SizedBox(height: 8.h),
+        Row(
+          children: [
+            Icon(
+              met ? Icons.check_circle : Icons.info_outline,
+              size: 14.sp,
+              color: met ? kThemeColor : Colors.grey,
+            ),
+            SizedBox(width: 5.w),
+            Text(
+              met
+                  ? '${_skills.length} skills added'
+                  : 'Pick at least $_kMinSkills skills · $remaining more',
               style: TextStyle(
-                color: kThemeColor,
+                color: met ? kThemeColor : Colors.grey,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ),
+          ],
+        ),
       ],
     );
   }
@@ -1134,15 +1232,17 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   // ── Continue button ────────────────────────────────────────────────────────
 
-  Widget _buildContinueButton() {
+  Widget _buildContinueButton({bool enabled = true}) {
     return SizedBox(
       width: double.infinity,
       height: 48.h,
       child: ElevatedButton(
-        onPressed: _onContinue,
+        onPressed: enabled ? _onContinue : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: kThemeColor,
+          disabledBackgroundColor: kThemeColor.withValues(alpha: 0.35),
           foregroundColor: Colors.white,
+          disabledForegroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14.r),
           ),
@@ -1249,6 +1349,78 @@ class _UserBubble extends StatelessWidget {
                   color: const Color.fromARGB(255, 0, 0, 0),
                   fontSize: 13.sp,
                   height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A selected-skill reply: a rounded pill on the user's side of the chat,
+/// with a tap-to-remove control.
+class _SkillBubble extends StatelessWidget {
+  const _SkillBubble({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          SizedBox(width: 48.w),
+          Flexible(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: EdgeInsets.only(
+                  left: 14.w,
+                  right: 6.w,
+                  top: 7.h,
+                  bottom: 7.h,
+                ),
+                decoration: BoxDecoration(
+                  color: kThemeColor,
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    GestureDetector(
+                      onTap: onRemove,
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: EdgeInsets.all(3.r),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 13.sp,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
