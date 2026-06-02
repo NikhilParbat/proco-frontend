@@ -2,12 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-<<<<<<< HEAD
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
-import 'package:flutter/foundation.dart' show kReleaseMode;
-=======
 import 'package:flutter/foundation.dart' show kReleaseMode, FlutterError;
->>>>>>> 510c247670fce4cea2d95665fa58e260f325c818
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -38,24 +33,7 @@ Future<void> main() async {
       // over the network — this eliminates first-frame stalls / font flicker.
       GoogleFonts.config.allowRuntimeFetching = false;
 
-<<<<<<< HEAD
-  if (kReleaseMode) debugPrint = (String? message, {int? wrapWidth}) {};
-
-  // Silence all debugPrint output in release builds.
-  if (kReleaseMode) {
-    debugPrint = (String? message, {int? wrapWidth}) {};
-  }
-
-  // Orientation lock is not supported on web
-  if (!kIsWeb) {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-  }
-=======
       if (kReleaseMode) debugPrint = (String? message, {int? wrapWidth}) {};
->>>>>>> 510c247670fce4cea2d95665fa58e260f325c818
 
       // Never let a widget build error take the whole screen down with a red
       // box in production — show a minimal, branded fallback instead.
@@ -90,12 +68,6 @@ Future<void> main() async {
         debugPrint('Orientation lock failed: $e');
       }
 
-<<<<<<< HEAD
-  // Background message handler is not available on web (service worker handles it)
-  if (!kIsWeb) {
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  }
-=======
       // .env must never crash startup. If it is missing/corrupt we continue
       // with whatever defaults Config provides.
       try {
@@ -103,7 +75,6 @@ Future<void> main() async {
       } catch (e) {
         debugPrint('dotenv load failed (continuing with defaults): $e');
       }
->>>>>>> 510c247670fce4cea2d95665fa58e260f325c818
 
       // Firebase init is non-fatal: the app should still open (in a degraded
       // state) even if Firebase is unreachable on a cold start.
