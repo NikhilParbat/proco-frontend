@@ -241,10 +241,55 @@ class UserHelper {
     }
   }
 
-  /// Fetches a single user's full profile by their userId.
+  /// In-memory cache of resolved users (e.g. opportunity-card owner names).
+  /// This removes the N+1 network call that previously fired for every card in
+  /// the swiper. Lives for the app session only.
+  static final Map<String, UserResponse> _userCache = {};
+
+  /// Tracks in-flight requests so concurrent lookups for the same user share a
+  /// single network call instead of stampeding the backend.
+  static final Map<String, Future<ApiResponse<UserResponse>>> _userInFlight =
+      {};
+
+  /// Fetches a single user's full profile by their userId, cache-first.
   /// Backend contract: GET /api/users/:userId
-  /// Response format: { "success": true, "data": { ...user fields... } }
-  static Future<ApiResponse<UserResponse>> fetchUserById(String userId) async {
+  static Future<ApiResponse<UserResponse>> fetchUserById(String userId) {
+    if (userId.isEmpty) {
+      return Future.value(
+        ApiResponse(success: false, message: 'Empty userId'),
+      );
+    }
+
+    final cached = _userCache[userId];
+    if (cached != null) {
+      return Future.value(
+        ApiResponse(success: true, message: 'cached', data: cached),
+      );
+    }
+
+    return _userInFlight.putIfAbsent(userId, () async {
+      try {
+        final res = await _fetchUserByIdNetwork(userId);
+        if (res.success && res.data != null) {
+          _userCache[userId] = res.data!;
+        }
+        return res;
+      } finally {
+        _userInFlight.remove(userId);
+      }
+    });
+  }
+
+  /// Clears the user cache (call on logout so a different account never sees
+  /// stale data).
+  static void clearUserCache() {
+    _userCache.clear();
+    _userInFlight.clear();
+  }
+
+  static Future<ApiResponse<UserResponse>> _fetchUserByIdNetwork(
+    String userId,
+  ) async {
     try {
       final token = await TokenStore.getToken();
 

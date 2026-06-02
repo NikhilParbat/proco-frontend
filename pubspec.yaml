@@ -98,13 +98,6 @@ flutter_native_splash:
     color: "#F4F6FA"
     image: assets/Lagoon.png
 
-fonts:
-  - family: CormorantGaramond
-    fonts:
-      - asset: assets/fonts/CormorantGaramond-Regular.ttf
-      - asset: assets/fonts/CormorantGaramond-Bold.ttf
-        weight: 700
-
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -120,4 +113,70 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/json/
+    # Bundled Google Fonts (also declared under `fonts:` below). Declared here
+    # too so the google_fonts package detects them in the asset manifest and
+    # loads them locally instead of fetching over the network at runtime.
+    - assets/fonts/google/
     - .env
+
+  fonts:
+    - family: DMSans
+      fonts:
+        - asset: assets/fonts/google/DMSans-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/google/DMSans-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/google/DMSans-Light.ttf
+          weight: 300
+        - asset: assets/fonts/google/DMSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/google/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/google/DMSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/google/DMSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/google/DMSans-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/google/DMSans-Black.ttf
+          weight: 900
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/google/Montserrat-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/google/Montserrat-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/google/Montserrat-Light.ttf
+          weight: 300
+        - asset: assets/fonts/google/Montserrat-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/google/Montserrat-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/google/Montserrat-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/google/Montserrat-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/google/Montserrat-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/google/Montserrat-Black.ttf
+          weight: 900
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/google/Poppins-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/google/Poppins-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/google/Poppins-Light.ttf
+          weight: 300
+        - asset: assets/fonts/google/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/google/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/google/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/google/Poppins-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/google/Poppins-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/google/Poppins-Black.ttf
+          weight: 900

@@ -25,6 +25,12 @@ class _MainScreenState extends State<MainScreen> {
   bool _isInitialized = false;
   SharedPreferences? _prefs;
 
+  // Tabs that have been opened at least once. Only these are built inside the
+  // IndexedStack; the rest stay as lightweight placeholders until first visited
+  // (lazy-load), and once built they are kept alive so switching tabs never
+  // re-runs initState or re-fetches data.
+  final Set<int> _activatedTabs = {0};
+
   @override
   void initState() {
     super.initState();
@@ -86,39 +92,43 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     if (!_isInitialized) return const SizedBox();
 
-    return Consumer<ZoomNotifier>(
-      builder: (context, zoomNotifier, child) {
-        return _buildCurrentScreen(zoomNotifier.currentIndex);
+    // Only rebuild when the selected tab actually changes (Selector instead of
+    // Consumer avoids rebuilding the whole stack on unrelated notifications).
+    return Selector<ZoomNotifier, int>(
+      selector: (_, z) => z.currentIndex,
+      builder: (context, index, child) {
+        _activatedTabs.add(index);
+
+        return IndexedStack(
+          index: index,
+          children: List.generate(6, (i) {
+            // Lazy: build a tab only after it has been visited at least once.
+            if (!_activatedTabs.contains(i)) {
+              return const SizedBox.shrink();
+            }
+            return _buildScreen(i);
+          }),
+        );
       },
     );
   }
 
-  Widget _buildCurrentScreen(int index) {
-    final loginNotifier = context.read<LoginNotifier>();
+  Widget _buildScreen(int index) {
+    final loggedIn = context.read<LoginNotifier>().loggedIn;
 
     switch (index) {
       case 0:
         return HomePage(userId: _userId);
       case 1:
-        return loginNotifier.loggedIn
-            ? const ChatsList()
-            : const LoginPage(drawer: false);
+        return loggedIn ? const ChatsList() : const LoginPage(drawer: false);
       case 2:
-        return loginNotifier.loggedIn
-            ? const BookMarkPage()
-            : const LoginPage(drawer: false);
+        return loggedIn ? const BookMarkPage() : const LoginPage(drawer: false);
       case 3:
-        return loginNotifier.loggedIn
-            ? const JobListPage()
-            : const LoginPage(drawer: false);
+        return loggedIn ? const JobListPage() : const LoginPage(drawer: false);
       case 4:
-        return loginNotifier.loggedIn
-            ? const ProfilePage()
-            : const LoginPage(drawer: false);
+        return loggedIn ? const ProfilePage() : const LoginPage(drawer: false);
       case 5:
-        return loginNotifier.loggedIn
-            ? const SettingsPage()
-            : const LoginPage(drawer: false);
+        return loggedIn ? const SettingsPage() : const LoginPage(drawer: false);
       default:
         return HomePage(userId: _userId);
     }

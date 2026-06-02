@@ -4,12 +4,35 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class Config {
   static const bool _isProd = true;
 
+  /// Hardcoded production host used as a fallback when the `.env` file is
+  /// missing or doesn't contain the key. This guarantees the app can always
+  /// reach the backend even if asset loading failed — preventing the
+  /// "everything fails to load" class of bugs.
+  static const String _fallbackProdHost = 'proco-backend-n5so.onrender.com';
+  static const String _fallbackDevHost = '10.0.2.2:3000';
+
+  /// Reads a key from dotenv without ever throwing. Returns [fallback] if the
+  /// key is absent, empty, or dotenv failed to initialise.
+  static String _envOr(String key, String fallback) {
+    try {
+      final value = dotenv.maybeGet(key);
+      if (value != null && value.isNotEmpty) return value;
+    } catch (_) {}
+    return fallback;
+  }
+
   static final String _devHost = kIsWeb
-      ? const String.fromEnvironment('LOCAL', defaultValue: 'localhost:3000')
-      : dotenv.get('LOCAL');
+      ? const String.fromEnvironment(
+          'LOCAL',
+          defaultValue: _fallbackDevHost,
+        )
+      : _envOr('LOCAL', _fallbackDevHost);
   static final String _prodHost = kIsWeb
-      ? const String.fromEnvironment('DEPLOYMENT', defaultValue: '')
-      : dotenv.get('DEPLOYMENT');
+      ? const String.fromEnvironment(
+          'DEPLOYMENT',
+          defaultValue: _fallbackProdHost,
+        )
+      : _envOr('DEPLOYMENT', _fallbackProdHost);
   // ─── URI builder ──────────────────────────────────────────────────────────
   // Use this everywhere instead of calling Uri.http / Uri.https directly.
   // It picks the right scheme and host automatically.
