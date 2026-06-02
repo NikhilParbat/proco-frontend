@@ -34,6 +34,10 @@ migrate_working_dir/
 /coverage/
 /.env
 AUTH.md
+<<<<<<< HEAD
+=======
+
+>>>>>>> 510c247670fce4cea2d95665fa58e260f325c818
 # Symbolication related
 app.*.symbols
 

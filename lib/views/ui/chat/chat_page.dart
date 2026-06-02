@@ -44,10 +44,12 @@ class _ChatPageState extends State<ChatPage> {
 
   int offset = 1;
   io.Socket? socket;
-  late Future<List<ReceivedMessage>> msgList;
   List<ReceivedMessage> messages = [];
   final Set<String> _loadedMessageIds = {};
-  bool _initialLoadDone = false;
+
+  bool _loadingInitial = true;
+  bool _loadingMore = false;
+  bool _loadError = false;
 
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -59,7 +61,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    getMessages(offset);
+    _loadInitialMessages();
     connect();
     joinChat();
     _handlePagination();
@@ -81,8 +83,47 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // ─── Data ─────────────────────────────────────────────────────────────────
-  void getMessages(int offset) {
-    msgList = MesssagingHelper.getMessages(widget.id, offset);
+
+  /// Loads the first page imperatively (no FutureBuilder in build). This avoids
+  /// re-running the future / flashing a spinner on every rebuild.
+  Future<void> _loadInitialMessages() async {
+    try {
+      final fetched = await MesssagingHelper.getMessages(widget.id, offset);
+      if (!mounted) return;
+      setState(() {
+        _mergeMessages(fetched);
+        _loadingInitial = false;
+        _loadError = false;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('Load initial messages error: $e');
+      if (!mounted) return;
+      setState(() {
+        _loadingInitial = false;
+        _loadError = true;
+      });
+    }
+  }
+
+  /// Loads the next page of older messages. Guarded so overlapping scroll
+  /// events can't fire duplicate requests; rolls back the offset on failure.
+  Future<void> _loadMoreMessages() async {
+    if (_loadingMore) return;
+    _loadingMore = true;
+    offset++;
+    try {
+      final fetched = await MesssagingHelper.getMessages(widget.id, offset);
+      if (!mounted) return;
+      if (fetched.isNotEmpty) {
+        setState(() => _mergeMessages(fetched));
+      }
+    } catch (e) {
+      debugPrint('Load more messages error: $e');
+      offset--; // roll back so we can retry this page later
+    } finally {
+      _loadingMore = false;
+    }
   }
 
   void _handlePagination() {
@@ -91,9 +132,7 @@ class _ChatPageState extends State<ChatPage> {
       if (_scrollController.position.pixels >=
               _scrollController.position.maxScrollExtent - 100 &&
           messages.length >= 12) {
-        offset++;
-        getMessages(offset);
-        setState(() {});
+        _loadMoreMessages();
       }
     });
   }
@@ -458,170 +497,159 @@ class _ChatPageState extends State<ChatPage> {
   // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Consumer<ChatNotifier>(
-      builder: (context, chatNotifier, child) {
-        receiver = widget.user.isNotEmpty ? widget.user[0] : '';
-        final isOnline = chatNotifier.online.contains(receiver);
+    receiver = widget.user.isNotEmpty ? widget.user[0] : '';
 
-        return Scaffold(
-          backgroundColor: _bgChat,
-          appBar: _buildAppBar(chatNotifier, isOnline),
-          body: SafeArea(
-            child: Column(
-              children: [
-                // ── Messages ────────────────────────────────────────────────
-                Expanded(
-                  child: FutureBuilder<List<ReceivedMessage>>(
-                    future: msgList,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                          child: CircularProgressIndicator(color: kThemeColor),
-                        );
-                      } else if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                            'Error ${snapshot.error}',
-                            style: GoogleFonts.dmSans(
-                              color: Colors.redAccent,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        );
-                      } else {
-                        if (!_initialLoadDone && snapshot.data != null) {
-                          _initialLoadDone = true;
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            setState(() => _mergeMessages(snapshot.data!));
-                          });
-                        } else if (snapshot.data != null) {
-                          _mergeMessages(snapshot.data!);
-                        }
+    return Scaffold(
+      backgroundColor: _bgChat,
+      appBar: _buildAppBar(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Messages ──────────────────────────────────────────────────
+            // build() no longer subscribes to ChatNotifier, so typing/online
+            // pings won't rebuild this list — only a local setState (new
+            // message / pagination) will. userId is read once (stable by the
+            // time a chat is opened).
+            Expanded(
+              child: _buildMessageArea(context.read<ChatNotifier>().userId),
+            ),
 
-                        if (messages.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                  size: 52,
-                                  color: kThemeColor.withValues(alpha: 0.25),
-                                ),
-                                SizedBox(height: 12.h),
-                                Text(
-                                  'No messages yet',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 15.sp,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Text(
-                                  'Say hello 👋',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 13.sp,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
+            // ── Unmatched banner / Input bar ──────────────────────────────
+            if (widget.isUnmatched)
+              _buildUnmatchedBanner()
+            else
+              ValueListenableBuilder<bool>(
+                valueListenable: _socketNotifier,
+                builder: (context, connected, child) {
+                  if (!connected) {
+                    return const SizedBox(
+                      height: 3,
+                      child: LinearProgressIndicator(color: kThemeColor),
+                    );
+                  }
+                  return _buildInputBar();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                        return ListView.builder(
-                          padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 6.h),
-                          itemCount: messages.length,
-                          reverse: true,
-                          controller: _scrollController,
-                          itemBuilder: (context, index) {
-                            if (messages.isEmpty) return const SizedBox();
+  Widget _buildMessageArea(String? userId) {
+    if (_loadingInitial) {
+      return Center(child: CircularProgressIndicator(color: kThemeColor));
+    }
 
-                            final reversedIndex = messages.length - 1 - index;
-                            if (reversedIndex < 0 ||
-                                reversedIndex >= messages.length) {
-                              return const SizedBox();
-                            }
-
-                            final data = messages[reversedIndex];
-                            final isMine = data.senderId == chatNotifier.userId;
-
-                            bool showTime = index == messages.length - 1;
-                            if (!showTime && index < messages.length - 1) {
-                              final prev =
-                                  messages[messages.length - 2 - index];
-                              showTime =
-                                  data.createdAt
-                                      .difference(prev.createdAt)
-                                      .inMinutes
-                                      .abs() >
-                                  5;
-                            }
-
-                            return _buildBubble(
-                              data,
-                              isMine,
-                              chatNotifier,
-                              showTime,
-                            );
-                          },
-                        );
-                      }
-                    },
-                  ),
+    if (_loadError && messages.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.wifi_off_rounded, size: 44, color: Colors.grey.shade400),
+            SizedBox(height: 12.h),
+            Text(
+              'Couldn\'t load messages',
+              style: GoogleFonts.dmSans(fontSize: 14.sp, color: Colors.grey),
+            ),
+            SizedBox(height: 12.h),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _loadingInitial = true;
+                  _loadError = false;
+                });
+                _loadInitialMessages();
+              },
+              child: Text(
+                'Retry',
+                style: GoogleFonts.dmSans(
+                  color: kThemeColor,
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-                // ── Unmatched banner / Input bar ────────────────────────────
-                if (widget.isUnmatched)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 14.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      border: Border(
-                        top: BorderSide(color: Colors.red.shade100),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.block_rounded,
-                          size: 16,
-                          color: Colors.red.shade400,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'You cannot message this person anymore',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 13.sp,
-                            color: Colors.red.shade400,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  ValueListenableBuilder<bool>(
-                    valueListenable: _socketNotifier,
-                    builder: (context, connected, child) {
-                      if (!connected) {
-                        return const SizedBox(
-                          height: 3,
-                          child: LinearProgressIndicator(color: kThemeColor),
-                        );
-                      }
-                      return _buildInputBar();
-                    },
-                  ),
-              ],
+    if (messages.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 52,
+              color: kThemeColor.withValues(alpha: 0.25),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'No messages yet',
+              style: GoogleFonts.dmSans(fontSize: 15.sp, color: Colors.grey),
+            ),
+            Text(
+              'Say hello 👋',
+              style: GoogleFonts.dmSans(
+                fontSize: 13.sp,
+                color: Colors.grey.shade400,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 6.h),
+      itemCount: messages.length,
+      reverse: true,
+      controller: _scrollController,
+      itemBuilder: (context, index) {
+        final reversedIndex = messages.length - 1 - index;
+        if (reversedIndex < 0 || reversedIndex >= messages.length) {
+          return const SizedBox();
+        }
+
+        final data = messages[reversedIndex];
+        final isMine = data.senderId == userId;
+
+        bool showTime = index == messages.length - 1;
+        if (!showTime && index < messages.length - 1) {
+          final prev = messages[messages.length - 2 - index];
+          showTime =
+              data.createdAt.difference(prev.createdAt).inMinutes.abs() > 5;
+        }
+
+        return _buildBubble(data, isMine, showTime);
+      },
+    );
+  }
+
+  Widget _buildUnmatchedBanner() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        border: Border(top: BorderSide(color: Colors.red.shade100)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.block_rounded, size: 16, color: Colors.red.shade400),
+          SizedBox(width: 8.w),
+          Text(
+            'You cannot message this person anymore',
+            style: GoogleFonts.dmSans(
+              fontSize: 13.sp,
+              color: Colors.red.shade400,
+              fontWeight: FontWeight.w500,
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -637,7 +665,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // ─── AppBar ───────────────────────────────────────────────────────────────
-  PreferredSizeWidget _buildAppBar(ChatNotifier chatNotifier, bool isOnline) {
+  PreferredSizeWidget _buildAppBar() {
     return PreferredSize(
       preferredSize: Size.fromHeight(66.h),
       child: AppBar(
@@ -655,7 +683,14 @@ class _ChatPageState extends State<ChatPage> {
         ),
 
         flexibleSpace: SafeArea(
-          child: Padding(
+          // Only this subtree rebuilds on typing/online changes — never the
+          // message list.
+          child: Selector<ChatNotifier, (bool, bool)>(
+            selector: (_, n) => (n.typing, n.online.contains(receiver)),
+            builder: (context, status, _) {
+              final typing = status.$1;
+              final isOnline = status.$2;
+              return Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
             child: Row(
               children: [
@@ -777,17 +812,16 @@ class _ChatPageState extends State<ChatPage> {
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 180),
                                 child: Text(
-                                  chatNotifier.typing
+                                  typing
                                       ? 'typing...'
                                       : (isOnline ? 'Online' : 'Offline'),
                                   key: ValueKey(
-                                    chatNotifier.typing.toString() +
-                                        isOnline.toString(),
+                                    typing.toString() + isOnline.toString(),
                                   ),
                                   style: GoogleFonts.dmSans(
                                     fontSize: 11.sp,
                                     fontWeight: FontWeight.w500,
-                                    color: chatNotifier.typing
+                                    color: typing
                                         ? kThemeColor.withValues(alpha: 0.9)
                                         : (isOnline
                                               ? const Color(0xFF4ADE80)
@@ -825,6 +859,8 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ],
             ),
+              );
+            },
           ),
         ),
       ),
@@ -832,12 +868,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // ─── Message bubble ───────────────────────────────────────────────────────
-  Widget _buildBubble(
-    ReceivedMessage data,
-    bool isMine,
-    ChatNotifier chatNotifier,
-    bool showTime,
-  ) {
+  Widget _buildBubble(ReceivedMessage data, bool isMine, bool showTime) {
     return Column(
       children: [
         if (showTime)
@@ -850,7 +881,8 @@ class _ChatPageState extends State<ChatPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                chatNotifier.msgTime(data.createdAt.toString()),
+                // read (not watch): pure date formatting, no rebuild needed.
+                context.read<ChatNotifier>().msgTime(data.createdAt.toString()),
                 style: GoogleFonts.dmSans(
                   fontSize: 11.sp,
                   color: Colors.grey.shade600,
@@ -869,7 +901,21 @@ class _ChatPageState extends State<ChatPage> {
               if (!isMine) ...[
                 CircleAvatar(
                   radius: 13.r,
-                  backgroundImage: NetworkImage(widget.profile),
+                  backgroundColor: kThemeColor.withValues(alpha: 0.12),
+                  // Guard against an empty/invalid URL (NetworkImage('') throws).
+                  backgroundImage: widget.profile.isNotEmpty
+                      ? NetworkImage(widget.profile)
+                      : null,
+                  onBackgroundImageError: widget.profile.isNotEmpty
+                      ? (_, _) {}
+                      : null,
+                  child: widget.profile.isEmpty
+                      ? Icon(
+                          Icons.person_rounded,
+                          size: 14.sp,
+                          color: kThemeColor,
+                        )
+                      : null,
                 ),
                 SizedBox(width: 6.w),
               ],

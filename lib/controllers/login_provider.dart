@@ -8,6 +8,7 @@ import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/helpers/device_helper.dart';
+import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/services/token_store.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/mainscreen.dart';
@@ -372,6 +373,7 @@ class LoginNotifier extends ChangeNotifier {
     await AuthHelper.logout();
 
     await TokenStore.clear();
+    UserHelper.clearUserCache();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('loggedIn', false);
     await prefs.setBool('entrypoint', false);

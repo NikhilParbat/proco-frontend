@@ -68,10 +68,21 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
   @override
   void didUpdateWidget(JobCardSwiper oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.jobs.length > _jobs.length) {
-      _expandedDesc.removeWhere(
-        (key, _) => !widget.jobs.any((j) => j.id == key),
-      );
+
+    // Append-only sync. When the parent passes a new list (e.g. pagination
+    // loaded more cards) we add only the genuinely new jobs to the END of our
+    // in-memory list. We deliberately NEVER reorder or remove existing entries
+    // here: the CardSwiper holds an internal index, and mutating items at/below
+    // that index mid-swipe is exactly what triggered RangeError crashes.
+    if (!identical(widget.jobs, oldWidget.jobs)) {
+      final existingIds = _jobs.map((j) => j.id).toSet();
+      final newOnes = widget.jobs
+          .where((j) => !existingIds.contains(j.id))
+          .toList();
+      if (newOnes.isNotEmpty) {
+        _jobs = [..._jobs, ...newOnes];
+      }
+      _expandedDesc.removeWhere((key, _) => !_jobs.any((j) => j.id == key));
     }
   }
 

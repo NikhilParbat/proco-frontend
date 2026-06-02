@@ -107,21 +107,20 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     NotificationHelper.addListener(_onNotificationUpdate);
 
-    // Load jobs and sync filter from backend after UI renders
+    // Load jobs and sync filter from backend right after the first frame —
+    // no artificial delay (the preload is already cache-first + debounced).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!mounted) return;
+      if (!mounted) return;
 
-        final bookmarkedIds = context.read<BookMarkNotifier>().jobs;
+      final bookmarkedIds = context.read<BookMarkNotifier>().jobs;
 
-        context.read<JobsNotifier>().preloadJobs(
-          widget.userId,
-          bookmarkedIds: bookmarkedIds,
-        );
+      context.read<JobsNotifier>().preloadJobs(
+        widget.userId,
+        bookmarkedIds: bookmarkedIds,
+      );
 
-        // Sync saved filter from backend so chip bar is accurate after login
-        context.read<FilterNotifier>().loadFilterForUser(widget.userId);
-      });
+      // Sync saved filter from backend so chip bar is accurate after login
+      context.read<FilterNotifier>().loadFilterForUser(widget.userId);
     });
   }
 
@@ -175,50 +174,6 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: _JobsList(userId: widget.userId),
-    );
-  }
-}
-
-// ✅ UPDATED: Filter button now uses standard Flutter Icon to match AppBar
-class _FilterButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  final bool Function(GetFilterRes) isFilterActive;
-
-  const _FilterButton({required this.onPressed, required this.isFilterActive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<FilterNotifier>(
-      builder: (context, filterNotifier, _) {
-        final hasFilter =
-            filterNotifier.activeFilter != null &&
-            isFilterActive(filterNotifier.activeFilter!);
-        return Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              padding: EdgeInsets.zero,
-              constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
-              icon: Icon(Icons.tune, size: 24.w, color: Colors.black),
-              onPressed: onPressed,
-            ),
-            if (hasFilter)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFf55631),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
     );
   }
 }
