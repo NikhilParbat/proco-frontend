@@ -235,6 +235,61 @@ class AuthHelper {
     }
   }
 
+  /// On-demand recovery for an unverified Firebase email/password account when
+  /// the user re-attempts signup. The backend overwrites the unverified
+  /// account's password with [password] (Admin SDK) so the client can sign in
+  /// and trigger a fresh Firebase verification email.
+  ///
+  /// Returns the backend status in [message]:
+  ///   'RESET'            → unverified; password updated, client should resend
+  ///   'NOT_FOUND'        → no Firebase account (client may retry normal signup)
+  ///   'ALREADY_VERIFIED' → verified account, route the user to login (409)
+  ///   'OTHER_PROVIDER'   → registered via Google etc. (409)
+  static Future<ApiResponse<String>> resendVerification({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final url = Config.url(Config.resendVerificationUrl);
+
+      final response = await client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      if (response.body.isEmpty) {
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
+      }
+
+      final Map<String, dynamic> body = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final status = body['data']?['status']?.toString() ?? '';
+        return ApiResponse(
+          success: true,
+          message: status,
+          data: status,
+        );
+      }
+
+      // 409 (already verified / other provider) and any other error.
+      return ApiResponse(
+        success: false,
+        message: body['message'] ?? 'Could not recover this account',
+      );
+    } catch (e) {
+      debugPrint('resendVerification error: $e');
+      return ApiResponse(
+        success: false,
+        message: 'Connection error: ${e.toString()}',
+      );
+    }
+  }
+
   static Future<ApiResponse<AuthUserModel>> googleSignup(
     GoogleAuthModel model,
   ) async {

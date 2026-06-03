@@ -227,11 +227,50 @@ class SignUpNotifier extends ChangeNotifier {
     }
   }
 
-  /// Handles the split-brain case: Firebase account exists but the DB user
-  /// may be missing. Signs into Firebase, then checks verification state.
+  /// Handles re-signup when the email already exists in Firebase.
+  ///
+  /// The user signed up before but never verified, so Firebase still holds an
+  /// unverified account and refuses a fresh `createUser` ("email-already-in-use")
+  /// while login is impossible (DB users are verified-only). We heal this:
+  ///
+  ///  1. Ask the backend to recover the account. For an UNVERIFIED account it
+  ///     overwrites the stored password with the freshly-typed one (Admin SDK),
+  ///     so a different password on re-signup simply replaces the old one.
+  ///  2. Sign in with that password (now guaranteed to match) and trigger a new
+  ///     Firebase verification email via `sendEmailVerification()`.
+  ///
+  /// A VERIFIED account is never touched by the backend — it returns 409 and we
+  /// route the user to login (their existing flow already handles that case).
   Future<void> _recoverExistingFirebaseAccount() async {
     isLoading = true;
     try {
+      final recovery = await AuthHelper.resendVerification(
+        email: signupModel.email,
+        password: signupModel.password,
+      );
+
+      if (!recovery.success) {
+        // 409 ALREADY_VERIFIED → "please log in", or OTHER_PROVIDER → use Google.
+        isLoading = false;
+        Get.snackbar(
+          'Account Already Exists',
+          recovery.message,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      if (recovery.data == 'NOT_FOUND') {
+        // Race: the Firebase account vanished between create and recover.
+        // Retry a clean signup now that the email is free.
+        isLoading = false;
+        await submitEmailSignup();
+        return;
+      }
+
+      // recovery.data == 'RESET': the unverified account now uses the typed
+      // password. Sign in and re-send the Firebase verification email.
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: signupModel.email,
         password: signupModel.password,
@@ -242,56 +281,37 @@ class SignUpNotifier extends ChangeNotifier {
         isLoading = false;
         Get.snackbar(
           'Error',
-          'Could not access account.',
+          'Could not access account. Please try again.',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
         return;
       }
 
-      await user.reload();
-      await user.getIdToken(true);
-      final refreshed = FirebaseAuth.instance.currentUser;
+      _firebaseUser = user;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pendingVerificationEmail', user.email!);
+      await prefs.setString('pendingVerificationUsername', signupModel.username);
 
-      if (refreshed?.emailVerified == true) {
-        // Verified but DB record missing — create it now.
-        await _completeEmailSignup(refreshed!);
-      } else {
-        // Not yet verified — restore step 3 and resend the email.
-        _firebaseUser = user;
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('pendingVerificationEmail', user.email!);
-        await prefs.setString(
-          'pendingVerificationUsername',
-          signupModel.username,
-        );
-        await user.sendEmailVerification();
-        isLoading = false;
-        changeStep(3);
-        Get.snackbar(
-          'Verify Your Email',
-          'A new verification link has been sent. Please check your inbox.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-      }
+      await user.sendEmailVerification();
+
+      isLoading = false;
+      changeStep(3);
+      Get.snackbar(
+        'Verify Your Email',
+        'You signed up earlier but didn\'t verify. We\'ve sent a new '
+            'verification link — please check your inbox.',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
     } on FirebaseAuthException catch (e) {
       isLoading = false;
-      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        Get.snackbar(
-          'Account Already Exists',
-          'An account with this email exists. Please log in instead.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-      } else {
-        Get.snackbar(
-          'Sign Up Failed',
-          _firebaseAuthMessage(e.code),
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
+      Get.snackbar(
+        'Sign Up Failed',
+        _firebaseAuthMessage(e.code),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } catch (e) {
       isLoading = false;
       Get.snackbar(

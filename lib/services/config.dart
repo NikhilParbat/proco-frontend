@@ -55,6 +55,7 @@ class Config {
   static const String googleLoginUrl = '/api/google-login';
   static const String googleSignupUrl = '/api/google-signup';
   static const String emailSignupUrl = '/api/email-signup';
+  static const String resendVerificationUrl = '/api/resend-verification';
   static const String jobs = '/api/jobs';
   static const String swipe = '/api/swipes';
   static const String matches = '/api/matches';
