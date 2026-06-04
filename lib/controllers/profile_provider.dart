@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/auth/profile_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/services/helpers/user_helper.dart';
-import 'package:get/get.dart';
 
 class ProfileNotifier extends ChangeNotifier {
   ProfileRes? _profile;
@@ -97,28 +95,7 @@ class ProfileNotifier extends ChangeNotifier {
     _isUpdatingProfile = false;
     notifyListeners();
 
-    if (response.success) {
-      Get.snackbar(
-        'Profile Update',
-        response.message.isNotEmpty
-            ? response.message
-            : 'Profile updated successfully',
-        colorText: kLight,
-        backgroundColor: kLightBlue,
-        icon: const Icon(Icons.check_circle),
-      );
-      return true;
-    } else {
-      Get.snackbar(
-        'Update Failed',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.error),
-        duration: const Duration(seconds: 5),
-      );
-      return false;
-    }
+    return response.success;
   }
   // ─── Create profile (onboarding) ──────────────────────────────────────────
 

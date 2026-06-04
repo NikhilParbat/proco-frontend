@@ -8,7 +8,6 @@ import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:provider/provider.dart';
 
-import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'profile_edit.dart';

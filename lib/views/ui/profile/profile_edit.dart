@@ -8,6 +8,7 @@ import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/common/skill_search_field.dart';
 import 'package:proco/views/common/phone_field.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
@@ -96,6 +97,17 @@ class EditProfilePage extends StatelessWidget {
                         final ok = await state.saveProfile(null);
                         if (ok && context.mounted) {
                           Navigator.pop(context);
+                          LagoonSnackbar.show(
+                            title: 'Profile Updated',
+                            message:
+                                'Your profile has been updated successfully.',
+                          );
+                        } else {
+                          LagoonSnackbar.show(
+                            title: 'Update Failed',
+                            message: 'Something went wrong. Please try again.',
+                            isError: true,
+                          );
                         }
                       },
                 backgroundColor: state.isSaving
@@ -307,6 +319,7 @@ class _EditFormState extends State<_EditForm> {
                 onChanged: (v) => widget.state.linkedInUrl = v,
                 keyboard: TextInputType.url,
                 hint: 'https://linkedin.com/in/…',
+                maxLines: 1,
                 maxLength: 200,
                 allowSpecialChars: true,
               ),
@@ -1106,7 +1119,7 @@ class _DropdownDialogField extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: 14.h),
       child: DropdownButtonFormField<String>(
-        value: items.contains(value) ? value : null,
+        initialValue: items.contains(value) ? value : null,
         hint: Text(
           hint ?? 'Select…',
           style: TextStyle(
@@ -1329,92 +1342,92 @@ class _ValidatedFieldState extends State<_ValidatedField> {
 }
 
 // ── Dropdown Field ────────────────────────────────────────────────────────────
-class _DropdownField extends StatelessWidget {
-  const _DropdownField({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-    this.hint,
-  });
+// class _DropdownField extends StatelessWidget {
+//   const _DropdownField({
+//     required this.label,
+//     required this.value,
+//     required this.items,
+//     required this.onChanged,
+//     this.hint,
+//   });
 
-  final String label;
-  final String value;
-  final List<String> items;
-  final ValueChanged<String?> onChanged;
-  final String? hint;
+//   final String label;
+//   final String value;
+//   final List<String> items;
+//   final ValueChanged<String?> onChanged;
+//   final String? hint;
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 14.h),
-      child: DropdownButtonFormField<String>(
-        value: items.contains(value) ? value : null,
-        hint: Text(
-          hint ?? 'Select…',
-          style: TextStyle(
-            fontFamily: kFontDMSans,
-            fontSize: 13.sp,
-            color: const Color(0xFFBBBBBB),
-          ),
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: kSmallTextStyle.copyWith(
-            color: kDarkGrey,
-            fontSize: 13.sp,
-          ),
-          filled: true,
-          fillColor: kLight,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 14.w,
-            vertical: 14.h,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: const BorderSide(color: kLightGrey),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: const BorderSide(color: kLightGrey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: const BorderSide(color: kThemeColor, width: 1.5),
-          ),
-        ),
-        items: items
-            .map(
-              (e) => DropdownMenuItem(
-                value: e,
-                child: Text(
-                  e,
-                  style: TextStyle(
-                    fontFamily: kFontDMSans,
-                    fontSize: 13.sp,
-                    color: kDark,
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-        onChanged: onChanged,
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: kDarkGrey,
-          size: 20.sp,
-        ),
-        dropdownColor: kLight,
-        isExpanded: true,
-        style: TextStyle(
-          fontFamily: kFontDMSans,
-          fontSize: 13.sp,
-          color: kDark,
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: EdgeInsets.only(bottom: 14.h),
+//       child: DropdownButtonFormField<String>(
+//         value: items.contains(value) ? value : null,
+//         hint: Text(
+//           hint ?? 'Select…',
+//           style: TextStyle(
+//             fontFamily: kFontDMSans,
+//             fontSize: 13.sp,
+//             color: const Color(0xFFBBBBBB),
+//           ),
+//         ),
+//         decoration: InputDecoration(
+//           labelText: label,
+//           labelStyle: kSmallTextStyle.copyWith(
+//             color: kDarkGrey,
+//             fontSize: 13.sp,
+//           ),
+//           filled: true,
+//           fillColor: kLight,
+//           contentPadding: EdgeInsets.symmetric(
+//             horizontal: 14.w,
+//             vertical: 14.h,
+//           ),
+//           border: OutlineInputBorder(
+//             borderRadius: BorderRadius.circular(10.r),
+//             borderSide: const BorderSide(color: kLightGrey),
+//           ),
+//           enabledBorder: OutlineInputBorder(
+//             borderRadius: BorderRadius.circular(10.r),
+//             borderSide: const BorderSide(color: kLightGrey),
+//           ),
+//           focusedBorder: OutlineInputBorder(
+//             borderRadius: BorderRadius.circular(10.r),
+//             borderSide: const BorderSide(color: kThemeColor, width: 1.5),
+//           ),
+//         ),
+//         items: items
+//             .map(
+//               (e) => DropdownMenuItem(
+//                 value: e,
+//                 child: Text(
+//                   e,
+//                   style: TextStyle(
+//                     fontFamily: kFontDMSans,
+//                     fontSize: 13.sp,
+//                     color: kDark,
+//                   ),
+//                 ),
+//               ),
+//             )
+//             .toList(),
+//         onChanged: onChanged,
+//         icon: Icon(
+//           Icons.keyboard_arrow_down_rounded,
+//           color: kDarkGrey,
+//           size: 20.sp,
+//         ),
+//         dropdownColor: kLight,
+//         isExpanded: true,
+//         style: TextStyle(
+//           fontFamily: kFontDMSans,
+//           fontSize: 13.sp,
+//           color: kDark,
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 // ── Expandable Card ───────────────────────────────────────────────────────────
 class _ExpandableCard extends StatelessWidget {
@@ -1752,7 +1765,7 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: _locationResults.length,
-                      separatorBuilder: (_, __) =>
+                      separatorBuilder: (_, _) =>
                           Divider(height: 1, color: Colors.grey.shade200),
                       itemBuilder: (context, index) {
                         final item = _locationResults[index];

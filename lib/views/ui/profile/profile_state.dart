@@ -271,7 +271,7 @@ class ProfileEditState extends ChangeNotifier {
   void _mapFromUserResponse(UserResponse d) {
     username = d.username;
     bio = d.bio ?? '';
-    email = d.email ?? '';
+    email = d.email;
     phone = d.phone ?? '';
     gender = d.gender ?? '';
     city = d.city ?? '';
