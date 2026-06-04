@@ -109,7 +109,9 @@ class ProfileRes {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'])
           : null,
-      skills: json['skills'] != null ? List<String>.from(json['skills']) : [],
+      skills:
+          (json['profileSkills'] as List?)?.map((e) => e.toString()).toList() ??
+          [],
       interests: json['interests'] != null
           ? List<String>.from(json['interests'])
           : [],
@@ -118,8 +120,8 @@ class ProfileRes {
           : [],
       education: json['education'] != null
           ? (json['education'] as List)
-              .map((e) => EducationItem.fromJson(e as Map<String, dynamic>))
-              .toList()
+                .map((e) => EducationItem.fromJson(e as Map<String, dynamic>))
+                .toList()
           : [],
       queriesCreated: (json['queriesCreated'] as num?)?.toInt() ?? 0,
       successfulMatches: (json['successfulMatches'] as num?)?.toInt() ?? 0,
@@ -177,7 +179,7 @@ class ProfileRes {
       'skills': skills,
       'interests': interests,
       'hobbies': hobbies,
-      'education': education,
+      'education': education.map((e) => e.toJson()).toList(),
       'queriesCreated': queriesCreated,
       'successfulMatches': successfulMatches,
       'experiences': experiences.map((e) => e.toJson()).toList(),

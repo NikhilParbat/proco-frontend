@@ -212,25 +212,17 @@ class ProfileEditState extends ChangeNotifier {
         final res = await UserHelper.getProfile();
         if (res.success && res.data != null) {
           final ProfileRes d = res.data!;
+          // debugPrint("Profile Data Loaded: ${d.toJson()}");
           _mapCommonFields(d);
 
           experiences = List<ExperienceItem>.from(d.experiences);
           projects = List<ProjectItem>.from(d.projects);
           achievements = List<AchievementItem>.from(d.achievements);
           links = List<LinkItem>.from(d.links);
+          education = List<EducationItem>.from(d.education);
+
           queriesCreated = d.queriesCreated;
           successfulMatches = d.successfulMatches;
-
-          // Fallback parsing strategy in case ProfileRes schema uses map representation or direct type mapping
-          if (d.education != null) {
-            education = (d.education as List)
-                .map(
-                  (e) => e is EducationItem
-                      ? e
-                      : EducationItem.fromJson(e as Map<String, dynamic>),
-                )
-                .toList();
-          }
         }
       }
     } catch (e) {
@@ -251,31 +243,28 @@ class ProfileEditState extends ChangeNotifier {
     city = d.city ?? '';
     state = d.state ?? '';
     country = d.country ?? '';
+
     profileImageUrl = d.profile ?? '';
+
     dob = d.dob ?? '';
     userType = d.userType ?? '';
+
     linkedInUrl = d.linkedInUrl ?? '';
     gitHubUrl = d.gitHubUrl ?? '';
     twitterUrl = d.twitterUrl ?? '';
     portfolioUrl = d.portfolioUrl ?? '';
+
     workStyle = d.workStyle ?? '';
     communicationStyle = d.communicationStyle ?? '';
-    latitude = d.latitude ?? 0.0;
-    longitude = d.longitude ?? 0.0;
 
-    skills = List<String>.from(d.skills ?? []);
-    interests = List<String>.from(d.interests ?? []);
-    hobbies = List<String>.from(d.hobbies ?? []);
+    latitude = (d.latitude ?? 0.0).toDouble();
+    longitude = (d.longitude ?? 0.0).toDouble();
 
-    links =
-        (d.links as List?)
-            ?.map(
-              (l) => l is LinkItem
-                  ? l
-                  : LinkItem.fromJson(l as Map<String, dynamic>),
-            )
-            .toList() ??
-        [];
+    skills = List<String>.from(d.skills);
+    interests = List<String>.from(d.interests);
+    hobbies = List<String>.from(d.hobbies);
+
+    links = List<LinkItem>.from(d.links);
   }
 
   Future<bool> saveProfile(XFile? image) async {
