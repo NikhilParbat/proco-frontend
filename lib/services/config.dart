@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Config {
-  static const bool _isProd = true;
+  static const bool _isProd = false;
 
   /// Hardcoded production host used as a fallback when the `.env` file is
   /// missing or doesn't contain the key. This guarantees the app can always
@@ -22,10 +22,7 @@ class Config {
   }
 
   static final String _devHost = kIsWeb
-      ? const String.fromEnvironment(
-          'LOCAL',
-          defaultValue: _fallbackDevHost,
-        )
+      ? const String.fromEnvironment('LOCAL', defaultValue: _fallbackDevHost)
       : _envOr('LOCAL', _fallbackDevHost);
   static final String _prodHost = kIsWeb
       ? const String.fromEnvironment(

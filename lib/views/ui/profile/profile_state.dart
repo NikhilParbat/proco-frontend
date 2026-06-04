@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
-import 'package:proco/services/helpers/user_helper.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/models/response/auth/profile_model.dart';
+import 'package:proco/models/response/user/user_response.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileEditState extends ChangeNotifier {
+  final ProfileNotifier _notifier;
+
   // Data Fields
   String username = '',
       bio = '',
@@ -26,7 +28,7 @@ class ProfileEditState extends ChangeNotifier {
   List<ProjectItem> projects = [];
   List<AchievementItem> achievements = [];
   List<LinkItem> links = [];
-  List<EducationItem> education = []; // Updated to match UserResponse
+  List<EducationItem> education = [];
   int queriesCreated = 0;
   int successfulMatches = 0;
 
@@ -34,15 +36,13 @@ class ProfileEditState extends ChangeNotifier {
       showPhone = true,
       showGender = true,
       showDob = true,
-      showCollege =
-          true, // Retained configuration flag for visibility UI
+      showCollege = true,
       showSkills = true,
       showLinkedIn = true,
       showGitHub = true,
       showTwitter = true,
       showPortfolio = true;
 
-  // Visibility Flags and Status
   bool isLoading = true;
   bool isSaving = false;
   bool _isPrivateInfoVisible = false;
@@ -52,7 +52,9 @@ class ProfileEditState extends ChangeNotifier {
   final String? _viewUserId;
   bool get isReadOnly => _viewUserId != null;
 
-  ProfileEditState({String? viewUserId}) : _viewUserId = viewUserId {
+  ProfileEditState({required ProfileNotifier notifier, String? viewUserId})
+    : _notifier = notifier,
+      _viewUserId = viewUserId {
     _init();
   }
 
@@ -63,10 +65,10 @@ class ProfileEditState extends ChangeNotifier {
 
   Future<void> updatePrivacyPreference(bool newValue) async {
     _isPrivateInfoVisible = newValue;
-    notifyListeners(); // Updates the UI instantly
+    notifyListeners();
   }
 
-  // ── List Management Helpers ──────────────────────────────────────────────
+  // ── Location ──────────────────────────────────────────────────────────────
 
   void setLocation({
     required String city,
@@ -82,6 +84,8 @@ class ProfileEditState extends ChangeNotifier {
     this.longitude = longitude;
     notifyListeners();
   }
+
+  // ── Skills / Interests / Hobbies ─────────────────────────────────────────
 
   void addSkill(String skill) {
     if (skill.isNotEmpty && !skills.contains(skill)) {
@@ -107,7 +111,7 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addHobbies(String hobby) {
+  void addHobby(String hobby) {
     if (hobby.isNotEmpty && !hobbies.contains(hobby)) {
       hobbies.add(hobby);
       notifyListeners();
@@ -119,7 +123,8 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Education Helpers ──
+  // ── Education ─────────────────────────────────────────────────────────────
+
   void addEducation(EducationItem item) {
     education.add(item);
     notifyListeners();
@@ -135,7 +140,8 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Experience Helpers ──
+  // ── Experience ────────────────────────────────────────────────────────────
+
   void addExperience(ExperienceItem item) {
     experiences.add(item);
     notifyListeners();
@@ -151,7 +157,8 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Project Helpers ──
+  // ── Projects ──────────────────────────────────────────────────────────────
+
   void addProject(ProjectItem item) {
     projects.add(item);
     notifyListeners();
@@ -167,7 +174,8 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Achievement Helpers ──
+  // ── Achievements ──────────────────────────────────────────────────────────
+
   void addAchievement(AchievementItem item) {
     achievements.add(item);
     notifyListeners();
@@ -183,7 +191,18 @@ class ProfileEditState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Core Logic ─────────────────────────────────────────────────────────────
+  void addLink(LinkItem item) {
+    if (links.length >= 6) return;
+    links.add(item);
+    notifyListeners();
+  }
+
+  void removeLink(int index) {
+    links.removeAt(index);
+    notifyListeners();
+  }
+
+  // ── Core Logic ────────────────────────────────────────────────────────────
 
   Future<void> _init() async {
     if (!isReadOnly) await _loadVisibility();
@@ -192,50 +211,65 @@ class ProfileEditState extends ChangeNotifier {
 
   Future<void> loadProfile() async {
     isLoading = true;
+    error = null;
     notifyListeners();
+
     try {
       if (isReadOnly) {
-        // Viewing someone else — full profile via UserResponse
-        final res = await UserHelper.fetchUserById(_viewUserId!);
-        if (res.success && res.data != null) {
-          final UserResponse d = res.data!;
-          _mapCommonFields(d);
-          experiences = List<ExperienceItem>.from(d.experiences);
-          projects = List<ProjectItem>.from(d.projects);
-          achievements = List<AchievementItem>.from(d.achievements);
-          education = List<EducationItem>.from(d.education);
-          queriesCreated = d.queriesCreated;
-          successfulMatches = d.successfulMatches;
-        }
+        final user = await _notifier.fetchUserById(_viewUserId!);
+        if (user != null) _mapFromUserResponse(user);
       } else {
-        // Viewing self
-        final res = await UserHelper.getProfile();
-        if (res.success && res.data != null) {
-          final ProfileRes d = res.data!;
-          // debugPrint("Profile Data Loaded: ${d.toJson()}");
-          _mapCommonFields(d);
-
-          experiences = List<ExperienceItem>.from(d.experiences);
-          projects = List<ProjectItem>.from(d.projects);
-          achievements = List<AchievementItem>.from(d.achievements);
-          links = List<LinkItem>.from(d.links);
-          education = List<EducationItem>.from(d.education);
-
-          queriesCreated = d.queriesCreated;
-          successfulMatches = d.successfulMatches;
+        await _notifier.getProfile();
+        final profile = _notifier.profile;
+        if (profile != null) {
+          _mapFromProfileRes(profile);
+        } else {
+          error = _notifier.profileError;
         }
       }
     } catch (e) {
       error = e.toString();
-      debugPrint("Load Profile Error: $e");
+      debugPrint('loadProfile error: $e');
     }
+
     isLoading = false;
     notifyListeners();
   }
 
-  // Maps fields shared safely between UserResponse and ProfileRes
-  void _mapCommonFields(dynamic d) {
-    username = d.username ?? '';
+  void _mapFromProfileRes(ProfileRes d) {
+    username = d.username;
+    bio = d.bio ?? '';
+    email = d.email;
+    phone = d.phone ?? '';
+    gender = d.gender ?? '';
+    city = d.city ?? '';
+    state = d.state ?? '';
+    country = d.country ?? '';
+    profileImageUrl = d.profile ?? '';
+    dob = d.dob ?? '';
+    userType = d.userType ?? '';
+    linkedInUrl = d.linkedInUrl ?? '';
+    gitHubUrl = d.gitHubUrl ?? '';
+    twitterUrl = d.twitterUrl ?? '';
+    portfolioUrl = d.portfolioUrl ?? '';
+    workStyle = d.workStyle ?? '';
+    communicationStyle = d.communicationStyle ?? '';
+    latitude = d.latitude ?? 0.0;
+    longitude = d.longitude ?? 0.0;
+    skills = List<String>.from(d.skills);
+    interests = List<String>.from(d.interests);
+    hobbies = List<String>.from(d.hobbies);
+    education = List<EducationItem>.from(d.education);
+    experiences = List<ExperienceItem>.from(d.experiences);
+    projects = List<ProjectItem>.from(d.projects);
+    achievements = List<AchievementItem>.from(d.achievements);
+    links = List<LinkItem>.from(d.links);
+    queriesCreated = d.queriesCreated;
+    successfulMatches = d.successfulMatches;
+  }
+
+  void _mapFromUserResponse(UserResponse d) {
+    username = d.username;
     bio = d.bio ?? '';
     email = d.email ?? '';
     phone = d.phone ?? '';
@@ -243,28 +277,27 @@ class ProfileEditState extends ChangeNotifier {
     city = d.city ?? '';
     state = d.state ?? '';
     country = d.country ?? '';
-
     profileImageUrl = d.profile ?? '';
-
     dob = d.dob ?? '';
     userType = d.userType ?? '';
-
     linkedInUrl = d.linkedInUrl ?? '';
     gitHubUrl = d.gitHubUrl ?? '';
     twitterUrl = d.twitterUrl ?? '';
     portfolioUrl = d.portfolioUrl ?? '';
-
     workStyle = d.workStyle ?? '';
     communicationStyle = d.communicationStyle ?? '';
-
     latitude = (d.latitude ?? 0.0).toDouble();
     longitude = (d.longitude ?? 0.0).toDouble();
-
     skills = List<String>.from(d.skills);
     interests = List<String>.from(d.interests);
     hobbies = List<String>.from(d.hobbies);
-
+    education = List<EducationItem>.from(d.education);
+    experiences = List<ExperienceItem>.from(d.experiences);
+    projects = List<ProjectItem>.from(d.projects);
+    achievements = List<AchievementItem>.from(d.achievements);
     links = List<LinkItem>.from(d.links);
+    queriesCreated = d.queriesCreated;
+    successfulMatches = d.successfulMatches;
   }
 
   Future<bool> saveProfile(XFile? image) async {
@@ -278,10 +311,10 @@ class ProfileEditState extends ChangeNotifier {
       state: state,
       country: country,
       phone: phone,
-      skills: skills,
       gender: gender.isEmpty ? null : gender,
       dob: dob,
       userType: userType,
+      skills: skills,
       interests: interests,
       hobbies: hobbies,
       latitude: latitude,
@@ -296,15 +329,14 @@ class ProfileEditState extends ChangeNotifier {
       projects: projects,
       achievements: achievements,
       links: links,
-      // Note: Ensure your backend's ProfileUpdateReq model supports this education parameter
       education: education,
     );
 
-    final res = await UserHelper.updateProfile(req, image);
+    final success = await _notifier.updateProfile(req, image);
+
     isSaving = false;
-    if (res.success) await loadProfile();
     notifyListeners();
-    return res.success;
+    return success;
   }
 
   Future<void> _loadVisibility() async {

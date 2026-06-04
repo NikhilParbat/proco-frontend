@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_text_styles.dart';
+import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/common/skill_search_field.dart';
@@ -29,12 +30,13 @@ bool _isValidText(String text) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 class EditProfilePage extends StatelessWidget {
-  const EditProfilePage({super.key});
+  final ProfileNotifier notifier;
+  const EditProfilePage({super.key, required this.notifier});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ProfileEditState(),
+      create: (_) => ProfileEditState(notifier: notifier),
       child: Scaffold(
         backgroundColor: kBackgroundColor,
         drawer: const LagoonDrawer(),
@@ -93,14 +95,7 @@ class EditProfilePage extends StatelessWidget {
                         }
                         final ok = await state.saveProfile(null);
                         if (ok && context.mounted) {
-                          Get.back();
-                          Get.snackbar(
-                            'Profile Saved',
-                            'Your profile has been updated.',
-                            backgroundColor: kTeal,
-                            colorText: kLight,
-                            duration: const Duration(seconds: 3),
-                          );
+                          Navigator.pop(context);
                         }
                       },
                 backgroundColor: state.isSaving
@@ -365,7 +360,7 @@ class _EditFormState extends State<_EditForm> {
               _ChipInputSection(
                 label: 'Hobbies',
                 values: widget.state.hobbies,
-                onAdded: (v) => widget.state.addHobbies(v),
+                onAdded: (v) => widget.state.addHobby(v),
                 onRemoved: (v) => widget.state.removeHobby(v),
               ),
             ],
@@ -2281,20 +2276,13 @@ class _LinksEditorState extends State<_LinksEditor> {
     }
     if (!valid) return;
     if (widget.state.links.length >= _kMaxLinks) return;
-    setState(() {
-      widget.state.links = [
-        ...widget.state.links,
-        LinkItem(label: label, url: url),
-      ];
-    });
+    widget.state.addLink(LinkItem(label: label, url: url));
     _labelCtrl.clear();
     _urlCtrl.clear();
   }
 
   void _remove(int index) {
-    setState(() {
-      widget.state.links = List.from(widget.state.links)..removeAt(index);
-    });
+    widget.state.removeLink(index);
   }
 
   @override

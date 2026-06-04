@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_text_styles.dart';
+import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +23,10 @@ class ProfilePage extends StatelessWidget {
     final isReadOnly = viewUserId != null;
 
     return ChangeNotifierProvider(
-      create: (_) => ProfileEditState(viewUserId: viewUserId),
+      create: (_) => ProfileEditState(
+        notifier: context.read<ProfileNotifier>(),
+        viewUserId: viewUserId,
+      ),
       child: DefaultTabController(
         length: 3,
         child: Scaffold(
@@ -205,7 +209,20 @@ class _AboutTab extends StatelessWidget {
               width: double.infinity,
               height: 52.h,
               child: ElevatedButton(
-                onPressed: () => Get.to(() => const EditProfilePage()),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditProfilePage(
+                        notifier: context.read<ProfileNotifier>(),
+                      ),
+                    ),
+                  );
+                  // When we return, reload the profile
+                  if (context.mounted) {
+                    context.read<ProfileEditState>().loadProfile();
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kThemeColor,
                   elevation: 0,
@@ -416,12 +433,17 @@ class _PersonalTab extends StatelessWidget {
               SizedBox(height: 24.h),
               _SectionHeader(title: 'EDUCATION', icon: Icons.school_outlined),
               SizedBox(height: 12.h),
-              ...state.education.map(
-                (edu) => Padding(
-                  padding: EdgeInsets.only(bottom: 14.h),
-                  child: _EducationCard(item: edu),
-                ),
-              ),
+              ...([...state.education]..sort((a, b) {
+                    final aYear = int.tryParse(a.classOf) ?? 0;
+                    final bYear = int.tryParse(b.classOf) ?? 0;
+                    return aYear.compareTo(bYear); // oldest first
+                  }))
+                  .map(
+                    (edu) => Padding(
+                      padding: EdgeInsets.only(bottom: 14.h),
+                      child: _EducationCard(item: edu),
+                    ),
+                  ),
             ],
             if (hasWorkStyle || hasCommunicationStyle) ...[
               SizedBox(height: 24.h),
@@ -510,24 +532,16 @@ class _PersonalTab extends StatelessWidget {
 }
 
 // ── Professional tab ───────────────────────────────────────────────────────
-
-class _ProfessionalTab extends StatefulWidget {
+class _ProfessionalTab extends StatelessWidget {
   const _ProfessionalTab({required this.state});
   final ProfileEditState state;
 
   @override
-  State<_ProfessionalTab> createState() => _ProfessionalTabState();
-}
-
-class _ProfessionalTabState extends State<_ProfessionalTab> {
-  ProfileEditState get _s => widget.state;
-
-  @override
   Widget build(BuildContext context) {
     final hasAnyData =
-        _s.experiences.isNotEmpty ||
-        _s.projects.isNotEmpty ||
-        _s.achievements.isNotEmpty;
+        state.experiences.isNotEmpty ||
+        state.projects.isNotEmpty ||
+        state.achievements.isNotEmpty;
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 32.h),
@@ -535,37 +549,31 @@ class _ProfessionalTabState extends State<_ProfessionalTab> {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_s.experiences.isNotEmpty) ...[
+                if (state.experiences.isNotEmpty) ...[
                   _ProSectionHeader(
                     title: 'EXPERIENCE',
                     icon: Icons.work_outline,
                   ),
                   SizedBox(height: 18.h),
-                  ..._s.experiences.asMap().entries.map(
-                    (e) => _ExperienceRow(data: e.value),
-                  ),
+                  ...state.experiences.map((e) => _ExperienceRow(data: e)),
                   SizedBox(height: 28.h),
                 ],
-                if (_s.projects.isNotEmpty) ...[
+                if (state.projects.isNotEmpty) ...[
                   _ProSectionHeader(
                     title: 'PROJECT SHOWCASE',
                     icon: Icons.star_border,
                   ),
                   SizedBox(height: 18.h),
-                  ..._s.projects.asMap().entries.map(
-                    (p) => _ProjectCard(data: p.value),
-                  ),
+                  ...state.projects.map((p) => _ProjectCard(data: p)),
                   SizedBox(height: 28.h),
                 ],
-                if (_s.achievements.isNotEmpty) ...[
+                if (state.achievements.isNotEmpty) ...[
                   _ProSectionHeader(
                     title: 'ACHIEVEMENTS',
                     icon: Icons.emoji_events_outlined,
                   ),
                   SizedBox(height: 18.h),
-                  ..._s.achievements.asMap().entries.map(
-                    (a) => _AchievementRow(data: a.value),
-                  ),
+                  ...state.achievements.map((a) => _AchievementRow(data: a)),
                   SizedBox(height: 28.h),
                 ],
               ],
