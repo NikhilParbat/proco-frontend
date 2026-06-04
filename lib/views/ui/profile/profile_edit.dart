@@ -93,6 +93,7 @@ class EditProfilePage extends StatelessWidget {
                         }
                         final ok = await state.saveProfile(null);
                         if (ok && context.mounted) {
+                          Get.back();
                           Get.snackbar(
                             'Profile Saved',
                             'Your profile has been updated.',
