@@ -182,7 +182,7 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
                   padding: EdgeInsets.only(bottom: fh(50)),
                   child: Stack(
                     children: [
-                      _FlippableJobCard(
+                      FlippableJobCard(
                         job: job,
                         imageCacheWidth: _imageCacheWidth,
                         isExpanded: isExpanded(job.id),
@@ -391,24 +391,31 @@ class _JobCardSwiperState extends State<JobCardSwiper> {
 
 // ─── Flippable Job Card ───────────────────────────────────────────────────────
 
-class _FlippableJobCard extends StatefulWidget {
+class FlippableJobCard extends StatefulWidget {
   final JobsResponse job;
   final int imageCacheWidth;
   final bool isExpanded;
   final VoidCallback onToggleExpanded;
 
-  const _FlippableJobCard({
+  /// When provided, the card uses this as the owner's name and skips the
+  /// (auth-protected) network lookup — needed for the public shared view
+  /// where the viewer is logged out.
+  final String? ownerName;
+
+  const FlippableJobCard({
+    super.key,
     required this.job,
     required this.imageCacheWidth,
     required this.isExpanded,
     required this.onToggleExpanded,
+    this.ownerName,
   });
 
   @override
-  State<_FlippableJobCard> createState() => _FlippableJobCardState();
+  State<FlippableJobCard> createState() => _FlippableJobCardState();
 }
 
-class _FlippableJobCardState extends State<_FlippableJobCard>
+class _FlippableJobCardState extends State<FlippableJobCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
@@ -423,7 +430,11 @@ class _FlippableJobCardState extends State<_FlippableJobCard>
       duration: const Duration(milliseconds: 450),
     );
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
-    _fetchOwnerName();
+    if (widget.ownerName != null && widget.ownerName!.isNotEmpty) {
+      _ownerName = widget.ownerName;
+    } else {
+      _fetchOwnerName();
+    }
   }
 
   Future<void> _fetchOwnerName() async {

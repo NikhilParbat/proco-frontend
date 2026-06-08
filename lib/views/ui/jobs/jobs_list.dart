@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/jobs_provider.dart';
+import 'package:proco/controllers/zoom_provider.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
+import 'package:proco/services/config.dart' as app_config;
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/ui/jobs/add_job.dart';
@@ -13,7 +16,14 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class JobListPage extends StatefulWidget {
-  const JobListPage({super.key});
+  /// Index of this page inside [MainScreen]'s bottom-nav [IndexedStack].
+  /// When set, the page reloads its jobs every time the tab becomes active
+  /// again (the IndexedStack keeps the page alive, so initState only runs
+  /// once). Leave null when pushed as a standalone route (e.g. from the
+  /// drawer), where initState already re-runs on each push.
+  final int? tabIndex;
+
+  const JobListPage({super.key, this.tabIndex});
 
   @override
   State<JobListPage> createState() => _JobListPageState();
@@ -24,6 +34,9 @@ class _JobListPageState extends State<JobListPage>
   late TabController _tabController;
   List<JobsResponse> jobs = [];
 
+  ZoomNotifier? _zoom;
+  int _lastTabIndex = -1;
+
   @override
   void initState() {
     super.initState();
@@ -32,10 +45,27 @@ class _JobListPageState extends State<JobListPage>
       if (!_tabController.indexIsChanging) setState(() {});
     });
     Future.delayed(const Duration(milliseconds: 500), loadJobs);
+
+    // Refresh applicant/match counts whenever the user returns to this tab.
+    if (widget.tabIndex != null) {
+      _zoom = context.read<ZoomNotifier>();
+      _lastTabIndex = _zoom!.currentIndex;
+      _zoom!.addListener(_onTabChanged);
+    }
+  }
+
+  void _onTabChanged() {
+    final current = _zoom?.currentIndex ?? -1;
+    // Only reload when this tab just became active (entered from another tab).
+    if (current == widget.tabIndex && _lastTabIndex != widget.tabIndex) {
+      loadJobs();
+    }
+    _lastTabIndex = current;
   }
 
   @override
   void dispose() {
+    _zoom?.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -253,25 +283,28 @@ class _JobListPageState extends State<JobListPage>
                                 ),
                               ).then((_) => loadJobs()),
                               onDelete: () {
+                                final notifier = context.read<JobsNotifier>();
                                 Get.defaultDialog(
                                   title: "Delete Opportunity",
                                   middleText:
-                                      "Are you sure you want to delete this opportunity?",
-                                  textConfirm: "Delete",
+                                      "Are you sure you want to delete this opportunity? This permanently removes it for everyone, including users who bookmarked it. This cannot be undone.",
+                                  textConfirm: "Yes, delete",
+                                  textCancel: "No",
                                   confirmTextColor: Colors.white,
                                   buttonColor: Colors.red,
+                                  onCancel: () {},
                                   onConfirm: () async {
-                                    await context
-                                        .read<JobsNotifier>()
-                                        .deleteJob(job.id);
                                     Get.back();
+                                    final ok = await notifier.deleteJob(job.id);
                                     loadJobs();
-                                    Get.snackbar(
-                                      "Deleted",
-                                      "Opportunity removed successfully",
-                                      backgroundColor: Colors.red,
-                                      colorText: Colors.white,
-                                    );
+                                    if (ok) {
+                                      Get.snackbar(
+                                        "Deleted",
+                                        "Opportunity removed successfully",
+                                        backgroundColor: Colors.red,
+                                        colorText: Colors.white,
+                                      );
+                                    }
                                   },
                                 );
                               },
@@ -430,17 +463,90 @@ class JobCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: onEdit,
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 8.w),
-                    child: const Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: Colors.black,
-                    ),
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    size: 20,
+                    color: Colors.black,
                   ),
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      onEdit();
+                    } else if (value == 'share') {
+                      _showShareSheet(context);
+                    } else if (value == 'delete') {
+                      onDelete();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: Colors.black87,
+                          ),
+                          SizedBox(width: 10.w),
+                          Text(
+                            'Edit',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.share_outlined,
+                            size: 18,
+                            color: Colors.black87,
+                          ),
+                          SizedBox(width: 10.w),
+                          Text(
+                            'Share',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: Colors.red,
+                          ),
+                          SizedBox(width: 10.w),
+                          Text(
+                            'Delete',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -494,6 +600,75 @@ class JobCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showShareSheet(BuildContext context) {
+    final link = app_config.Config.opportunityShareUrl(job.id);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    margin: EdgeInsets.only(bottom: 12.h),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 4.h, 20.w, 8.h),
+                  child: Text(
+                    'Share opportunity',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: kDark,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.link, color: Colors.black87),
+                  title: Text(
+                    'Copy link',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: link));
+                    if (sheetContext.mounted) Navigator.pop(sheetContext);
+                    Get.snackbar(
+                      'Link copied',
+                      'Opportunity link copied to clipboard',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: kThemeColor,
+                      colorText: Colors.white,
+                      margin: EdgeInsets.all(12.w),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

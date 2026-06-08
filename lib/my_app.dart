@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:proco/constants/app_colors.dart';
+import 'package:proco/services/config.dart';
 import 'package:proco/views/ui/auth/login.dart';
+import 'package:proco/views/ui/jobs/opportunity_share_screen.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,6 +41,13 @@ class MyApp extends StatelessWidget {
   });
 
   Widget get _home {
+    // Shared opportunity link (e.g. lagoon-web.onrender.com/?opportunity=<id>):
+    // show the read-only public view regardless of auth state.
+    final sharedId = Config.sharedOpportunityId(Uri.base);
+    if (sharedId != null) {
+      return OpportunityShareScreen(opportunityId: sharedId);
+    }
+
     if (!isLoggedIn) {
       return const LoginPage(drawer: false);
     }

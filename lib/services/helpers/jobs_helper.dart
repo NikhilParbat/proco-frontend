@@ -8,6 +8,7 @@ import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/jobs/get_job.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/models/response/jobs/match_res_model.dart';
+import 'package:proco/models/response/jobs/public_job.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/config.dart';
 import 'package:proco/services/http_client.dart';
@@ -206,6 +207,47 @@ class JobsHelper {
       );
     } catch (e) {
       debugPrint('JobsHelper.getJob error: $e');
+      return ApiResponse(success: false, message: e.toString());
+    }
+  }
+
+  // ─── Get a single opportunity for a shared link (public, no auth) ─────────
+
+  static Future<ApiResponse<PublicJob>> getPublicJob(String id) async {
+    try {
+      final url = Config.url('${Config.jobs}/public/$id');
+      final response = await client.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.body.isEmpty) {
+        return ApiResponse(
+          success: false,
+          message: 'Server is starting up, please try again',
+        );
+      }
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final data = (decoded is Map && decoded['data'] != null)
+            ? decoded['data']
+            : decoded;
+        final map = data as Map<String, dynamic>;
+        return ApiResponse(
+          success: true,
+          message: 'Opportunity fetched successfully',
+          data: PublicJob(
+            job: JobsResponse.fromJson(map),
+            ownerName: (map['ownerName'] ?? map['owner_name'] ?? '').toString(),
+          ),
+        );
+      }
+      return ApiResponse(
+        success: false,
+        message: _errorMessage(response, 'Failed to load opportunity'),
+      );
+    } catch (e) {
+      debugPrint('JobsHelper.getPublicJob error: $e');
       return ApiResponse(success: false, message: e.toString());
     }
   }

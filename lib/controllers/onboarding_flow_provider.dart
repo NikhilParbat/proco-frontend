@@ -5,6 +5,7 @@ import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/ui/mainscreen.dart';
+import 'package:proco/views/ui/onboarding/onboarding_loading_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingFlowProvider extends ChangeNotifier {
@@ -228,7 +229,13 @@ class OnboardingFlowProvider extends ChangeNotifier {
       await prefs.setBool('onboardingComplete', true);
       await prefs.remove('onboardingPage');
       await clearDraft();
-      Get.offAll(() => const MainScreen(), transition: Transition.fade);
+      // First-time users get a brief branded loader ("Let's take you to the
+      // shore") that preloads the home feed before the swiper appears, instead
+      // of the home page popping up abruptly.
+      Get.offAll(
+        () => const OnboardingLoadingScreen(),
+        transition: Transition.fade,
+      );
     } catch (e) {
       Get.snackbar(
         'Error',

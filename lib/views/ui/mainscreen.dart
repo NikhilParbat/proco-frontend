@@ -123,7 +123,9 @@ class _MainScreenState extends State<MainScreen> {
       case 2:
         return loggedIn ? const BookMarkPage() : const LoginPage(drawer: false);
       case 3:
-        return loggedIn ? const JobListPage() : const LoginPage(drawer: false);
+        return loggedIn
+            ? const JobListPage(tabIndex: 3)
+            : const LoginPage(drawer: false);
       case 4:
         return loggedIn ? const ProfilePage() : const LoginPage(drawer: false);
       case 5:
