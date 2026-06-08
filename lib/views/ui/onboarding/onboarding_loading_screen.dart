@@ -95,10 +95,10 @@ class _OnboardingLoadingScreenState extends State<OnboardingLoadingScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "Let's take you on the shore",
+                "Let's take you on\nthe shore",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.montserrat(
-                  fontSize: 16.sp,
+                  fontSize: 21.sp,
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
                   letterSpacing: 0.2,

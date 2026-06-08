@@ -127870,7 +127870,7 @@ s.l()
 this.anb()},
 H(a){var s,r,q,p,o,n=null,m=this.e
 m===$&&A.b()
-s=A.x("Let's take you on the shore",n,n,n,n,n,A.iX().$4$color$fontSize$fontWeight$letterSpacing(B.d,$.a().v(16),B.x,0.2),B.aS,n,n)
+s=A.x("Let's take you on\nthe shore",n,n,n,n,n,A.iX().$4$color$fontSize$fontWeight$letterSpacing(B.d,$.a().v(21),B.x,0.2),B.aS,n,n)
 r=A.q(n,28*$.a().gm(),n)
 q=$.a().gp()
 p=$.a().gm()
