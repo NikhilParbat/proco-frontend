@@ -612,6 +612,14 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     _advance(userSummary: label);
   }
 
+  /// Skip the (final) location step: advance without a location so the profile
+  /// is submitted with empty location fields. Safe — `submit()` already handles
+  /// the no-location case (lat/lng default to 0.0, city/state/country empty).
+  void _skipLocationStep() {
+    if (_transitioning) return;
+    _advance(userSummary: 'Skip for now');
+  }
+
   Future<void> _onLocationSearchChanged(String query) async {
     if (query.trim().length < 3) {
       if (mounted) {
@@ -1222,6 +1230,24 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
                 color: Colors.white,
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Center(
+          child: TextButton(
+            onPressed: _skipLocationStep,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey.shade600,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            ),
+            child: Text(
+              'Skip for now',
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
               ),
             ),
           ),
