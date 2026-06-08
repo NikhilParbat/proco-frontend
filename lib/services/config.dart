@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Config {
-  static const bool _isProd = false;
+  static const bool _isProd = true;
 
   /// Hardcoded production host used as a fallback when the `.env` file is
   /// missing or doesn't contain the key. This guarantees the app can always
