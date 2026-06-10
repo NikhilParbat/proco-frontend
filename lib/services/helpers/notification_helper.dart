@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/services/config.dart';
+import 'package:proco/services/http_client.dart';
+import 'package:proco/services/token_store.dart';
 import 'package:proco/views/ui/settings/notifications_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/services/notification_background.dart';
@@ -89,6 +91,16 @@ class NotificationHelper {
         badge: true,
         sound: true,
       );
+
+      final granted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+
+      // First launch only: seed BOTH in-app toggles from the OS permission
+      // answer — allow ⇒ both on, deny ⇒ both off. We key off the absence of a
+      // stored value so a choice the user later makes in Settings is never
+      // overwritten on subsequent launches.
+      await _seedPrefsFromPermission(granted);
 
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
         debugPrint('❌ Notification permission denied');
@@ -223,6 +235,71 @@ class NotificationHelper {
       ),
     );
     _notifyListeners();
+  }
+
+  /// Credentialed client: sends the HttpOnly auth cookie on web.
+  static final http.Client _prefsClient = createHttpClient();
+
+  /// One-time seeding of the match/chat toggles from the OS permission result.
+  /// Runs only when neither preference has been stored yet (true first launch),
+  /// so a later manual change in Settings is preserved across app restarts.
+  static Future<void> _seedPrefsFromPermission(bool granted) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final alreadySet = prefs.containsKey(kPrefNotifMatches) ||
+          prefs.containsKey(kPrefNotifChat);
+      if (alreadySet) return;
+
+      await prefs.setBool(kPrefNotifMatches, granted);
+      await prefs.setBool(kPrefNotifChat, granted);
+
+      // Mirror the seed to the backend so the server-side gate matches the UI
+      // from the very first launch.
+      await updateNotificationPreferences(
+        matchNotifications: granted,
+        chatNotifications: granted,
+      );
+    } catch (e) {
+      debugPrint('Seed notification prefs failed: $e');
+    }
+  }
+
+  /// Persists the user's match/chat notification preferences to the backend so
+  /// the server can suppress pushes at the source — the only way a disabled
+  /// toggle takes effect when the app is backgrounded or closed. Pass only the
+  /// preference(s) being changed; omitted ones are left untouched server-side.
+  static Future<bool> updateNotificationPreferences({
+    bool? matchNotifications,
+    bool? chatNotifications,
+  }) async {
+    try {
+      final token = await TokenStore.getToken() ?? '';
+      // Mobile needs a token; web authenticates via the cookie.
+      if (!kIsWeb && token.isEmpty) return false;
+
+      final body = <String, dynamic>{};
+      if (matchNotifications != null) {
+        body['matchNotifications'] = matchNotifications;
+      }
+      if (chatNotifications != null) {
+        body['chatNotifications'] = chatNotifications;
+      }
+      if (body.isEmpty) return true;
+
+      final response = await _prefsClient.put(
+        Config.url(Config.notificationPrefsUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token.isNotEmpty) 'token': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('updateNotificationPreferences error: $e');
+      return false;
+    }
   }
 
   static Future<void> _sendTokenToBackend(

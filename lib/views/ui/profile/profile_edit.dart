@@ -2852,12 +2852,27 @@ class _DateRangePickerState extends State<_DateRangePicker> {
     return '${months[d.month - 1]} ${d.year}';
   }
 
+  static DateTime? _parseFmt(String s) {
+    if (s.isEmpty) return null;
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final parts = s.trim().split(' ');
+    if (parts.length != 2) return null;
+    final monthIdx = months.indexOf(parts[0]);
+    final year = int.tryParse(parts[1]);
+    if (monthIdx == -1 || year == null) return null;
+    return DateTime(year, monthIdx + 1);
+  }
+
   Future<void> _pickFrom() async {
+    final toDt = _parseFmt(_to);
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now().subtract(const Duration(days: 365)),
       firstDate: DateTime(1990),
-      lastDate: DateTime.now(),
+      lastDate: toDt ?? DateTime.now(),
       builder: (ctx, child) => Theme(
         data: ThemeData.light().copyWith(
           colorScheme: const ColorScheme.light(primary: kThemeColor),
@@ -2871,10 +2886,11 @@ class _DateRangePickerState extends State<_DateRangePicker> {
   }
 
   Future<void> _pickTo() async {
+    final fromDt = _parseFmt(_from);
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1990),
+      initialDate: fromDt ?? DateTime.now(),
+      firstDate: fromDt ?? DateTime(1990),
       lastDate: DateTime(2030),
       builder: (ctx, child) => Theme(
         data: ThemeData.light().copyWith(

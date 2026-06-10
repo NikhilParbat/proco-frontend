@@ -1090,16 +1090,18 @@ class _AddJobPageState extends State<AddJobPage> {
       ),
       child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: kFontDMSans,
-              fontSize: 14.sp,
-              color: _textDark,
-              fontWeight: FontWeight.w500,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 14.sp,
+                color: _textDark,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          const Spacer(),
+          SizedBox(width: 8.w),
           Switch(
             value: value,
             onChanged: onChanged,
