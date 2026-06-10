@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
+import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/settings_page_header.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,20 +41,37 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Future<void> _setMatchNotif(bool value) async {
+    // Optimistically reflect the change, then persist locally + to the backend.
+    setState(() => _notifMatches = value);
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kPrefNotifMatches, value);
 
-    if (mounted) {
-      setState(() => _notifMatches = value);
+    final ok = await NotificationHelper.updateNotificationPreferences(
+      matchNotifications: value,
+    );
+
+    // The backend is the real gate (it suppresses background pushes), so if the
+    // sync fails, roll the toggle back rather than show a state we can't honour.
+    if (!ok) {
+      await prefs.setBool(kPrefNotifMatches, !value);
+      if (mounted) setState(() => _notifMatches = !value);
     }
   }
 
   Future<void> _setChatNotif(bool value) async {
+    setState(() => _notifChat = value);
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kPrefNotifChat, value);
 
-    if (mounted) {
-      setState(() => _notifChat = value);
+    final ok = await NotificationHelper.updateNotificationPreferences(
+      chatNotifications: value,
+    );
+
+    if (!ok) {
+      await prefs.setBool(kPrefNotifChat, !value);
+      if (mounted) setState(() => _notifChat = !value);
     }
   }
 

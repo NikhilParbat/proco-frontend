@@ -8,6 +8,7 @@ import 'package:proco/models/response/jobs/public_job.dart';
 import 'package:proco/services/config.dart';
 import 'package:proco/services/helpers/jobs_helper.dart';
 import 'package:proco/services/token_store.dart';
+import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/jobs/job_card_swiper.dart';
 import 'package:proco/views/ui/mainscreen.dart';
@@ -61,19 +62,7 @@ class _OpportunityShareScreenState extends State<OpportunityShareScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        centerTitle: false,
-        title: Text(
-          'ProCo',
-          style: GoogleFonts.montserrat(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-            color: kThemeColor,
-          ),
-        ),
-      ),
+      appBar: const LagoonAppBar(showDrawer: false),
       body: SafeArea(
         top: false,
         child: _loading
@@ -203,8 +192,8 @@ class _ShareCtaBar extends StatelessWidget {
         children: [
           Text(
             downloadMode
-                ? 'Get the ProCo app to apply and chat'
-                : 'Open ProCo to apply, bookmark and chat',
+                ? 'Get the Lagoon app to apply and chat'
+                : 'Open Lagoon to apply, bookmark and chat',
             textAlign: TextAlign.center,
             style: GoogleFonts.dmSans(
               fontSize: 12.sp,
@@ -226,7 +215,7 @@ class _ShareCtaBar extends StatelessWidget {
                 elevation: 0,
               ),
               child: Text(
-                downloadMode ? 'Download the app' : 'Open in ProCo Web',
+                downloadMode ? 'Download the app' : 'Open in Lagoon Web',
                 style: GoogleFonts.dmSans(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w700,

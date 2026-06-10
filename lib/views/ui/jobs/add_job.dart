@@ -1127,6 +1127,7 @@ class _AddJobPageState extends State<AddJobPage> {
 
   // ─── Toggle row ───────────────────────────────────────────────────────────
   Widget _toggleRow(String label, bool value, ValueChanged<bool> onChanged) {
+<<<<<<< HEAD
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
     decoration: BoxDecoration(
@@ -1162,6 +1163,42 @@ class _AddJobPageState extends State<AddJobPage> {
     ),
   );
 }
+=======
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 14.sp,
+                color: _textDark,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.white,
+            activeTrackColor: kThemeColor,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: const Color(0xFFDDDDDD),
+          ),
+        ],
+      ),
+    );
+  }
+
+>>>>>>> 8603e7f5e7921774dd3c16d0d22d5a6335d14131
   // ─── Domain chips ─────────────────────────────────────────────────────────
   Widget _domainChips() {
   final domains = [...kDomains, 'Other'];

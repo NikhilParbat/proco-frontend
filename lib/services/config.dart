@@ -94,6 +94,7 @@ class Config {
   static const String messagingUrl = '/api/messages';
   static const String filters = '/api/filters';
   static const String fcmTokenUrl = '/api/users/fcm-token';
+  static const String notificationPrefsUrl = '/api/users/notification-preferences';
   static const String deviceSessionUrl = '/api/users/device-session';
   static const String deviceSessionsUrl = '/api/users/device-sessions';
 }
