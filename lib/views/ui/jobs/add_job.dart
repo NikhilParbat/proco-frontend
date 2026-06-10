@@ -161,8 +161,8 @@ class _AddJobPageState extends State<AddJobPage> {
   // ─── Skills ───────────────────────────────────────────────────────────────
   void _addSkill(String skill) {
     if (skill.isEmpty || _skills.contains(skill)) return;
-    if (_skills.length >= 9) {
-      _snack('Maximum 9 skills allowed.');
+    if (_skills.length >= 12) {
+      _snack('Maximum 12 skills allowed.');
       return;
     }
     setState(() => _skills.add(skill));
@@ -1126,8 +1126,11 @@ class _AddJobPageState extends State<AddJobPage> {
   }
 
   // ─── Toggle row ───────────────────────────────────────────────────────────
-  Widget _toggleRow(String label, bool value, ValueChanged<bool> onChanged) {
-<<<<<<< HEAD
+  Widget _toggleRow(
+  String label,
+  bool value,
+  ValueChanged<bool> onChanged,
+) {
   return Container(
     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
     decoration: BoxDecoration(
@@ -1163,42 +1166,7 @@ class _AddJobPageState extends State<AddJobPage> {
     ),
   );
 }
-=======
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 14.sp,
-                color: _textDark,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: kThemeColor,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: const Color(0xFFDDDDDD),
-          ),
-        ],
-      ),
-    );
-  }
 
->>>>>>> 8603e7f5e7921774dd3c16d0d22d5a6335d14131
   // ─── Domain chips ─────────────────────────────────────────────────────────
   Widget _domainChips() {
   final domains = [...kDomains, 'Other'];
@@ -1371,17 +1339,17 @@ class _AddJobPageState extends State<AddJobPage> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                '${_skills.length}/9',
+                '${_skills.length}/12',
                 style: TextStyle(
                   fontFamily: kFontDMSans,
                   fontSize: 11.sp,
-                  color: _skills.length >= 9 ? Colors.redAccent : _textGrey,
+                  color: _skills.length >= 12 ? Colors.redAccent : _textGrey,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          if (_skills.length < 9) ...[
+          if (_skills.length < 12) ...[
             SizedBox(height: 6.h),
             SkillSearchField(
               onSelected: _addSkill,
@@ -1393,7 +1361,7 @@ class _AddJobPageState extends State<AddJobPage> {
           ] else ...[
             SizedBox(height: 4.h),
             Text(
-              'Maximum 9 skills reached.',
+              'Maximum 12 skills reached.',
               style: TextStyle(
                 fontFamily: kFontDMSans,
                 fontSize: 12.sp,
