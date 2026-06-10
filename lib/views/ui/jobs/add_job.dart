@@ -39,6 +39,7 @@ class _AddJobPageState extends State<AddJobPage> {
   final _durationValueController = TextEditingController();
   final _contractController = TextEditingController();
   final List<TextEditingController> _reqControllers = [];
+  final _customDomainController = TextEditingController();
 
   // ─── Location state ────────────────────────────────────────────────────────
   final _locationSearchCtrl = TextEditingController();
@@ -57,6 +58,7 @@ class _AddJobPageState extends State<AddJobPage> {
   List<String> selectedDomains = [];
   String? _selectedOpportunityType;
   List<String> _skills = [];
+  bool _isOtherDomainSelected = false;
 
   bool get _isEditMode => widget.job != null;
   late final ImageNotifier _imageNotifier;
@@ -108,9 +110,11 @@ class _AddJobPageState extends State<AddJobPage> {
       _skills = List.from(j.skills);
 
       if (j.domain.isNotEmpty) {
-        final splitDomains = j.domain.split(',').map((e) => e.trim()).toList();
-        for (final d in splitDomains) {
-          if (kDomains.contains(d)) selectedDomains.add(d);
+        if (kDomains.contains(j.domain)) {
+          selectedDomains.add(j.domain);
+        } else {
+          _isOtherDomainSelected = true;
+          _customDomainController.text = j.domain;
         }
       }
 
@@ -131,6 +135,7 @@ class _AddJobPageState extends State<AddJobPage> {
     _salaryController.dispose();
     _durationValueController.dispose();
     _contractController.dispose();
+    _customDomainController.dispose();
     for (final c in _reqControllers) {
       c.dispose();
     }
@@ -284,7 +289,11 @@ class _AddJobPageState extends State<AddJobPage> {
     JobsNotifier notifier,
     ImageNotifier imageNotifier,
   ) async {
-    if (selectedDomains.isEmpty || _selectedOpportunityType == null) {
+    final customDomain = _customDomainController.text.trim();
+
+    if ((!_isOtherDomainSelected && selectedDomains.isEmpty) ||
+        (_isOtherDomainSelected && customDomain.isEmpty) ||
+        _selectedOpportunityType == null) {
       _snack('Please select a domain and opportunity type.');
       return;
     }
@@ -293,7 +302,9 @@ class _AddJobPageState extends State<AddJobPage> {
       return;
     }
 
-    final effectiveDomain = selectedDomains.join(', ');
+    final effectiveDomain = _isOtherDomainSelected
+    ? _customDomainController.text.trim()
+    : selectedDomains.join(', ');
 
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId') ?? '';
@@ -701,57 +712,92 @@ class _AddJobPageState extends State<AddJobPage> {
               // ── MEDIA ─────────────────────────────────────────────────────
               _sectionLabel('MEDIA'),
               SizedBox(height: 10.h),
-              GestureDetector(
-                onTap: () => _showImageSourceSheet(imageNotifier),
-                child: Container(
-                  height: 185.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8F8FA),
-                    borderRadius: BorderRadius.circular(18.r),
-                    border: Border.all(
-                      color: const Color(0xFFD6D9E0),
-                      width: 1.2,
-                    ),
+
+              Container(
+                height: 185.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F8FA),
+                  borderRadius: BorderRadius.circular(18.r),
+                  border: Border.all(
+                    color: const Color(0xFFD6D9E0),
+                    width: 1.2,
                   ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18.r),
                   child: imageNotifier.imageBytes != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(18.r),
-                          child: Image.memory(
-                            imageNotifier.imageBytes!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          ),
+                      ? Image.memory(
+                          imageNotifier.imageBytes!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        )
+                      : (_isEditMode &&
+                            widget.job?.imageUrl != null &&
+                            widget.job!.imageUrl.isNotEmpty)
+                      ? Image.network(
+                          widget.job!.imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                          errorBuilder: (_, __, ___) {
+                            return const Center(
+                              child: Icon(Icons.broken_image, size: 40),
+                            );
+                          },
                         )
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              width: 54.w,
-                              height: 54.w,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.camera_alt_rounded,
-                                color: kDarkGrey,
-                                size: 24.sp,
-                              ),
+                            Icon(
+                              Icons.image_outlined,
+                              size: 50,
+                              color: Colors.grey,
                             ),
-                            SizedBox(height: 14.h),
+                            SizedBox(height: 10.h),
                             Text(
-                              'Upload Cover Image',
+                              'No cover image selected',
                               style: TextStyle(
                                 fontFamily: kFontDMSans,
-                                fontSize: 15.sp,
-                                color: kDarkGrey,
-                                fontWeight: FontWeight.w600,
+                                color: Colors.grey,
+                                fontSize: 14.sp,
                               ),
                             ),
                           ],
                         ),
                 ),
               ),
+
+              SizedBox(height: 12.h),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showImageSourceSheet(imageNotifier),
+                  icon: const Icon(Icons.camera_alt_rounded),
+                  label: Text(
+                    imageNotifier.imageBytes != null ||
+                            (_isEditMode &&
+                                widget.job?.imageUrl.isNotEmpty == true)
+                        ? 'Change Cover Image'
+                        : 'Upload Cover Image',
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kThemeColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                ),
+              ),
+
               SizedBox(height: 22.h),
             ],
           );
@@ -1081,17 +1127,20 @@ class _AddJobPageState extends State<AddJobPage> {
 
   // ─── Toggle row ───────────────────────────────────────────────────────────
   Widget _toggleRow(String label, bool value, ValueChanged<bool> onChanged) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
-      ),
-      child: Row(
-        children: [
-          Text(
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _border),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
             label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: kFontDMSans,
               fontSize: 14.sp,
@@ -1099,77 +1148,88 @@ class _AddJobPageState extends State<AddJobPage> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const Spacer(),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: kThemeColor,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: const Color(0xFFDDDDDD),
-          ),
-        ],
-      ),
-    );
-  }
-
+        ),
+        SizedBox(width: 8.w),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: Colors.white,
+          activeTrackColor: kThemeColor,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: const Color(0xFFDDDDDD),
+        ),
+      ],
+    ),
+  );
+}
   // ─── Domain chips ─────────────────────────────────────────────────────────
   Widget _domainChips() {
-    final domains = List<String>.from(kDomains);
-    return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
-      children: domains.map((d) {
-        final selected = selectedDomains.contains(d);
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              if (selected) {
-                selectedDomains.remove(d);
-              } else {
-                selectedDomains
-                  ..clear()
-                  ..add(d);
-              }
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-            decoration: BoxDecoration(
-              color: selected ? kThemeColor : Colors.white,
-              borderRadius: BorderRadius.circular(24.r),
-              border: Border.all(
-                color: selected
-                    ? kThemeColor
-                    : Colors.black.withValues(alpha: 0.06),
-                width: selected ? 1.4 : 1,
-              ),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: kThemeColor.withValues(alpha: 0.25),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Text(
-              d,
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 13.sp,
-                color: selected ? Colors.white : const Color(0xFF444444),
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
+  final domains = [...kDomains, 'Other'];
 
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Wrap(
+        spacing: 8.w,
+        runSpacing: 8.h,
+        children: domains.map((d) {
+          final selected = d == 'Other'
+              ? _isOtherDomainSelected
+              : selectedDomains.contains(d);
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedDomains.clear();
+
+                if (d == 'Other') {
+                  _isOtherDomainSelected = true;
+                } else {
+                  _isOtherDomainSelected = false;
+                  selectedDomains.add(d);
+                }
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+                vertical: 7.h,
+              ),
+              decoration: BoxDecoration(
+                color: selected ? kThemeColor : Colors.white,
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(
+                  color: selected
+                      ? kThemeColor
+                      : Colors.black.withValues(alpha: 0.06),
+                ),
+              ),
+              child: Text(
+                d,
+                style: TextStyle(
+                  color: selected ? Colors.white : const Color(0xFF444444),
+                  fontWeight: selected
+                      ? FontWeight.w600
+                      : FontWeight.w400,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+
+      if (_isOtherDomainSelected) ...[
+        SizedBox(height: 12.h),
+        _field(
+          _customDomainController,
+          hint: 'Enter domain',
+          maxLength: 40,
+        ),
+      ],
+    ],
+  );
+}
   // ─── Opportunity type selector ────────────────────────────────────────────
   Widget _opportunityTypeSelector() {
     return Wrap(

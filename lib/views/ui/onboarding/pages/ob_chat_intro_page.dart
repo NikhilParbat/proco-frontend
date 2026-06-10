@@ -266,6 +266,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   // Step 2: Skills
   final Set<String> _skills = {};
   static const int _kMinSkills = 4;
+  static const int _kMaxSkills = 12;
 
   // Step 3: Location
   final _locationSearchCtrl = TextEditingController();
@@ -400,6 +401,13 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   void _addSkill(String skill) {
     if (_skills.contains(skill)) return;
+    if (_skills.length >= _kMaxSkills) {
+    _snack(
+      'Skill limit reached',
+      'You can select a maximum of $_kMaxSkills skills.',
+    );
+    return;
+  }
     setState(() {
       _skills.add(skill);
       _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.skill, text: skill));
@@ -1035,7 +1043,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
             SizedBox(width: 5.w),
             Text(
               met
-                  ? '${_skills.length} skills added'
+                  ? '${_skills.length}/$_kMaxSkills skills added'
                   : 'Pick at least $_kMinSkills skills · $remaining more',
               style: TextStyle(
                 color: met ? kThemeColor : Colors.grey,

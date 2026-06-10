@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_text_styles.dart';
+import 'package:proco/controllers/image_provider.dart';
 import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
@@ -36,8 +38,13 @@ class EditProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProfileEditState(notifier: notifier),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => ProfileEditState(notifier: notifier),
+        ),
+        ChangeNotifierProvider(create: (_) => ImageNotifier()),
+      ],
       child: Scaffold(
         backgroundColor: kBackgroundColor,
         drawer: const LagoonDrawer(),
@@ -80,6 +87,7 @@ class EditProfilePage extends StatelessWidget {
                 onPressed: state.isSaving
                     ? null
                     : () async {
+                      final imageNotifier = context.read<ImageNotifier>();
                         final nameParts = state.username
                             .trim()
                             .split(' ')
@@ -94,7 +102,7 @@ class EditProfilePage extends StatelessWidget {
                           );
                           return;
                         }
-                        final ok = await state.saveProfile(null);
+                        final ok = await state.saveProfile(imageNotifier.selectedImage);
                         if (ok && context.mounted) {
                           Navigator.pop(context);
                           LagoonSnackbar.show(
@@ -248,19 +256,20 @@ class _EditFormState extends State<_EditForm> {
               _OptionSelector(
                 label: 'Work Style',
                 value: widget.state.workStyle,
-                options: const [
-                  'Remote-first',
-                  'Hybrid',
-                  'In-office',
-                  'Flexible',
-                ],
+                options: const ['Early Bird', 'Night Owl', 'Flexible'],
                 onChanged: (v) => widget.state.workStyle = v,
               ),
               SizedBox(height: 14.h),
               _OptionSelector(
                 label: 'Communication Style',
                 value: widget.state.communicationStyle,
-                options: const ['Asynchronous', 'Synchronous', 'Mixed'],
+                options: const [
+                  'Whatsapp',
+                  'Email',
+                  'Phone Call',
+                  'Video Call',
+                  'In-Person',
+                ],
                 onChanged: (v) => widget.state.communicationStyle = v,
               ),
               SizedBox(height: 20.h),
@@ -312,45 +321,6 @@ class _EditFormState extends State<_EditForm> {
                 onPressed: () => _showProjectDialog(context, widget.state),
               ),
               SizedBox(height: 20.h),
-              _SubSectionTitle(title: 'Links'),
-              _ValidatedField(
-                label: 'LinkedIn URL',
-                init: widget.state.linkedInUrl,
-                onChanged: (v) => widget.state.linkedInUrl = v,
-                keyboard: TextInputType.url,
-                hint: 'https://linkedin.com/in/…',
-                maxLines: 1,
-                maxLength: 200,
-                allowSpecialChars: true,
-              ),
-              _ValidatedField(
-                label: 'GitHub URL',
-                init: widget.state.gitHubUrl,
-                onChanged: (v) => widget.state.gitHubUrl = v,
-                keyboard: TextInputType.url,
-                hint: 'https://github.com/…',
-                maxLength: 200,
-                allowSpecialChars: true,
-              ),
-              _ValidatedField(
-                label: 'Twitter / X URL',
-                init: widget.state.twitterUrl,
-                onChanged: (v) => widget.state.twitterUrl = v,
-                keyboard: TextInputType.url,
-                hint: 'https://twitter.com/…',
-                maxLength: 200,
-                allowSpecialChars: true,
-              ),
-              _ValidatedField(
-                label: 'Portfolio / Behance URL',
-                init: widget.state.portfolioUrl,
-                onChanged: (v) => widget.state.portfolioUrl = v,
-                keyboard: TextInputType.url,
-                hint: 'https://…',
-                maxLength: 200,
-                allowSpecialChars: true,
-              ),
-              SizedBox(height: 10.h),
               _LinksEditor(state: widget.state),
               SizedBox(height: 20.h),
 
@@ -1196,36 +1166,52 @@ class _IdentitySection extends StatelessWidget {
     return Column(
       children: [
         Center(
-          child: Stack(
-            children: [
-              CircleAvatar(
-                radius: 48.r,
-                backgroundColor: kLightGrey,
-                backgroundImage: state.profileImageUrl.isNotEmpty
-                    ? NetworkImage(state.profileImageUrl)
-                    : null,
-                child: state.profileImageUrl.isEmpty
-                    ? Icon(Icons.person, size: 40.r, color: kDarkGrey)
-                    : null,
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    width: 28.w,
-                    height: 28.w,
-                    decoration: BoxDecoration(
-                      color: kThemeColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: kLight, width: 2),
-                    ),
-                    child: Icon(Icons.camera_alt, size: 14.r, color: kLight),
+          child: Consumer<ImageNotifier>(
+            builder: (context, imageNotifier, _) {
+              return Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 48.r,
+                    backgroundColor: kLightGrey,
+
+                    backgroundImage: imageNotifier.imageBytes != null
+                        ? MemoryImage(imageNotifier.imageBytes!)
+                        : state.profileImageUrl.isNotEmpty
+                        ? NetworkImage(state.profileImageUrl)
+                        : null,
+
+                    child:
+                        imageNotifier.imageBytes == null &&
+                            state.profileImageUrl.isEmpty
+                        ? Icon(Icons.person, size: 40.r, color: kDarkGrey)
+                        : null,
                   ),
-                ),
-              ),
-            ],
+
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () =>
+                          _showImageSourceSheet(context, imageNotifier),
+                      child: Container(
+                        width: 28.w,
+                        height: 28.w,
+                        decoration: BoxDecoration(
+                          color: kThemeColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: kLight, width: 2),
+                        ),
+                        child: Icon(
+                          Icons.camera_alt,
+                          size: 14.r,
+                          color: kLight,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         SizedBox(height: 20.h),
@@ -1235,12 +1221,98 @@ class _IdentitySection extends StatelessWidget {
           onChanged: (v) => state.username = v,
           maxLength: 60,
         ),
-        _BioField(init: state.bio, onChanged: (v) => state.bio = v),
+        _ValidatedField(
+          label: 'Bio',
+          init: state.bio,
+          onChanged: (v) => state.bio = v,
+          maxLength: 200,
+          allowSpecialChars: true,
+          hint: 'Tell the world about yourself in a few words…',
+        ),
         _LocationPickerRow(state: state),
       ],
     );
   }
 }
+
+void _showImageSourceSheet(
+  BuildContext context,
+  ImageNotifier imageNotifier,
+) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(20),
+      ),
+    ),
+    builder: (_) {
+      return SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () async {
+                Navigator.pop(context);
+                await imageNotifier.pickImage(
+                  source: ImageSource.gallery,
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              onTap: () async {
+                Navigator.pop(context);
+                await imageNotifier.pickImage(
+                  source: ImageSource.camera,
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Widget _sourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    
+  const Color _border = Color(0xFFE0E0E0);
+  const Color _textDark = Color(0xFF1A1A2E);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F8F8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: kThemeColor, size: 22),
+            SizedBox(width: 14.w),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: kFontDMSans,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: _textDark,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
 // ── Validated Field (with gibberish guard + char limit) ───────────────────────
 class _ValidatedField extends StatefulWidget {
@@ -1340,95 +1412,6 @@ class _ValidatedFieldState extends State<_ValidatedField> {
     );
   }
 }
-
-// ── Dropdown Field ────────────────────────────────────────────────────────────
-// class _DropdownField extends StatelessWidget {
-//   const _DropdownField({
-//     required this.label,
-//     required this.value,
-//     required this.items,
-//     required this.onChanged,
-//     this.hint,
-//   });
-
-//   final String label;
-//   final String value;
-//   final List<String> items;
-//   final ValueChanged<String?> onChanged;
-//   final String? hint;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: EdgeInsets.only(bottom: 14.h),
-//       child: DropdownButtonFormField<String>(
-//         value: items.contains(value) ? value : null,
-//         hint: Text(
-//           hint ?? 'Select…',
-//           style: TextStyle(
-//             fontFamily: kFontDMSans,
-//             fontSize: 13.sp,
-//             color: const Color(0xFFBBBBBB),
-//           ),
-//         ),
-//         decoration: InputDecoration(
-//           labelText: label,
-//           labelStyle: kSmallTextStyle.copyWith(
-//             color: kDarkGrey,
-//             fontSize: 13.sp,
-//           ),
-//           filled: true,
-//           fillColor: kLight,
-//           contentPadding: EdgeInsets.symmetric(
-//             horizontal: 14.w,
-//             vertical: 14.h,
-//           ),
-//           border: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(10.r),
-//             borderSide: const BorderSide(color: kLightGrey),
-//           ),
-//           enabledBorder: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(10.r),
-//             borderSide: const BorderSide(color: kLightGrey),
-//           ),
-//           focusedBorder: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(10.r),
-//             borderSide: const BorderSide(color: kThemeColor, width: 1.5),
-//           ),
-//         ),
-//         items: items
-//             .map(
-//               (e) => DropdownMenuItem(
-//                 value: e,
-//                 child: Text(
-//                   e,
-//                   style: TextStyle(
-//                     fontFamily: kFontDMSans,
-//                     fontSize: 13.sp,
-//                     color: kDark,
-//                   ),
-//                 ),
-//               ),
-//             )
-//             .toList(),
-//         onChanged: onChanged,
-//         icon: Icon(
-//           Icons.keyboard_arrow_down_rounded,
-//           color: kDarkGrey,
-//           size: 20.sp,
-//         ),
-//         dropdownColor: kLight,
-//         isExpanded: true,
-//         style: TextStyle(
-//           fontFamily: kFontDMSans,
-//           fontSize: 13.sp,
-//           color: kDark,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 // ── Expandable Card ───────────────────────────────────────────────────────────
 class _ExpandableCard extends StatelessWidget {
   const _ExpandableCard({
@@ -2124,120 +2107,6 @@ class _SubSectionTitle extends StatelessWidget {
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,
               color: kDark,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Bio field with 250-word limit ─────────────────────────────────────────────
-class _BioField extends StatefulWidget {
-  const _BioField({required this.init, required this.onChanged});
-  final String init;
-  final ValueChanged<String> onChanged;
-
-  @override
-  State<_BioField> createState() => _BioFieldState();
-}
-
-class _BioFieldState extends State<_BioField> {
-  late final TextEditingController _ctrl;
-  int _wordCount = 0;
-  static const int _maxWords = 250;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(text: widget.init);
-    _wordCount = _countWords(widget.init);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  int _countWords(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return 0;
-    return trimmed.split(RegExp(r'\s+')).length;
-  }
-
-  void _onChanged(String value) {
-    if (!_isValidText(value) && value.isNotEmpty) return;
-    final count = _countWords(value);
-    if (count > _maxWords) {
-      final words = value.trim().split(RegExp(r'\s+'));
-      final trimmed = words.take(_maxWords).join(' ');
-      _ctrl.value = TextEditingValue(
-        text: trimmed,
-        selection: TextSelection.collapsed(offset: trimmed.length),
-      );
-      setState(() => _wordCount = _maxWords);
-      widget.onChanged(trimmed);
-      return;
-    }
-    setState(() => _wordCount = count);
-    widget.onChanged(value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final atLimit = _wordCount >= _maxWords;
-    return Padding(
-      padding: EdgeInsets.only(bottom: 14.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextFormField(
-            controller: _ctrl,
-            onChanged: _onChanged,
-            maxLines: 5,
-            style: kSubTextStyle.copyWith(color: kDark, fontSize: 14.sp),
-            decoration: InputDecoration(
-              labelText: 'Bio',
-              hintText: 'Tell the world about yourself…',
-              labelStyle: kSmallTextStyle.copyWith(
-                color: kDarkGrey,
-                fontSize: 13.sp,
-              ),
-              hintStyle: kSmallTextStyle.copyWith(
-                color: const Color(0xFFBBBBBB),
-                fontSize: 13.sp,
-              ),
-              filled: true,
-              fillColor: kLight,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 14.w,
-                vertical: 14.h,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.r),
-                borderSide: const BorderSide(color: kLightGrey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.r),
-                borderSide: const BorderSide(color: kLightGrey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.r),
-                borderSide: const BorderSide(color: kThemeColor, width: 1.5),
-              ),
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '$_wordCount / $_maxWords words',
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 11.sp,
-                color: atLimit ? Colors.redAccent : kDarkGrey,
-              ),
             ),
           ),
         ],
