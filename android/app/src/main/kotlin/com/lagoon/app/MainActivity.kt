@@ -1,4 +1,4 @@
-package com.example.proco
+package com.lagoon.app
 
 import io.flutter.embedding.android.FlutterActivity
 
