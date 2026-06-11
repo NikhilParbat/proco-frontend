@@ -5,6 +5,7 @@ import 'package:proco/constants/app_colors.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/settings_page_header.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String kPrefNotifMatches = 'pref_notif_matches';
@@ -82,7 +83,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       appBar: const LagoonAppBar(),
 
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: kThemeColor))
+          ? const Center(child: WaveLoader())
           : SafeArea(
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),

@@ -5,6 +5,7 @@ import 'package:proco/constants/app_colors.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/common/settings_page_header.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String kPrefProfileViewChat = 'pref_profile_view_chat';
@@ -50,7 +51,7 @@ class _ProfileViewPageState extends State<ProfileViewPage> {
       appBar: const LagoonAppBar(),
       body: SafeArea(
         child: _loading
-            ? Center(child: CircularProgressIndicator(color: kThemeColor))
+            ? const Center(child: WaveLoader())
             : ListView(
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
                 children: [

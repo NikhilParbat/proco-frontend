@@ -11,6 +11,7 @@ import 'package:proco/constants/app_lists.dart';
 import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/skill_search_field.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:provider/provider.dart';
@@ -740,9 +741,7 @@ class _AddJobPageState extends State<AddJobPage> {
                           width: double.infinity,
                           loadingBuilder: (context, child, progress) {
                             if (progress == null) return child;
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
+                            return const Center(child: WaveLoader.small());
                           },
                           errorBuilder: (_, __, ___) {
                             return const Center(
@@ -914,14 +913,7 @@ class _AddJobPageState extends State<AddJobPage> {
                   ? null
                   : _useCurrentLocation,
               icon: _isFetchingCurrentLocation
-                  ? SizedBox(
-                      width: 16.w,
-                      height: 16.w,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                  ? const WaveLoader.small()
                   : const Icon(Icons.my_location_rounded, size: 18),
               label: Text(
                 _isFetchingCurrentLocation

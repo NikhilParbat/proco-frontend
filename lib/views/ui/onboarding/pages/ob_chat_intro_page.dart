@@ -11,6 +11,7 @@ import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/skill_search_field.dart';
+import 'package:proco/views/common/wave_loader.dart';
 
 // ── Colors ────────────────────────────────────────────────────────────────────
 
@@ -1105,14 +1106,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
                   ? null
                   : _useCurrentLocation,
               icon: _isFetchingCurrentLocation
-                  ? SizedBox(
-                      width: 16.w,
-                      height: 16.w,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                  ? const WaveLoader.small()
                   : const Icon(Icons.my_location_rounded, size: 18),
               label: Text(
                 _isFetchingCurrentLocation

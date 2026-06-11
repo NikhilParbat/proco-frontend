@@ -7,6 +7,7 @@ import 'package:proco/controllers/exports.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/settings_page_header.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:provider/provider.dart';
 
 class AccountPage extends StatefulWidget {
@@ -159,10 +160,7 @@ class _AccountPageState extends State<AccountPage> {
                       child: _deleting
                           ? Padding(
                               padding: EdgeInsets.all(11.r),
-                              child: const CircularProgressIndicator(
-                                color: _red,
-                                strokeWidth: 2,
-                              ),
+                              child: const WaveLoader.small(),
                             )
                           : Icon(
                               Icons.delete_outline_rounded,

@@ -7,6 +7,7 @@ import 'package:proco/controllers/login_provider.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/auth/signup_new.dart';
 import 'package:provider/provider.dart';
 
@@ -165,14 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           alignment: Alignment.center,
                           child: _isLoginLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Colors.black,
-                                  ),
-                                )
+                              ? const WaveLoader.small()
                               : Text(
                                   'Login',
                                   style: kSubTextStyle.copyWith(
@@ -208,16 +202,7 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(100.r),
                           ),
                           child: _isGoogleLoading
-                              ? Center(
-                                  child: SizedBox(
-                                    width: 22.w,
-                                    height: 22.w,
-                                    child: const CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                )
+                              ? const Center(child: WaveLoader.small())
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [

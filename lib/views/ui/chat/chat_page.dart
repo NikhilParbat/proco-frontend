@@ -538,7 +538,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMessageArea(String? userId) {
     if (_loadingInitial) {
-      return Center(child: CircularProgressIndicator(color: kThemeColor));
+      return const Center(child: WaveLoader());
     }
 
     if (_loadError && messages.isEmpty) {
@@ -1092,14 +1092,7 @@ class _ChatPageState extends State<ChatPage> {
 
                     child: Center(
                       child: sending
-                          ? SizedBox(
-                              width: 18.w,
-                              height: 18.w,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: Colors.white,
-                              ),
-                            )
+                          ? const WaveLoader.small()
                           : Transform.translate(
                               offset: const Offset(1, -1),
                               child: Icon(

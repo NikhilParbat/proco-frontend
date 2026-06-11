@@ -10,6 +10,7 @@ import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/services/config.dart' as app_config;
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/jobs/add_job.dart';
 import 'package:proco/views/ui/jobs/matched_users.dart';
 import 'package:provider/provider.dart';
@@ -171,9 +172,7 @@ class _JobListPageState extends State<JobListPage>
       body: Consumer<JobsNotifier>(
         builder: (context, jobsNotifier, child) {
           if (jobsNotifier.isLoadingUserJobs && jobsNotifier.userJobs.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(color: kThemeColor),
-            );
+            return const Center(child: WaveLoader());
           }
 
           jobs = jobsNotifier.userJobs;

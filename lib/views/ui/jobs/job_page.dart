@@ -45,9 +45,7 @@ class _JobPageState extends State<JobPage> {
             builder: (context) {
               if (jobsNotifier.isLoadingCurrentJob ||
                   jobsNotifier.currentJob == null) {
-                return const Center(
-                  child: CircularProgressIndicator(color: _teal),
-                );
+                return const Center(child: WaveLoader());
               }
 
               final job = jobsNotifier.currentJob!;

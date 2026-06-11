@@ -8,6 +8,7 @@ import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/models/request/chat/create_chat.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/models/response/user/user_response.dart';
+import 'package:proco/views/common/wave_loader.dart';
 
 import 'package:proco/services/helpers/chat_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
@@ -539,12 +540,7 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                 child: _isMatching
                     ? const SizedBox(
                         height: 20,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        ),
+                        child: Center(child: WaveLoader.small()),
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,

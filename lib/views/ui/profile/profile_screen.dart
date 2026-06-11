@@ -6,6 +6,7 @@ import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:provider/provider.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -58,9 +59,7 @@ class ProfilePage extends StatelessWidget {
           body: Consumer<ProfileEditState>(
             builder: (context, state, _) {
               if (state.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(color: kThemeColor),
-                );
+                return const Center(child: WaveLoader());
               }
 
               if (state.error != null) {
@@ -270,12 +269,8 @@ class _AvatarWithBadge extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: kThemeColor,
-                      ),
-                    ),
+                    placeholder: (context, url) =>
+                        const Center(child: WaveLoader.small()),
                     errorWidget: (context, url, error) =>
                         Icon(Icons.person, size: 42.sp, color: kDarkGrey),
                   )

@@ -9,6 +9,7 @@ import 'package:proco/services/config.dart';
 import 'package:proco/services/helpers/jobs_helper.dart';
 import 'package:proco/services/token_store.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/jobs/job_card_swiper.dart';
 import 'package:proco/views/ui/mainscreen.dart';
@@ -66,7 +67,7 @@ class _OpportunityShareScreenState extends State<OpportunityShareScreen> {
       body: SafeArea(
         top: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: kThemeColor))
+            ? const Center(child: WaveLoader())
             : _error != null
             ? _buildError()
             : _buildLoaded(),

@@ -11,6 +11,7 @@ import 'package:proco/controllers/profile_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
 import 'package:proco/views/common/lagoon_snackbar.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/common/skill_search_field.dart';
 import 'package:proco/views/common/phone_field.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
@@ -68,9 +69,7 @@ class EditProfilePage extends StatelessWidget {
         body: Consumer<ProfileEditState>(
           builder: (context, state, _) {
             if (state.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: kThemeColor),
-              );
+              return const Center(child: WaveLoader());
             }
             return _EditForm(state: state);
           },
@@ -126,14 +125,7 @@ class EditProfilePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 label: state.isSaving
-                    ? SizedBox(
-                        width: 22.w,
-                        height: 22.w,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: kLight,
-                        ),
-                      )
+                    ? const WaveLoader.small()
                     : Text(
                         'SAVE CHANGES',
                         style: TextStyle(
@@ -1656,14 +1648,7 @@ class _LocationPickerRowState extends State<_LocationPickerRow> {
                     ? null
                     : _useCurrentLocation,
                 icon: _isFetchingCurrentLocation
-                    ? SizedBox(
-                        width: 16.w,
-                        height: 16.w,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: kLight,
-                        ),
-                      )
+                    ? const WaveLoader.small()
                     : const Icon(Icons.my_location_rounded, size: 18),
                 label: Text(
                   _isFetchingCurrentLocation

@@ -1,15 +1,13 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/services/token_store.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 
 /// Shown once, right after the conversational onboarding finishes, to bridge
@@ -27,8 +25,6 @@ class OnboardingLoadingScreen extends StatefulWidget {
 
 class _OnboardingLoadingScreenState extends State<OnboardingLoadingScreen>
     with TickerProviderStateMixin {
-  // Drives the rippling motion of the wave lines.
-  late final AnimationController _waveCtrl;
   // Fades the whole stack in on first frame.
   late final AnimationController _fadeCtrl;
 
@@ -38,10 +34,6 @@ class _OnboardingLoadingScreenState extends State<OnboardingLoadingScreen>
   @override
   void initState() {
     super.initState();
-    _waveCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat();
     _fadeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -79,7 +71,6 @@ class _OnboardingLoadingScreenState extends State<OnboardingLoadingScreen>
 
   @override
   void dispose() {
-    _waveCtrl.dispose();
     _fadeCtrl.dispose();
     super.dispose();
   }
@@ -105,69 +96,11 @@ class _OnboardingLoadingScreenState extends State<OnboardingLoadingScreen>
                 ),
               ),
               SizedBox(height: 28.h),
-              SizedBox(
-                width: 140.w,
-                height: 84.h,
-                child: AnimatedBuilder(
-                  animation: _waveCtrl,
-                  builder: (context, _) => CustomPaint(
-                    painter: _WaveStackPainter(progress: _waveCtrl.value),
-                  ),
-                ),
-              ),
+              const WaveLoader(width: 140, height: 84),
             ],
           ),
         ),
       ),
     );
   }
-}
-
-/// Paints a stack of horizontal sine-wave lines that ripple sideways — the
-/// animated cousin of the drawer's `Icons.waves_rounded` mark.
-class _WaveStackPainter extends CustomPainter {
-  _WaveStackPainter({required this.progress});
-
-  /// 0..1 looping phase from the controller.
-  final double progress;
-
-  static const int _lines = 4;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gap = size.height / (_lines + 1);
-    final amplitude = gap * 0.55;
-
-    for (var i = 0; i < _lines; i++) {
-      // Front lines (higher i) are more opaque; the stack recedes upward.
-      final opacity = 0.30 + 0.70 * (i / (_lines - 1));
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.4
-        ..strokeCap = StrokeCap.round
-        ..color = kSend.withValues(alpha: opacity);
-
-      final baseY = gap * (i + 1);
-      // Each line is phase-shifted so the stack ripples rather than moving in
-      // lockstep.
-      final phase = progress * 2 * math.pi + i * (math.pi / 3);
-
-      final path = Path();
-      for (double x = 0; x <= size.width; x += 2) {
-        final y =
-            baseY +
-            amplitude * math.sin((x / size.width) * 2 * math.pi * 1.6 + phase);
-        if (x == 0) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
-        }
-      }
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_WaveStackPainter oldDelegate) =>
-      oldDelegate.progress != progress;
 }

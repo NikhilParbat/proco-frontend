@@ -10,6 +10,7 @@ import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/helpers/notification_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/filters/filter_page.dart';
 import 'package:proco/views/ui/jobs/job_card_swiper.dart';
 import 'package:proco/views/ui/notification/notification_page.dart';
@@ -195,11 +196,7 @@ class _JobsList extends StatelessWidget {
         );
 
         if (jobNotifier.isLoadingJobs && jobs.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Color.fromARGB(255, 0, 0, 0),
-            ),
-          );
+          return const Center(child: WaveLoader());
         }
 
         if (jobs.isEmpty) return const _EmptyState();

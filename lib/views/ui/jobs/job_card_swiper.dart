@@ -12,6 +12,7 @@ import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/common/skill_chips_wrap.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -529,13 +530,7 @@ class _FlippableJobCardState extends State<FlippableJobCard>
                       fit: BoxFit.cover,
                       placeholder: (ctx, _) => Container(
                         color: kThemeColor.withValues(alpha: 0.06),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
+                        child: const Center(child: WaveLoader.small()),
                       ),
                       errorWidget: (ctx, url, error) => Container(
                         color: kThemeColor.withValues(alpha: 0.06),

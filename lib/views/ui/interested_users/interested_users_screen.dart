@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/empty_state_widget.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +20,6 @@ class InterestedUsersScreen extends StatefulWidget {
 class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
   static const Color _bg = Color(0xFFF7F7F7);
   static const Color _navy = Color(0xFF040326);
-  static const Color _teal = Color(0xFF08979F);
 
   late final PageController _pageController;
   String _jobId = '';
@@ -176,9 +176,7 @@ class _InterestedUsersScreenState extends State<InterestedUsersScreen> {
     );
   }
 
-  Widget _buildLoader() => const Center(
-    child: CircularProgressIndicator(color: _teal, strokeWidth: 2.5),
-  );
+  Widget _buildLoader() => const Center(child: WaveLoader());
 
   Widget _buildEmpty() {
     return const EmptyStateWidget(
