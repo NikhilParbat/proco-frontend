@@ -7,6 +7,7 @@ import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
 import 'package:provider/provider.dart';
 
@@ -38,12 +39,7 @@ class _ChatsListState extends State<ChatsList> {
       body: Consumer<ChatNotifier>(
         builder: (context, chatNotifier, child) {
           if (chatNotifier.isLoading) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: kThemeColor,
-                strokeWidth: 2.6,
-              ),
-            );
+            return const Center(child: WaveLoader());
           }
 
           if (chatNotifier.chats.isEmpty) {

@@ -499,12 +499,7 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                 child: _isMatching
                     ? const SizedBox(
                         height: 20,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        ),
+                        child: Center(child: WaveLoader.small()),
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,

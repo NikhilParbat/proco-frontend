@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Config {
-  static const bool _isProd = false;
+  static const bool _isProd = true;
 
   /// Hardcoded production host used as a fallback when the `.env` file is
   /// missing or doesn't contain the key. This guarantees the app can always
@@ -46,6 +46,34 @@ class Config {
     return _isProd ? 'https://$host' : 'http://$host';
   }
 
+  /// Public URL of the deployed Flutter web app. Shared opportunity links
+  /// point here so anyone (no install, not logged in) can open them in a
+  /// browser.
+  static const String webAppBase = 'https://lagoon-web.onrender.com';
+
+  /// Public, shareable link to a single opportunity. The id is passed as a
+  /// query parameter on the web app root — this needs zero hosting/route
+  /// config (no rewrites, no GetX named routes) and is read back on startup
+  /// via [sharedOpportunityId].
+  static String opportunityShareUrl(String id) =>
+      '$webAppBase/?opportunity=$id';
+
+  /// Reads the shared opportunity id from a launch URL (the browser address on
+  /// web). Returns null when this isn't a shared-opportunity launch.
+  static String? sharedOpportunityId(Uri uri) {
+    final id = uri.queryParameters['opportunity'];
+    return (id != null && id.isNotEmpty) ? id : null;
+  }
+
+  // ─── Shared-opportunity call-to-action ────────────────────────────────────
+  // The persistent prompt on the public shared-opportunity view. Today it
+  // invites the viewer into the web app. Once the native app is published,
+  // flip [appStoreLive] to true and fill the store URLs below — that's the
+  // only change needed (see ShareCtaBar in opportunity_share_screen.dart).
+  static const bool appStoreLive = false;
+  static const String playStoreUrl = '';
+  static const String appStoreUrl = '';
+
   // ─── Paths ────────────────────────────────────────────────────────────────
   static const String loginUrl = '/api/login';
   static const String signupUrl = '/api/register';
@@ -66,6 +94,7 @@ class Config {
   static const String messagingUrl = '/api/messages';
   static const String filters = '/api/filters';
   static const String fcmTokenUrl = '/api/users/fcm-token';
+  static const String notificationPrefsUrl = '/api/users/notification-preferences';
   static const String deviceSessionUrl = '/api/users/device-session';
   static const String deviceSessionsUrl = '/api/users/device-sessions';
 }

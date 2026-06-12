@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:proco/views/common/app_bar.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HelpSupportPage extends StatefulWidget {
@@ -396,14 +397,7 @@ class _HelpSupportPageState extends State<HelpSupportPage>
                   elevation: 0,
                 ),
                 icon: _isSending
-                    ? SizedBox(
-                        width: 16.w,
-                        height: 16.w,
-                        child: const CircularProgressIndicator(
-                          color: _white,
-                          strokeWidth: 2,
-                        ),
-                      )
+                    ? const WaveLoader.small()
                     : Icon(Feather.send, size: 16.sp),
                 label: Text(
                   _isSending ? 'Opening…' : 'Send Message',

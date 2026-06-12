@@ -7,6 +7,7 @@ import 'package:proco/constants/app_lists.dart';
 import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/filter_provider.dart';
 import 'package:proco/views/common/skill_search_field.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/models/request/filters/create_filter.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/helpers/filter_helper.dart';
@@ -438,7 +439,7 @@ class _FilterPageState extends State<FilterPage> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _theme))
+          ? const Center(child: WaveLoader())
           : SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
               child: Column(

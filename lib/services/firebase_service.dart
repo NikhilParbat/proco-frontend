@@ -1,4 +1,3 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 class FirebaseService {
@@ -22,23 +21,10 @@ class FirebaseService {
   }
 
   static Future<void> _setupMessaging() async {
-    try {
-      final messaging = FirebaseMessaging.instance;
-
-      // ✅ Request permissions asynchronously
-      await messaging.requestPermission(alert: true, badge: true, sound: true);
-
-      // ✅ Get token in background
-      messaging
-          .getToken()
-          .then((token) {
-            // debugPrint('FCM Token: $token');
-          })
-          .catchError((e) {
-            debugPrint('FCM Token error: $e');
-          });
-    } catch (e) {
-      debugPrint('Messaging setup error: $e');
-    }
+    // Notification permission and FCM token are intentionally NOT requested here.
+    // Requesting at cold start pops the OS permission dialog before the user has
+    // done anything (and gets Apple apps rejected under guideline 5.1.1).
+    // Permission + token are handled in NotificationHelper.initialize(), which
+    // runs from MainScreen only after the user is logged in and in context.
   }
 }

@@ -8,6 +8,7 @@ flutter precache --web
 flutter pub get
 
 flutter build web --release --no-tree-shake-icons \
+  --no-web-resources-cdn \
   --dart-define=DEPLOYMENT=$DEPLOYMENT \
   --dart-define=LOCAL=$LOCAL \
   --dart-define=LOCATIONIQ_API_KEY=$LOCATIONIQ_API_KEY \

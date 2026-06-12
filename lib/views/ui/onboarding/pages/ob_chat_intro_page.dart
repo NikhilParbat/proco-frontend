@@ -11,6 +11,7 @@ import 'package:proco/controllers/onboarding_flow_provider.dart';
 import 'package:proco/services/location_service.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/skill_search_field.dart';
+import 'package:proco/views/common/wave_loader.dart';
 
 // ── Colors ────────────────────────────────────────────────────────────────────
 
@@ -266,6 +267,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   // Step 2: Skills
   final Set<String> _skills = {};
   static const int _kMinSkills = 4;
+  static const int _kMaxSkills = 12;
 
   // Step 3: Location
   final _locationSearchCtrl = TextEditingController();
@@ -400,6 +402,13 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   void _addSkill(String skill) {
     if (_skills.contains(skill)) return;
+    if (_skills.length >= _kMaxSkills) {
+    _snack(
+      'Skill limit reached',
+      'You can select a maximum of $_kMaxSkills skills.',
+    );
+    return;
+  }
     setState(() {
       _skills.add(skill);
       _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.skill, text: skill));
@@ -610,6 +619,14 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
       return;
     }
     _advance(userSummary: label);
+  }
+
+  /// Skip the (final) location step: advance without a location so the profile
+  /// is submitted with empty location fields. Safe — `submit()` already handles
+  /// the no-location case (lat/lng default to 0.0, city/state/country empty).
+  void _skipLocationStep() {
+    if (_transitioning) return;
+    _advance(userSummary: 'Skip for now');
   }
 
   Future<void> _onLocationSearchChanged(String query) async {
@@ -1027,7 +1044,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
             SizedBox(width: 5.w),
             Text(
               met
-                  ? '${_skills.length} skills added'
+                  ? '${_skills.length}/$_kMaxSkills skills added'
                   : 'Pick at least $_kMinSkills skills · $remaining more',
               style: TextStyle(
                 color: met ? kThemeColor : Colors.grey,
@@ -1089,14 +1106,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
                   ? null
                   : _useCurrentLocation,
               icon: _isFetchingCurrentLocation
-                  ? SizedBox(
-                      width: 16.w,
-                      height: 16.w,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                  ? const WaveLoader.small()
                   : const Icon(Icons.my_location_rounded, size: 18),
               label: Text(
                 _isFetchingCurrentLocation
@@ -1222,6 +1232,24 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
                 color: Colors.white,
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Center(
+          child: TextButton(
+            onPressed: _skipLocationStep,
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey.shade600,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            ),
+            child: Text(
+              'Skip for now',
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
               ),
             ),
           ),

@@ -7,6 +7,7 @@ import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/signup_provider.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:provider/provider.dart';
 
 /// Sign-up screen: 4 steps — choose method → email → password → verify email.
@@ -148,9 +149,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
               // Sign Up button
               provider.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: kThemeColor),
-                    )
+                  ? const Center(child: WaveLoader())
                   : GestureDetector(
                       onTap: () {
                         final email = _emailController.text.trim();
@@ -228,14 +227,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   alignment: Alignment.center,
                   child: provider.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
+                      ? const WaveLoader.small()
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -343,14 +335,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   alignment: Alignment.center,
                   child: provider.checkingVerification || provider.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
+                      ? const WaveLoader.small()
                       : Text(
                           "I've verified my email",
                           style: kSubTextStyle.copyWith(

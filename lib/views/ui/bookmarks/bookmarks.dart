@@ -7,6 +7,7 @@ import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/empty_state_widget.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/bookmarks/bookmark_card_swiper.dart';
 import 'package:provider/provider.dart';
 
@@ -39,12 +40,7 @@ class _BookMarkPageState extends State<BookMarkPage> {
       body: Consumer<BookMarkNotifier>(
         builder: (context, bookMarkNotifier, child) {
           if (bookMarkNotifier.isLoading) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: kThemeColor,
-                strokeWidth: 2.6,
-              ),
-            );
+            return const Center(child: WaveLoader());
           }
 
           if (bookMarkNotifier.bookmarks.isEmpty) {

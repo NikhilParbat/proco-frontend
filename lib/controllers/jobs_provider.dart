@@ -462,18 +462,20 @@ class JobsNotifier extends ChangeNotifier {
 
   // ─── Delete job ────────────────────────────────────────────────────────────
 
-  Future<void> deleteJob(String jobId) async {
+  Future<bool> deleteJob(String jobId) async {
     try {
       final response = await JobsHelper.deleteJob(jobId);
 
       if (response.success) {
         await getJobs();
-      } else {
-        _showErrorSnackbar('Error Deleting Job', response.message);
+        return true;
       }
+      _showErrorSnackbar('Error Deleting Job', response.message);
+      return false;
     } catch (e) {
       debugPrint('Delete job error: $e');
       _showErrorSnackbar('Error Deleting Job', e.toString());
+      return false;
     }
   }
 

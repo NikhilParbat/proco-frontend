@@ -554,8 +554,13 @@ class _ChatPageState extends State<ChatPage> {
 
   // ─── AppBar ───────────────────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar() {
+    // The header fills the whole AppBar (incl. behind the status bar) and uses
+    // SafeArea to push content below the notch. So the AppBar must be tall
+    // enough to hold the status-bar inset PLUS the content; otherwise the fixed
+    // budget overflows on phones with tall status bars. Add the real inset.
+    final topInset = MediaQuery.of(context).padding.top;
     return PreferredSize(
-      preferredSize: Size.fromHeight(66.h),
+      preferredSize: Size.fromHeight(topInset + 70.h),
       child: AppBar(
         backgroundColor: kBackgroundColor,
         elevation: 0,
@@ -937,14 +942,7 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     child: Center(
                       child: sending
-                          ? SizedBox(
-                              width: 18.w,
-                              height: 18.w,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: Colors.white,
-                              ),
-                            )
+                          ? const WaveLoader.small()
                           : Transform.translate(
                               offset: const Offset(1, -1),
                               child: Icon(
