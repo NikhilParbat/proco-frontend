@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:proco/controllers/message_provider.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/brand_splash_screen.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
@@ -147,6 +148,11 @@ class _AppInitializerState extends State<AppInitializer> {
             ChangeNotifierProxyProvider<LoginNotifier, ProfileNotifier>(
               create: (_) => ProfileNotifier(),
               update: (_, login, prev) => prev ?? ProfileNotifier(),
+              lazy: true,
+            ),
+            ChangeNotifierProxyProvider<LoginNotifier, MessageNotifier>(
+              create: (_) => MessageNotifier(),
+              update: (_, login, prev) => prev ?? MessageNotifier(),
               lazy: true,
             ),
             ChangeNotifierProxyProvider<LoginNotifier, ChatNotifier>(

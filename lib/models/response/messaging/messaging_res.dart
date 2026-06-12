@@ -19,6 +19,21 @@ class ReceivedMessage {
 
   bool get isAudio => messageType == 'audio';
 
+  factory ReceivedMessage.optimistic({
+    required String content,
+    required String chatId,
+    required String senderId,
+  }) {
+    return ReceivedMessage(
+      id: '__optimistic__${DateTime.now().millisecondsSinceEpoch}',
+      senderId: senderId,
+      chatId: chatId,
+      content: content,
+      createdAt: DateTime.now(),
+      messageType: 'text',
+    );
+  }
+
   factory ReceivedMessage.fromJson(Map<String, dynamic> json) {
     return ReceivedMessage(
       id: json['id'] ?? '',

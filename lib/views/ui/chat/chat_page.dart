@@ -5,10 +5,10 @@ import 'package:proco/constants/app_constants.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/controllers/chat_provider.dart';
+import 'package:proco/controllers/message_provider.dart';
 import 'package:proco/models/request/messaging/send_message.dart';
 import 'package:proco/models/response/messaging/messaging_res.dart';
 import 'package:proco/services/config.dart' as cfg;
-import 'package:proco/services/helpers/messaging_helper.dart';
 import 'package:proco/services/token_store.dart';
 import 'package:proco/views/common/exports.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
@@ -42,14 +42,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   static const Color _bgChat = kBackgroundColor;
 
-  int offset = 1;
   io.Socket? socket;
-  List<ReceivedMessage> messages = [];
-  final Set<String> _loadedMessageIds = {};
-
-  bool _loadingInitial = true;
-  bool _loadingMore = false;
-  bool _loadError = false;
 
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -61,9 +54,13 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    _loadInitialMessages();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MessageNotifier>().currentUserId = context
+          .read<ChatNotifier>()
+          .userId;
+      context.read<MessageNotifier>().getMessages(widget.id, refresh: true);
+    });
     connect();
-    joinChat();
     _handlePagination();
   }
 
@@ -84,67 +81,14 @@ class _ChatPageState extends State<ChatPage> {
 
   // ─── Data ─────────────────────────────────────────────────────────────────
 
-  /// Loads the first page imperatively (no FutureBuilder in build). This avoids
-  /// re-running the future / flashing a spinner on every rebuild.
-  Future<void> _loadInitialMessages() async {
-    try {
-      final fetched = await MesssagingHelper.getMessages(widget.id, offset);
-      if (!mounted) return;
-      setState(() {
-        _mergeMessages(fetched);
-        _loadingInitial = false;
-        _loadError = false;
-      });
-      _scrollToBottom();
-    } catch (e) {
-      debugPrint('Load initial messages error: $e');
-      if (!mounted) return;
-      setState(() {
-        _loadingInitial = false;
-        _loadError = true;
-      });
-    }
-  }
-
-  /// Loads the next page of older messages. Guarded so overlapping scroll
-  /// events can't fire duplicate requests; rolls back the offset on failure.
-  Future<void> _loadMoreMessages() async {
-    if (_loadingMore) return;
-    _loadingMore = true;
-    offset++;
-    try {
-      final fetched = await MesssagingHelper.getMessages(widget.id, offset);
-      if (!mounted) return;
-      if (fetched.isNotEmpty) {
-        setState(() => _mergeMessages(fetched));
-      }
-    } catch (e) {
-      debugPrint('Load more messages error: $e');
-      offset--; // roll back so we can retry this page later
-    } finally {
-      _loadingMore = false;
-    }
-  }
-
   void _handlePagination() {
     _scrollController.addListener(() {
       if (!_scrollController.hasClients) return;
       if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent - 100 &&
-          messages.length >= 12) {
-        _loadMoreMessages();
+          _scrollController.position.maxScrollExtent - 100) {
+        context.read<MessageNotifier>().getMessages(widget.id);
       }
     });
-  }
-
-  void _mergeMessages(List<ReceivedMessage> fetched) {
-    for (final msg in fetched) {
-      if (!_loadedMessageIds.contains(msg.id)) {
-        _loadedMessageIds.add(msg.id);
-        messages.add(msg);
-      }
-    }
-    messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
   // ─── Socket ───────────────────────────────────────────────────────────────
@@ -157,9 +101,6 @@ class _ChatPageState extends State<ChatPage> {
 
     final chatNotifier = context.read<ChatNotifier>();
 
-    // Authenticate the handshake with the JWT. The server validates this token
-    // in a connection middleware and derives the user identity from it — the
-    // client never asserts its own userId.
     final token = await TokenStore.getToken() ?? '';
 
     final socketOptions = io.OptionBuilder()
@@ -169,9 +110,6 @@ class _ChatPageState extends State<ChatPage> {
         .enableForceNewConnection()
         .build();
 
-    // On web the in-memory token is empty after a refresh; the JWT lives in the
-    // HttpOnly cookie. withCredentials lets the browser attach that cookie to the
-    // socket handshake so the server can authenticate the connection.
     if (kIsWeb) {
       socketOptions['withCredentials'] = true;
     }
@@ -181,8 +119,10 @@ class _ChatPageState extends State<ChatPage> {
     socket!.connect();
 
     socket!.onConnect((_) {
+      debugPrint('SOCKET Connected');
       _socketNotifier.value = true;
       socket!.emit('setup');
+      socket!.emit('join chat', widget.id);
       socket!.on(
         'online-users',
         (users) => chatNotifier.onlineUsers = List<String>.from(users),
@@ -190,16 +130,9 @@ class _ChatPageState extends State<ChatPage> {
       socket!.on('typing', (_) => chatNotifier.typingStatus = true);
       socket!.on('stop typing', (_) => chatNotifier.typingStatus = false);
       socket!.on('message received', (data) {
+        debugPrint('MESSAGE RECEIVED: $data');
         final msg = ReceivedMessage.fromJson(data);
-        if (msg.senderId != chatNotifier.userId &&
-            !_loadedMessageIds.contains(msg.id)) {
-          _loadedMessageIds.add(msg.id);
-          setState(() {
-            messages.add(msg);
-            messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-          });
-          _scrollToBottom();
-        }
+        context.read<MessageNotifier>().addIncomingMessage(widget.id, msg);
       });
     });
 
@@ -210,27 +143,21 @@ class _ChatPageState extends State<ChatPage> {
   // ─── Messaging ────────────────────────────────────────────────────────────
   Future<void> _sendMessage(String content, String chatId, String recv) async {
     if (content.trim().isEmpty) return;
+
+    // Clear input and scroll immediately — don't wait for the API response.
+    _messageController.clear();
+    _stopTyping();
+    _scrollToBottom();
+
     _sendingNotifier.value = true;
 
-    final result = await MesssagingHelper.sendMessage(
+    final message = await context.read<MessageNotifier>().sendMessage(
       SendMessage(content: content, chatId: chatId),
     );
 
     _sendingNotifier.value = false;
 
-    if (result['success']) {
-      final message = result['message'] as ReceivedMessage;
-      if (!_loadedMessageIds.contains(message.id)) {
-        _loadedMessageIds.add(message.id);
-        setState(() {
-          messages.add(message);
-          messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-          _messageController.clear();
-        });
-      } else {
-        setState(() => _messageController.clear());
-      }
-      _scrollToBottom();
+    if (message != null) {
       socket?.emit('new message', message.toJson());
       socket?.emit('stop typing', widget.id);
     }
@@ -250,7 +177,6 @@ class _ChatPageState extends State<ChatPage> {
 
   void _sendTyping() => socket?.emit('typing', widget.id);
   void _stopTyping() => socket?.emit('stop typing', widget.id);
-  void joinChat() => socket?.emit('join chat', widget.id);
 
   // ─── Options menu ─────────────────────────────────────────────────────────
   void _showOptions(BuildContext context) {
@@ -439,7 +365,7 @@ class _ChatPageState extends State<ChatPage> {
             onPressed: () async {
               Navigator.pop(context);
               await context.read<ChatNotifier>().clearChat(widget.id);
-              setState(() => messages.clear());
+              context.read<MessageNotifier>().clearChat(widget.id);
             },
             child: Text(
               'Clear',
@@ -505,16 +431,10 @@ class _ChatPageState extends State<ChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Messages ──────────────────────────────────────────────────
-            // build() no longer subscribes to ChatNotifier, so typing/online
-            // pings won't rebuild this list — only a local setState (new
-            // message / pagination) will. userId is read once (stable by the
-            // time a chat is opened).
             Expanded(
               child: _buildMessageArea(context.read<ChatNotifier>().userId),
             ),
 
-            // ── Unmatched banner / Input bar ──────────────────────────────
             if (widget.isUnmatched)
               _buildUnmatchedBanner()
             else
@@ -537,41 +457,12 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildMessageArea(String? userId) {
-    if (_loadingInitial) {
-      return Center(child: CircularProgressIndicator(color: kThemeColor));
-    }
+    final msgNotifier = context.watch<MessageNotifier>();
+    final messages = msgNotifier.messagesFor(widget.id);
+    final isLoading = msgNotifier.isLoadingFor(widget.id);
 
-    if (_loadError && messages.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.wifi_off_rounded, size: 44, color: Colors.grey.shade400),
-            SizedBox(height: 12.h),
-            Text(
-              'Couldn\'t load messages',
-              style: GoogleFonts.dmSans(fontSize: 14.sp, color: Colors.grey),
-            ),
-            SizedBox(height: 12.h),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _loadingInitial = true;
-                  _loadError = false;
-                });
-                _loadInitialMessages();
-              },
-              child: Text(
-                'Retry',
-                style: GoogleFonts.dmSans(
-                  color: kThemeColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+    if (isLoading && messages.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: kThemeColor));
     }
 
     if (messages.isEmpty) {
@@ -611,17 +502,14 @@ class _ChatPageState extends State<ChatPage> {
         if (reversedIndex < 0 || reversedIndex >= messages.length) {
           return const SizedBox();
         }
-
         final data = messages[reversedIndex];
         final isMine = data.senderId == userId;
-
         bool showTime = index == messages.length - 1;
         if (!showTime && index < messages.length - 1) {
           final prev = messages[messages.length - 2 - index];
           showTime =
               data.createdAt.difference(prev.createdAt).inMinutes.abs() > 5;
         }
-
         return _buildBubble(data, isMine, showTime);
       },
     );
@@ -673,192 +561,177 @@ class _ChatPageState extends State<ChatPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-
-        // Subtle divider line
         shape: Border(
           bottom: BorderSide(
             color: Colors.black.withValues(alpha: 0.08),
             width: 2,
           ),
         ),
-
         flexibleSpace: SafeArea(
-          // Only this subtree rebuilds on typing/online changes — never the
-          // message list.
           child: Selector<ChatNotifier, (bool, bool)>(
             selector: (_, n) => (n.typing, n.online.contains(receiver)),
             builder: (context, status, _) {
               final typing = status.$1;
               final isOnline = status.$2;
               return Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-            child: Row(
-              children: [
-                // Back button
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 38.w,
-                    height: 38.w,
-                    decoration: BoxDecoration(
-                      color: kBackgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.04),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 38.w,
+                        height: 38.w,
+                        decoration: BoxDecoration(
+                          color: kBackgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.04),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: kThemeColor,
+                          size: 16,
+                        ),
                       ),
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: kThemeColor,
-                      size: 16,
-                    ),
-                  ),
-                ),
 
-                SizedBox(width: 12.w),
+                    SizedBox(width: 12.w),
 
-                // Avatar + Name
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _openProfile,
-                    behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      children: [
-                        // Avatar
-                        Stack(
-                          clipBehavior: Clip.none,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _openProfile,
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.10),
-                                  width: 1,
-                                ),
-                              ),
-                              child: CircleAvatar(
-                                radius: 21.r,
-                                backgroundColor: const Color.fromARGB(
-                                  26,
-                                  0,
-                                  0,
-                                  0,
-                                ),
-
-                                // default image if null/empty
-                                backgroundImage: (widget.profile.isNotEmpty)
-                                    ? NetworkImage(widget.profile)
-                                    : const NetworkImage(
-                                        'https://ui-avatars.com/api/?name=User',
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.10,
                                       ),
-
-                                onBackgroundImageError: (_, _) {},
-                                child: widget.profile.isEmpty
-                                    ? Icon(
-                                        Icons.person_rounded,
-                                        color: Colors.white70,
-                                        size: 20.sp,
-                                      )
-                                    : null,
-                              ),
-                            ),
-
-                            // online indicator
-                            Positioned(
-                              right: 1,
-                              bottom: 1,
-                              child: Container(
-                                width: 11,
-                                height: 11,
-                                decoration: BoxDecoration(
-                                  color: isOnline
-                                      ? const Color(0xFF4ADE80)
-                                      : Colors.grey.shade500,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: kBackgroundColor,
-                                    width: 2,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 21.r,
+                                    backgroundColor: const Color.fromARGB(
+                                      26,
+                                      0,
+                                      0,
+                                      0,
+                                    ),
+                                    backgroundImage: (widget.profile.isNotEmpty)
+                                        ? NetworkImage(widget.profile)
+                                        : const NetworkImage(
+                                            'https://ui-avatars.com/api/?name=User',
+                                          ),
+                                    onBackgroundImageError: (_, _) {},
+                                    child: widget.profile.isEmpty
+                                        ? Icon(
+                                            Icons.person_rounded,
+                                            color: Colors.white70,
+                                            size: 20.sp,
+                                          )
+                                        : null,
                                   ),
                                 ),
+                                Positioned(
+                                  right: 1,
+                                  bottom: 1,
+                                  child: Container(
+                                    width: 11,
+                                    height: 11,
+                                    decoration: BoxDecoration(
+                                      color: isOnline
+                                          ? const Color(0xFF4ADE80)
+                                          : Colors.grey.shade500,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: kBackgroundColor,
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            SizedBox(width: 12.w),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    widget.title,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: kThemeColor,
+                                      letterSpacing: -0.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 1.h),
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 180),
+                                    child: Text(
+                                      typing
+                                          ? 'typing...'
+                                          : (isOnline ? 'Online' : 'Offline'),
+                                      key: ValueKey(
+                                        typing.toString() + isOnline.toString(),
+                                      ),
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: typing
+                                            ? kThemeColor.withValues(alpha: 0.9)
+                                            : (isOnline
+                                                  ? const Color(0xFF4ADE80)
+                                                  : const Color.fromARGB(
+                                                      137,
+                                                      78,
+                                                      78,
+                                                      78,
+                                                    )),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
+                      ),
+                    ),
 
-                        SizedBox(width: 12.w),
-
-                        // Name + Status
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                widget.title,
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: kThemeColor,
-                                  letterSpacing: -0.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-
-                              SizedBox(height: 1.h),
-
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 180),
-                                child: Text(
-                                  typing
-                                      ? 'typing...'
-                                      : (isOnline ? 'Online' : 'Offline'),
-                                  key: ValueKey(
-                                    typing.toString() + isOnline.toString(),
-                                  ),
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: typing
-                                        ? kThemeColor.withValues(alpha: 0.9)
-                                        : (isOnline
-                                              ? const Color(0xFF4ADE80)
-                                              : const Color.fromARGB(
-                                                  137,
-                                                  78,
-                                                  78,
-                                                  78,
-                                                )),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white.withValues(alpha: 0.03),
+                      ),
+                      child: IconButton(
+                        splashRadius: 20,
+                        icon: const Icon(
+                          Icons.more_vert_rounded,
+                          color: kThemeColor,
                         ),
-                      ],
+                        onPressed: () => _showOptions(context),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-
-                // More button
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.white.withValues(alpha: 0.03),
-                  ),
-                  child: IconButton(
-                    splashRadius: 20,
-                    icon: const Icon(
-                      Icons.more_vert_rounded,
-                      color: kThemeColor,
-                    ),
-                    onPressed: () => _showOptions(context),
-                  ),
-                ),
-              ],
-            ),
               );
             },
           ),
@@ -881,7 +754,6 @@ class _ChatPageState extends State<ChatPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                // read (not watch): pure date formatting, no rebuild needed.
                 context.read<ChatNotifier>().msgTime(data.createdAt.toString()),
                 style: GoogleFonts.dmSans(
                   fontSize: 11.sp,
@@ -902,7 +774,6 @@ class _ChatPageState extends State<ChatPage> {
                 CircleAvatar(
                   radius: 13.r,
                   backgroundColor: kThemeColor.withValues(alpha: 0.12),
-                  // Guard against an empty/invalid URL (NetworkImage('') throws).
                   backgroundImage: widget.profile.isNotEmpty
                       ? NetworkImage(widget.profile)
                       : null,
@@ -965,8 +836,6 @@ class _ChatPageState extends State<ChatPage> {
       padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 14.h),
       decoration: BoxDecoration(
         color: kBackgroundColor,
-
-        // top divider
         border: Border(
           top: BorderSide(
             color: Colors.white.withValues(alpha: 0.05),
@@ -974,25 +843,20 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
       ),
-
       child: SafeArea(
         top: false,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // ─── Textbox ───────────────────────────────
             Expanded(
               child: Container(
                 constraints: BoxConstraints(minHeight: 50.h, maxHeight: 130.h),
-
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(26),
-
                   border: Border.all(
                     color: Colors.black.withValues(alpha: 0.05),
                   ),
-
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.04),
@@ -1001,7 +865,6 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                   ],
                 ),
-
                 child: TextField(
                   controller: _messageController,
                   style: GoogleFonts.dmSans(
@@ -1009,23 +872,19 @@ class _ChatPageState extends State<ChatPage> {
                     fontWeight: FontWeight.w500,
                     color: Colors.black87,
                   ),
-
                   cursorColor: kThemeColor,
                   maxLines: null,
                   maxLength: 1000,
                   inputFormatters: [noEmojiFormatter],
                   textInputAction: TextInputAction.send,
                   textCapitalization: TextCapitalization.sentences,
-
                   onSubmitted: (_) => _sendMessage(
                     _messageController.text,
                     widget.id,
                     receiver,
                   ),
-
                   onChanged: (_) => _sendTyping(),
                   onTapOutside: (_) => _stopTyping(),
-
                   decoration: InputDecoration(
                     hintText: 'Type a message...',
                     hintStyle: GoogleFonts.dmSans(
@@ -1033,12 +892,10 @@ class _ChatPageState extends State<ChatPage> {
                       fontWeight: FontWeight.w500,
                       color: Colors.black38,
                     ),
-
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 18.w,
                       vertical: 14.h,
                     ),
-
                     border: InputBorder.none,
                     counterText: '',
                   ),
@@ -1048,7 +905,6 @@ class _ChatPageState extends State<ChatPage> {
 
             SizedBox(width: 10.w),
 
-            // ─── Send Button ──────────────────────────
             ValueListenableBuilder<bool>(
               valueListenable: _sendingNotifier,
               builder: (context, sending, child) {
@@ -1060,21 +916,16 @@ class _ChatPageState extends State<ChatPage> {
                           widget.id,
                           receiver,
                         ),
-
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     curve: Curves.easeOut,
-
                     width: 50.w,
                     height: 50.w,
-
                     decoration: BoxDecoration(
                       color: sending
                           ? kThemeColor.withValues(alpha: 0.6)
                           : kThemeColor,
-
                       shape: BoxShape.circle,
-
                       boxShadow: [
                         BoxShadow(
                           color: kThemeColor.withValues(alpha: 0.22),
@@ -1084,7 +935,6 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                       ],
                     ),
-
                     child: Center(
                       child: sending
                           ? SizedBox(

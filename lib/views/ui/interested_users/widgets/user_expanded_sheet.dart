@@ -8,9 +8,7 @@ import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/models/request/chat/create_chat.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/models/response/user/user_response.dart';
-
-import 'package:proco/services/helpers/chat_helper.dart';
-import 'package:proco/services/helpers/user_helper.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
 import 'package:proco/views/ui/jobs/match_dialog.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';
@@ -50,10 +48,11 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   }
 
   Future<void> _fetchProfile() async {
-    final res = await UserHelper.fetchUserById(widget.user.id);
+    final profileNotifier = context.read<ProfileNotifier>();
+    final user = await profileNotifier.fetchUserById(widget.user.id);
     if (!mounted) return;
     setState(() {
-      _profile = res.data;
+      _profile = user;
       _isLoading = false;
     });
   }
@@ -61,20 +60,16 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
   Future<void> _onMatch() async {
     setState(() => _isMatching = true);
 
-    Provider.of<JobsNotifier>(
-      context,
-      listen: false,
-    ).addMatchedUsers(widget.jobId, widget.user.id);
+    context.read<JobsNotifier>().addMatchedUsers(widget.jobId, widget.user.id);
 
-    final response = await ChatHelper.createChat(
+    final chatId = await context.read<ChatNotifier>().createChat(
       CreateChat(userId: widget.user.id),
     );
-    if (!mounted) return;
 
+    if (!mounted) return;
     setState(() => _isMatching = false);
 
-    if (response.success && response.data != null) {
-      final chatId = response.data!;
+    if (chatId != null) {
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getString('userId') ?? '';
       if (!mounted) return;
@@ -102,14 +97,10 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
         ),
       );
     } else {
-      Get.snackbar(
-        'Error',
-        response.message,
-        backgroundColor: const Color(0xFFE8505B),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        borderRadius: 12,
-        margin: const EdgeInsets.all(16),
+      LagoonSnackbar.show(
+        title: 'Match Failed',
+        message: 'Could not start a chat. Please try again.',
+        isError: true,
       );
     }
   }
@@ -132,7 +123,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Prefer full profile data; fall back to the minimal SwipedRes passed in.
     final bio = _profile?.bio ?? widget.user.bio;
     final skills = (_profile != null && _profile!.skills.isNotEmpty)
         ? _profile!.skills
@@ -155,7 +145,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
       if (genderStr.isNotEmpty) genderStr,
     ].join(' • ');
 
-    // Education — prefer full profile, sort newest first.
     final eduSource = (_profile != null && _profile!.education.isNotEmpty)
         ? _profile!.education
         : widget.user.education;
@@ -175,7 +164,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
         ? _profile!.links
         : widget.user.links;
 
-    // Social URLs
     final linkedIn = _profile?.linkedInUrl ?? '';
     final github = _profile?.gitHubUrl ?? '';
     final twitter = _profile?.twitterUrl ?? '';
@@ -192,7 +180,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-          // ── Hero photo ─────────────────────────────────────────────────
           SliverAppBar(
             expandedHeight: screenHeight * 0.60,
             pinned: true,
@@ -221,7 +208,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Photo
                   widget.user.profile.isNotEmpty
                       ? CachedNetworkImage(
                           imageUrl: widget.user.profile,
@@ -231,8 +217,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                           errorWidget: (ctx, url, err) => _placeholder(),
                         )
                       : _placeholder(),
-
-                  // Top gradient — keeps back button readable
                   Positioned(
                     top: 0,
                     left: 0,
@@ -251,8 +235,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       ),
                     ),
                   ),
-
-                  // Bottom gradient + name overlay
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -306,23 +288,18 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
               ),
             ),
           ),
-
-          // ── Content ────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Location
                   if (location.isNotEmpty)
                     _infoRow(
                       icon: Icons.location_on_rounded,
                       iconColor: _orange,
                       text: location,
                     ),
-
-                  // Bio
                   if (_isLoading) ...[
                     SizedBox(height: 16.h),
                     _shimmerLine(width: 0.85),
@@ -340,40 +317,30 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       ),
                     ),
                   ],
-
-                  // Education
                   if (sortedEducation.isNotEmpty) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('EDUCATION'),
                     SizedBox(height: 8.h),
                     ...sortedEducation.map(_educationRow),
                   ],
-
-                  // Experience
                   if (experiences.isNotEmpty) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('EXPERIENCE'),
                     SizedBox(height: 8.h),
                     ...experiences.map(_experienceRow),
                   ],
-
-                  // Projects
                   if (projects.isNotEmpty) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('PROJECTS'),
                     SizedBox(height: 8.h),
                     ...projects.map(_projectRow),
                   ],
-
-                  // Achievements
                   if (achievements.isNotEmpty) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('ACHIEVEMENTS'),
                     SizedBox(height: 8.h),
                     ...achievements.map(_achievementRow),
                   ],
-
-                  // Skills
                   if (skills.isNotEmpty) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('SKILLS'),
@@ -384,8 +351,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       children: skills.map(_skillChip).toList(),
                     ),
                   ],
-
-                  // Interests & Hobbies
                   if (interests.isNotEmpty || hobbies.isNotEmpty) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('INTERESTS & HOBBIES'),
@@ -399,8 +364,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       ],
                     ),
                   ],
-
-                  // Links (from profile)
                   if (links.isNotEmpty) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('LINKS & PORTFOLIOS'),
@@ -411,8 +374,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       children: links.map(_linkChip).toList(),
                     ),
                   ],
-
-                  // Social profiles
                   if (hasSocials) ...[
                     SizedBox(height: 24.h),
                     _sectionLabel('SOCIAL PROFILES'),
@@ -448,7 +409,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
                       ],
                     ),
                   ],
-
                   SizedBox(height: 16.h),
                 ],
               ),
@@ -574,17 +534,17 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
     );
   }
 
+  // ── All widget helpers unchanged below ───────────────────────────────────
+
   Widget _educationRow(EducationItem edu) {
     final degreeAndBranch = [
       if (edu.degree.isNotEmpty) edu.degree,
       if (edu.branch.isNotEmpty) edu.branch,
     ].join(' in ');
-
     final collegeAndYear = [
       if (edu.college.isNotEmpty) edu.college,
       if (edu.classOf.isNotEmpty) '(${edu.classOf})',
     ].join(' ');
-
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 6.h),
       child: Row(
@@ -647,7 +607,6 @@ class _UserExpandedSheetState extends State<UserExpandedSheet> {
     } else if (link.label.toLowerCase().contains('linkedin')) {
       linkIcon = Icons.work_history_rounded;
     }
-
     return InkWell(
       onTap: () async {
         if (link.url.isNotEmpty) {
