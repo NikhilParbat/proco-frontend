@@ -1,22 +1,21 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/auth_service.dart';
-import 'package:proco/services/snackbar_service.dart';
+
 import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/helpers/device_helper.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/services/token_store.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/ui/auth/login.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
-// Model for one device session (matches backend schema)
 class DeviceSession {
   final String sessionId;
   final String device;
@@ -120,12 +119,9 @@ class LoginNotifier extends ChangeNotifier {
 
         await saveDeviceSession();
 
-        Get.snackbar(
-          'Login Success',
-          'Enjoy your search for a job',
-          colorText: kLight,
-          backgroundColor: kLightBlue,
-          icon: const Icon(Icons.add_alert),
+        LagoonSnackbar.show(
+          title: 'Login Success',
+          message: 'Enjoy your search for a job',
         );
 
         await Future.delayed(const Duration(seconds: 1));
@@ -133,7 +129,6 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        // ✅ Use typed value instead of guessing from array
         if (user.isFirstTimeUser == true) {
           Get.offAll(() => const OnboardingFlow(), transition: Transition.fade);
         } else {
@@ -144,31 +139,27 @@ class LoginNotifier extends ChangeNotifier {
         notifyListeners();
 
         final msg = response.message;
-
         final isNotFound =
             msg.toLowerCase().contains('sign up') ||
             msg.toLowerCase().contains('no account');
 
-        Get.snackbar(
-          isNotFound ? 'Account Not Found' : 'Login Failed',
-          msg,
-          colorText: kLight,
-          backgroundColor: isNotFound ? kLightBlue : kOrange,
-          icon: Icon(isNotFound ? Icons.person_add_outlined : Icons.add_alert),
-          duration: const Duration(seconds: 4),
+        LagoonSnackbar.show(
+          title: isNotFound ? 'Account Not Found' : 'Login Failed',
+          message: msg,
+          isError: true,
         );
       }
     } catch (e) {
       _isLoading = false;
       notifyListeners();
-
-      showErrorSnackbar('An unexpected error occurred', title: 'Login Failed');
-
+      LagoonSnackbar.showError(
+        message: 'An unexpected error occurred',
+        title: 'Login Failed',
+      );
       debugPrint('Login Error: $e');
     }
   }
 
-  // Google Sign-In method
   Future<void> googleSignIn() async {
     _isLoading = true;
     notifyListeners();
@@ -180,7 +171,11 @@ class LoginNotifier extends ChangeNotifier {
       if (userCredential == null) {
         _isLoading = false;
         notifyListeners();
-        showErrorSnackbar('Please try again', title: 'Login Cancelled');
+        LagoonSnackbar.show(
+          title: 'Login Cancelled',
+          message: 'Please try again',
+          isError: true,
+        );
         return;
       }
 
@@ -188,9 +183,10 @@ class LoginNotifier extends ChangeNotifier {
       if (firebaseUser == null) {
         _isLoading = false;
         notifyListeners();
-        showErrorSnackbar(
-          'Could not retrieve user information',
+        LagoonSnackbar.show(
           title: 'Authentication Error',
+          message: 'Could not retrieve user information',
+          isError: true,
         );
         return;
       }
@@ -199,9 +195,10 @@ class LoginNotifier extends ChangeNotifier {
       if (idToken == null) {
         _isLoading = false;
         notifyListeners();
-        showErrorSnackbar(
-          'Could not retrieve authentication token',
+        LagoonSnackbar.show(
           title: 'Authentication Error',
+          message: 'Could not retrieve authentication token',
+          isError: true,
         );
         return;
       }
@@ -227,15 +224,12 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        final user = response.data!; // ✅ FIX
-        final isFirstTimeUser = user.isFirstTimeUser == true; // ✅ FIX
+        final user = response.data!;
+        final isFirstTimeUser = user.isFirstTimeUser == true;
 
-        Get.snackbar(
-          'Login Success',
-          'Welcome back, ${firebaseUser.displayName ?? ""}!',
-          colorText: kLight,
-          backgroundColor: kLightBlue,
-          icon: const Icon(Icons.check),
+        LagoonSnackbar.show(
+          title: 'Login Success',
+          message: 'Welcome back, ${firebaseUser.displayName ?? ""}!',
         );
 
         await Future.delayed(const Duration(seconds: 1));
@@ -252,35 +246,32 @@ class LoginNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        final message = response.message; // ✅ FIX
-
+        final message = response.message;
         final isNotFound =
             message.toLowerCase().contains('sign up') ||
             message.toLowerCase().contains('no account');
 
-        Get.snackbar(
-          isNotFound ? 'Account Not Found' : 'Login Failed',
-          isNotFound
+        LagoonSnackbar.show(
+          title: isNotFound ? 'Account Not Found' : 'Login Failed',
+          message: isNotFound
               ? 'No account found for this Google account. Please sign up first.'
               : message,
-          colorText: kLight,
-          backgroundColor: isNotFound ? kLightBlue : kOrange,
-          icon: Icon(isNotFound ? Icons.person_add_outlined : Icons.error),
-          duration: const Duration(seconds: 4),
+          isError: true,
         );
       }
     } catch (e) {
       _isLoading = false;
       notifyListeners();
       debugPrint('Google Sign-In Error: $e');
-
-      showErrorSnackbar('An unexpected error occurred', title: 'Login Failed');
+      LagoonSnackbar.showError(
+        message: 'An unexpected error occurred',
+        title: 'Login Failed',
+      );
     }
   }
-  // ─── Device Session Management (backend-backed) ───────────────────────────
 
-  /// Collects device info, generates a unique sessionId, registers it with the
-  /// backend, and stores the sessionId in SharedPreferences for later reference.
+  // ─── Device Session Management ────────────────────────────────────────────
+
   Future<void> saveDeviceSession() async {
     try {
       final deviceInfo = DeviceInfoPlugin();
@@ -302,8 +293,6 @@ class LoginNotifier extends ChangeNotifier {
       }
 
       final prefs = await SharedPreferences.getInstance();
-      // Reuse the existing sessionId for this installation so we don't create
-      // duplicate entries on every login.
       String sessionId =
           prefs.getString('deviceSessionId') ?? const Uuid().v4();
       await prefs.setString('deviceSessionId', sessionId);
@@ -323,38 +312,31 @@ class LoginNotifier extends ChangeNotifier {
     }
   }
 
-  /// Fetches the list of sessions from the backend.
   Future<void> loadDeviceSessions() async {
     try {
       final raw = await DeviceHelper.fetchDeviceSessions();
-      final sessions = raw
+      _deviceSessions = raw
           .map((e) => DeviceSession.fromJson(e))
           .toList()
           .reversed
           .toList();
-      _deviceSessions = sessions;
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading device sessions: $e');
     }
   }
 
-  /// Removes a single device session by index.
-  /// If the removed session is the current device's session, the user is signed
-  /// out; otherwise the entry is just removed from the backend list.
   Future<void> removeDeviceSession(int index) async {
     try {
       if (index < 0 || index >= _deviceSessions.length) return;
 
       final session = _deviceSessions[index];
-
       await DeviceHelper.removeDeviceSession(session.sessionId);
 
       final prefs = await SharedPreferences.getInstance();
       final currentSessionId = prefs.getString('deviceSessionId') ?? '';
 
       if (session.sessionId == currentSessionId) {
-        // Signing out of the current device — full logout.
         logout();
       } else {
         await loadDeviceSessions();
@@ -365,13 +347,8 @@ class LoginNotifier extends ChangeNotifier {
   }
 
   void logout() async {
-    // Best-effort: clear all sessions on the backend before wiping local state.
     await DeviceHelper.removeAllDeviceSessions();
-
-    // Expire the HttpOnly auth cookie server-side. This is the only way to
-    // remove it on web (JavaScript can't touch it); a no-op for mobile.
     await AuthHelper.logout();
-
     await TokenStore.clear();
     UserHelper.clearUserCache();
     final prefs = await SharedPreferences.getInstance();

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/request/auth/profile_update_model.dart';
 import 'package:proco/services/helpers/user_helper.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/welcome_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,20 +23,11 @@ class OnboardingFlowProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // ── Form data ──────────────────────────────────────────────────────────────
   String name = '';
-
-  /// 'Student' or 'Young Professional'.
-  /// NOTE: No matching backend field exists yet. This is stored locally only
-  /// until the backend adds a `userType` (or equivalent) field.
   String role = '';
-
-  /// Date of birth stored as "YYYY-MM-DD".
   String dob = '';
   String gender = '';
   String phone = '';
-
-  /// Profile photo picked during onboarding.
   XFile? profilePhoto;
   double latitude = 0.0;
   double longitude = 0.0;
@@ -50,14 +41,9 @@ class OnboardingFlowProvider extends ChangeNotifier {
   String classOf = '';
   String cgpa = '';
   List<String> skills = [];
-
-  /// Current chat step (0-based) the user has reached in [ObChatIntroPage].
-  /// Persisted so the conversational onboarding resumes where the user left.
   int chatStep = 0;
 
   bool get hasLocation => latitude != 0.0 || longitude != 0.0;
-
-  // ── Navigation ─────────────────────────────────────────────────────────────
 
   static const int _totalPages = 1;
 
@@ -91,8 +77,6 @@ class OnboardingFlowProvider extends ChangeNotifier {
     await prefs.setInt('onboardingPage', _currentPage);
   }
 
-  // ── Location ───────────────────────────────────────────────────────────────
-
   void setLocation(
     double lat,
     double lng, {
@@ -109,11 +93,6 @@ class OnboardingFlowProvider extends ChangeNotifier {
     this.country = country;
     notifyListeners();
   }
-
-  // ── Draft persistence ────────────────────────────────────────────────────
-  // The conversational onboarding collects data step-by-step. We snapshot the
-  // whole draft to SharedPreferences so the user can leave the app mid-flow
-  // and resume from exactly where they left off, with prior answers intact.
 
   static const List<String> _draftKeys = [
     'ob_step',
@@ -157,7 +136,6 @@ class OnboardingFlowProvider extends ChangeNotifier {
   Future<void> loadDraft() async {
     final prefs = await SharedPreferences.getInstance();
     chatStep = prefs.getInt('ob_step') ?? chatStep;
-    // Keep any constructor-supplied initialName when no draft name was stored.
     name = prefs.getString('ob_name') ?? name;
     gender = prefs.getString('ob_gender') ?? gender;
     dob = prefs.getString('ob_dob') ?? dob;
@@ -181,8 +159,6 @@ class OnboardingFlowProvider extends ChangeNotifier {
       await prefs.remove(key);
     }
   }
-
-  // ── Submit ─────────────────────────────────────────────────────────────────
 
   Future<void> submit() async {
     _isLoading = true;
@@ -217,32 +193,21 @@ class OnboardingFlowProvider extends ChangeNotifier {
       final error = await UserHelper.createProfile(req, profilePhoto);
 
       if (error != null) {
-        Get.snackbar(
-          'Could Not Save Profile',
-          error,
-          backgroundColor: kOrange,
-          colorText: kLight,
-          duration: const Duration(seconds: 6),
+        LagoonSnackbar.show(
+          title: 'Could Not Save Profile',
+          message: error,
+          isError: true,
         );
       }
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboardingComplete', true);
       await prefs.remove('onboardingPage');
       await clearDraft();
-      // First-time users get a brief branded loader ("Let's take you to the
-      // shore") that preloads the home feed before the swiper appears, instead
-      // of the home page popping up abruptly.
-      Get.offAll(
-        () => const WelcomeScreen(),
-        transition: Transition.fade,
-      );
+
+      Get.offAll(() => const WelcomeScreen(), transition: Transition.fade);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        backgroundColor: kOrange,
-        colorText: kLight,
-      );
+      LagoonSnackbar.show(title: 'Error', message: e.toString(), isError: true);
       Get.offAll(() => const MainScreen(), transition: Transition.fade);
     } finally {
       _isLoading = false;

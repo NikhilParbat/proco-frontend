@@ -8,6 +8,7 @@ import 'package:proco/constants/app_colors.dart';
 import 'package:proco/services/config.dart';
 import 'package:proco/services/http_client.dart';
 import 'package:proco/services/token_store.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/ui/settings/notifications_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:proco/services/notification_background.dart';
@@ -142,14 +143,9 @@ class NotificationHelper {
 
           _addFromRemoteMessage(message);
 
-          Get.snackbar(
-            message.notification?.title ?? 'New Message',
-            message.notification?.body ?? '',
-            colorText: kLight,
-            backgroundColor: kLightBlue,
-            duration: const Duration(seconds: 4),
-            snackPosition: SnackPosition.TOP,
-            icon: const Icon(Icons.notifications, color: Colors.white),
+          LagoonSnackbar.show(
+            title: message.notification?.title ?? 'New Message',
+            message: message.notification?.body ?? '',
           );
         } catch (e) {
           debugPrint('❌ Foreground notification error: $e');
@@ -246,7 +242,8 @@ class NotificationHelper {
   static Future<void> _seedPrefsFromPermission(bool granted) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final alreadySet = prefs.containsKey(kPrefNotifMatches) ||
+      final alreadySet =
+          prefs.containsKey(kPrefNotifMatches) ||
           prefs.containsKey(kPrefNotifChat);
       if (alreadySet) return;
 

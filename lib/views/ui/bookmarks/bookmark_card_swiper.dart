@@ -6,12 +6,12 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:get/get.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/bookmark_provider.dart';
 import 'package:proco/controllers/jobs_provider.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/common/skill_chips_wrap.dart';
 import 'package:proco/views/common/wave_loader.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -123,16 +123,10 @@ class _BookmarkCardSwiperState extends State<BookmarkCardSwiper> {
                     );
                   }
 
-                  Get.snackbar(
-                    'Swiped!',
-                    'You swiped on ${bookmark.job.company.isNotEmpty ? bookmark.job.company : bookmark.job.title}',
-                    colorText: kLight,
-                    backgroundColor: const Color(0xFF089F20),
-                    icon: const Icon(
-                      Icons.favorite_rounded,
-                      color: Colors.white,
-                    ),
-                    duration: const Duration(seconds: 2),
+                  LagoonSnackbar.show(
+                    title: 'Swiped!',
+                    message:
+                        'You swiped on ${bookmark.job.company.isNotEmpty ? bookmark.job.company : bookmark.job.title}',
                   );
                 }
 

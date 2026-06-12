@@ -9,6 +9,7 @@ import 'package:proco/models/request/chat/create_chat.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/models/response/user/user_response.dart';
 import 'package:proco/views/common/lagoon_snackbar.dart';
+import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/chat/chat_page.dart';
 import 'package:proco/views/ui/jobs/match_dialog.dart';
 import 'package:proco/views/ui/profile/profile_screen.dart';

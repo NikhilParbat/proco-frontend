@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:get/get.dart';
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/models/request/jobs/create_job.dart';
 import 'package:proco/models/response/api_response.dart';
 import 'package:proco/models/response/jobs/get_job.dart';
@@ -10,6 +8,7 @@ import 'package:proco/models/response/jobs/match_res_model.dart';
 import 'package:proco/models/response/jobs/swipe_res_model.dart';
 import 'package:proco/services/helpers/jobs_helper.dart';
 import 'package:proco/utils/debouncer.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 
 class JobsNotifier extends ChangeNotifier {
   // ── State fields ───────────────────────────────────────────────────────────
@@ -38,25 +37,19 @@ class JobsNotifier extends ChangeNotifier {
   List<JobsResponse> _displayJobs = [];
   bool _displayDirty = true;
 
-  // ✅ Debouncer for rapid preload calls
   final _preloadDebouncer = Debouncer(milliseconds: 300);
   final _nextPageDebouncer = Debouncer(milliseconds: 500);
 
-  // ✅ Cache last request to prevent duplicate calls
   String? _lastPreloadUserId;
   List<String> _lastBookmarkedIds = [];
 
-  // ─── Feed preloading (paginated, cache-first) ─────────────────────────────
+  // ─── Feed preloading ──────────────────────────────────────────────────────
 
-  /// Load page 1 from on-device cache immediately, then refresh from network.
-  /// Resets pagination state — call on app start or after filter changes.
-  /// Pass [forceRefresh] = true after a filter change to bypass the cache guard.
   Future<void> preloadJobs(
     String userId, {
     List<String> bookmarkedIds = const [],
     bool forceRefresh = false,
   }) async {
-    // Prevent duplicate calls with same parameters unless explicitly forced
     if (!forceRefresh &&
         _lastPreloadUserId == userId &&
         _listEquals(_lastBookmarkedIds, bookmarkedIds) &&
@@ -70,10 +63,9 @@ class JobsNotifier extends ChangeNotifier {
     if (forceRefresh) {
       cachedJobs = [];
       _displayDirty = true;
-      notifyListeners(); // show loading state immediately
+      notifyListeners();
     }
 
-    // ✅ Debounce rapid calls
     _preloadDebouncer.run(
       () => _executePreloadJobs(
         userId,
@@ -103,7 +95,6 @@ class JobsNotifier extends ChangeNotifier {
     isLoadingJobs = cachedJobs.isEmpty;
     if (cachedJobs.isEmpty) notifyListeners();
 
-    // ✅ Network request in background
     try {
       final response = userId.isNotEmpty
           ? await JobsHelper.getFilteredJobsPaged(
@@ -119,7 +110,6 @@ class JobsNotifier extends ChangeNotifier {
         _displayDirty = true;
         hasMorePages = response.data!.length >= _pageSize;
 
-        // ✅ Save cache in background (don't await)
         JobsHelper.saveJobsCache(userId, response.data!).catchError((e) {
           debugPrint('Cache save error: $e');
         });
@@ -132,15 +122,11 @@ class JobsNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Silently fetch the next page and append — called when remaining cards
-  /// drop below the percentage threshold set in JobCardSwiper.
   Future<void> loadNextPage(
     String userId, {
     List<String> bookmarkedIds = const [],
   }) async {
     if (isFetchingMore || !hasMorePages) return;
-
-    // ✅ Debounce rapid pagination requests
     _nextPageDebouncer.run(() => _executeLoadNextPage(userId, bookmarkedIds));
   }
 
@@ -152,7 +138,6 @@ class JobsNotifier extends ChangeNotifier {
 
     isFetchingMore = true;
     notifyListeners();
-
     _currentPage++;
 
     try {
@@ -169,11 +154,8 @@ class JobsNotifier extends ChangeNotifier {
         final next = response.data!;
         if (next.isEmpty || next.length < _pageSize) hasMorePages = false;
         if (next.isNotEmpty) {
-          cachedJobs.addAll(next); // ✅ also optimized (no list copy)
-
-          _displayDirty = true; // 🔥 ADD THIS LINE
-
-          // ✅ Save cache in background
+          cachedJobs.addAll(next);
+          _displayDirty = true;
           JobsHelper.saveJobsCache(userId, cachedJobs).catchError((e) {
             debugPrint('Cache save error: $e');
           });
@@ -193,22 +175,27 @@ class JobsNotifier extends ChangeNotifier {
   // ─── Get all jobs ──────────────────────────────────────────────────────────
 
   Future<void> getJobs() async {
-    if (isLoadingJobList) return; // ✅ Prevent duplicate calls
+    if (isLoadingJobList) return;
 
     isLoadingJobList = true;
     notifyListeners();
 
     try {
       final response = await JobsHelper.getJobs();
-
       if (response.success && response.data != null) {
         jobList = response.data!;
       } else {
-        _showErrorSnackbar('Error Loading Jobs', response.message);
+        LagoonSnackbar.showError(
+          message: response.message,
+          title: 'Error Loading Jobs',
+        );
       }
     } catch (e) {
       debugPrint('Get jobs error: $e');
-      _showErrorSnackbar('Error Loading Jobs', e.toString());
+      LagoonSnackbar.showError(
+        title: 'Error Loading Jobs',
+        message: e.toString(),
+      );
     }
 
     isLoadingJobList = false;
@@ -225,15 +212,20 @@ class JobsNotifier extends ChangeNotifier {
 
     try {
       final response = await JobsHelper.getFilteredJobs(agentId);
-
       if (response.success && response.data != null) {
         jobList = response.data!;
       } else {
-        _showErrorSnackbar('Error Loading Jobs', response.message);
+        LagoonSnackbar.showError(
+          title: 'Error Loading Jobs',
+          message: response.message,
+        );
       }
     } catch (e) {
       debugPrint('Get filtered jobs error: $e');
-      _showErrorSnackbar('Error Loading Jobs', e.toString());
+      LagoonSnackbar.showError(
+        title: 'Error Loading Jobs',
+        message: e.toString(),
+      );
     }
 
     isLoadingJobList = false;
@@ -251,15 +243,20 @@ class JobsNotifier extends ChangeNotifier {
 
     try {
       final response = await JobsHelper.getJob(jobId);
-
       if (response.success && response.data != null) {
         currentJob = response.data;
       } else {
-        _showErrorSnackbar('Error Loading Job', response.message);
+        LagoonSnackbar.showError(
+          title: 'Error Loading Job',
+          message: response.message,
+        );
       }
     } catch (e) {
       debugPrint('Get job error: $e');
-      _showErrorSnackbar('Error Loading Job', e.toString());
+      LagoonSnackbar.showError(
+        title: 'Error Loading Job',
+        message: e.toString(),
+      );
     }
 
     isLoadingCurrentJob = false;
@@ -271,12 +268,11 @@ class JobsNotifier extends ChangeNotifier {
   Future<void> getRecent() async {
     try {
       final response = await JobsHelper.getRecent();
-
       if (response.success && response.data != null) {
         recent = response.data;
         notifyListeners();
       } else {
-        _showErrorSnackbar('Error', response.message);
+        LagoonSnackbar.showError(title: 'Error', message: response.message);
       }
     } catch (e) {
       debugPrint('Get recent error: $e');
@@ -288,7 +284,6 @@ class JobsNotifier extends ChangeNotifier {
   Future<void> getUserJobs(String agentId) async {
     if (isLoadingUserJobs) return;
 
-    // ✅ Load from cache first
     await loadCachedUserJobs(agentId);
 
     isLoadingUserJobs = true;
@@ -296,27 +291,28 @@ class JobsNotifier extends ChangeNotifier {
 
     try {
       final response = await JobsHelper.getUserJobs(agentId);
-
       if (response.success && response.data != null) {
         userJobs = response.data!;
-
-        // ✅ Save to cache in background
         JobsHelper.saveCachedUserJobs(agentId, response.data!).catchError((e) {
           debugPrint('User jobs cache save error: $e');
         });
       } else {
-        _showErrorSnackbar('Error Loading Your Jobs', response.message);
+        LagoonSnackbar.showError(
+          title: 'Error Loading Your Jobs',
+          message: response.message,
+        );
       }
     } catch (e) {
       debugPrint('Get user jobs error: $e');
-      _showErrorSnackbar('Error Loading Your Jobs', e.toString());
+      LagoonSnackbar.showError(
+        title: 'Error Loading Your Jobs',
+        message: e.toString(),
+      );
     }
 
     isLoadingUserJobs = false;
     notifyListeners();
   }
-
-  // ─── Load cached user jobs for instant display ────────────────────────────
 
   Future<void> loadCachedUserJobs(String agentId) async {
     try {
@@ -330,7 +326,8 @@ class JobsNotifier extends ChangeNotifier {
     }
   }
 
-  // ─── Displayable feed (filtered for current user) ─────────────────────────
+  // ─── Displayable feed ─────────────────────────────────────────────────────
+
   List<JobsResponse> getDisplayableJobs(
     String currentUserId, {
     List<String> bookmarkedIds = const [],
@@ -338,7 +335,6 @@ class JobsNotifier extends ChangeNotifier {
     if (!_displayDirty) return _displayJobs;
 
     final bookmarkedSet = bookmarkedIds.toSet();
-
     _displayJobs = cachedJobs.where((j) {
       return j.agentId != currentUserId &&
           j.isActive == true &&
@@ -365,7 +361,6 @@ class JobsNotifier extends ChangeNotifier {
       final response = await JobsHelper.createJob(model, imageFile: imageFile);
 
       if (response.success) {
-        // ✅ Optimized: Run in parallel, don't block UI
         Future.wait([
           getJobs(),
           getUserJobs(model.agentId),
@@ -375,27 +370,20 @@ class JobsNotifier extends ChangeNotifier {
           return <List<void>>[];
         });
 
-        Get.snackbar(
-          'Opportunity Created Successfully',
-          'Your opportunity listing has been added.',
-          colorText: kLight,
-          backgroundColor: kLightBlue,
-          icon: const Icon(Icons.check_circle),
-          duration: const Duration(seconds: 2),
+        LagoonSnackbar.show(
+          title: 'Opportunity Created Successfully',
+          message: 'Your opportunity listing has been added.',
         );
 
         await Future.delayed(const Duration(milliseconds: 300));
-        Get.back();
+        Navigator.pop(context);
       } else {
-        if (context.mounted) {
+        if (context.mounted)
           _showCreateJobErrorDialog(context, response.message);
-        }
       }
     } catch (e) {
       debugPrint('Create job error: $e');
-      if (context.mounted) {
-        _showCreateJobErrorDialog(context, e.toString());
-      }
+      if (context.mounted) _showCreateJobErrorDialog(context, e.toString());
     }
 
     isCreatingJob = false;
@@ -423,7 +411,6 @@ class JobsNotifier extends ChangeNotifier {
       );
 
       if (response.success) {
-        // ✅ Same optimized refresh as create
         Future.wait([
           getJobs(),
           getUserJobs(model.agentId),
@@ -433,27 +420,20 @@ class JobsNotifier extends ChangeNotifier {
           return <List<void>>[];
         });
 
-        Get.snackbar(
-          'Opportunity Updated Successfully',
-          'Your changes have been saved.',
-          colorText: kLight,
-          backgroundColor: kLightBlue,
-          icon: const Icon(Icons.check_circle),
-          duration: const Duration(seconds: 2),
+        LagoonSnackbar.show(
+          title: 'Opportunity Updated Successfully',
+          message: 'Your changes have been saved.',
         );
 
         await Future.delayed(const Duration(milliseconds: 300));
-        Get.back();
+        Navigator.pop(context);
       } else {
-        if (context.mounted) {
+        if (context.mounted)
           _showCreateJobErrorDialog(context, response.message);
-        }
       }
     } catch (e) {
       debugPrint('Update job error: $e');
-      if (context.mounted) {
-        _showCreateJobErrorDialog(context, e.toString());
-      }
+      if (context.mounted) _showCreateJobErrorDialog(context, e.toString());
     }
 
     isCreatingJob = false;
@@ -465,16 +445,21 @@ class JobsNotifier extends ChangeNotifier {
   Future<bool> deleteJob(String jobId) async {
     try {
       final response = await JobsHelper.deleteJob(jobId);
-
       if (response.success) {
         await getJobs();
         return true;
       }
-      _showErrorSnackbar('Error Deleting Job', response.message);
+      LagoonSnackbar.showError(
+        title: 'Error Deleting Job',
+        message: response.message,
+      );
       return false;
     } catch (e) {
       debugPrint('Delete job error: $e');
-      _showErrorSnackbar('Error Deleting Job', e.toString());
+      LagoonSnackbar.showError(
+        title: 'Error Deleting Job',
+        message: e.toString(),
+      );
       return false;
     }
   }
@@ -489,7 +474,6 @@ class JobsNotifier extends ChangeNotifier {
 
     try {
       final response = await JobsHelper.getSwipededUsersId(jobId);
-
       if (response.success && response.data != null) {
         swipedUsers = response.data!;
       } else {
@@ -509,7 +493,6 @@ class JobsNotifier extends ChangeNotifier {
     String userId,
     String action,
   ) async {
-    // ✅ Fire-and-forget with error handling
     JobsHelper.addSwipedUsers(jobId, userId, action).catchError((e) {
       debugPrint('Add swiped users error: $e');
       return ApiResponse(success: false, message: e.toString());
@@ -529,7 +512,6 @@ class JobsNotifier extends ChangeNotifier {
   Future<void> getMatchedUsersId(String jobId) async {
     try {
       final response = await JobsHelper.getMatchedUsersId(jobId);
-
       if (response.success && response.data != null) {
         matchedUsers = response.data!;
       } else {
@@ -544,25 +526,13 @@ class JobsNotifier extends ChangeNotifier {
   }
 
   Future<void> addMatchedUsers(String jobId, String userId) async {
-    // ✅ Fire-and-forget with error handling
     JobsHelper.addMatchedUsers(jobId, userId).catchError((e) {
       debugPrint('Add matched users error: $e');
       return ApiResponse(success: false, message: e.toString());
     });
   }
 
-  // ✅ Helper methods ────────────────────────────────────────────────────────
-
-  void _showErrorSnackbar(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      colorText: kLight,
-      backgroundColor: kOrange,
-      icon: const Icon(Icons.error_outline),
-      duration: const Duration(seconds: 3),
-    );
-  }
+  // ─── Helpers ──────────────────────────────────────────────────────────────
 
   void _showCreateJobErrorDialog(BuildContext context, String message) {
     showDialog(
@@ -577,7 +547,7 @@ class JobsNotifier extends ChangeNotifier {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: kTealLight)),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF00BCD4))),
           ),
         ],
       ),
@@ -592,7 +562,6 @@ class JobsNotifier extends ChangeNotifier {
     return true;
   }
 
-  // ✅ Clean up resources
   @override
   void dispose() {
     _preloadDebouncer.dispose();

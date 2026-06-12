@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/loading_mixin.dart';
 import 'package:proco/models/request/bookmarks/bookmarks_model.dart';
 import 'package:proco/models/response/bookmarks/all_bookmarks.dart';
 import 'package:proco/services/helpers/book_helper.dart';
 import 'package:proco/services/helpers/jobs_helper.dart';
-import 'package:proco/services/snackbar_service.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookMarkNotifier extends ChangeNotifier with LoadingMixin {
@@ -53,15 +51,15 @@ class BookMarkNotifier extends ChangeNotifier with LoadingMixin {
 
     if (response.success) {
       await _addJob(jobId);
-      Get.snackbar(
-        'Bookmark Added',
-        'Please check your bookmarks',
-        colorText: kLight,
-        backgroundColor: kLightBlue,
-        icon: const Icon(Icons.bookmark_add),
+      LagoonSnackbar.show(
+        title: 'Bookmark Added',
+        message: 'Please check your bookmarks',
       );
     } else {
-      showErrorSnackbar(response.message, title: 'Failed to Add Bookmark');
+      LagoonSnackbar.showError(
+        message: response.message,
+        title: 'Failed to Add Bookmark',
+      );
     }
   }
 
@@ -82,15 +80,16 @@ class BookMarkNotifier extends ChangeNotifier with LoadingMixin {
         JobsHelper.addSwipedUsers(jobId, userId, 'left');
       }
 
-      Get.snackbar(
-        'Bookmark Deleted',
-        'Please check your bookmarks',
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.bookmark_remove_outlined),
+      LagoonSnackbar.show(
+        title: 'Bookmark Deleted',
+        message: 'Please check your bookmarks',
+        isError: true,
       );
     } else {
-      showErrorSnackbar(response.message, title: 'Failed to Delete Bookmark');
+      LagoonSnackbar.showError(
+        message: response.message,
+        title: 'Failed to Delete Bookmark',
+      );
     }
   }
 
@@ -116,14 +115,17 @@ class BookMarkNotifier extends ChangeNotifier with LoadingMixin {
           await prefs.setStringList('jobId', _jobs);
         } else {
           bookmarks = [];
-          showErrorSnackbar(
-            response.message,
+          LagoonSnackbar.showError(
+            message: response.message,
             title: 'Failed to Load Bookmarks',
           );
         }
       } catch (e) {
         bookmarks = [];
-        showErrorSnackbar(e.toString());
+        LagoonSnackbar.showError(
+          message: e.toString(),
+          title: 'Failed to Load Bookmarks',
+        );
       }
     });
   }

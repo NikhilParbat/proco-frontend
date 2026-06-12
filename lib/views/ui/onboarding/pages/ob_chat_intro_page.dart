@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:proco/constants/app_colors.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:provider/provider.dart';
 
 import 'package:proco/controllers/onboarding_flow_provider.dart';
@@ -356,7 +357,9 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   void _rebuildHistory() {
     _msgs.clear();
     for (var k = 0; k <= _step && k < _botQuestions.length; k++) {
-      _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.bot, text: _botQuestions[k]));
+      _msgs.add(
+        _Msg(id: _msgSeq++, kind: _MsgKind.bot, text: _botQuestions[k]),
+      );
       final completed = k < _step;
       if (k == 2) {
         // Skills render as individual bubbles whether the step is done or live.
@@ -403,12 +406,12 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   void _addSkill(String skill) {
     if (_skills.contains(skill)) return;
     if (_skills.length >= _kMaxSkills) {
-    _snack(
-      'Skill limit reached',
-      'You can select a maximum of $_kMaxSkills skills.',
-    );
-    return;
-  }
+      _snack(
+        'Skill limit reached',
+        'You can select a maximum of $_kMaxSkills skills.',
+      );
+      return;
+    }
     setState(() {
       _skills.add(skill);
       _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.skill, text: skill));
@@ -419,9 +422,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
   void _removeSkill(String skill) {
     setState(() {
       _skills.remove(skill);
-      _msgs.removeWhere(
-        (m) => m.kind == _MsgKind.skill && m.text == skill,
-      );
+      _msgs.removeWhere((m) => m.kind == _MsgKind.skill && m.text == skill);
     });
   }
 
@@ -475,9 +476,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
     // 1. User answer bubble slides in; block input.
     setState(() {
       if (userSummary != null && userSummary.isNotEmpty) {
-        _msgs.add(
-          _Msg(id: _msgSeq++, kind: _MsgKind.user, text: userSummary),
-        );
+        _msgs.add(_Msg(id: _msgSeq++, kind: _MsgKind.user, text: userSummary));
       }
       _transitioning = true;
     });
@@ -769,8 +768,7 @@ class _ObChatIntroPageState extends State<ObChatIntroPage> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  void _snack(String t, String m) =>
-      Get.snackbar(t, m, backgroundColor: kOrange, colorText: kLight);
+  void _snack(String t, String m) => LagoonSnackbar.show(title: t, message: m);
 
   // ── Build ──────────────────────────────────────────────────────────────────
 

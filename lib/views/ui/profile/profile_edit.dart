@@ -86,22 +86,23 @@ class EditProfilePage extends StatelessWidget {
                 onPressed: state.isSaving
                     ? null
                     : () async {
-                      final imageNotifier = context.read<ImageNotifier>();
+                        final imageNotifier = context.read<ImageNotifier>();
                         final nameParts = state.username
                             .trim()
                             .split(' ')
                             .where((p) => p.isNotEmpty)
                             .toList();
                         if (nameParts.length < 2) {
-                          Get.snackbar(
-                            'Full Name Required',
-                            'Please enter both your first and last name.',
-                            backgroundColor: kOrange,
-                            colorText: kLight,
+                          LagoonSnackbar.showError(
+                            title: 'Full Name Required',
+                            message:
+                                'Please enter both your first and last name.',
                           );
                           return;
                         }
-                        final ok = await state.saveProfile(imageNotifier.selectedImage);
+                        final ok = await state.saveProfile(
+                          imageNotifier.selectedImage,
+                        );
                         if (ok && context.mounted) {
                           Navigator.pop(context);
                           LagoonSnackbar.show(
@@ -1227,16 +1228,11 @@ class _IdentitySection extends StatelessWidget {
   }
 }
 
-void _showImageSourceSheet(
-  BuildContext context,
-  ImageNotifier imageNotifier,
-) {
+void _showImageSourceSheet(BuildContext context, ImageNotifier imageNotifier) {
   showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(20),
-      ),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (_) {
       return SafeArea(
@@ -1247,9 +1243,7 @@ void _showImageSourceSheet(
               title: const Text('Choose from Gallery'),
               onTap: () async {
                 Navigator.pop(context);
-                await imageNotifier.pickImage(
-                  source: ImageSource.gallery,
-                );
+                await imageNotifier.pickImage(source: ImageSource.gallery);
               },
             ),
             ListTile(
@@ -1257,9 +1251,7 @@ void _showImageSourceSheet(
               title: const Text('Take Photo'),
               onTap: () async {
                 Navigator.pop(context);
-                await imageNotifier.pickImage(
-                  source: ImageSource.camera,
-                );
+                await imageNotifier.pickImage(source: ImageSource.camera);
               },
             ),
           ],
@@ -1270,41 +1262,40 @@ void _showImageSourceSheet(
 }
 
 Widget _sourceOption({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    
+  required IconData icon,
+  required String label,
+  required VoidCallback onTap,
+}) {
   const Color _border = Color(0xFFE0E0E0);
   const Color _textDark = Color(0xFF1A1A2E);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8F8F8),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _border),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: kThemeColor, size: 22),
-            SizedBox(width: 14.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: kFontDMSans,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: _textDark,
-              ),
-            ),
-          ],
-        ),
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F8F8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
       ),
-    );
-  }
+      child: Row(
+        children: [
+          Icon(icon, color: kThemeColor, size: 22),
+          SizedBox(width: 14.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: kFontDMSans,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: _textDark,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 // ── Validated Field (with gibberish guard + char limit) ───────────────────────
 class _ValidatedField extends StatefulWidget {
@@ -1404,6 +1395,7 @@ class _ValidatedFieldState extends State<_ValidatedField> {
     );
   }
 }
+
 // ── Expandable Card ───────────────────────────────────────────────────────────
 class _ExpandableCard extends StatelessWidget {
   const _ExpandableCard({
@@ -2709,8 +2701,18 @@ class _DateRangePickerState extends State<_DateRangePicker> {
   static DateTime? _parseFmt(String s) {
     if (s.isEmpty) return null;
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final parts = s.trim().split(' ');
     if (parts.length != 2) return null;

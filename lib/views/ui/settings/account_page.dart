@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/services/helpers/user_helper.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/common/settings_page_header.dart';
 import 'package:proco/views/common/wave_loader.dart';
 import 'package:provider/provider.dart';
@@ -90,15 +90,7 @@ class _AccountPageState extends State<AccountPage> {
     if (response.success) {
       context.read<LoginNotifier>().logout();
     } else {
-      Get.snackbar(
-        'Error',
-        response.message,
-        backgroundColor: _red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        borderRadius: 12,
-        margin: const EdgeInsets.all(16),
-      );
+      LagoonSnackbar.showError(title: 'Error', message: response.message);
     }
   }
 

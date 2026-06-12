@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/exports.dart';
 import 'package:proco/views/common/empty_state_widget.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/bookmarks/bookmark_card_swiper.dart';
 import 'package:provider/provider.dart';
@@ -122,10 +122,9 @@ class _BookMarkPageState extends State<BookMarkPage> {
                     return GestureDetector(
                       onTap: () {
                         if (!active) {
-                          Get.snackbar(
-                            'Temporarily Unavailable',
-                            'This opportunity is currently paused.',
-                            snackPosition: SnackPosition.BOTTOM,
+                          LagoonSnackbar.show(
+                            title: 'Temporarily Unavailable',
+                            message: 'This opportunity is currently paused.',
                           );
                           return;
                         }
@@ -473,10 +472,7 @@ Widget _statItem(String value, String label) {
       SizedBox(height: 4.h),
       Text(
         label,
-        style: GoogleFonts.dmSans(
-          fontSize: 12.sp,
-          color: Colors.black54,
-        ),
+        style: GoogleFonts.dmSans(fontSize: 12.sp, color: Colors.black54),
       ),
     ],
   );

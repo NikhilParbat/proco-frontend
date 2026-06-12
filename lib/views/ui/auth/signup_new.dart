@@ -7,6 +7,7 @@ import 'package:proco/constants/app_text_styles.dart';
 import 'package:proco/controllers/signup_provider.dart';
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/custom_textfield_input.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/common/wave_loader.dart';
 import 'package:provider/provider.dart';
 
@@ -154,18 +155,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       onTap: () {
                         final email = _emailController.text.trim();
                         if (email.isEmpty || !email.contains('@')) {
-                          _snack(
-                            'Invalid Email',
-                            'Please enter a valid email address.',
+                          LagoonSnackbar.showError(
+                            title: 'Invalid Email',
+                            message: 'Please enter a valid email address.',
                           );
                           return;
                         }
                         if (!provider.passwordValidator(
                           _passwordController.text,
                         )) {
-                          _snack(
-                            'Weak Password',
-                            'Need 8+ chars, uppercase, lowercase, digit & special character.',
+                          LagoonSnackbar.showError(
+                            title: 'Weak Password',
+                            message:
+                                'Need 8+ chars, uppercase, lowercase, digit & special character.',
                           );
                           return;
                         }
@@ -366,17 +368,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  // ── Shared helpers ───────────────────────────────────────────────────────────
-
-  void _snack(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: kLightBlue,
-      colorText: Colors.white,
     );
   }
 }

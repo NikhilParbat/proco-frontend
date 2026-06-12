@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/loading_mixin.dart';
 import 'package:proco/models/request/filters/create_filter.dart';
 import 'package:proco/models/response/filters/filter_response.dart';
 import 'package:proco/models/response/filters/get_filter.dart';
 import 'package:proco/services/helpers/filter_helper.dart';
-import 'package:proco/services/snackbar_service.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FilterNotifier extends ChangeNotifier with LoadingMixin {
@@ -14,7 +12,6 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
   GetFilterRes? filter;
   List<FilterResponse> userFilters = [];
 
-  // ── Active filter (shown as chips on homepage) ──────────────────────────
   GetFilterRes? activeFilter;
 
   FilterNotifier() {
@@ -40,7 +37,6 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
   }
 
   Future<void> clearFilter(String agentId) async {
-    // REFACTORED: Send clean default fields matching your new CreateFilterRequest array structures
     final response = await FilterHelper.createFilter(
       CreateFilterRequest(
         agentId: agentId,
@@ -57,7 +53,10 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
     );
 
     if (!response.success) {
-      showErrorSnackbar(response.message);
+      LagoonSnackbar.showError(
+        message: response.message,
+        title: "Error Clearing Filter",
+      );
     }
 
     activeFilter = null;
@@ -66,8 +65,6 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
     notifyListeners();
   }
 
-  /// Fetches the saved filter for [userId] from the backend and updates
-  /// [activeFilter] + the local SharedPreferences cache.
   Future<void> loadFilterForUser(String userId) async {
     if (userId.isEmpty) return;
     final response = await FilterHelper.getFilter(userId);
@@ -82,7 +79,10 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
       if (response.success && response.data != null) {
         filterList = response.data!;
       } else {
-        showErrorSnackbar(response.message);
+        LagoonSnackbar.showError(
+          message: response.message,
+          title: "Error Fetching Filters",
+        );
       }
     });
   }
@@ -94,7 +94,10 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
       filter = response.data;
       notifyListeners();
     } else {
-      showErrorSnackbar(response.message);
+      LagoonSnackbar.showError(
+        message: response.message,
+        title: "Error Fetching filter",
+      );
     }
   }
 
@@ -102,21 +105,17 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
     final response = await FilterHelper.createFilter(model);
 
     if (response.success) {
-      Get.snackbar(
-        'Filter Applied',
-        response.message,
-        colorText: kLight,
-        backgroundColor: kLightBlue,
-        icon: const Icon(Icons.check_circle),
-      );
+      LagoonSnackbar.show(title: 'Filter Applied', message: response.message);
       if (response.data != null) {
         filter = response.data;
-        // Synchronize your active visual filters state immediately on success
         setActiveFilter(response.data!);
       }
       return true;
     } else {
-      showErrorSnackbar(response.message, title: 'Error Saving Filter');
+      LagoonSnackbar.showError(
+        message: response.message,
+        title: 'Error Saving Filter',
+      );
       return false;
     }
   }
@@ -128,7 +127,10 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
     final response = await FilterHelper.updateFilter(filterId, filterData);
 
     if (!response.success) {
-      showErrorSnackbar(response.message, title: 'Error Updating Filter');
+      LagoonSnackbar.showError(
+        message: response.message,
+        title: 'Error Updating Filter',
+      );
     }
   }
 
@@ -136,7 +138,10 @@ class FilterNotifier extends ChangeNotifier with LoadingMixin {
     final response = await FilterHelper.deleteFilter(filterId);
 
     if (!response.success) {
-      showErrorSnackbar(response.message, title: 'Error Deleting Filter');
+      LagoonSnackbar.showError(
+        title: 'Error Deleting Filter',
+        message: response.message,
+      );
     }
   }
 }

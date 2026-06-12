@@ -2,7 +2,6 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:proco/constants/app_colors.dart';
 import 'package:proco/controllers/auth_service.dart';
 import 'package:proco/models/request/auth/google_auth_model.dart';
 import 'package:proco/models/request/auth/login_model.dart';
@@ -10,6 +9,7 @@ import 'package:proco/models/request/auth/signup_model.dart';
 import 'package:proco/services/helpers/auth_helper.dart';
 import 'package:proco/services/helpers/device_helper.dart';
 import 'package:proco/services/location_service.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/ui/mainscreen.dart';
 import 'package:proco/views/ui/onboarding/onboarding_flow.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -104,12 +104,7 @@ class SignUpNotifier extends ChangeNotifier {
       );
       return result;
     } catch (e) {
-      Get.snackbar(
-        'Location Error',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      LagoonSnackbar.showError(title: 'Location Error', message: e.toString());
       return null;
     } finally {
       _locationLoading = false;
@@ -124,11 +119,10 @@ class SignUpNotifier extends ChangeNotifier {
     try {
       final result = await LocationService.geocodeAddress(address);
       if (result == null) {
-        Get.snackbar(
-          'Address Not Found',
-          'Could not find coordinates for "$address". Try a different query.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Address Not Found',
+          message:
+              'Could not find coordinates for "$address". Try a different query.',
         );
         return null;
       }
@@ -139,12 +133,7 @@ class SignUpNotifier extends ChangeNotifier {
       );
       return result;
     } catch (e) {
-      Get.snackbar(
-        'Geocoding Error',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      LagoonSnackbar.showError(title: 'Geocoding Error', message: e.toString());
       return null;
     } finally {
       _locationLoading = false;
@@ -178,11 +167,9 @@ class SignUpNotifier extends ChangeNotifier {
 
       if (_firebaseUser == null) {
         isLoading = false;
-        Get.snackbar(
-          'Sign Up Failed',
-          'Could not create account. Please try again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Sign Up Failed',
+          message: 'Could not create account. Please try again.',
         );
         return;
       }
@@ -210,20 +197,13 @@ class SignUpNotifier extends ChangeNotifier {
         await _recoverExistingFirebaseAccount();
         return;
       }
-      Get.snackbar(
-        'Sign Up Failed',
-        _firebaseAuthMessage(e.code),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      LagoonSnackbar.showError(
+        title: 'Sign Up Failed',
+        message: _firebaseAuthMessage(e.code),
       );
     } catch (e) {
       isLoading = false;
-      Get.snackbar(
-        'Sign Up Failed',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      LagoonSnackbar.showError(title: 'Sign Up Failed', message: e.toString());
     }
   }
 
@@ -252,11 +232,9 @@ class SignUpNotifier extends ChangeNotifier {
       if (!recovery.success) {
         // 409 ALREADY_VERIFIED → "please log in", or OTHER_PROVIDER → use Google.
         isLoading = false;
-        Get.snackbar(
-          'Account Already Exists',
-          recovery.message,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Account Already Exists',
+          message: recovery.message,
         );
         return;
       }
@@ -279,11 +257,9 @@ class SignUpNotifier extends ChangeNotifier {
       final user = credential.user;
       if (user == null) {
         isLoading = false;
-        Get.snackbar(
-          'Error',
-          'Could not access account. Please try again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Error',
+          message: 'Could not access account. Please try again.',
         );
         return;
       }
@@ -291,35 +267,30 @@ class SignUpNotifier extends ChangeNotifier {
       _firebaseUser = user;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('pendingVerificationEmail', user.email!);
-      await prefs.setString('pendingVerificationUsername', signupModel.username);
+      await prefs.setString(
+        'pendingVerificationUsername',
+        signupModel.username,
+      );
 
       await user.sendEmailVerification();
 
       isLoading = false;
       changeStep(3);
-      Get.snackbar(
-        'Verify Your Email',
-        'You signed up earlier but didn\'t verify. We\'ve sent a new '
+      LagoonSnackbar.show(
+        title: 'Verify Your Email',
+        message:
+            'You signed up earlier but didn\'t verify. We\'ve sent a new '
             'verification link — please check your inbox.',
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
       );
     } on FirebaseAuthException catch (e) {
       isLoading = false;
-      Get.snackbar(
-        'Sign Up Failed',
-        _firebaseAuthMessage(e.code),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      LagoonSnackbar.showError(
+        title: 'Sign Up Failed',
+        message: _firebaseAuthMessage(e.code),
       );
     } catch (e) {
       isLoading = false;
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      LagoonSnackbar.showError(title: 'Error', message: e.toString());
     }
   }
 
@@ -329,16 +300,14 @@ class SignUpNotifier extends ChangeNotifier {
       // Fall back to currentUser when _firebaseUser is null (app was restarted)
       final user = _firebaseUser ?? FirebaseAuth.instance.currentUser;
       await user?.sendEmailVerification();
-      Get.snackbar(
-        'Email Sent',
-        'Verification email resent. Check your inbox.',
+      LagoonSnackbar.show(
+        title: 'Email Sent',
+        message: 'Verification email resent. Check your inbox.',
       );
     } catch (_) {
-      Get.snackbar(
-        'Error',
-        'Could not resend email. Please try again.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      LagoonSnackbar.showError(
+        title: 'Error',
+        message: 'Could not resend email. Please try again.',
       );
     }
   }
@@ -358,11 +327,9 @@ class SignUpNotifier extends ChangeNotifier {
       final current = FirebaseAuth.instance.currentUser;
 
       if (current == null) {
-        Get.snackbar(
-          'Session Expired',
-          'Your session has expired. Please sign up again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Session Expired',
+          message: 'Your session has expired. Please sign up again.',
         );
         changeStep(0);
         return;
@@ -381,20 +348,17 @@ class SignUpNotifier extends ChangeNotifier {
       if (refreshed?.emailVerified == true) {
         await _completeEmailSignup(refreshed!);
       } else {
-        Get.snackbar(
-          'Not Verified Yet',
-          'Please open the link in the email first, then tap this button.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Not Verified Yet',
+          message:
+              'Please open the link in the email first, then tap this button.',
         );
       }
     } catch (e) {
       debugPrint('checkVerifiedAndProceed error: $e');
-      Get.snackbar(
-        'Error',
-        'Could not check verification. Please try again.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      LagoonSnackbar.showError(
+        title: 'Error',
+        message: 'Could not check verification. Please try again.',
       );
     } finally {
       _checkingVerification = false;
@@ -411,11 +375,10 @@ class SignUpNotifier extends ChangeNotifier {
       // Edge-case: app was killed before verification — password is gone.
       if (signupModel.password.isEmpty) {
         isLoading = false;
-        Get.snackbar(
-          'Email Verified!',
-          'Please re-enter your details to finish creating your account.',
-          backgroundColor: kLightBlue,
-          colorText: Colors.white,
+        LagoonSnackbar.show(
+          title: 'Email Verified!',
+          message:
+              'Please re-enter your details to finish creating your account.',
         );
         changeStep(0);
         return;
@@ -434,11 +397,9 @@ class SignUpNotifier extends ChangeNotifier {
 
       if (!registrationOk) {
         isLoading = false;
-        Get.snackbar(
-          'Sign Up Failed',
-          signupResponse.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Sign Up Failed',
+          message: signupResponse.message,
         );
         return;
       }
@@ -461,11 +422,9 @@ class SignUpNotifier extends ChangeNotifier {
 
         isLoading = false;
 
-        Get.snackbar(
-          'Email Verified!',
-          'Welcome! Let\'s set up your profile.',
-          backgroundColor: kLightBlue,
-          colorText: Colors.white,
+        LagoonSnackbar.show(
+          title: 'Email Verified!',
+          message: 'Welcome! Let\'s set up your profile.',
         );
 
         await Future.delayed(const Duration(milliseconds: 800));
@@ -482,21 +441,14 @@ class SignUpNotifier extends ChangeNotifier {
         }
       } else {
         isLoading = false;
-        Get.snackbar(
-          'Sign Up Failed',
-          loginResponse.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        LagoonSnackbar.showError(
+          title: 'Sign Up Failed',
+          message: loginResponse.message,
         );
       }
     } catch (e) {
       isLoading = false;
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      LagoonSnackbar.showError(title: 'Error', message: e.toString());
     }
   }
 
@@ -529,12 +481,9 @@ class SignUpNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        Get.snackbar(
-          'Sign Up Cancelled',
-          'Please try again',
-          colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert),
+        LagoonSnackbar.showError(
+          title: 'Sign Up Cancelled',
+          message: 'Please try again',
         );
         return;
       }
@@ -544,12 +493,9 @@ class SignUpNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        Get.snackbar(
-          'Authentication Error',
-          'Could not retrieve user information',
-          colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert),
+        LagoonSnackbar.showError(
+          title: 'Authentication Error',
+          message: 'Could not retrieve user information',
         );
         return;
       }
@@ -559,12 +505,9 @@ class SignUpNotifier extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        Get.snackbar(
-          'Authentication Error',
-          'Could not retrieve authentication token',
-          colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.add_alert),
+        LagoonSnackbar.showError(
+          title: 'Authentication Error',
+          message: 'Could not retrieve authentication token',
         );
         return;
       }
@@ -580,8 +523,6 @@ class SignUpNotifier extends ChangeNotifier {
 
       final response = await AuthHelper.googleSignup(model);
 
-      Get.closeAllSnackbars();
-
       if (response.success) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('loggedIn', true);
@@ -595,12 +536,9 @@ class SignUpNotifier extends ChangeNotifier {
         final user = response.data!;
 
         if (user.isFirstTimeUser == true) {
-          Get.snackbar(
-            'Welcome!',
-            'Let\'s set up your profile.',
-            colorText: kLight,
-            backgroundColor: kLightBlue,
-            icon: const Icon(Icons.check),
+          LagoonSnackbar.show(
+            title: 'Welcome!',
+            message: 'Let\'s set up your profile.',
           );
 
           await Future.delayed(const Duration(seconds: 1));
@@ -610,12 +548,9 @@ class SignUpNotifier extends ChangeNotifier {
             transition: Transition.fade,
           );
         } else {
-          Get.snackbar(
-            'Welcome Back!',
-            'Signed in with Google.',
-            colorText: kLight,
-            backgroundColor: kLightBlue,
-            icon: const Icon(Icons.check),
+          LagoonSnackbar.show(
+            title: 'Welcome Back!',
+            message: 'Signed in with Google.',
           );
 
           await Future.delayed(const Duration(seconds: 1));
@@ -630,8 +565,6 @@ class SignUpNotifier extends ChangeNotifier {
 
         final loginResponse = await AuthHelper.googleLogin(model);
 
-        Get.closeAllSnackbars();
-
         if (loginResponse.success) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('loggedIn', true);
@@ -645,12 +578,9 @@ class SignUpNotifier extends ChangeNotifier {
           final user = loginResponse.data!;
 
           if (user.isFirstTimeUser == true) {
-            Get.snackbar(
-              'Welcome!',
-              'Let\'s finish setting up your profile.',
-              colorText: kLight,
-              backgroundColor: kLightBlue,
-              icon: const Icon(Icons.check),
+            LagoonSnackbar.show(
+              title: 'Welcome!',
+              message: 'Let\'s finish setting up your profile.',
             );
 
             await Future.delayed(const Duration(seconds: 1));
@@ -660,12 +590,9 @@ class SignUpNotifier extends ChangeNotifier {
               transition: Transition.fade,
             );
           } else {
-            Get.snackbar(
-              'Welcome Back!',
-              'You already have an account. Logging you in...',
-              colorText: kLight,
-              backgroundColor: kLightBlue,
-              icon: const Icon(Icons.check),
+            LagoonSnackbar.show(
+              title: 'Welcome Back!',
+              message: 'You already have an account. Logging you in...',
             );
 
             await Future.delayed(const Duration(seconds: 1));
@@ -681,25 +608,16 @@ class SignUpNotifier extends ChangeNotifier {
 
         final message = response.message;
 
-        Get.snackbar(
-          'Sign Up Failed',
-          message,
-          colorText: kLight,
-          backgroundColor: kOrange,
-          icon: const Icon(Icons.error),
-        );
+        LagoonSnackbar.showError(title: 'Sign Up Failed', message: message);
       }
     } catch (e) {
       _isLoading = false;
       notifyListeners();
 
       debugPrint('Google Sign-Up Error: $e');
-      Get.snackbar(
-        'Sign Up Failed',
-        'An unexpected error occurred: ${e.toString()}',
-        colorText: kLight,
-        backgroundColor: kOrange,
-        icon: const Icon(Icons.add_alert),
+      LagoonSnackbar.showError(
+        title: 'Sign Up Failed',
+        message: 'An unexpected error occurred: ${e.toString()}',
       );
     }
   }

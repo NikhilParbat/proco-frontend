@@ -10,6 +10,7 @@ import 'package:proco/models/response/jobs/jobs_response.dart';
 import 'package:proco/services/config.dart' as app_config;
 import 'package:proco/views/common/lagoon_app_bar.dart';
 import 'package:proco/views/common/lagoon_drawer.dart';
+import 'package:proco/views/common/lagoon_snackbar.dart';
 import 'package:proco/views/common/wave_loader.dart';
 import 'package:proco/views/ui/jobs/add_job.dart';
 import 'package:proco/views/ui/jobs/matched_users.dart';
@@ -297,11 +298,10 @@ class _JobListPageState extends State<JobListPage>
                                     final ok = await notifier.deleteJob(job.id);
                                     loadJobs();
                                     if (ok) {
-                                      Get.snackbar(
-                                        "Deleted",
-                                        "Opportunity removed successfully",
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white,
+                                      LagoonSnackbar.show(
+                                        title: "Deleted",
+                                        message:
+                                            "Opportunity removed successfully",
                                       );
                                     }
                                   },
@@ -653,13 +653,9 @@ class JobCard extends StatelessWidget {
                   onTap: () async {
                     await Clipboard.setData(ClipboardData(text: link));
                     if (sheetContext.mounted) Navigator.pop(sheetContext);
-                    Get.snackbar(
-                      'Link copied',
-                      'Opportunity link copied to clipboard',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: kThemeColor,
-                      colorText: Colors.white,
-                      margin: EdgeInsets.all(12.w),
+                    LagoonSnackbar.show(
+                      title: 'Link copied',
+                      message: 'Opportunity link copied to clipboard',
                     );
                   },
                 ),
