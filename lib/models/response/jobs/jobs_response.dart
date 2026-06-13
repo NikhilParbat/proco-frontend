@@ -46,6 +46,7 @@ class JobsResponse {
   final List<String> skills;
   final int applicantsCount;
   final int matchesCount;
+  final String ownerName;
 
   JobsResponse({
     required this.id,
@@ -75,6 +76,7 @@ class JobsResponse {
     this.skills = const [],
     this.applicantsCount = 0,
     this.matchesCount = 0,
+    this.ownerName = '',
   });
 
   String get location {
@@ -119,6 +121,7 @@ class JobsResponse {
       skills: json['skills'] != null ? List<String>.from(json['skills']) : [],
       applicantsCount: (json['applicantsCount'] as num?)?.toInt() ?? 0,
       matchesCount: (json['matchesCount'] as num?)?.toInt() ?? 0,
+      ownerName: (json['ownerName'] ?? json['owner_name'] ?? '').toString(),
     );
   }
 
@@ -185,5 +188,6 @@ class JobsResponse {
     'skills': skills,
     'applicantsCount': applicantsCount,
     'matchesCount': matchesCount,
+    'ownerName': ownerName,
   };
 }

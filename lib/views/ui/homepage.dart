@@ -29,12 +29,12 @@ class _HomePageState extends State<HomePage> {
   // static const Color _navy = Color(0xFF040326);
   static const Color _bg = Color(0xFFF4F6FA);
 
-  bool _hasNewNotification = NotificationHelper.notifications.isNotEmpty;
+  bool _hasNewNotification = NotificationHelper.hasUnread;
 
   void _onNotificationUpdate() {
     if (mounted) {
       setState(() {
-        _hasNewNotification = NotificationHelper.notifications.isNotEmpty;
+        _hasNewNotification = NotificationHelper.hasUnread;
       });
     }
   }
@@ -162,7 +162,9 @@ class _HomePageState extends State<HomePage> {
             icon: CupertinoIcons.bell,
             size: 22.w,
             onTap: () {
-              setState(() => _hasNewNotification = false);
+              // Opening the list counts as seeing the notifications, so clear
+              // the unread state at the source. The listener recomputes the dot.
+              NotificationHelper.markAllAsRead();
 
               Navigator.push(
                 context,

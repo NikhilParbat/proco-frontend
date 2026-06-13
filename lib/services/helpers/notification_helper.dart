@@ -49,10 +49,25 @@ class NotificationHelper {
   static List<NotificationItem> get notifications =>
       List.unmodifiable(_notifications);
 
+  /// True only when at least one notification has not been read yet.
+  /// Drives the home AppBar bell dot — a read (or empty) list shows no dot.
+  static bool get hasUnread => _notifications.any((n) => !n.isRead);
+
   static void markAsRead(int index) {
     if (index < 0 || index >= _notifications.length) return;
     _notifications[index] = _notifications[index].copyWith(isRead: true);
     _notifyListeners();
+  }
+
+  static void markAllAsRead() {
+    var changed = false;
+    for (var i = 0; i < _notifications.length; i++) {
+      if (!_notifications[i].isRead) {
+        _notifications[i] = _notifications[i].copyWith(isRead: true);
+        changed = true;
+      }
+    }
+    if (changed) _notifyListeners();
   }
 
   static void addListener(VoidCallback listener) => _listeners.add(listener);

@@ -433,6 +433,9 @@ class _FlippableJobCardState extends State<FlippableJobCard>
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
     if (widget.ownerName != null && widget.ownerName!.isNotEmpty) {
       _ownerName = widget.ownerName;
+    } else if (widget.job.ownerName.isNotEmpty) {
+      // Owner name is embedded in the jobs response, so skip the per-card lookup.
+      _ownerName = widget.job.ownerName;
     } else {
       _fetchOwnerName();
     }

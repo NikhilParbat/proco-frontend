@@ -9,7 +9,6 @@ import 'package:proco/views/ui/device_mgt/devices_info.dart';
 import 'package:proco/views/ui/settings/account_page.dart';
 import 'package:proco/views/ui/settings/help_support_page.dart';
 import 'package:proco/views/ui/settings/notifications_page.dart';
-import 'package:proco/views/ui/settings/profile_view_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -55,18 +54,6 @@ class SettingsPage extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const HelpSupportPage()),
-              ),
-            ),
-
-            SizedBox(height: 14.h),
-
-            _SettingsTile(
-              icon: Icons.visibility_outlined,
-              label: 'Profile View',
-              subtitle: 'Control who can view your profile',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileViewPage()),
               ),
             ),
 
